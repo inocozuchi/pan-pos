@@ -26,7 +26,17 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            /* ↓これを追加：ブラウザのメニューバーなどで画面が狭くなっても100%に収める設定 */
+            height: 100dvh; 
             overflow: hidden;
+        }
+
+        /* ↓これをついでに「body」のすぐ下あたりに追加してね！ */
+        @media (min-width: 769px) {
+            main {
+                /* パソコンやiPadの横画面で、商品ボタンの縦幅を画面に合わせて自動縮小させる設定 */
+                grid-auto-rows: minmax(50px, 1fr) !important; 
+            }
         }
 
         header {
