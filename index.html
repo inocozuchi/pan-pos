@@ -292,9 +292,10 @@
             </div>
 
             <div id="tab-analytics" style="display:none;">
+                <button class="action-btn btn-checkout" style="width:100%; margin-bottom:15px; background-color:#FFDFBA;" onclick="downloadPDF()">📄 PDFとして保存・印刷</button>
                 <div id="analytics-result" style="font-size:14px; white-space: pre-wrap; line-height: 1.6;">売上データがありません。</div>
             </div>
-        </div>
+            </div>
 
         <button class="action-btn btn-undo" style="width:100%; margin-top:15px;" onclick="closeModal('settings-modal')">閉じる</button>
     </div>
@@ -669,7 +670,84 @@
         if(tabId === 'reservations') renderReservations();
     }
 
+    // ▼▼▼ PDF保存用の関数を追加 ▼▼▼
+    function downloadPDF() {
+        const text = document.getElementById('analytics-result').innerText;
+        if (text === "まだ売上データがないよ" || text === "売上データがありません。") {
+            alert("印刷する売上データがありません。");
+            return;
+        }
+
+        // 印刷用の新しいウィンドウ（タブ）を一時的に作成
+        const printWindow = window.open('', '_blank');
+        
+        // 印刷用画面のレイアウト（A4で見やすくなるようなデザイン）を書き込む
+        printWindow.document.write(`
+            <html>
+            <head>
+                <title>泰山木POS_売上報告書</title>
+                <style>
+                    body {
+                        font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+                        color: #333;
+                        padding: 40px;
+                        line-height: 1.8;
+                    }
+                    .report-header {
+                        text-align: center;
+                        border-bottom: 3px double #FF9AA2;
+                        padding-bottom: 10px;
+                        margin-bottom: 30px;
+                    }
+                    .report-title {
+                        font-size: 26px;
+                        font-weight: bold;
+                        color: #5A4E4D;
+                        margin: 0;
+                    }
+                    .report-date {
+                        text-align: right;
+                        font-size: 14px;
+                        color: #887B7A;
+                        margin-top: 5px;
+                    }
+                    .report-content {
+                        font-size: 16px;
+                        white-space: pre-wrap;
+                        background: #FFF5F7;
+                        padding: 25px;
+                        border-radius: 12px;
+                        border: 1px solid #FFD1DC;
+                    }
+                    @media print {
+                        body { padding: 0; }
+                        .no-print { display: none; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="report-header">
+                    <h1 class="report-title">📊 泰山木POS 売上分析報告書</h1>
+                    <div class="report-date">出力日時: ${new Date().toLocaleString('ja-JP')}</div>
+                </div>
+                <div class="report-content">${text}</div>
+                <script>
+                    // 画面が開いたら自動で印刷ダイアログ（PDF保存）を起動
+                    window.onload = function() {
+                        window.print();
+                        // ダイアログを閉じたら自動的にこのタブを閉じる
+                        setTimeout(function() { window.close(); }, 500);
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     init();
 </script>
 </body>
+    
 </html>
