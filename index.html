@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>泰山木POS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <style>
+        :root {
+            --bg-color: #FFF5F7;
+            --header-bg: #FFD1DC;
+            --btn-sweet: #FFDAC1;
+            --btn-savory: #E2F0CB;
+            --btn-drink: #B5EAD7;
+            --accent: #FF9AA2;
+            --text-main: #5A4E4D;
+            --text-light: #887B7A;
+            --white: #FFFFFF;
+        }
+
+        body {
+            font-family: 'Hiragino Rounded W3 JIS2004', 'ヒラギノ丸ゴ ProN', 'Quicksand', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--header-bg);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .app-title { font-size: 22px; font-weight: bold; color: var(--text-main); display: flex; align-items: center; gap: 15px; }
+        .session-info { font-size: 14px; background: var(--white); padding: 4px 10px; border-radius: 10px; color: var(--accent); }
+        .settings-btn { 
+            background: var(--white); 
+            border: 2px solid var(--white); 
+            color: var(--text-main); 
+            padding: 8px 20px; 
+            border-radius: 20px; 
+            font-weight: bold;
+            cursor: pointer; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        #app-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        main {
+            flex: 2;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: minmax(80px, 1fr);
+            gap: 10px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .product-btn {
+            border: none;
+            border-radius: 15px;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .product-btn:active { transform: translateY(2px); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .product-btn.out-of-stock { opacity: 0.4; pointer-events: none; filter: grayscale(100%); }
+        .product-btn .price { color: var(--accent); font-size: 16px; margin-top: 4px; }
+        .product-btn .stock { font-size: 11px; color: var(--text-light); font-weight: normal; margin-top: 2px; }
+
+        #sidebar {
+            flex: 1;
+            background-color: var(--white);
+            border-left: 2px solid #FFF0F0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -2px 0 15px rgba(0,0,0,0.02);
+            z-index: 5;
+        }
+
+        #cart-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 2px dashed #FFF0F0;
+            font-size: 16px;
+        }
+
+        footer {
+            background-color: #FAFAFA;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            border-top: 2px solid #FFF0F0;
+        }
+
+        .total-display { font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .total-display span { font-size: 32px; color: var(--accent); }
+        
+        .action-row { display: flex; gap: 10px; }
+        .action-btn { 
+            padding: 12px; 
+            border-radius: 12px; 
+            font-weight: bold; 
+            font-size: 15px;
+            cursor: pointer; 
+            border: none; 
+            color: var(--text-main);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .btn-undo { background-color: #F3F3F3; flex: 1; }
+        .btn-reserve { background-color: #FFDFBA; flex: 1; }
+        .btn-checkout { background-color: #B5EAD7; width: 100%; font-size: 18px; padding: 15px; margin-top: 5px;}
+
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(90, 78, 77, 0.6);
+            display: none;
+            justify-content: center; align-items: center; z-index: 100;
+        }
+        .modal-content {
+            background: var(--white); 
+            width: 90%; max-width: 450px; 
+            padding: 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .receipt-list {
+            list-style: none; padding: 0; margin: 15px 0;
+            max-height: 150px; overflow-y: auto;
+            border-top: 2px dashed #EEE; border-bottom: 2px dashed #EEE;
+        }
+        .receipt-item {
+            display: flex; justify-content: space-between;
+            padding: 8px 0; font-size: 15px; border-bottom: 1px solid #FAFAFA;
+        }
+
+        input[type="number"], input[type="text"] { 
+            width: calc(100% - 30px); padding: 12px 15px; font-size: 18px; 
+            margin: 10px 0; border-radius: 12px; border: 2px solid #EEE; 
+            background: #FAFAFA; color: var(--text-main); outline: none;
+        }
+        input:focus { border-color: var(--accent); }
+
+        .change-display { font-size: 36px; color: var(--accent); margin: 15px 0; font-weight: bold; text-align: center; }
+        
+        .tab-menu { display: flex; border-bottom: 2px solid #EEE; margin-bottom: 15px; flex-shrink: 0; }
+        .tab-item { flex: 1; padding: 12px; color: var(--text-light); cursor: pointer; text-align: center; font-weight: bold; }
+        .tab-item.active { color: var(--accent); border-bottom: 3px solid var(--accent); }
+        .tab-content { flex: 1; overflow-y: auto; padding-bottom: 10px; }
+
+        .res-card {
+            background: var(--bg-color); border-radius: 12px; padding: 15px;
+            margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;
+        }
+        .res-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #EAEAEA; padding-bottom: 5px; }
+        .res-actions { display: flex; gap: 10px; }
+
+        @media (max-width: 768px) {
+            #app-container { flex-direction: column; }
+            main { flex: 1.5; grid-template-columns: repeat(3, 1fr); }
+            #sidebar { flex: 1; border-left: none; border-top: 2px solid #FFF0F0; }
+            .action-row { display: flex; }
+            .btn-checkout { padding: 12px; }
+            .total-display { font-size: 18px; }
+            .total-display span { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="app-title">
+        🥖 泰山木POS
+        <span class="session-info" id="session-display">閉店中</span>
+    </div>
+    <button class="settings-btn" onclick="openSettings()">設定 / 予約</button>
+</header>
+
+<div id="app-container">
+    <main id="product-grid">
+    </main>
+
+    <aside id="sidebar">
+        <div id="cart-list">
+        </div>
+        <footer>
+            <div class="total-display">
+                <span>合計</span>
+                <div>¥<span id="cart-total">0</span></div>
+            </div>
+            <div class="action-row">
+                <button class="action-btn btn-undo" onclick="undoLast()">1つ戻す</button>
+                <button class="action-btn btn-reserve" onclick="promptReservation()">予約保留</button>
+            </div>
+            <button class="action-btn btn-checkout" onclick="openCheckout()">会計へ進む</button>
+        </footer>
+    </aside>
+</div>
+
+<div id="checkout-modal" class="modal">
+    <div class="modal-content">
+        <h2 style="margin-top:0; text-align:center;">お会計</h2>
+        
+        <ul class="receipt-list" id="checkout-receipt"></ul>
+
+        <div style="font-size: 22px; font-weight: bold; text-align:right;">合計：¥<span id="modal-total">0</span></div>
+        
+        <div style="margin: 15px 0; text-align: left; background: #FAFAFA; padding: 10px; border-radius: 12px; border: 2px solid #EEE;">
+            <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">客属性 (任意)</div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 16px;">
+                <label><input type="radio" name="customerType" value="学生"> 学生</label>
+                <label><input type="radio" name="customerType" value="教員"> 教員</label>
+                <label><input type="radio" name="customerType" value="職員"> 職員</label>
+                <label><input type="radio" name="customerType" value="その他"> その他</label>
+                <label><input type="radio" name="customerType" value="不明" checked> 不明</label>
+            </div>
+        </div>
+        
+        <input type="number" id="cash-input" placeholder="預かり金額を入力" oninput="calcChange()">
+        <div class="change-display">お釣り: ¥<span id="change-amount">0</span></div>
+        
+        <div style="display:flex; gap:10px; margin-top:10px;">
+            <button class="action-btn btn-undo" style="flex:1;" onclick="closeModal('checkout-modal')">戻る</button>
+            <button class="action-btn btn-checkout" style="flex:2;" onclick="completeTransaction()">完了・記録</button>
+        </div>
+    </div>
+</div>
+
+<div id="settings-modal" class="modal">
+    <div class="modal-content">
+        <div class="tab-menu">
+            <div class="tab-item active" onclick="showTab('session')" id="tab-btn-session">営業管理</div>
+            <div class="tab-item" onclick="showTab('reservations')" id="tab-btn-reservations">予約管理</div>
+            <div class="tab-item" onclick="showTab('analytics')" id="tab-btn-analytics">売上確認</div>
+        </div>
+        
+        <div class="tab-content">
+            <div id="tab-session">
+                <p style="font-size: 14px; color: var(--text-light);">新しい販売会を始める時に名前をつけて開店します。</p>
+                <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
+                <button class="action-btn btn-checkout" style="width:100%; margin-bottom:20px;" onclick="startSession()">開店する (データリセット)</button>
+                <hr style="border: 1px dashed #EEE; margin-bottom: 20px;">
+                <button class="action-btn" style="width:100%; background: #FF9AA2; color: white;" onclick="endSession()">閉店する (集計して終了)</button>
+            </div>
+
+            <div id="tab-reservations" style="display:none;">
+                <div id="reservation-list"></div>
+            </div>
+
+            <div id="tab-analytics" style="display:none;">
+                <div id="analytics-result" style="font-size:14px; white-space: pre-wrap; line-height: 1.6;">売上データがありません。</div>
+            </div>
+        </div>
+
+        <button class="action-btn btn-undo" style="width:100%; margin-top:15px;" onclick="closeModal('settings-modal')">閉じる</button>
+    </div>
+</div>
+
+<script>
+    const products = [
+        { id: 1, name: "アップルパイ", price: 200, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 2, name: "アップルシナモン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 3, name: "あんぱん", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 4, name: "ウィンナーパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 5, name: "クリームパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 6, name: "塩パン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 7, name: "チーズパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 8, name: "ミルクパン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 9, name: "メロンパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 10, name: "チョコチップ", price: 200, stock: 50, initialStock: 50, type: "savory" },
+        { id: 11, name: "フロランタン", price: 200, stock: 50, initialStock: 50, type: "savory" },
+        { id: 12, name: "ココナッツ", price: 200, stock: 50, initialStock: 50, type: "savory" },
+        { id: 13, name: "チョコクッキー", price: 100, stock: 50, initialStock: 50, type: "savory" },
+        { id: 14, name: "紅茶クッキー", price: 100, stock: 50, initialStock: 50, type: "savory" },
+        { id: 15, name: "パウンドケーキ", price: 350, stock: 50, initialStock: 50, type: "savory" },
+        { id: 16, name: "KENJIブレンド", price: 100, stock: 50, initialStock: 50, type: "drink" }
+    ];
+
+    let cart = [];
+    let salesHistory = [];
+    let reservations = [];
+    let currentSession = null;
+    let processingReservationId = null;
+
+    function init() {
+        const grid = document.getElementById('product-grid');
+        grid.innerHTML = '';
+        products.forEach(p => {
+            const btn = document.createElement('button');
+            btn.className = `product-btn ${p.stock <= 0 ? 'out-of-stock' : ''}`;
+            
+            if(p.type === 'sweet') btn.style.backgroundColor = 'var(--btn-sweet)';
+            else if(p.type === 'savory') btn.style.backgroundColor = 'var(--btn-savory)';
+            else btn.style.backgroundColor = 'var(--btn-drink)';
+
+            btn.innerHTML = `
+                <span>${p.name}</span>
+                <span class="price">¥${p.price}</span>
+                <span class="stock">在庫:${p.stock}</span>
+            `;
+            btn.onclick = () => addToCart(p);
+            grid.appendChild(btn);
+        });
+        updateCartDisplay();
+    }
+
+    function addToCart(p) {
+        if (!currentSession) { alert('設定から先に開店してください'); return; }
+        if (p.stock > 0) {
+            p.stock--;
+            cart.push({...p});
+            init();
+        }
+    }
+
+    function undoLast() {
+        if (cart.length > 0) {
+            const lastItem = cart.pop();
+            const product = products.find(p => p.id === lastItem.id);
+            product.stock++;
+            init();
+        }
+    }
+
+    function updateCartDisplay() {
+        const list = document.getElementById('cart-list');
+        list.innerHTML = '';
+        let total = 0;
+        const counts = {};
+
+        cart.forEach(item => {
+            if(!counts[item.name]) counts[item.name] = { count: 0, price: item.price };
+            counts[item.name].count++;
+            total += item.price;
+        });
+
+        for (const [name, data] of Object.entries(counts)) {
+            const subtotal = data.price * data.count;
+            list.innerHTML += `
+                <div class="cart-item">
+                    <span>${name} × ${data.count}</span>
+                    <span style="font-weight:bold;">¥${subtotal}</span>
+                </div>
+            `;
+        }
+        
+        if(cart.length === 0) {
+            list.innerHTML = '<div style="color:var(--text-light); text-align:center; margin-top:20px;">注文がありません</div>';
+        }
+
+        document.getElementById('cart-total').innerText = total;
+    }
+
+    function generateReceiptHTML(items) {
+        const counts = {};
+        items.forEach(item => {
+            if(!counts[item.name]) counts[item.name] = { count: 0, price: item.price };
+            counts[item.name].count++;
+        });
+
+        let html = '';
+        for (const [name, data] of Object.entries(counts)) {
+            const subtotal = data.price * data.count;
+            html += `
+                <li class="receipt-item">
+                    <span>${name} <span style="color:var(--text-light);font-size:13px;">(@¥${data.price}×${data.count})</span></span>
+                    <span style="font-weight:bold;">¥${subtotal}</span>
+                </li>`;
+        }
+        return html;
+    }
+
+    function openCheckout(reservationId = null) {
+        let itemsToProcess = cart;
+        processingReservationId = reservationId;
+
+        if (reservationId !== null) {
+            const res = reservations.find(r => r.id === reservationId);
+            itemsToProcess = res.items;
+        } else if (cart.length === 0) {
+            return;
+        }
+
+        const total = itemsToProcess.reduce((sum, item) => sum + item.price, 0);
+        document.getElementById('checkout-receipt').innerHTML = generateReceiptHTML(itemsToProcess);
+        document.getElementById('modal-total').innerText = total;
+        document.getElementById('cash-input').value = '';
+        document.getElementById('change-amount').innerText = '0';
+        document.getElementById('checkout-modal').style.display = 'flex';
+    }
+
+    function calcChange() {
+        const total = parseInt(document.getElementById('modal-total').innerText);
+        const cash = parseInt(document.getElementById('cash-input').value) || 0;
+        document.getElementById('change-amount').innerText = Math.max(0, cash - total);
+    }
+
+    function completeTransaction() {
+        const total = parseInt(document.getElementById('modal-total').innerText);
+        const cash = parseInt(document.getElementById('cash-input').value) || 0;
+        if (cash < total) { alert('お預かり金額が足りません'); return; }
+
+        let itemsRecorded = cart;
+
+        if (processingReservationId !== null) {
+            const resIndex = reservations.findIndex(r => r.id === processingReservationId);
+            itemsRecorded = reservations[resIndex].items;
+            reservations.splice(resIndex, 1);
+            processingReservationId = null;
+        } else {
+            cart = [];
+        }
+
+        const typeRadios = document.getElementsByName('customerType');
+        let selectedType = "不明";
+        for (let i = 0; i < typeRadios.length; i++) {
+            if (typeRadios[i].checked) {
+                selectedType = typeRadios[i].value;
+                break;
+            }
+        }
+
+        const record = { time: new Date(), items: [...itemsRecorded], total: total, customerType: selectedType };
+        salesHistory.push(record);
+        
+        for (let i = 0; i < typeRadios.length; i++) {
+            if (typeRadios[i].value === "不明") typeRadios[i].checked = true;
+        }
+
+        closeModal('checkout-modal');
+        init();
+        renderReservations();
+    }
+
+    function promptReservation() {
+        if (cart.length === 0) return;
+        const name = prompt('予約者のお名前を入力してください:');
+        if (name) {
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            reservations.push({
+                id: Date.now(),
+                name: name,
+                items: [...cart],
+                total: total
+            });
+            cart = []; 
+            init();
+            alert(`${name} 様の予約を登録しました。設定の予約管理から清算できます。`);
+        }
+    }
+
+    function renderReservations() {
+        const list = document.getElementById('reservation-list');
+        list.innerHTML = '';
+        if (reservations.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-light); text-align:center;">現在、保留中の予約はありません</p>';
+            return;
+        }
+
+        reservations.forEach(res => {
+            const div = document.createElement('div');
+            div.className = 'res-card';
+            div.innerHTML = `
+                <div class="res-header">
+                    <span>👤 ${res.name} 様</span>
+                    <span style="color:var(--accent);">合計: ¥${res.total}</span>
+                </div>
+                <div style="font-size:13px; color:var(--text-light);">
+                    ${res.items.map(i => i.name).join(', ')}
+                </div>
+                <div class="res-actions">
+                    <button class="action-btn btn-undo" style="flex:1; padding:8px; font-size:14px;" onclick="cancelReservation(${res.id})">キャンセル</button>
+                    <button class="action-btn btn-checkout" style="flex:1; padding:8px; font-size:14px; margin-top:0;" onclick="closeModal('settings-modal'); openCheckout(${res.id})">受取・清算</button>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function cancelReservation(id) {
+        if (!confirm('この予約を取り消して在庫に戻します。よろしいですか？')) return;
+        const resIndex = reservations.findIndex(r => r.id === id);
+        const res = reservations[resIndex];
+        res.items.forEach(item => {
+            const p = products.find(prod => prod.id === item.id);
+            if (p) p.stock++;
+        });
+        reservations.splice(resIndex, 1);
+        renderReservations();
+        init();
+    }
+
+    function openSettings() { 
+        document.getElementById('settings-modal').style.display = 'flex'; 
+        renderReservations();
+        updateAnalytics(); 
+    }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function startSession() {
+        const name = document.getElementById('session-name-input').value;
+        if (!name) { alert('名前を入力してください'); return; }
+        currentSession = name;
+        salesHistory = [];
+        reservations = [];
+        cart = [];
+        products.forEach(p => p.stock = p.initialStock);
+        document.getElementById('session-display').innerText = `営業中: ${name}`;
+        document.getElementById('session-display').style.background = 'var(--white)';
+        closeModal('settings-modal');
+        init();
+    }
+
+    function endSession() {
+        if(reservations.length > 0) {
+            alert('【！】未精算の予約が残っています。予約管理を確認してください');
+            return;
+        }
+        if (!confirm('営業を終了して売上を集計します。')) return;
+        updateAnalytics();
+        currentSession = null;
+        document.getElementById('session-display').innerText = "閉店中";
+        showTab('analytics');
+    }
+
+    function updateAnalytics() {
+        if (salesHistory.length === 0) {
+            document.getElementById('analytics-result').innerText = "まだ売上データがありません";
+            return;
+        }
+        
+        let totalRev = salesHistory.reduce((s, h) => s + h.total, 0);
+        let itemCounts = {};
+        let categoryRev = { sweet: 0, savory: 0, drink: 0 };
+        const catNames = { sweet: "パン類", savory: "クッキー類", drink: "ドリンク" };
+
+        let timeSlotRev = {};
+        
+        let customerTypeStats = { 
+            "学生": { count: 0, rev: 0 }, 
+            "教員": { count: 0, rev: 0 }, 
+            "職員": { count: 0, rev: 0 }, 
+            "その他": { count: 0, rev: 0 }, 
+            "不明": { count: 0, rev: 0 } 
+        };
+
+        let totalItemsSold = 0; 
+
+        salesHistory.forEach(h => {
+            let date = new Date(h.time);
+            let hStr = date.getHours();
+            let mStr = Math.floor(date.getMinutes() / 15) * 15;
+            let timeLabel = `${hStr}:${mStr === 0 ? "00" : mStr}`;
+            timeSlotRev[timeLabel] = (timeSlotRev[timeLabel] || 0) + h.total;
+
+            if(h.customerType && customerTypeStats[h.customerType]) {
+                customerTypeStats[h.customerType].count += 1;
+                customerTypeStats[h.customerType].rev += h.total;
+            }
+
+            h.items.forEach(i => {
+                itemCounts[i.name] = (itemCounts[i.name] || 0) + 1;
+                totalItemsSold += 1;
+                
+                if (i.type) {
+                    categoryRev[i.type] += i.price;
+                }
+            });
+        });
+
+        let customerCount = salesHistory.length; 
+        let averagePurchase = Math.floor(totalRev / customerCount);
+        let averageItems = (totalItemsSold / customerCount).toFixed(1);
+
+        let res = `【売上集計: ${currentSession || '前回'}】\n`;
+        res += `総売上: ¥${totalRev}\n`;
+        res += `来店人数: ${customerCount}人\n`;
+        res += `平均客単価: ¥${averagePurchase}\n`;
+        res += `平均買上点数: ${averageItems}個/人\n`;
+        res += `--------------------------\n`;
+        
+        res += `[客属性別 来店人数と客単価]\n`;
+        for(let type in customerTypeStats) {
+            let stats = customerTypeStats[type];
+            if(stats.count > 0) {
+                let typeAvg = Math.floor(stats.rev / stats.count);
+                res += `・${type}: ${stats.count}人 (平均 ¥${typeAvg})\n`;
+            }
+        }
+        res += `--------------------------\n`;
+        
+        res += `[カテゴリ別 売上と占有率]\n`;
+        for (let cat in categoryRev) {
+            let rev = categoryRev[cat];
+            let percent = totalRev > 0 ? Math.round((rev / totalRev) * 100) : 0;
+            res += `・${catNames[cat]}: ¥${rev} (${percent}%)\n`;
+        }
+        res += `--------------------------\n`;
+
+        res += `[時間帯別(15分刻み) 売上]\n`;
+        let sortedSlots = Object.keys(timeSlotRev).sort((a, b) => {
+            return parseInt(a.replace(':', '')) - parseInt(b.replace(':', ''));
+        });
+        sortedSlots.forEach(slot => {
+            res += `・${slot}〜: ¥${timeSlotRev[slot]}\n`;
+        });
+        res += `--------------------------\n`;
+
+        res += `[販売数ランキング]\n`;
+        let sortedItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]);
+        sortedItems.forEach(item => {
+            res += `・${item[0]}: ${item[1]}個\n`;
+        });
+
+        document.getElementById('analytics-result').innerText = res;
+    }
+
+    function showTab(tabId) {
+        document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+        document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+        document.getElementById('tab-session').style.display = 'none';
+        document.getElementById('tab-reservations').style.display = 'none';
+        document.getElementById('tab-analytics').style.display = 'none';
+        document.getElementById(`tab-${tabId}`).style.display = 'block';
+        if(tabId === 'reservations') renderReservations();
+    }
+
+    init();
+</script>
+</body>
+</html>
