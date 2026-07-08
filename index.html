@@ -17,7 +17,7 @@
             --white: #FFFFFF;
         }
 
-        body {
+       body {
             font-family: 'Hiragino Rounded W3 JIS2004', 'ヒラギノ丸ゴ ProN', 'Quicksand', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
@@ -26,15 +26,33 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            /* ↓これを追加：ブラウザのメニューバーなどで画面が狭くなっても100%に収める設定 */
             height: 100dvh; 
             overflow: hidden;
         }
 
-        /* ↓これをついでに「body」のすぐ下あたりに追加してね！ */
+        /* ここにテンキーのCSSを追加するよ */
+        .tenkey-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .tenkey-btn {
+            background-color: #FAFAFA;
+            border: 2px solid #EEE;
+            font-size: 20px;
+            padding: 12px;
+            border-radius: 10px;
+            color: var(--text-main);
+            font-family: inherit;
+        }
+        .tenkey-btn.clear-btn {
+            background-color: #FFDAC1;
+        }
+        /* 追加ここまで */
+
         @media (min-width: 769px) {
             main {
-                /* パソコンやiPadの横画面で、商品ボタンの縦幅を画面に合わせて自動縮小させる設定 */
                 grid-auto-rows: minmax(50px, 1fr) !important; 
             }
         }
@@ -260,7 +278,28 @@
             </div>
         </div>
         
-        <input type="number" id="cash-input" placeholder="預かり金額を入力" oninput="calcChange()">
+        <input type="text" id="cash-input" placeholder="預かり金額" readonly>
+        
+        <div style="display: flex; gap: 10px; margin-top: 5px;">
+            <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #E2F0CB;" onclick="setCashExact()">ちょうど</button>
+            <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #FFF; border: 2px solid #EEE;" onclick="setCash(500)">500円</button>
+            <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #FFF; border: 2px solid #EEE;" onclick="setCash(1000)">1000円</button>
+        </div>
+
+        <div class="tenkey-grid">
+            <button class="action-btn tenkey-btn" onclick="appendCash('7')">7</button>
+            <button class="action-btn tenkey-btn" onclick="appendCash('8')">8</button>
+            <button class="action-btn tenkey-btn" onclick="appendCash('9')">9</button>
+            <button class="action-btn tenkey-btn" onclick="appendCash('4')">4</button>
+            <button class="action-btn tenkey-btn" onclick="appendCash('5')">5</button>
+            <button class="action-btn tenkey-btn" onclick="appendCash('6')">6</button>
+            <button class="action-btn tenkey-btn" onclick="appendCash('1')">1</button>
+            <button class="action-btn tenkey-btn" onclick="appendCash('2')">2</button>
+            <button class="action-btn tenkey-btn" onclick="appendCash('3')">3</button>
+            <button class="action-btn tenkey-btn" onclick="appendCash('0')">0</button>
+            <button class="action-btn tenkey-btn" onclick="appendCash('00')">00</button>
+            <button class="action-btn tenkey-btn clear-btn" onclick="clearCash()">C</button>
+        </div>
         <div class="change-display">お釣り: ¥<span id="change-amount">0</span></div>
         
         <div style="display:flex; gap:10px; margin-top:10px;">
@@ -440,6 +479,31 @@
         document.getElementById('change-amount').innerText = Math.max(0, cash - total);
     }
 
+    function setCashExact() {
+        const total = parseInt(document.getElementById('modal-total').innerText);
+        document.getElementById('cash-input').value = total;
+        calcChange();
+    }
+
+    function setCash(amount) {
+        document.getElementById('cash-input').value = amount;
+        calcChange();
+    }
+
+    // ここからテンキーの機能を新しく追加するよ
+    function appendCash(num) {
+        const input = document.getElementById('cash-input');
+        input.value = input.value + num;
+        calcChange();
+    }
+
+    function clearCash() {
+        document.getElementById('cash-input').value = '';
+        calcChange();
+    }
+    // ここまで追加するよ
+
+
     function completeTransaction() {
         const total = parseInt(document.getElementById('modal-total').innerText);
         const cash = parseInt(document.getElementById('cash-input').value) || 0;
@@ -574,13 +638,15 @@
             return;
         }
         
-        let totalRev = salesHistory.reduce((s, h) => s + h.total, 0);
+        let sortedHistory = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
+        let sessionStartTime = new Date(sortedHistory[0].time); 
+
+        let totalRev = sortedHistory.reduce((s, h) => s + h.total, 0);
         let itemCounts = {};
         let categoryRev = { sweet: 0, savory: 0, drink: 0 };
         const catNames = { sweet: "パン類", savory: "クッキー類", drink: "ドリンク" };
 
         let timeSlotRev = {};
-        
         let customerTypeStats = { 
             "学生": { count: 0, rev: 0 }, 
             "教員": { count: 0, rev: 0 }, 
@@ -590,17 +656,27 @@
         };
 
         let totalItemsSold = 0; 
+        let itemStats = {}; 
+        let coPurchase = {}; 
 
-        salesHistory.forEach(h => {
+        sortedHistory.forEach(h => {
             let date = new Date(h.time);
             let hStr = date.getHours();
             let mStr = Math.floor(date.getMinutes() / 15) * 15;
-            let timeLabel = `${hStr}:${mStr === 0 ? "00" : mStr}`;
+            let timeLabel = `${hStr}:${mStr === 0 ? "00" : String(mStr).padStart(2, '0')}`;
             timeSlotRev[timeLabel] = (timeSlotRev[timeLabel] || 0) + h.total;
 
             if(h.customerType && customerTypeStats[h.customerType]) {
                 customerTypeStats[h.customerType].count += 1;
                 customerTypeStats[h.customerType].rev += h.total;
+            }
+
+            let uniqueItems = [...new Set(h.items.map(i => i.name))];
+            for(let i = 0; i < uniqueItems.length; i++){
+                for(let j = i + 1; j < uniqueItems.length; j++){
+                    let pair = [uniqueItems[i], uniqueItems[j]].sort().join(' ＋ ');
+                    coPurchase[pair] = (coPurchase[pair] || 0) + 1;
+                }
             }
 
             h.items.forEach(i => {
@@ -610,10 +686,16 @@
                 if (i.type) {
                     categoryRev[i.type] += i.price;
                 }
+
+                if (!itemStats[i.name]) {
+                    itemStats[i.name] = { count: 0, lastTime: date };
+                }
+                itemStats[i.name].count += 1;
+                itemStats[i.name].lastTime = date;
             });
         });
 
-        let customerCount = salesHistory.length; 
+        let customerCount = sortedHistory.length; 
         let averagePurchase = Math.floor(totalRev / customerCount);
         let averageItems = (totalItemsSold / customerCount).toFixed(1);
 
@@ -622,6 +704,51 @@
         res += `来店人数: ${customerCount}人\n`;
         res += `平均客単価: ¥${averagePurchase}\n`;
         res += `平均買上点数: ${averageItems}個/人\n`;
+        res += `--------------------------\n`;
+        
+        res += `[商品別 完売時刻と販売スピード]\n`;
+        res += `※( )内は品切れにならなければ1時間で何個売れたかの「予測ペース」\n`;
+        
+        let soldOutItems = [];
+        let notSoldOutItems = [];
+
+        Object.keys(itemStats).forEach(name => {
+            let stat = itemStats[name];
+            let product = products.find(p => p.name === name);
+            let isSoldOut = product ? (product.stock === 0) : false;
+            
+            if (isSoldOut) {
+                let lastTime = new Date(stat.lastTime);
+                let tLabel = `${lastTime.getHours()}:${String(lastTime.getMinutes()).padStart(2, '0')}`;
+                
+                let durationMin = Math.max(1, (lastTime - sessionStartTime) / 60000); 
+                let paceHour = Math.round((stat.count / durationMin) * 60);
+                
+                soldOutItems.push({ name: name, timeStr: tLabel, timeValue: lastTime, pace: paceHour });
+            } else {
+                notSoldOutItems.push(name);
+            }
+        });
+
+        soldOutItems.sort((a, b) => a.timeValue - b.timeValue);
+        soldOutItems.forEach(item => {
+            res += `・${item.name}: ${item.timeStr} 完売 (ペース: ${item.pace}個/時)\n`;
+        });
+        
+        if(notSoldOutItems.length > 0) {
+            res += `・販売中: ${notSoldOutItems.join(', ')}\n`;
+        }
+        res += `--------------------------\n`;
+
+        res += `[よく一緒に買われた商品 (併売分析)]\n`;
+        let sortedPairs = Object.entries(coPurchase).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        if(sortedPairs.length > 0) {
+            sortedPairs.forEach(pair => {
+                res += `・${pair[0]}: ${pair[1]}回\n`;
+            });
+        } else {
+            res += `・データなし\n`;
+        }
         res += `--------------------------\n`;
         
         res += `[客属性別 来店人数と客単価]\n`;
