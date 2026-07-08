@@ -399,6 +399,7 @@
     let reservations = [];
     let currentSession = null;
     let processingReservationId = null;
+    let sessionArchive = []; // 過去の販売会の実績（次回仕入れ推奨のもと）
 
     function init() {
         const grid = document.getElementById('product-grid');
@@ -646,14 +647,30 @@
         if (!list) return;
 
         list.innerHTML = '';
-        tempSetupProducts.forEach(p => {
+
+        const latest = getLatestRecommendationMap();
+        if (latest) {
             list.innerHTML += `
-                <div style="display:flex; gap:5px; margin-bottom:8px; align-items:center; border-bottom:1px solid #EEE; padding-bottom:5px;">
+                <button onclick="applyRecommendations()" style="width:100%; margin-bottom:12px; padding:10px; background:#B5EAD7; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-main);">✨ 前回「${latest.sessionName}」の実績から推奨数を適用</button>
+            `;
+        }
+
+        tempSetupProducts.forEach(p => {
+            let hint = '';
+            if (latest && latest.map[p.name]) {
+                const r = latest.map[p.name];
+                const arrow = r.recommended > r.initial ? '⬆️' : (r.recommended < r.initial ? '⬇️' : '→');
+                hint = `<div style="font-size:11px; color:var(--text-light); margin-left:35px; margin-bottom:8px;">前回 仕入${r.initial}/販売${r.sold}${r.soldOut ? '(完売)' : ''} → 推奨 <b style="color:var(--accent);">${r.recommended}</b> ${arrow}</div>`;
+            }
+            list.innerHTML += `
+                <div style="display:flex; gap:5px; margin-bottom:${hint ? '2px' : '8px'}; align-items:center; border-bottom:${hint ? 'none' : '1px solid #EEE'}; padding-bottom:5px;">
                     <button onclick="removeTempProduct(${p.id})" style="background:#FF9AA2; color:white; border:none; border-radius:4px; width:30px; height:30px; font-weight:bold; cursor:pointer; flex-shrink:0;">×</button>
                     <input type="text" value="${p.name}" style="flex:2; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px;" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
                     <input type="number" value="${p.price}" style="flex:1; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px;" placeholder="価格" onchange="updateTempProduct(${p.id}, 'price', this.value)">
                     <input type="number" value="${p.initialStock}" style="flex:1; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px;" placeholder="在庫" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">
                 </div>
+                ${hint}
+                ${hint ? '<div style="border-bottom:1px solid #EEE; margin-bottom:8px;"></div>' : ''}
             `;
         });
 
@@ -722,8 +739,25 @@
         }
         if (!confirm('営業を終了して売上を集計します。')) return;
         updateAnalytics();
+
+        // ▼▼▼ この回の実績を次回の仕入れ推奨として保存（開店リセットでは消えない） ▼▼▼
+        if (salesHistory.length > 0) {
+            const summary = {
+                name: currentSession || '無題',
+                date: new Date().toISOString(),
+                totalRev: salesHistory.reduce((s, h) => s + h.total, 0),
+                customerCount: salesHistory.length,
+                recommendations: buildRestockRecommendations()
+            };
+            sessionArchive.push(summary);
+            if (sessionArchive.length > 20) sessionArchive = sessionArchive.slice(-20);
+        }
+        // ▲▲▲ ここまで ▲▲▲
+
         currentSession = null;
-        document.getElementById('session-display').innerText = "閉店中";
+        const disp = document.getElementById('session-display');
+        disp.innerText = "閉店中";
+        disp.style.background = '';
         showTab('analytics');
         saveData();
     }
@@ -902,8 +936,102 @@
             res += `・${catNames[cat]}: ¥${rev} (${percent}%)\n`;
         }
 
+        // ▼▼▼ 次回への仕入れ提案（この回の実績から算出） ▼▼▼
+        const recs = buildRestockRecommendations();
+        if (recs.length > 0) {
+            res += `--------------------------\n`;
+            res += `[次回への仕入れ提案]\n`;
+            res += `※販売数・完売状況から次回の仕入れ数を提案します\n`;
+            recs.forEach(r => {
+                let arrow = r.recommended > r.initial ? '⬆️' : (r.recommended < r.initial ? '⬇️' : '→');
+                res += `・${r.name}: 前回 仕入${r.initial}/販売${r.sold} → 推奨 ${r.recommended}個 ${arrow} (${r.reason})\n`;
+            });
+        }
+        // ▲▲▲ ここまで ▲▲▲
+
         document.getElementById('analytics-result').innerText = res;
     }
+
+    // ▼▼▼ 次回の仕入れ推奨数を算出する ▼▼▼
+    // 販売実績（salesHistory）と現在の在庫状況から、商品ごとの推奨仕入れ数を返す。
+    function buildRestockRecommendations() {
+        if (salesHistory.length === 0) return [];
+
+        const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
+        const openTime = new Date(sorted[0].time);
+        const closeTime = new Date(sorted[sorted.length - 1].time);
+        const totalDurationMin = Math.max(1, (closeTime - openTime) / 60000);
+
+        const soldCount = {};
+        const lastSaleTime = {};
+        sorted.forEach(h => h.items.forEach(i => {
+            soldCount[i.name] = (soldCount[i.name] || 0) + 1;
+            lastSaleTime[i.name] = new Date(h.time);
+        }));
+
+        // 5個単位に切り上げ（最低5個）
+        const roundUp5 = n => Math.max(5, Math.ceil(n / 5) * 5);
+
+        return products.map(p => {
+            const sold = soldCount[p.name] || 0;
+            const initial = p.initialStock || 0;
+            const soldOut = initial > 0 && p.stock <= 0 && sold > 0;
+            let projected = sold;
+            let reason;
+
+            if (sold === 0 && initial > 0) {
+                // 全く売れなかった → 半減を提案
+                projected = initial * 0.5;
+                reason = '販売実績なし、半減を提案';
+            } else if (soldOut) {
+                // 完売 → 品切れまでの経過時間から本来の需要を推定
+                const elapsed = Math.max(1, (lastSaleTime[p.name] - openTime) / 60000);
+                const frac = Math.min(1, Math.max(0.15, elapsed / totalDurationMin));
+                projected = (sold / frac) * 1.05; // 5%の安全在庫
+                reason = frac < 0.9 ? '早期完売、需要を取りこぼした可能性' : '完売、やや増量';
+            } else if (initial > 0) {
+                const sellThrough = sold / initial;
+                if (sellThrough >= 0.9) { projected = sold * 1.15; reason = 'ほぼ完売、増量'; }
+                else if (sellThrough <= 0.5) { projected = sold * 1.0; reason = '売れ残り多め、抑えめに'; }
+                else { projected = sold * 1.1; reason = '適正、微増'; }
+            } else {
+                projected = sold;
+                reason = 'データ不足';
+            }
+
+            return {
+                name: p.name,
+                sold: sold,
+                initial: initial,
+                soldOut: soldOut,
+                recommended: roundUp5(projected),
+                reason: reason
+            };
+        });
+    }
+
+    // 直近の販売会の推奨数を商品名で引ける形にして返す
+    function getLatestRecommendationMap() {
+        if (sessionArchive.length === 0) return null;
+        const last = sessionArchive[sessionArchive.length - 1];
+        const map = {};
+        (last.recommendations || []).forEach(r => { map[r.name] = r; });
+        return { sessionName: last.name, map: map };
+    }
+
+    // 開店設定画面で「推奨を適用」→ 前回実績に基づいて仕入れ数を自動入力
+    function applyRecommendations() {
+        const latest = getLatestRecommendationMap();
+        if (!latest) { alert('過去の販売実績がまだありません。'); return; }
+        let applied = 0;
+        tempSetupProducts.forEach(p => {
+            const r = latest.map[p.name];
+            if (r) { p.initialStock = r.recommended; applied++; }
+        });
+        renderInventorySetup();
+        alert(`「${latest.sessionName}」の実績をもとに ${applied} 件の仕入れ数を推奨値に更新しました。`);
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     function showTab(tabId) {
         document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
@@ -918,7 +1046,7 @@
     // ▼▼▼ PDF保存用の関数を追加 ▼▼▼
     function downloadPDF() {
         const text = document.getElementById('analytics-result').innerText;
-        if (text === "まだ売上データがないよ" || text === "売上データがありません。") {
+        if (!text || text.includes("売上データがありません") || text.includes("まだ売上データが")) {
             alert("印刷する売上データがありません。");
             return;
         }
@@ -992,7 +1120,7 @@
     // ▲▲▲ ここまで ▲▲▲
 
    function saveData() {
-        const data = { products, cart, salesHistory, reservations, currentSession };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive };
         localStorage.setItem('taizanboku_pos_data', JSON.stringify(data));
     }
 
@@ -1005,6 +1133,7 @@
             salesHistory = data.salesHistory || [];
             reservations = data.reservations || [];
             currentSession = data.currentSession || null;
+            sessionArchive = data.sessionArchive || [];
 
             if (currentSession) {
                 document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
