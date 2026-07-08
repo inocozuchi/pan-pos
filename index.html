@@ -625,6 +625,10 @@
         updateAnalytics(); 
     }
 
+    
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    
+
     function startSession() {
         const name = document.getElementById('session-name-input').value;
         if (!name) { alert('名前を入力してください'); return; }
