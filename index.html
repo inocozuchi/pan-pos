@@ -307,10 +307,8 @@
             
             <input type="text" id="cash-input" placeholder="預かり金額" readonly>
             
-            <div style="display: flex; gap: 10px; margin-top: 5px;">
+            <div id="cash-suggestions" style="display: flex; gap: 10px; margin-top: 5px;">
                 <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #E2F0CB;" onclick="setCashExact()">ちょうど</button>
-                <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #FFF; border: 2px solid #EEE;" onclick="setCash(500)">500円</button>
-                <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #FFF; border: 2px solid #EEE;" onclick="setCash(1000)">1000円</button>
             </div>
 
             <div class="tenkey-grid">
@@ -357,10 +355,16 @@
 
                 <button class="action-btn btn-checkout" style="width:100%; margin-bottom:20px;" onclick="startSession()">開店する (データリセット)</button>
 
-                <details id="live-stock-details" style="margin-bottom:20px;">
+                <details id="live-stock-details" style="margin-bottom:15px;">
                     <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の在庫調整（追加搬入・数え直し）</summary>
                     <div id="live-stock-list" style="max-height:200px; overflow-y:auto; background:#FAFAFA; border:2px solid #EEE; padding:10px; border-radius:12px; margin-top:10px;"></div>
                 </details>
+
+                <div style="background:#FFF5F7; border:2px solid #FFD1DC; border-radius:12px; padding:12px; margin-bottom:20px;">
+                    <div style="font-size:14px; font-weight:bold; margin-bottom:6px;">🧾 会計ミスの訂正</div>
+                    <div id="last-sale-info" style="font-size:12px; color:var(--text-light); margin-bottom:8px;">直前の会計はありません。</div>
+                    <button class="action-btn btn-undo" style="width:100%;" onclick="voidLastSale()">直前の会計を取り消す（在庫を戻す）</button>
+                </div>
 
                 <hr style="border: 1px dashed #EEE; margin-bottom: 20px;">
                 <button class="action-btn" style="width:100%; background: #FF9AA2; color: white;" onclick="endSession()">閉店する (集計して終了)</button>
@@ -393,6 +397,31 @@
 </div>
 
 <script>
+    // ▼▼▼ 操作音（電子音を鳴らす）▼▼▼
+    // AudioContext は最初の操作時に作る（自動再生ブロック対策）。音が出せない環境では無視。
+    let audioCtx = null;
+    function playSound(freq = 880, duration = 0.1, type = 'sine', volume = 0.1) {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + duration);
+        } catch (e) { /* 音が出せない環境では何もしない */ }
+    }
+    // 登録できなかった時の警告音（低め・少し長め）→ 打ち間違い・未開店に気づける
+    function playError() { playSound(220, 0.25, 'square', 0.12); }
+    // 会計完了の確認音（ポン♪と2音）
+    function playSuccess() { playSound(880, 0.08); setTimeout(() => playSound(1320, 0.13), 90); }
+    // ▲▲▲ ここまで ▲▲▲
+
     let products = [
         { id: 1, name: "アップルパイ", price: 200, stock: 50, initialStock: 50, type: "sweet" },
         { id: 2, name: "アップルシナモン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
@@ -442,14 +471,58 @@
     }
 
     function addToCart(p) {
-        if (!currentSession) { alert('設定から先に開店してください'); return; }
+        if (!currentSession) { playError(); alert('設定から先に開店してください'); return; }
         if (p.stock > 0) {
+            playSound(); // 登録成功の合図（耳で確認できてミス防止）
             p.stock--;
             cart.push({...p});
             saveData();
             init();
+        } else {
+            playError(); // 在庫切れで登録できなかった合図
         }
     }
+
+    // カート内の「＋」用：商品名から在庫を1つ追加する
+    function addOneToCart(name) {
+        const p = products.find(prod => prod.name === name);
+        if (p) addToCart(p);
+    }
+
+    // ▼▼▼ 直前の会計を取り消す（会計後に気づいたミスの訂正）▼▼▼
+    function renderLastSaleInfo() {
+        const el = document.getElementById('last-sale-info');
+        if (!el) return;
+        if (salesHistory.length === 0) {
+            el.innerText = '直前の会計はありません。';
+            return;
+        }
+        const last = salesHistory[salesHistory.length - 1];
+        const counts = {};
+        last.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
+        const summary = Object.entries(counts).map(([n, c]) => `${n}×${c}`).join('、');
+        const t = new Date(last.time);
+        const tStr = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
+        el.innerText = `直前(${tStr}): ${summary} ／ 合計¥${last.total}`;
+    }
+
+    function voidLastSale() {
+        if (salesHistory.length === 0) { playError(); alert('取り消せる会計がありません。'); return; }
+        const last = salesHistory[salesHistory.length - 1];
+        if (!confirm(`直前の会計を取り消します。\n合計 ¥${last.total}\n※販売した商品は在庫に戻ります。よろしいですか？`)) return;
+        last.items.forEach(it => {
+            const p = products.find(prod => prod.id === it.id);
+            if (p) p.stock++;
+        });
+        salesHistory.pop();
+        playSound(660, 0.08);
+        saveData();
+        init();
+        renderLastSaleInfo();
+        updateAnalytics();
+        alert('直前の会計を取り消しました。');
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     function undoLast() {
         if (cart.length > 0) {
@@ -465,6 +538,7 @@
     function removeOneFromCart(name) {
         const idx = cart.map(i => i.name).lastIndexOf(name);
         if (idx === -1) return;
+        playSound(660, 0.08); // 取り消しの合図（追加音より低め）
         const removed = cart.splice(idx, 1)[0];
         const product = products.find(p => p.id === removed.id);
         if (product) product.stock++;
@@ -486,11 +560,13 @@
 
         for (const [name, data] of Object.entries(counts)) {
             const subtotal = data.price * data.count;
+            const safeName = name.replace(/'/g, "\\'");
             list.innerHTML += `
                 <div class="cart-item">
-                    <span>
-                        <button onclick="removeOneFromCart('${name.replace(/'/g, "\\'")}')" style="background:#F3F3F3; border:none; border-radius:6px; width:26px; height:26px; font-weight:bold; cursor:pointer; color:var(--accent); margin-right:8px; vertical-align:middle;">−</button>
-                        ${name} × ${data.count}
+                    <span style="display:flex; align-items:center; gap:6px;">
+                        <button onclick="removeOneFromCart('${safeName}')" style="background:#F3F3F3; border:none; border-radius:6px; width:28px; height:28px; font-weight:bold; cursor:pointer; color:var(--accent); flex-shrink:0;">−</button>
+                        <button onclick="addOneToCart('${safeName}')" style="background:#E2F0CB; border:none; border-radius:6px; width:28px; height:28px; font-weight:bold; cursor:pointer; color:var(--text-main); flex-shrink:0;">＋</button>
+                        <span>${name} × <b>${data.count}</b></span>
                     </span>
                     <span style="font-weight:bold;">¥${subtotal}</span>
                 </div>
@@ -539,8 +615,31 @@
         document.getElementById('modal-total').innerText = total;
         document.getElementById('cash-input').value = '';
         document.getElementById('change-amount').innerText = '0';
+        renderCashSuggestions(total);
         document.getElementById('checkout-modal').style.display = 'flex';
     }
+
+    // ▼▼▼ スマート預かり金：合計額から「出されやすい金額」を提案（会計速度アップ）▼▼▼
+    function suggestCashAmounts(total) {
+        if (!total || total <= 0) return [];
+        const opts = new Set();
+        opts.add(Math.ceil(total / 100) * 100);   // 次の100円
+        opts.add(Math.ceil(total / 500) * 500);   // 次の500円
+        opts.add(Math.ceil(total / 1000) * 1000); // 次の1000円
+        [1000, 2000, 5000].forEach(v => opts.add(v)); // よく出される紙幣
+        return [...opts].filter(v => v > total).sort((a, b) => a - b).slice(0, 4);
+    }
+
+    function renderCashSuggestions(total) {
+        const box = document.getElementById('cash-suggestions');
+        if (!box) return;
+        let html = `<button class="action-btn" style="flex:1; padding:10px; font-size:16px; background-color:#E2F0CB;" onclick="setCashExact()">ちょうど</button>`;
+        suggestCashAmounts(total).forEach(v => {
+            html += `<button class="action-btn" style="flex:1; padding:10px; font-size:16px; background-color:#FFF; border:2px solid #EEE;" onclick="setCash(${v})">¥${v}</button>`;
+        });
+        box.innerHTML = html;
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     function calcChange() {
         const total = parseInt(document.getElementById('modal-total').innerText);
@@ -549,24 +648,28 @@
     }
 
     function setCashExact() {
+        playSound();
         const total = parseInt(document.getElementById('modal-total').innerText);
         document.getElementById('cash-input').value = total;
         calcChange();
     }
 
     function setCash(amount) {
+        playSound();
         document.getElementById('cash-input').value = amount;
         calcChange();
     }
 
     // ここからテンキーの機能を新しく追加するよ
     function appendCash(num) {
+        playSound();
         const input = document.getElementById('cash-input');
         input.value = input.value + num;
         calcChange();
     }
 
     function clearCash() {
+        playSound(660, 0.08);
         document.getElementById('cash-input').value = '';
         calcChange();
     }
@@ -576,7 +679,8 @@
     function completeTransaction() {
         const total = parseInt(document.getElementById('modal-total').innerText);
         const cash = parseInt(document.getElementById('cash-input').value) || 0;
-        if (cash < total) { alert('お預かり金額が足りません'); return; }
+        if (cash < total) { playError(); alert('お預かり金額が足りません'); return; }
+        playSuccess();
 
         let itemsRecorded = cart;
 
@@ -609,6 +713,7 @@
         saveData();
         init();
         renderReservations();
+        renderLastSaleInfo();
     }
 
     function promptReservation() {
@@ -735,6 +840,7 @@
         tempSetupProducts = JSON.parse(JSON.stringify(products));
         renderInventorySetup();
         renderLiveStock();
+        renderLastSaleInfo();
         renderReservations();
         updateAnalytics();
     }
