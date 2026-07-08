@@ -29,6 +29,11 @@
             height: 100dvh; 
             overflow: hidden;
         }
+        
+        /* ダブルタップでの画面拡大を防止する設定 */
+        button, input, .product-btn, .tab-item {
+            touch-action: manipulation;
+        }
 
         /* ここにテンキーのCSSを追加するよ */
         .tenkey-grid {
