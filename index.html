@@ -26,8 +26,11 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            height: 100dvh; 
+            height: 100dvh;
             overflow: hidden;
+            position: fixed;
+            width: 100%;
+            overscroll-behavior-y: none;
         }
         
         /* ダブルタップでの画面拡大を防止する設定 */
@@ -424,6 +427,7 @@
         if (p.stock > 0) {
             p.stock--;
             cart.push({...p});
+            saveData();
             init();
         }
     }
@@ -433,6 +437,7 @@
             const lastItem = cart.pop();
             const product = products.find(p => p.id === lastItem.id);
             product.stock++;
+            saveData();
             init();
         }
     }
@@ -568,6 +573,7 @@
         }
 
         closeModal('checkout-modal');
+        saveData();
         init();
         renderReservations();
     }
@@ -584,6 +590,7 @@
                 total: total
             });
             cart = []; 
+            saveData();
             init();
             alert(`${name} 様の予約を登録しました。設定の予約管理から清算できます。`);
         }
@@ -627,6 +634,7 @@
         });
         reservations.splice(resIndex, 1);
         renderReservations();
+        saveData();
         init();
     }
 
@@ -703,6 +711,7 @@
         document.getElementById('session-display').innerText = `営業中: ${name}`;
         document.getElementById('session-display').style.background = 'var(--white)';
         closeModal('settings-modal');
+        saveData();
         init();
     }
 
@@ -716,6 +725,7 @@
         currentSession = null;
         document.getElementById('session-display').innerText = "閉店中";
         showTab('analytics');
+        saveData();
     }
 
     function updateAnalytics() {
@@ -980,6 +990,30 @@
         printWindow.document.close();
     }
     // ▲▲▲ ここまで ▲▲▲
+
+   function saveData() {
+        const data = { products, cart, salesHistory, reservations, currentSession };
+        localStorage.setItem('taizanboku_pos_data', JSON.stringify(data));
+    }
+
+    function loadData() {
+        const saved = localStorage.getItem('taizanboku_pos_data');
+        if (saved) {
+            const data = JSON.parse(saved);
+            if (data.products) products = data.products;
+            cart = data.cart || [];
+            salesHistory = data.salesHistory || [];
+            reservations = data.reservations || [];
+            currentSession = data.currentSession || null;
+
+            if (currentSession) {
+                document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
+                document.getElementById('session-display').style.background = 'var(--white)';
+            }
+        }
+    }
+
+    loadData();
 
     init();
 </script>
