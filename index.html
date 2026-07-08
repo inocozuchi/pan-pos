@@ -321,6 +321,11 @@
             <div id="tab-session">
                 <p style="font-size: 14px; color: var(--text-light);">新しい販売会を始める時に名前をつけて開店します。</p>
                 <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
+                
+                <div style="font-size: 14px; font-weight: bold; margin: 15px 0 5px 0;">当日の仕入れ数設定</div>
+                <div id="inventory-setup-list" style="max-height: 200px; overflow-y: auto; background: #FAFAFA; border: 2px solid #EEE; padding: 10px; border-radius: 12px; margin-bottom: 15px;">
+                    </div>
+
                 <button class="action-btn btn-checkout" style="width:100%; margin-bottom:20px;" onclick="startSession()">開店する (データリセット)</button>
                 <hr style="border: 1px dashed #EEE; margin-bottom: 20px;">
                 <button class="action-btn" style="width:100%; background: #FF9AA2; color: white;" onclick="endSession()">閉店する (集計して終了)</button>
@@ -599,21 +604,52 @@
         init();
     }
 
+    function renderInventorySetup() {
+        const list = document.getElementById('inventory-setup-list');
+        if (!list) return;
+        list.innerHTML = '';
+        products.forEach(p => {
+            list.innerHTML += `
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px; align-items:center; border-bottom:1px solid #EEE; padding-bottom:5px;">
+                    <span style="font-size:14px;">${p.name}</span>
+                    <input type="number" id="init-stock-${p.id}" value="${p.initialStock}" style="width:60px; padding:5px; margin:0; text-align:right; font-size:14px; border:1px solid #CCC; border-radius:4px;">
+                </div>
+            `;
+        });
+    }
+
     function openSettings() { 
         document.getElementById('settings-modal').style.display = 'flex'; 
+        renderInventorySetup();
         renderReservations();
         updateAnalytics(); 
     }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
     function startSession() {
         const name = document.getElementById('session-name-input').value;
         if (!name) { alert('名前を入力してください'); return; }
+        
+        if (salesHistory.length > 0 || reservations.length > 0) {
+            if (!confirm('新しい販売会を始めると、前回の売上データや予約はすべてリセットされます。よろしいですか？')) return;
+        }
+
         currentSession = name;
         salesHistory = [];
         reservations = [];
         cart = [];
-        products.forEach(p => p.stock = p.initialStock);
+        
+        products = JSON.parse(JSON.stringify(defaultProducts));
+        
+        products.forEach(p => {
+            const input = document.getElementById(`init-stock-${p.id}`);
+            if (input) {
+                p.initialStock = parseInt(input.value) || 0;
+            }
+            p.stock = p.initialStock;
+        });
+        
+        saveData();
+        
         document.getElementById('session-display').innerText = `営業中: ${name}`;
         document.getElementById('session-display').style.background = 'var(--white)';
         closeModal('settings-modal');
