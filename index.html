@@ -356,8 +356,23 @@
                     </div>
 
                 <button class="action-btn btn-checkout" style="width:100%; margin-bottom:20px;" onclick="startSession()">開店する (データリセット)</button>
+
+                <details id="live-stock-details" style="margin-bottom:20px;">
+                    <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の在庫調整（追加搬入・数え直し）</summary>
+                    <div id="live-stock-list" style="max-height:200px; overflow-y:auto; background:#FAFAFA; border:2px solid #EEE; padding:10px; border-radius:12px; margin-top:10px;"></div>
+                </details>
+
                 <hr style="border: 1px dashed #EEE; margin-bottom: 20px;">
                 <button class="action-btn" style="width:100%; background: #FF9AA2; color: white;" onclick="endSession()">閉店する (集計して終了)</button>
+
+                <hr style="border: 1px dashed #EEE; margin: 20px 0;">
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">データのバックアップ</div>
+                <p style="font-size: 12px; color: var(--text-light); margin: 0 0 10px 0;">データは端末内にのみ保存されます。大切な販売会の記録は定期的に書き出して保管してください。</p>
+                <div style="display:flex; gap:10px;">
+                    <button class="action-btn btn-reserve" style="flex:1;" onclick="exportBackup()">💾 保存</button>
+                    <button class="action-btn btn-undo" style="flex:1;" onclick="document.getElementById('import-file').click()">📂 復元</button>
+                </div>
+                <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importBackup(event)">
             </div>
 
             <div id="tab-reservations" style="display:none;">
@@ -365,7 +380,10 @@
             </div>
 
             <div id="tab-analytics" style="display:none;">
-                <button class="action-btn btn-checkout" style="width:100%; margin-bottom:15px; background-color:#FFDFBA;" onclick="downloadPDF()">📄 PDFとして保存・印刷</button>
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button class="action-btn btn-checkout" style="flex:1; margin-top:0; background-color:#FFDFBA;" onclick="downloadPDF()">📄 PDF保存</button>
+                    <button class="action-btn btn-checkout" style="flex:1; margin-top:0; background-color:#B5EAD7;" onclick="exportFacilityCSV()">🏭 精算CSV</button>
+                </div>
                 <div id="analytics-result" style="font-size:14px; white-space: pre-wrap; line-height: 1.6;">売上データがありません。</div>
             </div>
             </div>
@@ -437,10 +455,21 @@
         if (cart.length > 0) {
             const lastItem = cart.pop();
             const product = products.find(p => p.id === lastItem.id);
-            product.stock++;
+            if (product) product.stock++;
             saveData();
             init();
         }
+    }
+
+    // カート内の特定商品を1つだけ取り消す（混雑時の打ち間違い訂正用）
+    function removeOneFromCart(name) {
+        const idx = cart.map(i => i.name).lastIndexOf(name);
+        if (idx === -1) return;
+        const removed = cart.splice(idx, 1)[0];
+        const product = products.find(p => p.id === removed.id);
+        if (product) product.stock++;
+        saveData();
+        init();
     }
 
     function updateCartDisplay() {
@@ -459,7 +488,10 @@
             const subtotal = data.price * data.count;
             list.innerHTML += `
                 <div class="cart-item">
-                    <span>${name} × ${data.count}</span>
+                    <span>
+                        <button onclick="removeOneFromCart('${name.replace(/'/g, "\\'")}')" style="background:#F3F3F3; border:none; border-radius:6px; width:26px; height:26px; font-weight:bold; cursor:pointer; color:var(--accent); margin-right:8px; vertical-align:middle;">−</button>
+                        ${name} × ${data.count}
+                    </span>
                     <span style="font-weight:bold;">¥${subtotal}</span>
                 </div>
             `;
@@ -651,7 +683,7 @@
         const latest = getLatestRecommendationMap();
         if (latest) {
             list.innerHTML += `
-                <button onclick="applyRecommendations()" style="width:100%; margin-bottom:12px; padding:10px; background:#B5EAD7; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-main);">✨ 前回「${latest.sessionName}」の実績から推奨数を適用</button>
+                <button onclick="applyRecommendations()" style="width:100%; margin-bottom:12px; padding:10px; background:#B5EAD7; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-main);">✨ 前回「${latest.sessionName}」の実績を参考に反映</button>
             `;
         }
 
@@ -660,7 +692,7 @@
             if (latest && latest.map[p.name]) {
                 const r = latest.map[p.name];
                 const arrow = r.recommended > r.initial ? '⬆️' : (r.recommended < r.initial ? '⬇️' : '→');
-                hint = `<div style="font-size:11px; color:var(--text-light); margin-left:35px; margin-bottom:8px;">前回 仕入${r.initial}/販売${r.sold}${r.soldOut ? '(完売)' : ''} → 推奨 <b style="color:var(--accent);">${r.recommended}</b> ${arrow}</div>`;
+                hint = `<div style="font-size:11px; color:var(--text-light); margin-left:35px; margin-bottom:8px;">前回 仕入${r.initial}/販売${r.sold}${r.soldOut ? '(完売)' : ''} → 参考 <b style="color:var(--accent);">${r.recommended}</b> ${arrow}</div>`;
             }
             list.innerHTML += `
                 <div style="display:flex; gap:5px; margin-bottom:${hint ? '2px' : '8px'}; align-items:center; border-bottom:${hint ? 'none' : '1px solid #EEE'}; padding-bottom:5px;">
@@ -702,8 +734,9 @@
         // 設定画面を開くたびに、現在の商品の状態をコピーして編集画面にセットする
         tempSetupProducts = JSON.parse(JSON.stringify(products));
         renderInventorySetup();
+        renderLiveStock();
         renderReservations();
-        updateAnalytics(); 
+        updateAnalytics();
     }
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -936,15 +969,15 @@
             res += `・${catNames[cat]}: ¥${rev} (${percent}%)\n`;
         }
 
-        // ▼▼▼ 次回への仕入れ提案（この回の実績から算出） ▼▼▼
+        // ▼▼▼ 次回準備の参考メモ（この回の実績から算出。あくまで参考値） ▼▼▼
         const recs = buildRestockRecommendations();
         if (recs.length > 0) {
             res += `--------------------------\n`;
-            res += `[次回への仕入れ提案]\n`;
-            res += `※販売数・完売状況から次回の仕入れ数を提案します\n`;
+            res += `[次回準備の参考メモ]\n`;
+            res += `※今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変動するため参考程度にご利用ください\n`;
             recs.forEach(r => {
                 let arrow = r.recommended > r.initial ? '⬆️' : (r.recommended < r.initial ? '⬇️' : '→');
-                res += `・${r.name}: 前回 仕入${r.initial}/販売${r.sold} → 推奨 ${r.recommended}個 ${arrow} (${r.reason})\n`;
+                res += `・${r.name}: 今回 仕入${r.initial}/販売${r.sold} → 参考 ${r.recommended}個 ${arrow} (${r.reason})\n`;
             });
         }
         // ▲▲▲ ここまで ▲▲▲
@@ -1029,7 +1062,7 @@
             if (r) { p.initialStock = r.recommended; applied++; }
         });
         renderInventorySetup();
-        alert(`「${latest.sessionName}」の実績をもとに ${applied} 件の仕入れ数を推奨値に更新しました。`);
+        alert(`「${latest.sessionName}」の実績を参考に ${applied} 件の仕入れ数を反映しました。季節や天候に合わせて調整してください。`);
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -1141,6 +1174,146 @@
             }
         }
     }
+
+    // ▼▼▼ データのバックアップ書き出し／復元 ▼▼▼
+    // 端末内(localStorage)のデータをファイルに書き出す。月1回の貴重な記録を守るための保険。
+    function triggerDownload(filename, content, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function dateStamp() {
+        const d = new Date();
+        const p = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
+    }
+
+    function exportBackup() {
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive };
+        triggerDownload(`taizanboku_backup_${dateStamp()}.json`, JSON.stringify(data, null, 2), 'application/json');
+    }
+
+    function importBackup(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!data || typeof data !== 'object' || !Array.isArray(data.products)) {
+                    alert('このファイルは泰山木POSのバックアップではないようです。');
+                    return;
+                }
+                if (!confirm('現在のデータを、選んだバックアップの内容で上書きします。よろしいですか？')) return;
+                products = data.products;
+                cart = data.cart || [];
+                salesHistory = data.salesHistory || [];
+                reservations = data.reservations || [];
+                currentSession = data.currentSession || null;
+                sessionArchive = data.sessionArchive || [];
+
+                const disp = document.getElementById('session-display');
+                if (currentSession) {
+                    disp.innerText = `営業中: ${currentSession}`;
+                    disp.style.background = 'var(--white)';
+                } else {
+                    disp.innerText = '閉店中';
+                    disp.style.background = '';
+                }
+                saveData();
+                init();
+                renderInventorySetup();
+                renderLiveStock();
+                renderReservations();
+                updateAnalytics();
+                alert('バックアップを復元しました。');
+            } catch (err) {
+                alert('ファイルの読み込みに失敗しました。');
+            } finally {
+                event.target.value = ''; // 同じファイルを再度選べるように
+            }
+        };
+        reader.readAsText(file);
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 施設向け 精算レポート（商品別 販売数・売上）▼▼▼
+    // 販売実績を商品名でまとめ、[{name, price, count, revenue}] を返す（販売数の多い順）。
+    function buildItemSalesRows() {
+        const rows = {};
+        salesHistory.forEach(h => h.items.forEach(i => {
+            if (!rows[i.name]) rows[i.name] = { name: i.name, price: i.price, count: 0, revenue: 0 };
+            rows[i.name].count += 1;
+            rows[i.name].revenue += i.price;
+        }));
+        return Object.values(rows).sort((a, b) => b.count - a.count);
+    }
+
+    function exportFacilityCSV() {
+        const rows = buildItemSalesRows();
+        if (rows.length === 0) { alert('書き出す売上データがありません。'); return; }
+
+        const total = rows.reduce((s, r) => s + r.revenue, 0);
+        const totalCount = rows.reduce((s, r) => s + r.count, 0);
+        // Excel(日本語)で文字化けしないよう BOM を先頭に付与
+        let csv = '﻿';
+        csv += `販売会,${(currentSession || '前回').replace(/,/g, ' ')}\n`;
+        csv += `出力日時,${new Date().toLocaleString('ja-JP')}\n\n`;
+        csv += `商品名,単価,販売数,売上\n`;
+        rows.forEach(r => {
+            csv += `${r.name.replace(/,/g, ' ')},${r.price},${r.count},${r.revenue}\n`;
+        });
+        csv += `合計,,${totalCount},${total}\n`;
+        triggerDownload(`taizanboku_精算_${dateStamp()}.csv`, csv, 'text/csv');
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 販売中の在庫調整（追加搬入・数え直し）▼▼▼
+    function renderLiveStock() {
+        const list = document.getElementById('live-stock-list');
+        if (!list) return;
+        if (!currentSession) {
+            list.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:0;">開店後、当日の在庫をここで増減できます。</p>';
+            return;
+        }
+        list.innerHTML = '';
+        products.forEach(p => {
+            list.innerHTML += `
+                <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                    <span style="flex:1; font-size:14px;">${p.name}</span>
+                    <button onclick="adjustLiveStock(${p.id}, -1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#F3F3F3; font-weight:bold; cursor:pointer;">−</button>
+                    <input type="number" value="${p.stock}" style="width:60px; padding:6px; text-align:center; font-size:14px; border:1px solid #CCC; border-radius:6px; margin:0;" onchange="setLiveStock(${p.id}, this.value)">
+                    <button onclick="adjustLiveStock(${p.id}, 1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#E2F0CB; font-weight:bold; cursor:pointer;">＋</button>
+                </div>
+            `;
+        });
+    }
+
+    function adjustLiveStock(id, delta) {
+        const p = products.find(prod => prod.id === id);
+        if (!p) return;
+        p.stock = Math.max(0, p.stock + delta);
+        saveData();
+        init();
+        renderLiveStock();
+    }
+
+    function setLiveStock(id, value) {
+        const p = products.find(prod => prod.id === id);
+        if (!p) return;
+        p.stock = Math.max(0, parseInt(value) || 0);
+        saveData();
+        init();
+        renderLiveStock();
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     loadData();
 
