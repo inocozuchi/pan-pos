@@ -643,10 +643,12 @@
 
         let totalRev = sortedHistory.reduce((s, h) => s + h.total, 0);
         let itemCounts = {};
+        let itemRev = {};
         let categoryRev = { sweet: 0, savory: 0, drink: 0 };
         const catNames = { sweet: "パン類", savory: "クッキー類", drink: "ドリンク" };
 
         let timeSlotRev = {};
+        let timeSlotItemCounts = {};
         let customerTypeStats = { 
             "学生": { count: 0, rev: 0 }, 
             "教員": { count: 0, rev: 0 }, 
@@ -664,7 +666,9 @@
             let hStr = date.getHours();
             let mStr = Math.floor(date.getMinutes() / 15) * 15;
             let timeLabel = `${hStr}:${mStr === 0 ? "00" : String(mStr).padStart(2, '0')}`;
+            
             timeSlotRev[timeLabel] = (timeSlotRev[timeLabel] || 0) + h.total;
+            if (!timeSlotItemCounts[timeLabel]) timeSlotItemCounts[timeLabel] = {};
 
             if(h.customerType && customerTypeStats[h.customerType]) {
                 customerTypeStats[h.customerType].count += 1;
@@ -681,6 +685,8 @@
 
             h.items.forEach(i => {
                 itemCounts[i.name] = (itemCounts[i.name] || 0) + 1;
+                itemRev[i.name] = (itemRev[i.name] || 0) + i.price;
+                timeSlotItemCounts[timeLabel][i.name] = (timeSlotItemCounts[timeLabel][i.name] || 0) + 1;
                 totalItemsSold += 1;
                 
                 if (i.type) {
@@ -705,9 +711,28 @@
         res += `平均客単価: ¥${averagePurchase}\n`;
         res += `平均買上点数: ${averageItems}個/人\n`;
         res += `--------------------------\n`;
+
+        res += `[商品別 在庫消化率とABC分析]\n`;
+        let sortedRevItems = Object.entries(itemRev).sort((a, b) => b[1] - a[1]);
+        let cumulativeRev = 0;
+        sortedRevItems.forEach(item => {
+            let name = item[0];
+            let rev = item[1];
+            cumulativeRev += rev;
+            let cumPercent = (cumulativeRev / totalRev) * 100;
+            let rank = cumPercent <= 70 ? 'A' : (cumPercent <= 90 ? 'B' : 'C');
+
+            let product = products.find(p => p.name === name);
+            let initial = product ? product.initialStock : 0;
+            let sold = itemCounts[name];
+            let sellThrough = initial > 0 ? Math.round((sold / initial) * 100) : 0;
+
+            res += `・${name}: 消化率${sellThrough}% (ランク${rank})\n`;
+        });
+        res += `--------------------------\n`;
         
         res += `[商品別 完売時刻と販売スピード]\n`;
-        res += `※( )内は品切れにならなければ1時間で何個売れたかの「予測ペース」\n`;
+        res += `※()内は品切れにならなければ1時間で何個売れたかの予測ペース\n`;
         
         let soldOutItems = [];
         let notSoldOutItems = [];
@@ -740,7 +765,20 @@
         }
         res += `--------------------------\n`;
 
-        res += `[よく一緒に買われた商品 (併売分析)]\n`;
+        res += `[時間帯別(15分刻み) トップ3商品]\n`;
+        let sortedSlots = Object.keys(timeSlotRev).sort((a, b) => {
+            return parseInt(a.replace(':', '')) - parseInt(b.replace(':', ''));
+        });
+        sortedSlots.forEach(slot => {
+            res += `・${slot}〜: ¥${timeSlotRev[slot]}\n`;
+            let itemsInSlot = Object.entries(timeSlotItemCounts[slot]).sort((a, b) => b[1] - a[1]).slice(0, 3);
+            itemsInSlot.forEach((item, index) => {
+                res += `  ${index + 1}位: ${item[0]} (${item[1]}個)\n`;
+            });
+        });
+        res += `--------------------------\n`;
+
+        res += `[よく一緒に買われた商品]\n`;
         let sortedPairs = Object.entries(coPurchase).sort((a, b) => b[1] - a[1]).slice(0, 5);
         if(sortedPairs.length > 0) {
             sortedPairs.forEach(pair => {
@@ -767,22 +805,6 @@
             let percent = totalRev > 0 ? Math.round((rev / totalRev) * 100) : 0;
             res += `・${catNames[cat]}: ¥${rev} (${percent}%)\n`;
         }
-        res += `--------------------------\n`;
-
-        res += `[時間帯別(15分刻み) 売上]\n`;
-        let sortedSlots = Object.keys(timeSlotRev).sort((a, b) => {
-            return parseInt(a.replace(':', '')) - parseInt(b.replace(':', ''));
-        });
-        sortedSlots.forEach(slot => {
-            res += `・${slot}〜: ¥${timeSlotRev[slot]}\n`;
-        });
-        res += `--------------------------\n`;
-
-        res += `[販売数ランキング]\n`;
-        let sortedItems = Object.entries(itemCounts).sort((a, b) => b[1] - a[1]);
-        sortedItems.forEach(item => {
-            res += `・${item[0]}: ${item[1]}個\n`;
-        });
 
         document.getElementById('analytics-result').innerText = res;
     }
