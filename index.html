@@ -56,6 +56,24 @@
         }
         /* 追加ここまで */
 
+        /* ▼▼▼ お会計画面の横長化＆客属性ボタン化 ▼▼▼ */
+        .customer-type-group { display: flex; gap: 5px; width: 100%; }
+        .type-btn {
+            flex: 1; text-align: center; background: #FFF; border: 2px solid #CCC; 
+            border-radius: 8px; padding: 10px 2px; font-weight: bold; cursor: pointer;
+            font-size: 14px; transition: all 0.2s;
+        }
+        .type-btn input[type="radio"] { display: none; } /* ラジオボタンの丸を隠す */
+        .type-btn:has(input:checked) { background: var(--accent); color: white; border-color: var(--accent); }
+        
+        @media (min-width: 769px) {
+            .checkout-wide { max-width: 800px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
+            .checkout-left { flex: 1; display: flex; flex-direction: column; border-right: 2px dashed #EEE; padding-right: 20px; }
+            .checkout-right { flex: 1.2; display: flex; flex-direction: column; justify-content: space-between; }
+            .checkout-left .receipt-list { flex: 1; max-height: none; }
+        }
+        /* ▲▲▲ ここまで ▲▲▲ */
+
         @media (min-width: 769px) {
             main {
                 grid-auto-rows: minmax(50px, 1fr) !important; 
@@ -265,51 +283,54 @@
 </div>
 
 <div id="checkout-modal" class="modal">
-    <div class="modal-content">
-        <h2 style="margin-top:0; text-align:center;">お会計</h2>
+    <div class="modal-content checkout-wide">
+        <div class="checkout-left">
+            <h2 style="margin-top:0; text-align:center;">お会計</h2>
+            <ul class="receipt-list" id="checkout-receipt"></ul>
+            <div style="font-size: 24px; font-weight: bold; text-align:right;">合計：¥<span id="modal-total">0</span></div>
+        </div>
         
-        <ul class="receipt-list" id="checkout-receipt"></ul>
-
-        <div style="font-size: 22px; font-weight: bold; text-align:right;">合計：¥<span id="modal-total">0</span></div>
-        
-        <div style="margin: 15px 0; text-align: left; background: #FAFAFA; padding: 10px; border-radius: 12px; border: 2px solid #EEE;">
-            <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">客属性 (任意)</div>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; font-size: 16px;">
-                <label><input type="radio" name="customerType" value="学生"> 学生</label>
-                <label><input type="radio" name="customerType" value="教員"> 教員</label>
-                <label><input type="radio" name="customerType" value="職員"> 職員</label>
-                <label><input type="radio" name="customerType" value="その他"> その他</label>
-                <label><input type="radio" name="customerType" value="不明" checked> 不明</label>
+        <div class="checkout-right">
+            <div style="margin-bottom: 10px; text-align: left; background: #FAFAFA; padding: 10px; border-radius: 12px; border: 2px solid #EEE;">
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">客属性 (任意)</div>
+                <div class="customer-type-group">
+                    <label class="type-btn"><input type="radio" name="customerType" value="学生"> 学生</label>
+                    <label class="type-btn"><input type="radio" name="customerType" value="教員"> 教員</label>
+                    <label class="type-btn"><input type="radio" name="customerType" value="職員"> 職員</label>
+                    <label class="type-btn"><input type="radio" name="customerType" value="その他"> その他</label>
+                    <label class="type-btn"><input type="radio" name="customerType" value="不明" checked> 不明</label>
+                </div>
             </div>
-        </div>
-        
-        <input type="text" id="cash-input" placeholder="預かり金額" readonly>
-        
-        <div style="display: flex; gap: 10px; margin-top: 5px;">
-            <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #E2F0CB;" onclick="setCashExact()">ちょうど</button>
-            <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #FFF; border: 2px solid #EEE;" onclick="setCash(500)">500円</button>
-            <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #FFF; border: 2px solid #EEE;" onclick="setCash(1000)">1000円</button>
-        </div>
+            
+            <input type="text" id="cash-input" placeholder="預かり金額" readonly>
+            
+            <div style="display: flex; gap: 10px; margin-top: 5px;">
+                <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #E2F0CB;" onclick="setCashExact()">ちょうど</button>
+                <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #FFF; border: 2px solid #EEE;" onclick="setCash(500)">500円</button>
+                <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #FFF; border: 2px solid #EEE;" onclick="setCash(1000)">1000円</button>
+            </div>
 
-        <div class="tenkey-grid">
-            <button class="action-btn tenkey-btn" onclick="appendCash('7')">7</button>
-            <button class="action-btn tenkey-btn" onclick="appendCash('8')">8</button>
-            <button class="action-btn tenkey-btn" onclick="appendCash('9')">9</button>
-            <button class="action-btn tenkey-btn" onclick="appendCash('4')">4</button>
-            <button class="action-btn tenkey-btn" onclick="appendCash('5')">5</button>
-            <button class="action-btn tenkey-btn" onclick="appendCash('6')">6</button>
-            <button class="action-btn tenkey-btn" onclick="appendCash('1')">1</button>
-            <button class="action-btn tenkey-btn" onclick="appendCash('2')">2</button>
-            <button class="action-btn tenkey-btn" onclick="appendCash('3')">3</button>
-            <button class="action-btn tenkey-btn" onclick="appendCash('0')">0</button>
-            <button class="action-btn tenkey-btn" onclick="appendCash('00')">00</button>
-            <button class="action-btn tenkey-btn clear-btn" onclick="clearCash()">C</button>
-        </div>
-        <div class="change-display">お釣り: ¥<span id="change-amount">0</span></div>
-        
-        <div style="display:flex; gap:10px; margin-top:10px;">
-            <button class="action-btn btn-undo" style="flex:1;" onclick="closeModal('checkout-modal')">戻る</button>
-            <button class="action-btn btn-checkout" style="flex:2;" onclick="completeTransaction()">完了・記録</button>
+            <div class="tenkey-grid">
+                <button class="action-btn tenkey-btn" onclick="appendCash('7')">7</button>
+                <button class="action-btn tenkey-btn" onclick="appendCash('8')">8</button>
+                <button class="action-btn tenkey-btn" onclick="appendCash('9')">9</button>
+                <button class="action-btn tenkey-btn" onclick="appendCash('4')">4</button>
+                <button class="action-btn tenkey-btn" onclick="appendCash('5')">5</button>
+                <button class="action-btn tenkey-btn" onclick="appendCash('6')">6</button>
+                <button class="action-btn tenkey-btn" onclick="appendCash('1')">1</button>
+                <button class="action-btn tenkey-btn" onclick="appendCash('2')">2</button>
+                <button class="action-btn tenkey-btn" onclick="appendCash('3')">3</button>
+                <button class="action-btn tenkey-btn" onclick="appendCash('0')">0</button>
+                <button class="action-btn tenkey-btn" onclick="appendCash('00')">00</button>
+                <button class="action-btn tenkey-btn clear-btn" onclick="clearCash()">C</button>
+            </div>
+            
+            <div class="change-display">お釣り: ¥<span id="change-amount">0</span></div>
+            
+            <div style="display:flex; gap:10px;">
+                <button class="action-btn btn-undo" style="flex:1;" onclick="closeModal('checkout-modal')">戻る</button>
+                <button class="action-btn btn-checkout" style="flex:2; margin-top:0;" onclick="completeTransaction()">完了・記録</button>
+            </div>
         </div>
     </div>
 </div>
