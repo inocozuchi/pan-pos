@@ -372,7 +372,7 @@
 </div>
 
 <script>
-    const products = [
+    let products = [
         { id: 1, name: "アップルパイ", price: 200, stock: 50, initialStock: 50, type: "sweet" },
         { id: 2, name: "アップルシナモン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
         { id: 3, name: "あんぱん", price: 180, stock: 50, initialStock: 50, type: "sweet" },
@@ -688,7 +688,7 @@
         if (!name) { alert('名前を入力してください'); return; }
         
         if (salesHistory.length > 0 || reservations.length > 0) {
-            if (!confirm('新しい販売会を始めると、前回の売上データや予約はすべてリセットされます。本当にいいですか？')) return;
+            if (!confirm('新しい販売会を始めると、前回の売上データや予約はすべてリセットされます。よろしいですか？')) return;
         }
 
         currentSession = name;
@@ -699,8 +699,6 @@
         // 編集した一時データを本番の商品データとして適用する
         products = JSON.parse(JSON.stringify(tempSetupProducts));
         products.forEach(p => p.stock = p.initialStock);
-        
-        saveData();
         
         document.getElementById('session-display').innerText = `営業中: ${name}`;
         document.getElementById('session-display').style.background = 'var(--white)';
