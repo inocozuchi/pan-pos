@@ -307,10 +307,8 @@
             
             <input type="text" id="cash-input" placeholder="預かり金額" readonly>
             
-            <div style="display: flex; gap: 10px; margin-top: 5px;">
+            <div id="cash-suggestions" style="display: flex; gap: 10px; margin-top: 5px;">
                 <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #E2F0CB;" onclick="setCashExact()">ちょうど</button>
-                <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #FFF; border: 2px solid #EEE;" onclick="setCash(500)">500円</button>
-                <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #FFF; border: 2px solid #EEE;" onclick="setCash(1000)">1000円</button>
             </div>
 
             <div class="tenkey-grid">
@@ -356,8 +354,29 @@
                     </div>
 
                 <button class="action-btn btn-checkout" style="width:100%; margin-bottom:20px;" onclick="startSession()">開店する (データリセット)</button>
+
+                <details id="live-stock-details" style="margin-bottom:15px;">
+                    <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の在庫調整（追加搬入・数え直し）</summary>
+                    <div id="live-stock-list" style="max-height:200px; overflow-y:auto; background:#FAFAFA; border:2px solid #EEE; padding:10px; border-radius:12px; margin-top:10px;"></div>
+                </details>
+
+                <div style="background:#FFF5F7; border:2px solid #FFD1DC; border-radius:12px; padding:12px; margin-bottom:20px;">
+                    <div style="font-size:14px; font-weight:bold; margin-bottom:6px;">🧾 会計ミスの訂正</div>
+                    <div id="last-sale-info" style="font-size:12px; color:var(--text-light); margin-bottom:8px;">直前の会計はありません。</div>
+                    <button class="action-btn btn-undo" style="width:100%;" onclick="voidLastSale()">直前の会計を取り消す（在庫を戻す）</button>
+                </div>
+
                 <hr style="border: 1px dashed #EEE; margin-bottom: 20px;">
                 <button class="action-btn" style="width:100%; background: #FF9AA2; color: white;" onclick="endSession()">閉店する (集計して終了)</button>
+
+                <hr style="border: 1px dashed #EEE; margin: 20px 0;">
+                <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">データのバックアップ</div>
+                <p style="font-size: 12px; color: var(--text-light); margin: 0 0 10px 0;">データは端末内にのみ保存されます。大切な販売会の記録は定期的に書き出して保管してください。</p>
+                <div style="display:flex; gap:10px;">
+                    <button class="action-btn btn-reserve" style="flex:1;" onclick="exportBackup()">💾 保存</button>
+                    <button class="action-btn btn-undo" style="flex:1;" onclick="document.getElementById('import-file').click()">📂 復元</button>
+                </div>
+                <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importBackup(event)">
             </div>
 
             <div id="tab-reservations" style="display:none;">
@@ -365,7 +384,10 @@
             </div>
 
             <div id="tab-analytics" style="display:none;">
-                <button class="action-btn btn-checkout" style="width:100%; margin-bottom:15px; background-color:#FFDFBA;" onclick="downloadPDF()">📄 PDFとして保存・印刷</button>
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button class="action-btn btn-checkout" style="flex:1; margin-top:0; background-color:#FFDFBA;" onclick="downloadPDF()">📄 PDF保存</button>
+                    <button class="action-btn btn-checkout" style="flex:1; margin-top:0; background-color:#B5EAD7;" onclick="exportFacilityCSV()">🏭 精算CSV</button>
+                </div>
                 <div id="analytics-result" style="font-size:14px; white-space: pre-wrap; line-height: 1.6;">売上データがありません。</div>
             </div>
             </div>
@@ -375,6 +397,62 @@
 </div>
 
 <script>
+    // ▼▼▼ 操作音（電子音を鳴らす）▼▼▼
+    // iOS(iPad/iPhone)対策：AudioContextはユーザー操作の中でしか起動できず、
+    // 最初のタップで「解錠」しないと無音のままになる。そのため画面への最初の
+    // タッチ/クリックで必ず解錠する。音が出せない環境では無視。
+    let audioCtx = null;
+    let audioUnlocked = false;
+
+    function getAudioCtx() {
+        if (!audioCtx) {
+            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+            catch (e) { return null; }
+        }
+        return audioCtx;
+    }
+
+    // 最初のタップで呼ばれ、無音を1回鳴らしてiOSのオーディオを完全に解錠する
+    function unlockAudio() {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        if (ctx.state !== 'running') ctx.resume();
+        if (!audioUnlocked) {
+            try {
+                const src = ctx.createBufferSource();
+                src.buffer = ctx.createBuffer(1, 1, 22050);
+                src.connect(ctx.destination);
+                src.start(0);
+                audioUnlocked = true;
+            } catch (e) { /* 無視 */ }
+        }
+    }
+    document.addEventListener('touchend', unlockAudio, { passive: true });
+    document.addEventListener('click', unlockAudio, { passive: true });
+
+    function playSound(freq = 880, duration = 0.1, type = 'sine', volume = 0.1) {
+        try {
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            if (ctx.state !== 'running') ctx.resume(); // iOSで一時停止していたら再開
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            oscillator.type = type;
+            oscillator.frequency.setValueAtTime(freq, ctx.currentTime);
+            gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+            oscillator.connect(gainNode);
+            gainNode.connect(ctx.destination);
+            oscillator.start();
+            oscillator.stop(ctx.currentTime + duration);
+        } catch (e) { /* 音が出せない環境では何もしない */ }
+    }
+    // 登録できなかった時の警告音（低め・少し長め）→ 打ち間違い・未開店に気づける
+    function playError() { playSound(220, 0.25, 'square', 0.12); }
+    // 会計完了の確認音（ポン♪と2音）
+    function playSuccess() { playSound(880, 0.08); setTimeout(() => playSound(1320, 0.13), 90); }
+    // ▲▲▲ ここまで ▲▲▲
+
     let products = [
         { id: 1, name: "アップルパイ", price: 200, stock: 50, initialStock: 50, type: "sweet" },
         { id: 2, name: "アップルシナモン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
@@ -399,6 +477,7 @@
     let reservations = [];
     let currentSession = null;
     let processingReservationId = null;
+    let sessionArchive = []; // 過去の販売会の実績（次回仕入れ推奨のもと）
 
     function init() {
         const grid = document.getElementById('product-grid');
@@ -423,23 +502,79 @@
     }
 
     function addToCart(p) {
-        if (!currentSession) { alert('設定から先に開店してください'); return; }
+        if (!currentSession) { playError(); alert('設定から先に開店してください'); return; }
         if (p.stock > 0) {
+            playSound(); // 登録成功の合図（耳で確認できてミス防止）
             p.stock--;
             cart.push({...p});
             saveData();
             init();
+        } else {
+            playError(); // 在庫切れで登録できなかった合図
         }
     }
+
+    // カート内の「＋」用：商品名から在庫を1つ追加する
+    function addOneToCart(name) {
+        const p = products.find(prod => prod.name === name);
+        if (p) addToCart(p);
+    }
+
+    // ▼▼▼ 直前の会計を取り消す（会計後に気づいたミスの訂正）▼▼▼
+    function renderLastSaleInfo() {
+        const el = document.getElementById('last-sale-info');
+        if (!el) return;
+        if (salesHistory.length === 0) {
+            el.innerText = '直前の会計はありません。';
+            return;
+        }
+        const last = salesHistory[salesHistory.length - 1];
+        const counts = {};
+        last.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
+        const summary = Object.entries(counts).map(([n, c]) => `${n}×${c}`).join('、');
+        const t = new Date(last.time);
+        const tStr = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
+        el.innerText = `直前(${tStr}): ${summary} ／ 合計¥${last.total}`;
+    }
+
+    function voidLastSale() {
+        if (salesHistory.length === 0) { playError(); alert('取り消せる会計がありません。'); return; }
+        const last = salesHistory[salesHistory.length - 1];
+        if (!confirm(`直前の会計を取り消します。\n合計 ¥${last.total}\n※販売した商品は在庫に戻ります。よろしいですか？`)) return;
+        last.items.forEach(it => {
+            const p = products.find(prod => prod.id === it.id);
+            if (p) p.stock++;
+        });
+        salesHistory.pop();
+        playSound(660, 0.08);
+        saveData();
+        init();
+        renderLastSaleInfo();
+        updateAnalytics();
+        alert('直前の会計を取り消しました。');
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     function undoLast() {
         if (cart.length > 0) {
             const lastItem = cart.pop();
             const product = products.find(p => p.id === lastItem.id);
-            product.stock++;
+            if (product) product.stock++;
             saveData();
             init();
         }
+    }
+
+    // カート内の特定商品を1つだけ取り消す（混雑時の打ち間違い訂正用）
+    function removeOneFromCart(name) {
+        const idx = cart.map(i => i.name).lastIndexOf(name);
+        if (idx === -1) return;
+        playSound(660, 0.08); // 取り消しの合図（追加音より低め）
+        const removed = cart.splice(idx, 1)[0];
+        const product = products.find(p => p.id === removed.id);
+        if (product) product.stock++;
+        saveData();
+        init();
     }
 
     function updateCartDisplay() {
@@ -456,9 +591,14 @@
 
         for (const [name, data] of Object.entries(counts)) {
             const subtotal = data.price * data.count;
+            const safeName = name.replace(/'/g, "\\'");
             list.innerHTML += `
                 <div class="cart-item">
-                    <span>${name} × ${data.count}</span>
+                    <span style="display:flex; align-items:center; gap:6px;">
+                        <button onclick="removeOneFromCart('${safeName}')" style="background:#F3F3F3; border:none; border-radius:6px; width:28px; height:28px; font-weight:bold; cursor:pointer; color:var(--accent); flex-shrink:0;">−</button>
+                        <button onclick="addOneToCart('${safeName}')" style="background:#E2F0CB; border:none; border-radius:6px; width:28px; height:28px; font-weight:bold; cursor:pointer; color:var(--text-main); flex-shrink:0;">＋</button>
+                        <span>${name} × <b>${data.count}</b></span>
+                    </span>
                     <span style="font-weight:bold;">¥${subtotal}</span>
                 </div>
             `;
@@ -506,8 +646,31 @@
         document.getElementById('modal-total').innerText = total;
         document.getElementById('cash-input').value = '';
         document.getElementById('change-amount').innerText = '0';
+        renderCashSuggestions(total);
         document.getElementById('checkout-modal').style.display = 'flex';
     }
+
+    // ▼▼▼ スマート預かり金：合計額から「出されやすい金額」を提案（会計速度アップ）▼▼▼
+    function suggestCashAmounts(total) {
+        if (!total || total <= 0) return [];
+        const opts = new Set();
+        opts.add(Math.ceil(total / 100) * 100);   // 次の100円
+        opts.add(Math.ceil(total / 500) * 500);   // 次の500円
+        opts.add(Math.ceil(total / 1000) * 1000); // 次の1000円
+        [1000, 2000, 5000].forEach(v => opts.add(v)); // よく出される紙幣
+        return [...opts].filter(v => v > total).sort((a, b) => a - b).slice(0, 4);
+    }
+
+    function renderCashSuggestions(total) {
+        const box = document.getElementById('cash-suggestions');
+        if (!box) return;
+        let html = `<button class="action-btn" style="flex:1; padding:10px; font-size:16px; background-color:#E2F0CB;" onclick="setCashExact()">ちょうど</button>`;
+        suggestCashAmounts(total).forEach(v => {
+            html += `<button class="action-btn" style="flex:1; padding:10px; font-size:16px; background-color:#FFF; border:2px solid #EEE;" onclick="setCash(${v})">¥${v}</button>`;
+        });
+        box.innerHTML = html;
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     function calcChange() {
         const total = parseInt(document.getElementById('modal-total').innerText);
@@ -516,24 +679,28 @@
     }
 
     function setCashExact() {
+        playSound();
         const total = parseInt(document.getElementById('modal-total').innerText);
         document.getElementById('cash-input').value = total;
         calcChange();
     }
 
     function setCash(amount) {
+        playSound();
         document.getElementById('cash-input').value = amount;
         calcChange();
     }
 
     // ここからテンキーの機能を新しく追加するよ
     function appendCash(num) {
+        playSound();
         const input = document.getElementById('cash-input');
         input.value = input.value + num;
         calcChange();
     }
 
     function clearCash() {
+        playSound(660, 0.08);
         document.getElementById('cash-input').value = '';
         calcChange();
     }
@@ -543,7 +710,8 @@
     function completeTransaction() {
         const total = parseInt(document.getElementById('modal-total').innerText);
         const cash = parseInt(document.getElementById('cash-input').value) || 0;
-        if (cash < total) { alert('お預かり金額が足りません'); return; }
+        if (cash < total) { playError(); alert('お預かり金額が足りません'); return; }
+        playSuccess();
 
         let itemsRecorded = cart;
 
@@ -576,6 +744,7 @@
         saveData();
         init();
         renderReservations();
+        renderLastSaleInfo();
     }
 
     function promptReservation() {
@@ -646,14 +815,30 @@
         if (!list) return;
 
         list.innerHTML = '';
-        tempSetupProducts.forEach(p => {
+
+        const latest = getLatestRecommendationMap();
+        if (latest) {
             list.innerHTML += `
-                <div style="display:flex; gap:5px; margin-bottom:8px; align-items:center; border-bottom:1px solid #EEE; padding-bottom:5px;">
+                <button onclick="applyRecommendations()" style="width:100%; margin-bottom:12px; padding:10px; background:#B5EAD7; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-main);">✨ 前回「${latest.sessionName}」の実績を参考に反映</button>
+            `;
+        }
+
+        tempSetupProducts.forEach(p => {
+            let hint = '';
+            if (latest && latest.map[p.name]) {
+                const r = latest.map[p.name];
+                const arrow = r.recommended > r.initial ? '⬆️' : (r.recommended < r.initial ? '⬇️' : '→');
+                hint = `<div style="font-size:11px; color:var(--text-light); margin-left:35px; margin-bottom:8px;">前回 仕入${r.initial}/販売${r.sold}${r.soldOut ? '(完売)' : ''} → 参考 <b style="color:var(--accent);">${r.recommended}</b> ${arrow}</div>`;
+            }
+            list.innerHTML += `
+                <div style="display:flex; gap:5px; margin-bottom:${hint ? '2px' : '8px'}; align-items:center; border-bottom:${hint ? 'none' : '1px solid #EEE'}; padding-bottom:5px;">
                     <button onclick="removeTempProduct(${p.id})" style="background:#FF9AA2; color:white; border:none; border-radius:4px; width:30px; height:30px; font-weight:bold; cursor:pointer; flex-shrink:0;">×</button>
                     <input type="text" value="${p.name}" style="flex:2; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px;" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
                     <input type="number" value="${p.price}" style="flex:1; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px;" placeholder="価格" onchange="updateTempProduct(${p.id}, 'price', this.value)">
                     <input type="number" value="${p.initialStock}" style="flex:1; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px;" placeholder="在庫" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">
                 </div>
+                ${hint}
+                ${hint ? '<div style="border-bottom:1px solid #EEE; margin-bottom:8px;"></div>' : ''}
             `;
         });
 
@@ -685,8 +870,10 @@
         // 設定画面を開くたびに、現在の商品の状態をコピーして編集画面にセットする
         tempSetupProducts = JSON.parse(JSON.stringify(products));
         renderInventorySetup();
+        renderLiveStock();
+        renderLastSaleInfo();
         renderReservations();
-        updateAnalytics(); 
+        updateAnalytics();
     }
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -722,8 +909,25 @@
         }
         if (!confirm('営業を終了して売上を集計します。')) return;
         updateAnalytics();
+
+        // ▼▼▼ この回の実績を次回の仕入れ推奨として保存（開店リセットでは消えない） ▼▼▼
+        if (salesHistory.length > 0) {
+            const summary = {
+                name: currentSession || '無題',
+                date: new Date().toISOString(),
+                totalRev: salesHistory.reduce((s, h) => s + h.total, 0),
+                customerCount: salesHistory.length,
+                recommendations: buildRestockRecommendations()
+            };
+            sessionArchive.push(summary);
+            if (sessionArchive.length > 20) sessionArchive = sessionArchive.slice(-20);
+        }
+        // ▲▲▲ ここまで ▲▲▲
+
         currentSession = null;
-        document.getElementById('session-display').innerText = "閉店中";
+        const disp = document.getElementById('session-display');
+        disp.innerText = "閉店中";
+        disp.style.background = '';
         showTab('analytics');
         saveData();
     }
@@ -902,8 +1106,102 @@
             res += `・${catNames[cat]}: ¥${rev} (${percent}%)\n`;
         }
 
+        // ▼▼▼ 次回準備の参考メモ（この回の実績から算出。あくまで参考値） ▼▼▼
+        const recs = buildRestockRecommendations();
+        if (recs.length > 0) {
+            res += `--------------------------\n`;
+            res += `[次回準備の参考メモ]\n`;
+            res += `※今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変動するため参考程度にご利用ください\n`;
+            recs.forEach(r => {
+                let arrow = r.recommended > r.initial ? '⬆️' : (r.recommended < r.initial ? '⬇️' : '→');
+                res += `・${r.name}: 今回 仕入${r.initial}/販売${r.sold} → 参考 ${r.recommended}個 ${arrow} (${r.reason})\n`;
+            });
+        }
+        // ▲▲▲ ここまで ▲▲▲
+
         document.getElementById('analytics-result').innerText = res;
     }
+
+    // ▼▼▼ 次回の仕入れ推奨数を算出する ▼▼▼
+    // 販売実績（salesHistory）と現在の在庫状況から、商品ごとの推奨仕入れ数を返す。
+    function buildRestockRecommendations() {
+        if (salesHistory.length === 0) return [];
+
+        const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
+        const openTime = new Date(sorted[0].time);
+        const closeTime = new Date(sorted[sorted.length - 1].time);
+        const totalDurationMin = Math.max(1, (closeTime - openTime) / 60000);
+
+        const soldCount = {};
+        const lastSaleTime = {};
+        sorted.forEach(h => h.items.forEach(i => {
+            soldCount[i.name] = (soldCount[i.name] || 0) + 1;
+            lastSaleTime[i.name] = new Date(h.time);
+        }));
+
+        // 5個単位に切り上げ（最低5個）
+        const roundUp5 = n => Math.max(5, Math.ceil(n / 5) * 5);
+
+        return products.map(p => {
+            const sold = soldCount[p.name] || 0;
+            const initial = p.initialStock || 0;
+            const soldOut = initial > 0 && p.stock <= 0 && sold > 0;
+            let projected = sold;
+            let reason;
+
+            if (sold === 0 && initial > 0) {
+                // 全く売れなかった → 半減を提案
+                projected = initial * 0.5;
+                reason = '販売実績なし、半減を提案';
+            } else if (soldOut) {
+                // 完売 → 品切れまでの経過時間から本来の需要を推定
+                const elapsed = Math.max(1, (lastSaleTime[p.name] - openTime) / 60000);
+                const frac = Math.min(1, Math.max(0.15, elapsed / totalDurationMin));
+                projected = (sold / frac) * 1.05; // 5%の安全在庫
+                reason = frac < 0.9 ? '早期完売、需要を取りこぼした可能性' : '完売、やや増量';
+            } else if (initial > 0) {
+                const sellThrough = sold / initial;
+                if (sellThrough >= 0.9) { projected = sold * 1.15; reason = 'ほぼ完売、増量'; }
+                else if (sellThrough <= 0.5) { projected = sold * 1.0; reason = '売れ残り多め、抑えめに'; }
+                else { projected = sold * 1.1; reason = '適正、微増'; }
+            } else {
+                projected = sold;
+                reason = 'データ不足';
+            }
+
+            return {
+                name: p.name,
+                sold: sold,
+                initial: initial,
+                soldOut: soldOut,
+                recommended: roundUp5(projected),
+                reason: reason
+            };
+        });
+    }
+
+    // 直近の販売会の推奨数を商品名で引ける形にして返す
+    function getLatestRecommendationMap() {
+        if (sessionArchive.length === 0) return null;
+        const last = sessionArchive[sessionArchive.length - 1];
+        const map = {};
+        (last.recommendations || []).forEach(r => { map[r.name] = r; });
+        return { sessionName: last.name, map: map };
+    }
+
+    // 開店設定画面で「推奨を適用」→ 前回実績に基づいて仕入れ数を自動入力
+    function applyRecommendations() {
+        const latest = getLatestRecommendationMap();
+        if (!latest) { alert('過去の販売実績がまだありません。'); return; }
+        let applied = 0;
+        tempSetupProducts.forEach(p => {
+            const r = latest.map[p.name];
+            if (r) { p.initialStock = r.recommended; applied++; }
+        });
+        renderInventorySetup();
+        alert(`「${latest.sessionName}」の実績を参考に ${applied} 件の仕入れ数を反映しました。季節や天候に合わせて調整してください。`);
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     function showTab(tabId) {
         document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
@@ -918,7 +1216,7 @@
     // ▼▼▼ PDF保存用の関数を追加 ▼▼▼
     function downloadPDF() {
         const text = document.getElementById('analytics-result').innerText;
-        if (text === "まだ売上データがないよ" || text === "売上データがありません。") {
+        if (!text || text.includes("売上データがありません") || text.includes("まだ売上データが")) {
             alert("印刷する売上データがありません。");
             return;
         }
@@ -992,7 +1290,7 @@
     // ▲▲▲ ここまで ▲▲▲
 
    function saveData() {
-        const data = { products, cart, salesHistory, reservations, currentSession };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive };
         localStorage.setItem('taizanboku_pos_data', JSON.stringify(data));
     }
 
@@ -1005,6 +1303,7 @@
             salesHistory = data.salesHistory || [];
             reservations = data.reservations || [];
             currentSession = data.currentSession || null;
+            sessionArchive = data.sessionArchive || [];
 
             if (currentSession) {
                 document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
@@ -1012,6 +1311,146 @@
             }
         }
     }
+
+    // ▼▼▼ データのバックアップ書き出し／復元 ▼▼▼
+    // 端末内(localStorage)のデータをファイルに書き出す。月1回の貴重な記録を守るための保険。
+    function triggerDownload(filename, content, mime) {
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function dateStamp() {
+        const d = new Date();
+        const p = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
+    }
+
+    function exportBackup() {
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive };
+        triggerDownload(`taizanboku_backup_${dateStamp()}.json`, JSON.stringify(data, null, 2), 'application/json');
+    }
+
+    function importBackup(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!data || typeof data !== 'object' || !Array.isArray(data.products)) {
+                    alert('このファイルは泰山木POSのバックアップではないようです。');
+                    return;
+                }
+                if (!confirm('現在のデータを、選んだバックアップの内容で上書きします。よろしいですか？')) return;
+                products = data.products;
+                cart = data.cart || [];
+                salesHistory = data.salesHistory || [];
+                reservations = data.reservations || [];
+                currentSession = data.currentSession || null;
+                sessionArchive = data.sessionArchive || [];
+
+                const disp = document.getElementById('session-display');
+                if (currentSession) {
+                    disp.innerText = `営業中: ${currentSession}`;
+                    disp.style.background = 'var(--white)';
+                } else {
+                    disp.innerText = '閉店中';
+                    disp.style.background = '';
+                }
+                saveData();
+                init();
+                renderInventorySetup();
+                renderLiveStock();
+                renderReservations();
+                updateAnalytics();
+                alert('バックアップを復元しました。');
+            } catch (err) {
+                alert('ファイルの読み込みに失敗しました。');
+            } finally {
+                event.target.value = ''; // 同じファイルを再度選べるように
+            }
+        };
+        reader.readAsText(file);
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 施設向け 精算レポート（商品別 販売数・売上）▼▼▼
+    // 販売実績を商品名でまとめ、[{name, price, count, revenue}] を返す（販売数の多い順）。
+    function buildItemSalesRows() {
+        const rows = {};
+        salesHistory.forEach(h => h.items.forEach(i => {
+            if (!rows[i.name]) rows[i.name] = { name: i.name, price: i.price, count: 0, revenue: 0 };
+            rows[i.name].count += 1;
+            rows[i.name].revenue += i.price;
+        }));
+        return Object.values(rows).sort((a, b) => b.count - a.count);
+    }
+
+    function exportFacilityCSV() {
+        const rows = buildItemSalesRows();
+        if (rows.length === 0) { alert('書き出す売上データがありません。'); return; }
+
+        const total = rows.reduce((s, r) => s + r.revenue, 0);
+        const totalCount = rows.reduce((s, r) => s + r.count, 0);
+        // Excel(日本語)で文字化けしないよう BOM を先頭に付与
+        let csv = '﻿';
+        csv += `販売会,${(currentSession || '前回').replace(/,/g, ' ')}\n`;
+        csv += `出力日時,${new Date().toLocaleString('ja-JP')}\n\n`;
+        csv += `商品名,単価,販売数,売上\n`;
+        rows.forEach(r => {
+            csv += `${r.name.replace(/,/g, ' ')},${r.price},${r.count},${r.revenue}\n`;
+        });
+        csv += `合計,,${totalCount},${total}\n`;
+        triggerDownload(`taizanboku_精算_${dateStamp()}.csv`, csv, 'text/csv');
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 販売中の在庫調整（追加搬入・数え直し）▼▼▼
+    function renderLiveStock() {
+        const list = document.getElementById('live-stock-list');
+        if (!list) return;
+        if (!currentSession) {
+            list.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:0;">開店後、当日の在庫をここで増減できます。</p>';
+            return;
+        }
+        list.innerHTML = '';
+        products.forEach(p => {
+            list.innerHTML += `
+                <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+                    <span style="flex:1; font-size:14px;">${p.name}</span>
+                    <button onclick="adjustLiveStock(${p.id}, -1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#F3F3F3; font-weight:bold; cursor:pointer;">−</button>
+                    <input type="number" value="${p.stock}" style="width:60px; padding:6px; text-align:center; font-size:14px; border:1px solid #CCC; border-radius:6px; margin:0;" onchange="setLiveStock(${p.id}, this.value)">
+                    <button onclick="adjustLiveStock(${p.id}, 1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#E2F0CB; font-weight:bold; cursor:pointer;">＋</button>
+                </div>
+            `;
+        });
+    }
+
+    function adjustLiveStock(id, delta) {
+        const p = products.find(prod => prod.id === id);
+        if (!p) return;
+        p.stock = Math.max(0, p.stock + delta);
+        saveData();
+        init();
+        renderLiveStock();
+    }
+
+    function setLiveStock(id, value) {
+        const p = products.find(prod => prod.id === id);
+        if (!p) return;
+        p.stock = Math.max(0, parseInt(value) || 0);
+        saveData();
+        init();
+        renderLiveStock();
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     loadData();
 
