@@ -282,7 +282,7 @@
         </div>
         <footer>
             <div class="total-display">
-                <span>合計</span>
+                <span>合計 <span id="cart-count" style="font-size:15px; color:var(--text-light); font-weight:normal;"></span></span>
                 <div>¥<span id="cart-total">0</span></div>
             </div>
             <div class="action-row">
@@ -499,6 +499,7 @@
     let processingReservationId = null;
     let sessionArchive = []; // 過去の販売会の実績（次回仕入れ推奨のもと）
     let receiptCounter = 0;  // 客No.（会計ごとの通し番号）
+    let voidCount = 0;       // この販売会での会計取り消し件数
 
     function init() {
         const grid = document.getElementById('product-grid');
@@ -511,10 +512,13 @@
             else if(p.type === 'savory') btn.style.backgroundColor = 'var(--btn-savory)';
             else btn.style.backgroundColor = 'var(--btn-drink)';
 
+            // 残りわずか（1〜5個）は在庫表示を強調して品切れ間近に気づけるように（位置は変えない）
+            const lowStock = p.stock > 0 && p.stock <= 5;
+            const stockStyle = lowStock ? 'color:#e06c00; font-weight:bold;' : '';
             btn.innerHTML = `
                 <span>${p.name}</span>
                 <span class="price">¥${p.price}</span>
-                <span class="stock">在庫:${p.stock}</span>
+                <span class="stock" style="${stockStyle}">在庫:${p.stock}${lowStock ? ' ⚠️' : ''}</span>
             `;
             btn.onclick = () => addToCart(p);
             grid.appendChild(btn);
@@ -560,21 +564,31 @@
 
     function voidLastSale() {
         if (salesHistory.length === 0) { playError(); alert('取り消せる会計がありません。'); return; }
-        const last = salesHistory[salesHistory.length - 1];
-        if (!confirm(`直前の会計を取り消します。\n合計 ¥${last.total}\n※販売した商品は在庫に戻ります。よろしいですか？`)) return;
-        last.items.forEach(it => {
+        voidSale(salesHistory.length - 1);
+    }
+
+    // 指定した会計を取り消す（レシート／会計済一覧からも呼べる）
+    function voidSale(idx) {
+        const rec = salesHistory[idx];
+        if (!rec) { playError(); return; }
+        const counts = {};
+        rec.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
+        const summary = Object.entries(counts).map(([n, c]) => `${n}×${c}`).join('、');
+        if (!confirm(`客No.${rec.no || ''} の会計を取り消します。\n［${summary}］ 合計¥${rec.total}\n※販売した商品は在庫に戻ります。よろしいですか？`)) return;
+        rec.items.forEach(it => {
             const p = products.find(prod => prod.id === it.id);
             if (p) p.stock++;
         });
-        salesHistory.pop();
-        if (last.no === receiptCounter) receiptCounter--; // 客No.を詰める
+        salesHistory.splice(idx, 1);
+        if (rec.no === receiptCounter) receiptCounter--; // 末尾なら客No.を詰める（途中なら欠番のまま）
+        voidCount++;
         playSound(660, 0.08);
         saveData();
         init();
         renderLastSaleInfo();
         renderRecords();
         updateAnalytics();
-        alert('直前の会計を取り消しました。');
+        alert('会計を取り消しました。');
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -632,6 +646,7 @@
         }
 
         document.getElementById('cart-total').innerText = total;
+        document.getElementById('cart-count').innerText = cart.length > 0 ? `(${cart.length}点)` : '';
     }
 
     function generateReceiptHTML(items) {
@@ -934,6 +949,7 @@
         reservations = [];
         cart = [];
         receiptCounter = 0;
+        voidCount = 0;
 
         // 編集した一時データを本番の商品データとして適用する
         products = JSON.parse(JSON.stringify(tempSetupProducts));
@@ -1046,15 +1062,25 @@
             });
         });
 
-        let customerCount = sortedHistory.length; 
+        let customerCount = sortedHistory.length;
         let averagePurchase = Math.floor(totalRev / customerCount);
         let averageItems = (totalItemsSold / customerCount).toFixed(1);
+
+        // 現金集計・最高/最低会計・ピーク時間帯・取り消し件数
+        let cashTotal = 0, changeTotal = 0, cashKnown = 0;
+        sortedHistory.forEach(h => { if (h.cash != null) { cashTotal += h.cash; changeTotal += (h.change || 0); cashKnown++; } });
+        let maxSale = Math.max(...sortedHistory.map(h => h.total));
+        let minSale = Math.min(...sortedHistory.map(h => h.total));
+        let peakSlot = Object.entries(timeSlotRev).sort((a, b) => b[1] - a[1])[0];
 
         let res = `【売上集計: ${currentSession || '前回'}】\n`;
         res += `総売上: ¥${totalRev}\n`;
         res += `来店人数: ${customerCount}人\n`;
-        res += `平均客単価: ¥${averagePurchase}\n`;
+        res += `平均客単価: ¥${averagePurchase}（最高¥${maxSale} / 最低¥${minSale}）\n`;
         res += `平均買上点数: ${averageItems}個/人\n`;
+        if (peakSlot) res += `最も売れた時間帯: ${peakSlot[0]}〜（¥${peakSlot[1]}）\n`;
+        if (cashKnown > 0) res += `現金: お預かり計¥${cashTotal} / お釣り計¥${changeTotal}\n`;
+        if (voidCount > 0) res += `会計取り消し: ${voidCount}件\n`;
         res += `--------------------------\n`;
 
         res += `[商品別 在庫消化率とABC分析]\n`;
@@ -1337,7 +1363,7 @@
     // ▲▲▲ ここまで ▲▲▲
 
    function saveData() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount };
         localStorage.setItem('taizanboku_pos_data', JSON.stringify(data));
     }
 
@@ -1352,6 +1378,7 @@
             currentSession = data.currentSession || null;
             sessionArchive = data.sessionArchive || [];
             receiptCounter = data.receiptCounter || salesHistory.length;
+            voidCount = data.voidCount || 0;
 
             if (currentSession) {
                 document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
@@ -1381,7 +1408,7 @@
     }
 
     function exportBackup() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount };
         triggerDownload(`taizanboku_backup_${dateStamp()}.json`, JSON.stringify(data, null, 2), 'application/json');
     }
 
@@ -1404,6 +1431,7 @@
                 currentSession = data.currentSession || null;
                 sessionArchive = data.sessionArchive || [];
                 receiptCounter = data.receiptCounter || salesHistory.length;
+                voidCount = data.voidCount || 0;
 
                 const disp = document.getElementById('session-display');
                 if (currentSession) {
@@ -1530,7 +1558,10 @@
                     <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-light);">
                         <span>お預かり ${cashStr}</span><span>お釣り ${changeStr}</span>
                     </div>
-                    <button class="action-btn btn-reserve" style="width:100%; padding:8px; font-size:14px;" onclick="printReceipt(${idx})">🧾 レシート発行 (PDF)</button>
+                    <div style="display:flex; gap:8px;">
+                        <button class="action-btn btn-undo" style="flex:1; padding:8px; font-size:14px;" onclick="voidSale(${idx})">↩️ 取り消し</button>
+                        <button class="action-btn btn-reserve" style="flex:1; padding:8px; font-size:14px;" onclick="printReceipt(${idx})">🧾 レシート</button>
+                    </div>
                 </div>`;
         }).join('');
     }
