@@ -398,22 +398,53 @@
 
 <script>
     // ▼▼▼ 操作音（電子音を鳴らす）▼▼▼
-    // AudioContext は最初の操作時に作る（自動再生ブロック対策）。音が出せない環境では無視。
+    // iOS(iPad/iPhone)対策：AudioContextはユーザー操作の中でしか起動できず、
+    // 最初のタップで「解錠」しないと無音のままになる。そのため画面への最初の
+    // タッチ/クリックで必ず解錠する。音が出せない環境では無視。
     let audioCtx = null;
+    let audioUnlocked = false;
+
+    function getAudioCtx() {
+        if (!audioCtx) {
+            try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+            catch (e) { return null; }
+        }
+        return audioCtx;
+    }
+
+    // 最初のタップで呼ばれ、無音を1回鳴らしてiOSのオーディオを完全に解錠する
+    function unlockAudio() {
+        const ctx = getAudioCtx();
+        if (!ctx) return;
+        if (ctx.state !== 'running') ctx.resume();
+        if (!audioUnlocked) {
+            try {
+                const src = ctx.createBufferSource();
+                src.buffer = ctx.createBuffer(1, 1, 22050);
+                src.connect(ctx.destination);
+                src.start(0);
+                audioUnlocked = true;
+            } catch (e) { /* 無視 */ }
+        }
+    }
+    document.addEventListener('touchend', unlockAudio, { passive: true });
+    document.addEventListener('click', unlockAudio, { passive: true });
+
     function playSound(freq = 880, duration = 0.1, type = 'sine', volume = 0.1) {
         try {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            if (ctx.state !== 'running') ctx.resume(); // iOSで一時停止していたら再開
+            const oscillator = ctx.createOscillator();
+            const gainNode = ctx.createGain();
             oscillator.type = type;
-            oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            oscillator.frequency.setValueAtTime(freq, ctx.currentTime);
+            gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
             oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+            gainNode.connect(ctx.destination);
             oscillator.start();
-            oscillator.stop(audioCtx.currentTime + duration);
+            oscillator.stop(ctx.currentTime + duration);
         } catch (e) { /* 音が出せない環境では何もしない */ }
     }
     // 登録できなかった時の警告音（低め・少し長め）→ 打ち間違い・未開店に気づける
