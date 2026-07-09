@@ -38,19 +38,21 @@
             touch-action: manipulation;
         }
 
-        /* ここにテンキーのCSSを追加するよ */
+        /* テンキー */
         .tenkey-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
+            gap: 12px;
             margin-top: 15px;
         }
         .tenkey-btn {
             background-color: #FAFAFA;
             border: 2px solid #EEE;
-            font-size: 20px;
-            padding: 12px;
-            border-radius: 10px;
+            font-size: 30px;
+            font-weight: bold;
+            padding: 18px;
+            min-height: 68px;
+            border-radius: 12px;
             color: var(--text-main);
             font-family: inherit;
         }
@@ -70,7 +72,7 @@
         .type-btn:has(input:checked) { background: var(--accent); color: white; border-color: var(--accent); }
         
         @media (min-width: 769px) {
-            .checkout-wide { max-width: 800px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
+            .checkout-wide { max-width: 940px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
             .checkout-left { flex: 1; display: flex; flex-direction: column; border-right: 2px dashed #EEE; padding-right: 20px; }
             .checkout-right { flex: 1.2; display: flex; flex-direction: column; justify-content: space-between; }
             .checkout-left .receipt-list { flex: 1; max-height: none; }
@@ -205,9 +207,10 @@
             background: var(--white); 
             width: 90%; max-width: 450px; 
             padding: 25px; 
-            border-radius: 20px; 
+            border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-height: 85vh;
+            max-height: 92vh;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
         }
@@ -222,17 +225,23 @@
             padding: 8px 0; font-size: 15px; border-bottom: 1px solid #FAFAFA;
         }
 
-        input[type="number"], input[type="text"] { 
-            width: calc(100% - 30px); padding: 12px 15px; font-size: 18px; 
-            margin: 10px 0; border-radius: 12px; border: 2px solid #EEE; 
+        input[type="number"], input[type="text"] {
+            width: calc(100% - 30px); padding: 12px 15px; font-size: 18px;
+            margin: 10px 0; border-radius: 12px; border: 2px solid #EEE;
             background: #FAFAFA; color: var(--text-main); outline: none;
         }
         input:focus { border-color: var(--accent); }
 
+        /* お会計の預かり金額入力を大きく・見やすく */
+        #cash-input {
+            font-size: 30px; font-weight: bold; text-align: right;
+            padding: 16px 18px; width: calc(100% - 36px);
+        }
+
         .change-display { font-size: 36px; color: var(--accent); margin: 15px 0; font-weight: bold; text-align: center; }
         
         .tab-menu { display: flex; border-bottom: 2px solid #EEE; margin-bottom: 15px; flex-shrink: 0; }
-        .tab-item { flex: 1; padding: 12px; color: var(--text-light); cursor: pointer; text-align: center; font-weight: bold; }
+        .tab-item { flex: 1; padding: 12px 4px; color: var(--text-light); cursor: pointer; text-align: center; font-weight: bold; font-size: 15px; }
         .tab-item.active { color: var(--accent); border-bottom: 3px solid var(--accent); }
         .tab-content { flex: 1; overflow-y: auto; padding-bottom: 10px; }
 
@@ -273,7 +282,7 @@
         </div>
         <footer>
             <div class="total-display">
-                <span>合計</span>
+                <span>合計 <span id="cart-count" style="font-size:15px; color:var(--text-light); font-weight:normal;"></span></span>
                 <div>¥<span id="cart-total">0</span></div>
             </div>
             <div class="action-row">
@@ -342,6 +351,7 @@
             <div class="tab-item active" onclick="showTab('session')" id="tab-btn-session">営業管理</div>
             <div class="tab-item" onclick="showTab('reservations')" id="tab-btn-reservations">予約管理</div>
             <div class="tab-item" onclick="showTab('analytics')" id="tab-btn-analytics">売上確認</div>
+            <div class="tab-item" onclick="showTab('records')" id="tab-btn-records">会計済</div>
         </div>
         
         <div class="tab-content">
@@ -359,12 +369,6 @@
                     <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の在庫調整（追加搬入・数え直し）</summary>
                     <div id="live-stock-list" style="max-height:200px; overflow-y:auto; background:#FAFAFA; border:2px solid #EEE; padding:10px; border-radius:12px; margin-top:10px;"></div>
                 </details>
-
-                <div style="background:#FFF5F7; border:2px solid #FFD1DC; border-radius:12px; padding:12px; margin-bottom:20px;">
-                    <div style="font-size:14px; font-weight:bold; margin-bottom:6px;">🧾 会計ミスの訂正</div>
-                    <div id="last-sale-info" style="font-size:12px; color:var(--text-light); margin-bottom:8px;">直前の会計はありません。</div>
-                    <button class="action-btn btn-undo" style="width:100%;" onclick="voidLastSale()">直前の会計を取り消す（在庫を戻す）</button>
-                </div>
 
                 <hr style="border: 1px dashed #EEE; margin-bottom: 20px;">
                 <button class="action-btn" style="width:100%; background: #FF9AA2; color: white;" onclick="endSession()">閉店する (集計して終了)</button>
@@ -384,11 +388,24 @@
             </div>
 
             <div id="tab-analytics" style="display:none;">
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <button class="action-btn btn-checkout" style="flex:1; margin-top:0; background-color:#FFDFBA;" onclick="downloadPDF()">📄 PDF保存</button>
-                    <button class="action-btn btn-checkout" style="flex:1; margin-top:0; background-color:#B5EAD7;" onclick="exportFacilityCSV()">🏭 精算CSV</button>
+                <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap;">
+                    <button class="action-btn btn-checkout" style="flex:1; min-width:90px; margin-top:0; background-color:#FFDFBA;" onclick="downloadPDF()">📄 PDF</button>
+                    <button class="action-btn btn-checkout" style="flex:1; min-width:90px; margin-top:0; background-color:#B5EAD7;" onclick="exportFacilityCSV()">🏭 精算CSV</button>
+                    <button class="action-btn btn-checkout" style="flex:1; min-width:90px; margin-top:0; background-color:#B5EAD7;" onclick="exportDetailCSV()">🧾 明細CSV</button>
                 </div>
+
+                <div style="font-size:14px; font-weight:bold; margin-bottom:6px;">📉 商品ごとの残在庫の推移</div>
+                <div id="stock-chart" style="background:#FFF; border:2px solid #EEE; border-radius:12px; padding:10px; margin-bottom:8px; overflow-x:auto;"></div>
+                <div id="stock-chart-legend" style="display:flex; flex-wrap:wrap; gap:6px 12px; margin-bottom:15px;"></div>
+
+                <div style="font-size:14px; font-weight:bold; margin-bottom:6px;">👥 時間帯別の客数（15分ごと）</div>
+                <div id="customer-chart" style="background:#FFF; border:2px solid #EEE; border-radius:12px; padding:10px; margin-bottom:15px; overflow-x:auto;"></div>
+
                 <div id="analytics-result" style="font-size:14px; white-space: pre-wrap; line-height: 1.6;">売上データがありません。</div>
+            </div>
+
+            <div id="tab-records" style="display:none;">
+                <div id="records-list"></div>
             </div>
             </div>
 
@@ -478,6 +495,8 @@
     let currentSession = null;
     let processingReservationId = null;
     let sessionArchive = []; // 過去の販売会の実績（次回仕入れ推奨のもと）
+    let receiptCounter = 0;  // 客No.（会計ごとの通し番号）
+    let voidCount = 0;       // この販売会での会計取り消し件数
 
     function init() {
         const grid = document.getElementById('product-grid');
@@ -490,10 +509,13 @@
             else if(p.type === 'savory') btn.style.backgroundColor = 'var(--btn-savory)';
             else btn.style.backgroundColor = 'var(--btn-drink)';
 
+            // 残りわずか（1〜5個）は在庫表示を強調して品切れ間近に気づけるように（位置は変えない）
+            const lowStock = p.stock > 0 && p.stock <= 5;
+            const stockStyle = lowStock ? 'color:#e06c00; font-weight:bold;' : '';
             btn.innerHTML = `
                 <span>${p.name}</span>
                 <span class="price">¥${p.price}</span>
-                <span class="stock">在庫:${p.stock}</span>
+                <span class="stock" style="${stockStyle}">在庫:${p.stock}${lowStock ? ' ⚠️' : ''}</span>
             `;
             btn.onclick = () => addToCart(p);
             grid.appendChild(btn);
@@ -520,40 +542,28 @@
         if (p) addToCart(p);
     }
 
-    // ▼▼▼ 直前の会計を取り消す（会計後に気づいたミスの訂正）▼▼▼
-    function renderLastSaleInfo() {
-        const el = document.getElementById('last-sale-info');
-        if (!el) return;
-        if (salesHistory.length === 0) {
-            el.innerText = '直前の会計はありません。';
-            return;
-        }
-        const last = salesHistory[salesHistory.length - 1];
+    // 指定した会計を取り消す（会計済一覧から呼ぶ／会計後に気づいたミスの訂正）
+    function voidSale(idx) {
+        const rec = salesHistory[idx];
+        if (!rec) { playError(); return; }
         const counts = {};
-        last.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
+        rec.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
         const summary = Object.entries(counts).map(([n, c]) => `${n}×${c}`).join('、');
-        const t = new Date(last.time);
-        const tStr = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
-        el.innerText = `直前(${tStr}): ${summary} ／ 合計¥${last.total}`;
-    }
-
-    function voidLastSale() {
-        if (salesHistory.length === 0) { playError(); alert('取り消せる会計がありません。'); return; }
-        const last = salesHistory[salesHistory.length - 1];
-        if (!confirm(`直前の会計を取り消します。\n合計 ¥${last.total}\n※販売した商品は在庫に戻ります。よろしいですか？`)) return;
-        last.items.forEach(it => {
+        if (!confirm(`客No.${rec.no || ''} の会計を取り消します。\n［${summary}］ 合計¥${rec.total}\n※販売した商品は在庫に戻ります。よろしいですか？`)) return;
+        rec.items.forEach(it => {
             const p = products.find(prod => prod.id === it.id);
             if (p) p.stock++;
         });
-        salesHistory.pop();
+        salesHistory.splice(idx, 1);
+        if (rec.no === receiptCounter) receiptCounter--; // 末尾なら客No.を詰める（途中なら欠番のまま）
+        voidCount++;
         playSound(660, 0.08);
         saveData();
         init();
-        renderLastSaleInfo();
+        renderRecords();
         updateAnalytics();
-        alert('直前の会計を取り消しました。');
+        alert('会計を取り消しました。');
     }
-    // ▲▲▲ ここまで ▲▲▲
 
     function undoLast() {
         if (cart.length > 0) {
@@ -609,6 +619,7 @@
         }
 
         document.getElementById('cart-total').innerText = total;
+        document.getElementById('cart-count').innerText = cart.length > 0 ? `(${cart.length}点)` : '';
     }
 
     function generateReceiptHTML(items) {
@@ -691,7 +702,7 @@
         calcChange();
     }
 
-    // ここからテンキーの機能を新しく追加するよ
+    // テンキー入力
     function appendCash(num) {
         playSound();
         const input = document.getElementById('cash-input');
@@ -704,7 +715,6 @@
         document.getElementById('cash-input').value = '';
         calcChange();
     }
-    // ここまで追加するよ
 
 
     function completeTransaction() {
@@ -733,9 +743,18 @@
             }
         }
 
-        const record = { time: new Date(), items: [...itemsRecorded], total: total, customerType: selectedType };
+        receiptCounter++;
+        const record = {
+            no: receiptCounter,
+            time: new Date(),
+            items: [...itemsRecorded],
+            total: total,
+            customerType: selectedType,
+            cash: cash,
+            change: Math.max(0, cash - total)
+        };
         salesHistory.push(record);
-        
+
         for (let i = 0; i < typeRadios.length; i++) {
             if (typeRadios[i].value === "不明") typeRadios[i].checked = true;
         }
@@ -744,7 +763,6 @@
         saveData();
         init();
         renderReservations();
-        renderLastSaleInfo();
     }
 
     function promptReservation() {
@@ -865,14 +883,24 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
-    function openSettings() { 
-        document.getElementById('settings-modal').style.display = 'flex'; 
+    // 「2026/07/10デモ販売会」のような、当日の日付入りの既定の販売会名
+    function defaultSessionName() {
+        const d = new Date();
+        const p = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}デモ販売会`;
+    }
+
+    function openSettings() {
+        document.getElementById('settings-modal').style.display = 'flex';
+        // 未入力なら当日の日付入りの名前を自動でセット（そのまま開店できる）
+        const nameInput = document.getElementById('session-name-input');
+        if (!nameInput.value) nameInput.value = defaultSessionName();
         // 設定画面を開くたびに、現在の商品の状態をコピーして編集画面にセットする
         tempSetupProducts = JSON.parse(JSON.stringify(products));
         renderInventorySetup();
         renderLiveStock();
-        renderLastSaleInfo();
         renderReservations();
+        renderRecords();
         updateAnalytics();
     }
 
@@ -890,7 +918,9 @@
         salesHistory = [];
         reservations = [];
         cart = [];
-        
+        receiptCounter = 0;
+        voidCount = 0;
+
         // 編集した一時データを本番の商品データとして適用する
         products = JSON.parse(JSON.stringify(tempSetupProducts));
         products.forEach(p => p.stock = p.initialStock);
@@ -933,11 +963,13 @@
     }
 
     function updateAnalytics() {
+        renderStockChart();
+        renderCustomerChart();
         if (salesHistory.length === 0) {
             document.getElementById('analytics-result').innerText = "まだ売上データがありません";
             return;
         }
-        
+
         let sortedHistory = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
         let sessionStartTime = new Date(sortedHistory[0].time); 
 
@@ -1001,15 +1033,25 @@
             });
         });
 
-        let customerCount = sortedHistory.length; 
+        let customerCount = sortedHistory.length;
         let averagePurchase = Math.floor(totalRev / customerCount);
         let averageItems = (totalItemsSold / customerCount).toFixed(1);
+
+        // 現金集計・最高/最低会計・ピーク時間帯・取り消し件数
+        let cashTotal = 0, changeTotal = 0, cashKnown = 0;
+        sortedHistory.forEach(h => { if (h.cash != null) { cashTotal += h.cash; changeTotal += (h.change || 0); cashKnown++; } });
+        let maxSale = Math.max(...sortedHistory.map(h => h.total));
+        let minSale = Math.min(...sortedHistory.map(h => h.total));
+        let peakSlot = Object.entries(timeSlotRev).sort((a, b) => b[1] - a[1])[0];
 
         let res = `【売上集計: ${currentSession || '前回'}】\n`;
         res += `総売上: ¥${totalRev}\n`;
         res += `来店人数: ${customerCount}人\n`;
-        res += `平均客単価: ¥${averagePurchase}\n`;
+        res += `平均客単価: ¥${averagePurchase}（最高¥${maxSale} / 最低¥${minSale}）\n`;
         res += `平均買上点数: ${averageItems}個/人\n`;
+        if (peakSlot) res += `最も売れた時間帯: ${peakSlot[0]}〜（¥${peakSlot[1]}）\n`;
+        if (cashKnown > 0) res += `現金: お預かり計¥${cashTotal} / お釣り計¥${changeTotal}\n`;
+        if (voidCount > 0) res += `会計取り消し: ${voidCount}件\n`;
         res += `--------------------------\n`;
 
         res += `[商品別 在庫消化率とABC分析]\n`;
@@ -1209,8 +1251,10 @@
         document.getElementById('tab-session').style.display = 'none';
         document.getElementById('tab-reservations').style.display = 'none';
         document.getElementById('tab-analytics').style.display = 'none';
+        document.getElementById('tab-records').style.display = 'none';
         document.getElementById(`tab-${tabId}`).style.display = 'block';
         if(tabId === 'reservations') renderReservations();
+        if(tabId === 'records') renderRecords();
     }
 
     // ▼▼▼ PDF保存用の関数を追加 ▼▼▼
@@ -1290,7 +1334,7 @@
     // ▲▲▲ ここまで ▲▲▲
 
    function saveData() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount };
         localStorage.setItem('taizanboku_pos_data', JSON.stringify(data));
     }
 
@@ -1304,6 +1348,8 @@
             reservations = data.reservations || [];
             currentSession = data.currentSession || null;
             sessionArchive = data.sessionArchive || [];
+            receiptCounter = data.receiptCounter || salesHistory.length;
+            voidCount = data.voidCount || 0;
 
             if (currentSession) {
                 document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
@@ -1333,7 +1379,7 @@
     }
 
     function exportBackup() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount };
         triggerDownload(`taizanboku_backup_${dateStamp()}.json`, JSON.stringify(data, null, 2), 'application/json');
     }
 
@@ -1355,6 +1401,8 @@
                 reservations = data.reservations || [];
                 currentSession = data.currentSession || null;
                 sessionArchive = data.sessionArchive || [];
+                receiptCounter = data.receiptCounter || salesHistory.length;
+                voidCount = data.voidCount || 0;
 
                 const disp = document.getElementById('session-display');
                 if (currentSession) {
@@ -1369,6 +1417,7 @@
                 renderInventorySetup();
                 renderLiveStock();
                 renderReservations();
+                renderRecords();
                 updateAnalytics();
                 alert('バックアップを復元しました。');
             } catch (err) {
@@ -1409,6 +1458,286 @@
         });
         csv += `合計,,${totalCount},${total}\n`;
         triggerDownload(`taizanboku_精算_${dateStamp()}.csv`, csv, 'text/csv');
+    }
+
+    // 一会計ごとの明細をすべて書き出す（記録の保存用）
+    function exportDetailCSV() {
+        if (salesHistory.length === 0) { alert('書き出す売上データがありません。'); return; }
+        const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
+        let csv = '﻿';
+        csv += `販売会,${(currentSession || '前回').replace(/,/g, ' ')}\n`;
+        csv += `出力日時,${new Date().toLocaleString('ja-JP')}\n\n`;
+        csv += `客No,時刻,客属性,購入内容,点数,合計,預かり,お釣り\n`;
+        sorted.forEach((h, idx) => {
+            const counts = {};
+            h.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
+            const detail = Object.entries(counts).map(([n, c]) => `${n}×${c}`).join(' / ').replace(/,/g, ' ');
+            const t = new Date(h.time);
+            const tStr = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}:${String(t.getSeconds()).padStart(2, '0')}`;
+            const cash = (h.cash != null) ? h.cash : '';
+            const change = (h.change != null) ? h.change : '';
+            csv += `${h.no || idx + 1},${tStr},${h.customerType || '不明'},${detail},${h.items.length},${h.total},${cash},${change}\n`;
+        });
+        triggerDownload(`taizanboku_明細_${dateStamp()}.csv`, csv, 'text/csv');
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 会計済情報（一会計ごとの明細表示 & レシート発行）▼▼▼
+    // 商品を「名前・単価」でまとめて {name, price, qty, subtotal} の配列にする
+    function itemLines(items) {
+        const map = {};
+        items.forEach(i => {
+            const key = i.name + '' + i.price;
+            if (!map[key]) map[key] = { name: i.name, price: i.price, qty: 0 };
+            map[key].qty += 1;
+        });
+        return Object.values(map).map(l => ({ ...l, subtotal: l.price * l.qty }));
+    }
+
+    function renderRecords() {
+        const list = document.getElementById('records-list');
+        if (!list) return;
+        if (salesHistory.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-light); text-align:center; margin-top:20px;">まだ会計済のデータはありません。</p>';
+            return;
+        }
+        // 新しい会計を上に。元の配列インデックスも保持（レシート発行用）
+        const rows = salesHistory.map((h, idx) => ({ h, idx }))
+            .sort((a, b) => new Date(b.h.time) - new Date(a.h.time));
+
+        list.innerHTML = rows.map(({ h, idx }) => {
+            const t = new Date(h.time);
+            const dtStr = `${t.getFullYear()}/${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')} ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
+            const lines = itemLines(h.items).map(l =>
+                `<div style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
+                    <span>${l.name} <span style="color:var(--text-light);">×${l.qty} (@¥${l.price})</span></span>
+                    <span style="font-weight:bold;">¥${l.subtotal}</span>
+                </div>`).join('');
+            const cashStr = (h.cash != null) ? `¥${h.cash}` : '—';
+            const changeStr = (h.change != null) ? `¥${h.change}` : '—';
+            return `
+                <div class="res-card">
+                    <div class="res-header">
+                        <span>客No. ${h.no || '-'}</span>
+                        <span style="color:var(--text-light); font-size:13px; font-weight:normal;">${dtStr}</span>
+                    </div>
+                    <div style="font-size:12px; color:var(--text-light);">客属性: ${h.customerType || '不明'}</div>
+                    <div style="border-top:1px dashed #EAEAEA; border-bottom:1px dashed #EAEAEA; padding:6px 0;">${lines}</div>
+                    <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                        <span>合計</span><span style="color:var(--accent);">¥${h.total}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-light);">
+                        <span>お預かり ${cashStr}</span><span>お釣り ${changeStr}</span>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button class="action-btn btn-undo" style="flex:1; padding:8px; font-size:14px;" onclick="voidSale(${idx})">↩️ 取り消し</button>
+                        <button class="action-btn btn-reserve" style="flex:1; padding:8px; font-size:14px;" onclick="printReceipt(${idx})">🧾 レシート</button>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    // 指定した会計のレシートを印刷用ウィンドウで開く（ブラウザのPDF保存が使える）
+    function printReceipt(idx) {
+        const h = salesHistory[idx];
+        if (!h) return;
+        const t = new Date(h.time);
+        const dtStr = `${t.getFullYear()}/${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')} ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
+        const lines = itemLines(h.items).map(l =>
+            `<tr><td>${l.name}</td><td style="text-align:center;">${l.qty}</td><td style="text-align:right;">¥${l.price}</td><td style="text-align:right;">¥${l.subtotal}</td></tr>`).join('');
+        const cashStr = (h.cash != null) ? `¥${h.cash}` : '—';
+        const changeStr = (h.change != null) ? `¥${h.change}` : '—';
+
+        const win = window.open('', '_blank');
+        win.document.write(`
+            <html><head><title>レシート No.${h.no || ''}</title>
+            <style>
+                body { font-family: 'Hiragino Kaku Gothic ProN', sans-serif; color:#333; padding:20px; max-width:360px; margin:0 auto; }
+                h1 { font-size:20px; text-align:center; margin:0 0 4px; }
+                .sub { text-align:center; font-size:12px; color:#888; margin-bottom:12px; }
+                .meta { font-size:13px; display:flex; justify-content:space-between; margin-bottom:8px; }
+                table { width:100%; border-collapse:collapse; font-size:13px; }
+                th { border-bottom:2px solid #333; text-align:left; padding:4px 0; }
+                td { padding:4px 0; border-bottom:1px dashed #DDD; }
+                .total { display:flex; justify-content:space-between; font-size:18px; font-weight:bold; margin-top:10px; border-top:2px solid #333; padding-top:8px; }
+                .pay { display:flex; justify-content:space-between; font-size:14px; margin-top:6px; color:#555; }
+                .foot { text-align:center; font-size:12px; color:#888; margin-top:16px; }
+                @media print { body { padding:0; } }
+            </style></head>
+            <body>
+                <h1>🥖 泰山木POS</h1>
+                <div class="sub">${(currentSession || '').replace(/</g, '')}</div>
+                <div class="meta"><span>客No. ${h.no || '-'}</span><span>${dtStr}</span></div>
+                <table>
+                    <thead><tr><th>商品</th><th style="text-align:center;">数</th><th style="text-align:right;">単価</th><th style="text-align:right;">小計</th></tr></thead>
+                    <tbody>${lines}</tbody>
+                </table>
+                <div class="total"><span>合計</span><span>¥${h.total}</span></div>
+                <div class="pay"><span>お預かり</span><span>${cashStr}</span></div>
+                <div class="pay"><span>お釣り</span><span>${changeStr}</span></div>
+                <div class="foot">ありがとうございました</div>
+                <script>window.onload=function(){window.print();setTimeout(function(){window.close();},400);};<\/script>
+            </body></html>
+        `);
+        win.document.close();
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 残在庫の推移グラフ（折れ線）▼▼▼
+    // 検証済みカテゴリカルパレット（8色）。9商品目以降は同色＋破線で識別（色＋線種の複合エンコード）。
+    const CHART_PALETTE = ['#2a78d6', '#1baf7a', '#eda100', '#008300', '#4a3aa7', '#e34948', '#e87ba4', '#eb6834'];
+    let chartHighlight = null; // 凡例タップで注目する商品名
+
+    // 各会計時点での商品ごとの残在庫を時系列で再構成する
+    function buildStockTimeline() {
+        if (salesHistory.length === 0) return null;
+        const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
+        let t0 = new Date(sorted[0].time).getTime();
+        let t1 = new Date(sorted[sorted.length - 1].time).getTime();
+        if (t1 <= t0) t1 = t0 + 1;
+
+        const series = products
+            .filter(p => (p.initialStock || 0) > 0)
+            .map(p => {
+                let remaining = p.initialStock;
+                const pts = [{ t: t0, y: remaining }];
+                sorted.forEach(h => {
+                    const soldInTx = h.items.filter(i => i.id === p.id).length;
+                    if (soldInTx > 0) remaining -= soldInTx;
+                    pts.push({ t: new Date(h.time).getTime(), y: Math.max(0, remaining) });
+                });
+                return { name: p.name, initial: p.initialStock, final: Math.max(0, remaining), pts };
+            });
+
+        const maxStock = Math.max(1, ...series.map(s => s.initial));
+        return { t0, t1, series, maxStock };
+    }
+
+    function renderStockChart() {
+        const box = document.getElementById('stock-chart');
+        const legendBox = document.getElementById('stock-chart-legend');
+        if (!box) return;
+        const data = buildStockTimeline();
+        if (!data) {
+            box.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:6px;">売上が記録されるとここにグラフが表示されます。</p>';
+            if (legendBox) legendBox.innerHTML = '';
+            return;
+        }
+
+        const W = 620, H = 300, mL = 40, mR = 12, mT = 12, mB = 40;
+        const plotW = W - mL - mR, plotH = H - mT - mB;
+        const xOf = t => mL + ((t - data.t0) / (data.t1 - data.t0)) * plotW;
+        const yOf = v => mT + (1 - v / data.maxStock) * plotH;
+        const fmt = t => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
+
+        let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; min-width:520px; height:auto; font-family:inherit;">`;
+        // Y軸グリッド＆目盛り（0〜max を数段）
+        const ySteps = 4;
+        for (let i = 0; i <= ySteps; i++) {
+            const val = Math.round((data.maxStock / ySteps) * i);
+            const y = yOf(val);
+            svg += `<line x1="${mL}" y1="${y}" x2="${W - mR}" y2="${y}" stroke="#e1e0d9" stroke-width="1"/>`;
+            svg += `<text x="${mL - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="#898781">${val}</text>`;
+        }
+        // X軸目盛り（開始・中間・終了）
+        [data.t0, (data.t0 + data.t1) / 2, data.t1].forEach((t, i) => {
+            const x = xOf(t);
+            const anchor = i === 0 ? 'start' : (i === 2 ? 'end' : 'middle');
+            svg += `<text x="${x}" y="${H - mB + 20}" text-anchor="${anchor}" font-size="11" fill="#898781">${fmt(t)}</text>`;
+        });
+        svg += `<text x="${mL}" y="${H - 4}" font-size="11" fill="#898781">時刻 →</text>`;
+        // 各商品の折れ線
+        data.series.forEach((s, idx) => {
+            const color = CHART_PALETTE[idx % 8];
+            const dash = idx >= 8 ? 'stroke-dasharray="6 4"' : '';
+            const path = s.pts.map((pt, k) => `${k === 0 ? 'M' : 'L'}${xOf(pt.t).toFixed(1)},${yOf(pt.y).toFixed(1)}`).join(' ');
+            const isDim = chartHighlight && chartHighlight !== s.name;
+            const isFocus = chartHighlight === s.name;
+            const opacity = isDim ? 0.12 : 1;
+            const width = isFocus ? 4 : 2;
+            svg += `<path d="${path}" fill="none" stroke="${color}" stroke-width="${width}" ${dash} opacity="${opacity}" stroke-linejoin="round" stroke-linecap="round"/>`;
+        });
+        svg += `</svg>`;
+        box.innerHTML = svg;
+
+        // 凡例（色＋線種＋商品名。タップでその商品を強調）
+        if (legendBox) {
+            legendBox.innerHTML = data.series.map((s, idx) => {
+                const color = CHART_PALETTE[idx % 8];
+                const dashLine = idx >= 8
+                    ? `<svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="${color}" stroke-width="3" stroke-dasharray="5 3"/></svg>`
+                    : `<svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="${color}" stroke-width="3"/></svg>`;
+                const active = chartHighlight === s.name;
+                return `<span onclick="toggleChartHighlight('${s.name.replace(/'/g, "\\'")}')" style="display:inline-flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; padding:2px 6px; border-radius:6px; background:${active ? '#FFF0F0' : 'transparent'}; color:var(--text-main); font-weight:${active ? 'bold' : 'normal'};">${dashLine}${s.name}（残${s.final}）</span>`;
+            }).join('');
+        }
+    }
+
+    function toggleChartHighlight(name) {
+        chartHighlight = (chartHighlight === name) ? null : name;
+        renderStockChart();
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 時間帯別の客数グラフ（棒グラフ）▼▼▼
+    // 15分ごとに会計件数（＝客数）を集計する。売上のない時間帯も0として連続表示する。
+    function buildCustomerTimeline() {
+        if (salesHistory.length === 0) return null;
+        const slotMs = 15 * 60000;
+        const floorSlot = t => Math.floor(t / slotMs) * slotMs;
+        const times = salesHistory.map(h => new Date(h.time).getTime());
+        const first = floorSlot(Math.min(...times));
+        const last = floorSlot(Math.max(...times));
+
+        const counts = {};
+        times.forEach(t => { const s = floorSlot(t); counts[s] = (counts[s] || 0) + 1; });
+
+        const slots = [];
+        for (let t = first; t <= last; t += slotMs) {
+            const d = new Date(t);
+            slots.push({ label: `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`, count: counts[t] || 0 });
+        }
+        return { slots, maxCount: Math.max(1, ...slots.map(s => s.count)) };
+    }
+
+    function renderCustomerChart() {
+        const box = document.getElementById('customer-chart');
+        if (!box) return;
+        const data = buildCustomerTimeline();
+        if (!data) {
+            box.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:6px;">売上が記録されるとここにグラフが表示されます。</p>';
+            return;
+        }
+
+        const barW = 34, gap = 8, mL = 34, mR = 12, mT = 16, mB = 40;
+        const plotH = 200;
+        const W = mL + mR + data.slots.length * (barW + gap);
+        const H = mT + plotH + mB;
+        const yOf = v => mT + (1 - v / data.maxCount) * plotH;
+
+        let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; min-width:${Math.max(W, 320)}px; height:auto; font-family:inherit;">`;
+        // Y軸グリッド＆目盛り（整数の客数）
+        const ySteps = Math.min(data.maxCount, 4);
+        for (let i = 0; i <= ySteps; i++) {
+            const val = Math.round((data.maxCount / ySteps) * i);
+            const y = yOf(val);
+            svg += `<line x1="${mL}" y1="${y}" x2="${W - mR}" y2="${y}" stroke="#e1e0d9" stroke-width="1"/>`;
+            svg += `<text x="${mL - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="#898781">${val}</text>`;
+        }
+        // 棒＋各棒の上に客数、下に時刻
+        data.slots.forEach((s, i) => {
+            const x = mL + i * (barW + gap);
+            const y = yOf(s.count);
+            const h = mT + plotH - y;
+            if (s.count > 0) {
+                svg += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="4" fill="#2a78d6"/>`;
+                svg += `<text x="${x + barW / 2}" y="${y - 4}" text-anchor="middle" font-size="11" font-weight="bold" fill="#0b0b0b">${s.count}</text>`;
+            }
+            svg += `<text x="${x + barW / 2}" y="${H - mB + 16}" text-anchor="middle" font-size="10" fill="#898781">${s.label}</text>`;
+        });
+        svg += `<text x="${mL}" y="${H - 6}" font-size="11" fill="#898781">人</text>`;
+        svg += `</svg>`;
+        box.innerHTML = svg;
     }
     // ▲▲▲ ここまで ▲▲▲
 
