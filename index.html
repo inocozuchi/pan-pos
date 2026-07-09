@@ -241,7 +241,7 @@
         .change-display { font-size: 36px; color: var(--accent); margin: 15px 0; font-weight: bold; text-align: center; }
         
         .tab-menu { display: flex; border-bottom: 2px solid #EEE; margin-bottom: 15px; flex-shrink: 0; }
-        .tab-item { flex: 1; padding: 12px; color: var(--text-light); cursor: pointer; text-align: center; font-weight: bold; }
+        .tab-item { flex: 1; padding: 12px 4px; color: var(--text-light); cursor: pointer; text-align: center; font-weight: bold; font-size: 15px; }
         .tab-item.active { color: var(--accent); border-bottom: 3px solid var(--accent); }
         .tab-content { flex: 1; overflow-y: auto; padding-bottom: 10px; }
 
@@ -351,6 +351,7 @@
             <div class="tab-item active" onclick="showTab('session')" id="tab-btn-session">営業管理</div>
             <div class="tab-item" onclick="showTab('reservations')" id="tab-btn-reservations">予約管理</div>
             <div class="tab-item" onclick="showTab('analytics')" id="tab-btn-analytics">売上確認</div>
+            <div class="tab-item" onclick="showTab('records')" id="tab-btn-records">会計済</div>
         </div>
         
         <div class="tab-content">
@@ -404,6 +405,10 @@
                 <div id="stock-chart-legend" style="display:flex; flex-wrap:wrap; gap:6px 12px; margin-bottom:15px;"></div>
 
                 <div id="analytics-result" style="font-size:14px; white-space: pre-wrap; line-height: 1.6;">売上データがありません。</div>
+            </div>
+
+            <div id="tab-records" style="display:none;">
+                <div id="records-list"></div>
             </div>
             </div>
 
@@ -493,6 +498,7 @@
     let currentSession = null;
     let processingReservationId = null;
     let sessionArchive = []; // 過去の販売会の実績（次回仕入れ推奨のもと）
+    let receiptCounter = 0;  // 客No.（会計ごとの通し番号）
 
     function init() {
         const grid = document.getElementById('product-grid');
@@ -561,10 +567,12 @@
             if (p) p.stock++;
         });
         salesHistory.pop();
+        if (last.no === receiptCounter) receiptCounter--; // 客No.を詰める
         playSound(660, 0.08);
         saveData();
         init();
         renderLastSaleInfo();
+        renderRecords();
         updateAnalytics();
         alert('直前の会計を取り消しました。');
     }
@@ -748,9 +756,18 @@
             }
         }
 
-        const record = { time: new Date(), items: [...itemsRecorded], total: total, customerType: selectedType };
+        receiptCounter++;
+        const record = {
+            no: receiptCounter,
+            time: new Date(),
+            items: [...itemsRecorded],
+            total: total,
+            customerType: selectedType,
+            cash: cash,
+            change: Math.max(0, cash - total)
+        };
         salesHistory.push(record);
-        
+
         for (let i = 0; i < typeRadios.length; i++) {
             if (typeRadios[i].value === "不明") typeRadios[i].checked = true;
         }
@@ -898,6 +915,7 @@
         renderLiveStock();
         renderLastSaleInfo();
         renderReservations();
+        renderRecords();
         updateAnalytics();
     }
 
@@ -915,7 +933,8 @@
         salesHistory = [];
         reservations = [];
         cart = [];
-        
+        receiptCounter = 0;
+
         // 編集した一時データを本番の商品データとして適用する
         products = JSON.parse(JSON.stringify(tempSetupProducts));
         products.forEach(p => p.stock = p.initialStock);
@@ -1235,8 +1254,10 @@
         document.getElementById('tab-session').style.display = 'none';
         document.getElementById('tab-reservations').style.display = 'none';
         document.getElementById('tab-analytics').style.display = 'none';
+        document.getElementById('tab-records').style.display = 'none';
         document.getElementById(`tab-${tabId}`).style.display = 'block';
         if(tabId === 'reservations') renderReservations();
+        if(tabId === 'records') renderRecords();
     }
 
     // ▼▼▼ PDF保存用の関数を追加 ▼▼▼
@@ -1316,7 +1337,7 @@
     // ▲▲▲ ここまで ▲▲▲
 
    function saveData() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter };
         localStorage.setItem('taizanboku_pos_data', JSON.stringify(data));
     }
 
@@ -1330,6 +1351,7 @@
             reservations = data.reservations || [];
             currentSession = data.currentSession || null;
             sessionArchive = data.sessionArchive || [];
+            receiptCounter = data.receiptCounter || salesHistory.length;
 
             if (currentSession) {
                 document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
@@ -1359,7 +1381,7 @@
     }
 
     function exportBackup() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter };
         triggerDownload(`taizanboku_backup_${dateStamp()}.json`, JSON.stringify(data, null, 2), 'application/json');
     }
 
@@ -1381,6 +1403,7 @@
                 reservations = data.reservations || [];
                 currentSession = data.currentSession || null;
                 sessionArchive = data.sessionArchive || [];
+                receiptCounter = data.receiptCounter || salesHistory.length;
 
                 const disp = document.getElementById('session-display');
                 if (currentSession) {
@@ -1395,6 +1418,7 @@
                 renderInventorySetup();
                 renderLiveStock();
                 renderReservations();
+                renderRecords();
                 updateAnalytics();
                 alert('バックアップを復元しました。');
             } catch (err) {
@@ -1444,16 +1468,116 @@
         let csv = '﻿';
         csv += `販売会,${(currentSession || '前回').replace(/,/g, ' ')}\n`;
         csv += `出力日時,${new Date().toLocaleString('ja-JP')}\n\n`;
-        csv += `会計No,時刻,客属性,購入内容,点数,合計\n`;
+        csv += `客No,時刻,客属性,購入内容,点数,合計,預かり,お釣り\n`;
         sorted.forEach((h, idx) => {
             const counts = {};
             h.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
             const detail = Object.entries(counts).map(([n, c]) => `${n}×${c}`).join(' / ').replace(/,/g, ' ');
             const t = new Date(h.time);
             const tStr = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}:${String(t.getSeconds()).padStart(2, '0')}`;
-            csv += `${idx + 1},${tStr},${h.customerType || '不明'},${detail},${h.items.length},${h.total}\n`;
+            const cash = (h.cash != null) ? h.cash : '';
+            const change = (h.change != null) ? h.change : '';
+            csv += `${h.no || idx + 1},${tStr},${h.customerType || '不明'},${detail},${h.items.length},${h.total},${cash},${change}\n`;
         });
         triggerDownload(`taizanboku_明細_${dateStamp()}.csv`, csv, 'text/csv');
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 会計済情報（一会計ごとの明細表示 & レシート発行）▼▼▼
+    // 商品を「名前・単価」でまとめて {name, price, qty, subtotal} の配列にする
+    function itemLines(items) {
+        const map = {};
+        items.forEach(i => {
+            const key = i.name + '' + i.price;
+            if (!map[key]) map[key] = { name: i.name, price: i.price, qty: 0 };
+            map[key].qty += 1;
+        });
+        return Object.values(map).map(l => ({ ...l, subtotal: l.price * l.qty }));
+    }
+
+    function renderRecords() {
+        const list = document.getElementById('records-list');
+        if (!list) return;
+        if (salesHistory.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-light); text-align:center; margin-top:20px;">まだ会計済のデータはありません。</p>';
+            return;
+        }
+        // 新しい会計を上に。元の配列インデックスも保持（レシート発行用）
+        const rows = salesHistory.map((h, idx) => ({ h, idx }))
+            .sort((a, b) => new Date(b.h.time) - new Date(a.h.time));
+
+        list.innerHTML = rows.map(({ h, idx }) => {
+            const t = new Date(h.time);
+            const dtStr = `${t.getFullYear()}/${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')} ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
+            const lines = itemLines(h.items).map(l =>
+                `<div style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
+                    <span>${l.name} <span style="color:var(--text-light);">×${l.qty} (@¥${l.price})</span></span>
+                    <span style="font-weight:bold;">¥${l.subtotal}</span>
+                </div>`).join('');
+            const cashStr = (h.cash != null) ? `¥${h.cash}` : '—';
+            const changeStr = (h.change != null) ? `¥${h.change}` : '—';
+            return `
+                <div class="res-card">
+                    <div class="res-header">
+                        <span>客No. ${h.no || '-'}</span>
+                        <span style="color:var(--text-light); font-size:13px; font-weight:normal;">${dtStr}</span>
+                    </div>
+                    <div style="font-size:12px; color:var(--text-light);">客属性: ${h.customerType || '不明'}</div>
+                    <div style="border-top:1px dashed #EAEAEA; border-bottom:1px dashed #EAEAEA; padding:6px 0;">${lines}</div>
+                    <div style="display:flex; justify-content:space-between; font-weight:bold;">
+                        <span>合計</span><span style="color:var(--accent);">¥${h.total}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-light);">
+                        <span>お預かり ${cashStr}</span><span>お釣り ${changeStr}</span>
+                    </div>
+                    <button class="action-btn btn-reserve" style="width:100%; padding:8px; font-size:14px;" onclick="printReceipt(${idx})">🧾 レシート発行 (PDF)</button>
+                </div>`;
+        }).join('');
+    }
+
+    // 指定した会計のレシートを印刷用ウィンドウで開く（ブラウザのPDF保存が使える）
+    function printReceipt(idx) {
+        const h = salesHistory[idx];
+        if (!h) return;
+        const t = new Date(h.time);
+        const dtStr = `${t.getFullYear()}/${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')} ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
+        const lines = itemLines(h.items).map(l =>
+            `<tr><td>${l.name}</td><td style="text-align:center;">${l.qty}</td><td style="text-align:right;">¥${l.price}</td><td style="text-align:right;">¥${l.subtotal}</td></tr>`).join('');
+        const cashStr = (h.cash != null) ? `¥${h.cash}` : '—';
+        const changeStr = (h.change != null) ? `¥${h.change}` : '—';
+
+        const win = window.open('', '_blank');
+        win.document.write(`
+            <html><head><title>レシート No.${h.no || ''}</title>
+            <style>
+                body { font-family: 'Hiragino Kaku Gothic ProN', sans-serif; color:#333; padding:20px; max-width:360px; margin:0 auto; }
+                h1 { font-size:20px; text-align:center; margin:0 0 4px; }
+                .sub { text-align:center; font-size:12px; color:#888; margin-bottom:12px; }
+                .meta { font-size:13px; display:flex; justify-content:space-between; margin-bottom:8px; }
+                table { width:100%; border-collapse:collapse; font-size:13px; }
+                th { border-bottom:2px solid #333; text-align:left; padding:4px 0; }
+                td { padding:4px 0; border-bottom:1px dashed #DDD; }
+                .total { display:flex; justify-content:space-between; font-size:18px; font-weight:bold; margin-top:10px; border-top:2px solid #333; padding-top:8px; }
+                .pay { display:flex; justify-content:space-between; font-size:14px; margin-top:6px; color:#555; }
+                .foot { text-align:center; font-size:12px; color:#888; margin-top:16px; }
+                @media print { body { padding:0; } }
+            </style></head>
+            <body>
+                <h1>🥖 泰山木POS</h1>
+                <div class="sub">${(currentSession || '').replace(/</g, '')}</div>
+                <div class="meta"><span>客No. ${h.no || '-'}</span><span>${dtStr}</span></div>
+                <table>
+                    <thead><tr><th>商品</th><th style="text-align:center;">数</th><th style="text-align:right;">単価</th><th style="text-align:right;">小計</th></tr></thead>
+                    <tbody>${lines}</tbody>
+                </table>
+                <div class="total"><span>合計</span><span>¥${h.total}</span></div>
+                <div class="pay"><span>お預かり</span><span>${cashStr}</span></div>
+                <div class="pay"><span>お釣り</span><span>${changeStr}</span></div>
+                <div class="foot">ありがとうございました</div>
+                <script>window.onload=function(){window.print();setTimeout(function(){window.close();},400);};<\/script>
+            </body></html>
+        `);
+        win.document.close();
     }
     // ▲▲▲ ここまで ▲▲▲
 
