@@ -261,6 +261,25 @@
             .total-display { font-size: 18px; }
             .total-display span { font-size: 24px; }
         }
+
+        /* ▼ 設定/予約パネル：横長デバイス向けにワイド化＆横スクロール ▼ */
+        @media (min-width: 769px) {
+            #settings-modal .modal-content { max-width: 1000px; width: 94vw; }
+            /* 会計済・予約のカードを横一列に並べ、横スクロールで見る */
+            .card-strip { display: flex; flex-wrap: nowrap; gap: 12px; overflow-x: auto; padding-bottom: 10px; }
+            .card-strip .res-card { min-width: 300px; max-width: 340px; margin-bottom: 0; flex-shrink: 0; }
+            .card-strip > p { flex: 1; }
+        }
+        /* 集計メニュー（項目選択）のボタン群 */
+        .analytics-menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        @media (min-width: 769px) { .analytics-menu-grid { grid-template-columns: repeat(3, 1fr); } }
+        .analytics-menu-btn {
+            background: #FAFAFA; border: 2px solid #EEE; border-radius: 12px; padding: 16px 10px;
+            font-size: 15px; font-weight: bold; color: var(--text-main); cursor: pointer;
+            font-family: inherit; text-align: center; line-height: 1.5;
+        }
+        .analytics-menu-btn:active { background: #FFF0F0; }
+        .analytics-sec { font-size: 14px; white-space: pre-wrap; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -384,28 +403,61 @@
             </div>
 
             <div id="tab-reservations" style="display:none;">
-                <div id="reservation-list"></div>
+                <div id="reservation-list" class="card-strip"></div>
             </div>
 
             <div id="tab-analytics" style="display:none;">
-                <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap:wrap;">
-                    <button class="action-btn btn-checkout" style="flex:1; min-width:90px; margin-top:0; background-color:#FFDFBA;" onclick="downloadPDF()">📄 PDF</button>
-                    <button class="action-btn btn-checkout" style="flex:1; min-width:90px; margin-top:0; background-color:#B5EAD7;" onclick="exportFacilityCSV()">🏭 精算CSV</button>
-                    <button class="action-btn btn-checkout" style="flex:1; min-width:90px; margin-top:0; background-color:#B5EAD7;" onclick="exportDetailCSV()">🧾 明細CSV</button>
+                <!-- 項目選択メニュー -->
+                <div id="analytics-menu">
+                    <div id="analytics-empty" style="display:none; color:var(--text-light); text-align:center; margin:20px 0;">まだ売上データがありません。</div>
+                    <div id="analytics-menu-grid" class="analytics-menu-grid">
+                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('summary')">📊<br>概要</button>
+                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('items')">🥐<br>商品別</button>
+                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('time')">🕐<br>時間帯別<br>（客数グラフ）</button>
+                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('stock')">📉<br>残在庫の推移</button>
+                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('segment')">👥<br>客層・カテゴリ</button>
+                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('next')">📝<br>次回準備の<br>参考メモ</button>
+                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('export')">💾<br>書き出し<br>（PDF/CSV）</button>
+                    </div>
                 </div>
 
-                <div style="font-size:14px; font-weight:bold; margin-bottom:6px;">📉 商品ごとの残在庫の推移</div>
-                <div id="stock-chart" style="background:#FFF; border:2px solid #EEE; border-radius:12px; padding:10px; margin-bottom:8px; overflow-x:auto;"></div>
-                <div id="stock-chart-legend" style="display:flex; flex-wrap:wrap; gap:6px 12px; margin-bottom:15px;"></div>
+                <!-- 選択した項目の表示 -->
+                <div id="analytics-detail" style="display:none;">
+                    <button class="action-btn btn-undo" style="margin-bottom:12px; padding:8px 16px;" onclick="showAnalyticsMenu()">← 集計メニューに戻る</button>
+                    <div id="analytics-detail-title" style="font-size:16px; font-weight:bold; margin-bottom:10px;"></div>
 
-                <div style="font-size:14px; font-weight:bold; margin-bottom:6px;">👥 時間帯別の客数（15分ごと）</div>
-                <div id="customer-chart" style="background:#FFF; border:2px solid #EEE; border-radius:12px; padding:10px; margin-bottom:15px; overflow-x:auto;"></div>
+                    <div id="sec-summary" class="analytics-sec" style="display:none;"></div>
+                    <div id="sec-items" class="analytics-sec" style="display:none;"></div>
 
-                <div id="analytics-result" style="font-size:14px; white-space: pre-wrap; line-height: 1.6;">売上データがありません。</div>
+                    <div id="sec-time" class="analytics-sec" style="display:none;">
+                        <div id="customer-chart" style="background:#FFF; border:2px solid #EEE; border-radius:12px; padding:10px; margin-bottom:12px; overflow-x:auto;"></div>
+                        <div id="sec-time-text"></div>
+                    </div>
+
+                    <div id="sec-stock" class="analytics-sec" style="display:none;">
+                        <div id="stock-chart" style="background:#FFF; border:2px solid #EEE; border-radius:12px; padding:10px; margin-bottom:8px; overflow-x:auto;"></div>
+                        <div id="stock-chart-legend" style="display:flex; flex-wrap:wrap; gap:6px 12px;"></div>
+                    </div>
+
+                    <div id="sec-segment" class="analytics-sec" style="display:none;"></div>
+                    <div id="sec-next" class="analytics-sec" style="display:none;"></div>
+
+                    <div id="sec-export" class="analytics-sec" style="display:none;">
+                        <p style="font-size:13px; color:var(--text-light);">集計結果を書き出します。</p>
+                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                            <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#FFDFBA;" onclick="downloadPDF()">📄 PDF保存</button>
+                            <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#B5EAD7;" onclick="exportFacilityCSV()">🏭 精算CSV</button>
+                            <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#B5EAD7;" onclick="exportDetailCSV()">🧾 明細CSV</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PDF出力用（全項目まとめ・非表示） -->
+                <div id="analytics-result" style="display:none;">売上データがありません。</div>
             </div>
 
             <div id="tab-records" style="display:none;">
-                <div id="records-list"></div>
+                <div id="records-list" class="card-strip"></div>
             </div>
             </div>
 
@@ -497,6 +549,7 @@
     let sessionArchive = []; // 過去の販売会の実績（次回仕入れ推奨のもと）
     let receiptCounter = 0;  // 客No.（会計ごとの通し番号）
     let voidCount = 0;       // この販売会での会計取り消し件数
+    let analyticsSections = null; // 集計結果（項目別テキスト）のキャッシュ
 
     function init() {
         const grid = document.getElementById('product-grid');
@@ -962,16 +1015,18 @@
         saveData();
     }
 
+    // 売上データを集計し、項目ごとのテキストを analyticsSections に格納する。
+    // 実際の表示は集計メニュー（showAnalyticsSection）から項目を選んで行う。
     function updateAnalytics() {
-        renderStockChart();
-        renderCustomerChart();
         if (salesHistory.length === 0) {
+            analyticsSections = null;
             document.getElementById('analytics-result').innerText = "まだ売上データがありません";
+            showAnalyticsMenu();
             return;
         }
 
         let sortedHistory = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
-        let sessionStartTime = new Date(sortedHistory[0].time); 
+        let sessionStartTime = new Date(sortedHistory[0].time);
 
         let totalRev = sortedHistory.reduce((s, h) => s + h.total, 0);
         let itemCounts = {};
@@ -981,35 +1036,35 @@
 
         let timeSlotRev = {};
         let timeSlotItemCounts = {};
-        let customerTypeStats = { 
-            "学生": { count: 0, rev: 0 }, 
-            "教員": { count: 0, rev: 0 }, 
-            "職員": { count: 0, rev: 0 }, 
-            "その他": { count: 0, rev: 0 }, 
-            "不明": { count: 0, rev: 0 } 
+        let customerTypeStats = {
+            "学生": { count: 0, rev: 0 },
+            "教員": { count: 0, rev: 0 },
+            "職員": { count: 0, rev: 0 },
+            "その他": { count: 0, rev: 0 },
+            "不明": { count: 0, rev: 0 }
         };
 
-        let totalItemsSold = 0; 
-        let itemStats = {}; 
-        let coPurchase = {}; 
+        let totalItemsSold = 0;
+        let itemStats = {};
+        let coPurchase = {};
 
         sortedHistory.forEach(h => {
             let date = new Date(h.time);
             let hStr = date.getHours();
             let mStr = Math.floor(date.getMinutes() / 15) * 15;
             let timeLabel = `${hStr}:${mStr === 0 ? "00" : String(mStr).padStart(2, '0')}`;
-            
+
             timeSlotRev[timeLabel] = (timeSlotRev[timeLabel] || 0) + h.total;
             if (!timeSlotItemCounts[timeLabel]) timeSlotItemCounts[timeLabel] = {};
 
-            if(h.customerType && customerTypeStats[h.customerType]) {
+            if (h.customerType && customerTypeStats[h.customerType]) {
                 customerTypeStats[h.customerType].count += 1;
                 customerTypeStats[h.customerType].rev += h.total;
             }
 
             let uniqueItems = [...new Set(h.items.map(i => i.name))];
-            for(let i = 0; i < uniqueItems.length; i++){
-                for(let j = i + 1; j < uniqueItems.length; j++){
+            for (let i = 0; i < uniqueItems.length; i++) {
+                for (let j = i + 1; j < uniqueItems.length; j++) {
                     let pair = [uniqueItems[i], uniqueItems[j]].sort().join(' ＋ ');
                     coPurchase[pair] = (coPurchase[pair] || 0) + 1;
                 }
@@ -1020,14 +1075,10 @@
                 itemRev[i.name] = (itemRev[i.name] || 0) + i.price;
                 timeSlotItemCounts[timeLabel][i.name] = (timeSlotItemCounts[timeLabel][i.name] || 0) + 1;
                 totalItemsSold += 1;
-                
-                if (i.type) {
-                    categoryRev[i.type] += i.price;
-                }
 
-                if (!itemStats[i.name]) {
-                    itemStats[i.name] = { count: 0, lastTime: date };
-                }
+                if (i.type) categoryRev[i.type] += i.price;
+
+                if (!itemStats[i.name]) itemStats[i.name] = { count: 0, lastTime: date };
                 itemStats[i.name].count += 1;
                 itemStats[i.name].lastTime = date;
             });
@@ -1037,132 +1088,144 @@
         let averagePurchase = Math.floor(totalRev / customerCount);
         let averageItems = (totalItemsSold / customerCount).toFixed(1);
 
-        // 現金集計・最高/最低会計・ピーク時間帯・取り消し件数
         let cashTotal = 0, changeTotal = 0, cashKnown = 0;
         sortedHistory.forEach(h => { if (h.cash != null) { cashTotal += h.cash; changeTotal += (h.change || 0); cashKnown++; } });
         let maxSale = Math.max(...sortedHistory.map(h => h.total));
         let minSale = Math.min(...sortedHistory.map(h => h.total));
         let peakSlot = Object.entries(timeSlotRev).sort((a, b) => b[1] - a[1])[0];
 
-        let res = `【売上集計: ${currentSession || '前回'}】\n`;
-        res += `総売上: ¥${totalRev}\n`;
-        res += `来店人数: ${customerCount}人\n`;
-        res += `平均客単価: ¥${averagePurchase}（最高¥${maxSale} / 最低¥${minSale}）\n`;
-        res += `平均買上点数: ${averageItems}個/人\n`;
-        if (peakSlot) res += `最も売れた時間帯: ${peakSlot[0]}〜（¥${peakSlot[1]}）\n`;
-        if (cashKnown > 0) res += `現金: お預かり計¥${cashTotal} / お釣り計¥${changeTotal}\n`;
-        if (voidCount > 0) res += `会計取り消し: ${voidCount}件\n`;
-        res += `--------------------------\n`;
+        // --- 概要 ---
+        let summary = `【売上集計: ${currentSession || '前回'}】\n`;
+        summary += `総売上: ¥${totalRev}\n`;
+        summary += `来店人数: ${customerCount}人\n`;
+        summary += `平均客単価: ¥${averagePurchase}（最高¥${maxSale} / 最低¥${minSale}）\n`;
+        summary += `平均買上点数: ${averageItems}個/人\n`;
+        if (peakSlot) summary += `最も売れた時間帯: ${peakSlot[0]}〜（¥${peakSlot[1]}）\n`;
+        if (cashKnown > 0) summary += `現金: お預かり計¥${cashTotal} / お釣り計¥${changeTotal}\n`;
+        if (voidCount > 0) summary += `会計取り消し: ${voidCount}件\n`;
 
-        res += `[商品別 在庫消化率とABC分析]\n`;
+        // --- 商品別（消化率・ABC ＋ 完売時刻・販売スピード）---
+        let itemsText = `[在庫消化率とABC分析]\n`;
         let sortedRevItems = Object.entries(itemRev).sort((a, b) => b[1] - a[1]);
         let cumulativeRev = 0;
         sortedRevItems.forEach(item => {
             let name = item[0];
-            let rev = item[1];
-            cumulativeRev += rev;
+            cumulativeRev += item[1];
             let cumPercent = (cumulativeRev / totalRev) * 100;
             let rank = cumPercent <= 70 ? 'A' : (cumPercent <= 90 ? 'B' : 'C');
-
             let product = products.find(p => p.name === name);
             let initial = product ? product.initialStock : 0;
             let sold = itemCounts[name];
             let sellThrough = initial > 0 ? Math.round((sold / initial) * 100) : 0;
-
-            res += `・${name}: 消化率${sellThrough}% (ランク${rank})\n`;
+            itemsText += `・${name}: 消化率${sellThrough}% (ランク${rank})\n`;
         });
-        res += `--------------------------\n`;
-        
-        res += `[商品別 完売時刻と販売スピード]\n`;
-        res += `※()内は品切れにならなければ1時間で何個売れたかの予測ペース\n`;
-        
+        itemsText += `\n[完売時刻と販売スピード]\n`;
+        itemsText += `※()内は品切れにならなければ1時間で何個売れたかの予測ペース\n`;
         let soldOutItems = [];
         let notSoldOutItems = [];
-
         Object.keys(itemStats).forEach(name => {
             let stat = itemStats[name];
             let product = products.find(p => p.name === name);
             let isSoldOut = product ? (product.stock === 0) : false;
-            
             if (isSoldOut) {
                 let lastTime = new Date(stat.lastTime);
                 let tLabel = `${lastTime.getHours()}:${String(lastTime.getMinutes()).padStart(2, '0')}`;
-                
-                let durationMin = Math.max(1, (lastTime - sessionStartTime) / 60000); 
+                let durationMin = Math.max(1, (lastTime - sessionStartTime) / 60000);
                 let paceHour = Math.round((stat.count / durationMin) * 60);
-                
                 soldOutItems.push({ name: name, timeStr: tLabel, timeValue: lastTime, pace: paceHour });
             } else {
                 notSoldOutItems.push(name);
             }
         });
-
         soldOutItems.sort((a, b) => a.timeValue - b.timeValue);
-        soldOutItems.forEach(item => {
-            res += `・${item.name}: ${item.timeStr} 完売 (ペース: ${item.pace}個/時)\n`;
-        });
-        
-        if(notSoldOutItems.length > 0) {
-            res += `・販売中: ${notSoldOutItems.join(', ')}\n`;
-        }
-        res += `--------------------------\n`;
+        soldOutItems.forEach(item => { itemsText += `・${item.name}: ${item.timeStr} 完売 (ペース: ${item.pace}個/時)\n`; });
+        if (notSoldOutItems.length > 0) itemsText += `・販売中: ${notSoldOutItems.join(', ')}\n`;
 
-        res += `[時間帯別(15分刻み) トップ3商品]\n`;
-        let sortedSlots = Object.keys(timeSlotRev).sort((a, b) => {
-            return parseInt(a.replace(':', '')) - parseInt(b.replace(':', ''));
-        });
+        // --- 時間帯別 ---
+        let timeText = `[時間帯別(15分刻み) 売上とトップ3商品]\n`;
+        let sortedSlots = Object.keys(timeSlotRev).sort((a, b) => parseInt(a.replace(':', '')) - parseInt(b.replace(':', '')));
         sortedSlots.forEach(slot => {
-            res += `・${slot}〜: ¥${timeSlotRev[slot]}\n`;
+            timeText += `・${slot}〜: ¥${timeSlotRev[slot]}\n`;
             let itemsInSlot = Object.entries(timeSlotItemCounts[slot]).sort((a, b) => b[1] - a[1]).slice(0, 3);
-            itemsInSlot.forEach((item, index) => {
-                res += `  ${index + 1}位: ${item[0]} (${item[1]}個)\n`;
-            });
+            itemsInSlot.forEach((item, index) => { timeText += `  ${index + 1}位: ${item[0]} (${item[1]}個)\n`; });
         });
-        res += `--------------------------\n`;
 
-        res += `[よく一緒に買われた商品]\n`;
-        let sortedPairs = Object.entries(coPurchase).sort((a, b) => b[1] - a[1]).slice(0, 5);
-        if(sortedPairs.length > 0) {
-            sortedPairs.forEach(pair => {
-                res += `・${pair[0]}: ${pair[1]}回\n`;
-            });
-        } else {
-            res += `・データなし\n`;
-        }
-        res += `--------------------------\n`;
-        
-        res += `[客属性別 来店人数と客単価]\n`;
-        for(let type in customerTypeStats) {
+        // --- 客層・カテゴリ ---
+        let segmentText = `[客属性別 来店人数と客単価]\n`;
+        for (let type in customerTypeStats) {
             let stats = customerTypeStats[type];
-            if(stats.count > 0) {
-                let typeAvg = Math.floor(stats.rev / stats.count);
-                res += `・${type}: ${stats.count}人 (平均 ¥${typeAvg})\n`;
-            }
+            if (stats.count > 0) segmentText += `・${type}: ${stats.count}人 (平均 ¥${Math.floor(stats.rev / stats.count)})\n`;
         }
-        res += `--------------------------\n`;
-        
-        res += `[カテゴリ別 売上と占有率]\n`;
+        segmentText += `\n[カテゴリ別 売上と占有率]\n`;
         for (let cat in categoryRev) {
-            let rev = categoryRev[cat];
-            let percent = totalRev > 0 ? Math.round((rev / totalRev) * 100) : 0;
-            res += `・${catNames[cat]}: ¥${rev} (${percent}%)\n`;
+            let percent = totalRev > 0 ? Math.round((categoryRev[cat] / totalRev) * 100) : 0;
+            segmentText += `・${catNames[cat]}: ¥${categoryRev[cat]} (${percent}%)\n`;
         }
+        segmentText += `\n[よく一緒に買われた商品]\n`;
+        let sortedPairs = Object.entries(coPurchase).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        if (sortedPairs.length > 0) sortedPairs.forEach(pair => { segmentText += `・${pair[0]}: ${pair[1]}回\n`; });
+        else segmentText += `・データなし\n`;
 
-        // ▼▼▼ 次回準備の参考メモ（この回の実績から算出。あくまで参考値） ▼▼▼
+        // --- 次回準備の参考メモ ---
+        let nextText = '';
         const recs = buildRestockRecommendations();
         if (recs.length > 0) {
-            res += `--------------------------\n`;
-            res += `[次回準備の参考メモ]\n`;
-            res += `※今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変動するため参考程度にご利用ください\n`;
+            nextText += `※今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変動するため参考程度にご利用ください\n`;
             recs.forEach(r => {
                 let arrow = r.recommended > r.initial ? '⬆️' : (r.recommended < r.initial ? '⬇️' : '→');
-                res += `・${r.name}: 今回 仕入${r.initial}/販売${r.sold} → 参考 ${r.recommended}個 ${arrow} (${r.reason})\n`;
+                nextText += `・${r.name}: 今回 仕入${r.initial}/販売${r.sold} → 参考 ${r.recommended}個 ${arrow} (${r.reason})\n`;
             });
+        } else {
+            nextText = 'データがありません';
         }
-        // ▲▲▲ ここまで ▲▲▲
 
-        document.getElementById('analytics-result').innerText = res;
+        analyticsSections = { summary, items: itemsText, time: timeText, segment: segmentText, next: nextText };
+
+        // PDF出力用（全項目まとめ）
+        const sep = '--------------------------\n';
+        document.getElementById('analytics-result').innerText =
+            summary + sep + itemsText + sep + timeText + sep + segmentText + sep +
+            '[次回準備の参考メモ]\n' + nextText;
+
+        showAnalyticsMenu();
     }
+
+    // ▼▼▼ 売上確認：項目選択メニュー ▼▼▼
+    const ANALYTICS_TITLES = {
+        summary: '📊 概要', items: '🥐 商品別', time: '🕐 時間帯別の客数',
+        stock: '📉 残在庫の推移', segment: '👥 客層・カテゴリ', next: '📝 次回準備の参考メモ',
+        export: '💾 書き出し（PDF/CSV）'
+    };
+
+    function showAnalyticsMenu() {
+        const detail = document.getElementById('analytics-detail');
+        const menu = document.getElementById('analytics-menu');
+        if (!detail || !menu) return;
+        detail.style.display = 'none';
+        menu.style.display = 'block';
+        const hasData = !!analyticsSections;
+        document.getElementById('analytics-empty').style.display = hasData ? 'none' : 'block';
+        document.getElementById('analytics-menu-grid').style.display = hasData ? '' : 'none';
+    }
+
+    function showAnalyticsSection(key) {
+        if (!analyticsSections) return;
+        document.getElementById('analytics-menu').style.display = 'none';
+        document.getElementById('analytics-detail').style.display = 'block';
+        document.getElementById('analytics-detail-title').innerText = ANALYTICS_TITLES[key] || '';
+        document.querySelectorAll('.analytics-sec').forEach(el => el.style.display = 'none');
+        const sec = document.getElementById('sec-' + key);
+        if (sec) sec.style.display = 'block';
+
+        if (key === 'summary') document.getElementById('sec-summary').innerText = analyticsSections.summary;
+        else if (key === 'items') document.getElementById('sec-items').innerText = analyticsSections.items;
+        else if (key === 'segment') document.getElementById('sec-segment').innerText = analyticsSections.segment;
+        else if (key === 'next') document.getElementById('sec-next').innerText = analyticsSections.next;
+        else if (key === 'time') { document.getElementById('sec-time-text').innerText = analyticsSections.time; renderCustomerChart(); }
+        else if (key === 'stock') renderStockChart();
+        // export はボタンのみ（静的）
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     // ▼▼▼ 次回の仕入れ推奨数を算出する ▼▼▼
     // 販売実績（salesHistory）と現在の在庫状況から、商品ごとの推奨仕入れ数を返す。
@@ -1255,6 +1318,7 @@
         document.getElementById(`tab-${tabId}`).style.display = 'block';
         if(tabId === 'reservations') renderReservations();
         if(tabId === 'records') renderRecords();
+        if(tabId === 'analytics') showAnalyticsMenu();
     }
 
     // ▼▼▼ PDF保存用の関数を追加 ▼▼▼
