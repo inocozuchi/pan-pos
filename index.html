@@ -426,6 +426,7 @@
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('time')">🕐<br>時間帯別<br>（客数グラフ）</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('stock')">📉<br>残在庫の推移</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('segment')">👥<br>客層・カテゴリ</button>
+                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('insight')">🔮<br>次回インサイト</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('next')">📝<br>次回準備の<br>参考メモ</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('export')">💾<br>書き出し<br>（PDF/CSV）</button>
                     </div>
@@ -450,6 +451,7 @@
                     </div>
 
                     <div id="sec-segment" class="analytics-sec" style="display:none;"></div>
+                    <div id="sec-insight" class="analytics-sec" style="display:none;"></div>
                     <div id="sec-next" class="analytics-sec" style="display:none;"></div>
 
                     <div id="sec-export" class="analytics-sec" style="display:none;">
@@ -591,6 +593,7 @@
         if (p.stock > 0) {
             playSound(); // 登録成功の合図（耳で確認できてミス防止）
             p.stock--;
+            if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString(); // 在庫切れ日時を記録
             cart.push({...p});
             saveData();
             init();
@@ -605,6 +608,13 @@
         if (p) addToCart(p);
     }
 
+    // 在庫を1つ戻す。在庫が復活したら「在庫切れ日時」の記録を消す。
+    function restockOne(p) {
+        if (!p) return;
+        p.stock++;
+        if (p.stock > 0) p.soldOutTime = null;
+    }
+
     // 指定した会計を取り消す（会計済一覧から呼ぶ／会計後に気づいたミスの訂正）
     function voidSale(idx) {
         const rec = salesHistory[idx];
@@ -615,7 +625,7 @@
         if (!confirm(`客No.${rec.no || ''} の会計を取り消します。\n［${summary}］ 合計¥${rec.total}\n※販売した商品は在庫に戻ります。よろしいですか？`)) return;
         rec.items.forEach(it => {
             const p = products.find(prod => prod.id === it.id);
-            if (p) p.stock++;
+            restockOne(p);
         });
         salesHistory.splice(idx, 1);
         if (rec.no === receiptCounter) receiptCounter--; // 末尾なら客No.を詰める（途中なら欠番のまま）
@@ -632,7 +642,7 @@
         if (cart.length > 0) {
             const lastItem = cart.pop();
             const product = products.find(p => p.id === lastItem.id);
-            if (product) product.stock++;
+            restockOne(product);
             saveData();
             init();
         }
@@ -645,7 +655,7 @@
         playSound(660, 0.08); // 取り消しの合図（追加音より低め）
         const removed = cart.splice(idx, 1)[0];
         const product = products.find(p => p.id === removed.id);
-        if (product) product.stock++;
+        restockOne(product);
         saveData();
         init();
     }
@@ -887,7 +897,7 @@
         const res = reservations[resIndex];
         res.items.forEach(item => {
             const p = products.find(prod => prod.id === item.id);
-            if (p) p.stock++;
+            restockOne(p);
         });
         reservations.splice(resIndex, 1);
         renderReservations();
@@ -1004,7 +1014,7 @@
 
         // 編集した一時データを本番の商品データとして適用する
         products = JSON.parse(JSON.stringify(tempSetupProducts));
-        products.forEach(p => p.stock = p.initialStock);
+        products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; });
         
         document.getElementById('session-display').innerText = `営業中: ${name}`;
         document.getElementById('session-display').style.background = 'var(--white)';
@@ -1040,6 +1050,7 @@
         disp.innerText = "閉店中";
         disp.style.background = '';
         showTab('analytics');
+        if (salesHistory.length > 0) showAnalyticsSection('insight'); // 閉店時は次回インサイトを表示
         saveData();
     }
 
@@ -1156,7 +1167,8 @@
             let product = products.find(p => p.name === name);
             let isSoldOut = product ? (product.stock === 0) : false;
             if (isSoldOut) {
-                let lastTime = new Date(stat.lastTime);
+                // 記録された在庫切れ日時を優先（無ければ最後の販売時刻で近似）
+                let lastTime = (product && product.soldOutTime) ? new Date(product.soldOutTime) : new Date(stat.lastTime);
                 let tLabel = `${lastTime.getHours()}:${String(lastTime.getMinutes()).padStart(2, '0')}`;
                 let durationMin = Math.max(1, (lastTime - sessionStartTime) / 60000);
                 let paceHour = Math.round((stat.count / durationMin) * 60);
@@ -1207,13 +1219,15 @@
             nextText = 'データがありません';
         }
 
-        analyticsSections = { summary, items: itemsText, time: timeText, segment: segmentText, next: nextText };
+        const insight = computeInsights();
+
+        analyticsSections = { summary, items: itemsText, time: timeText, segment: segmentText, next: nextText, insight };
 
         // PDF出力用（全項目まとめ）
         const sep = '--------------------------\n';
         document.getElementById('analytics-result').innerText =
             summary + sep + itemsText + sep + timeText + sep + segmentText + sep +
-            '[次回準備の参考メモ]\n' + nextText;
+            '[次回準備の参考メモ]\n' + nextText + sep + '[次回インサイト]\n' + (insight || '');
 
         showAnalyticsMenu();
     }
@@ -1222,7 +1236,7 @@
     const ANALYTICS_TITLES = {
         summary: '📊 概要', items: '🥐 商品別', time: '🕐 時間帯別の客数',
         stock: '📉 残在庫の推移', segment: '👥 客層・カテゴリ', next: '📝 次回準備の参考メモ',
-        export: '💾 書き出し（PDF/CSV）'
+        insight: '🔮 次回インサイト', export: '💾 書き出し（PDF/CSV）'
     };
 
     function showAnalyticsMenu() {
@@ -1251,7 +1265,91 @@
         else if (key === 'next') document.getElementById('sec-next').innerText = analyticsSections.next;
         else if (key === 'time') { document.getElementById('sec-time-text').innerText = analyticsSections.time; renderCustomerChart(); }
         else if (key === 'stock') renderStockChart();
+        else if (key === 'insight') document.getElementById('sec-insight').innerText = analyticsSections.insight || 'データがありません';
         // export はボタンのみ（静的）
+    }
+
+    // 商品名から味の傾向（甘い/しょっぱい/ドリンク）を簡易推定する。
+    // ※オフライン動作のため、クラウドAIではなくキーワードによるルール判定。
+    const TASTE_SWEET = ['チョコ', 'クリーム', 'あん', 'メロン', 'アップル', 'りんご', 'シナモン', 'ミルク', 'パウンド', 'ケーキ', 'フロランタン', 'ココナッツ', '紅茶', 'カスタード', 'ジャム', 'はちみつ', 'ハニー', '練乳', 'いちご', 'ストロベリー', '抹茶', 'きなこ', 'マロン', '栗', 'かぼちゃ', 'カボチャ', 'さつま', 'バナナ', 'レーズン', 'メープル', 'キャラメル', 'あんこ', 'シュガー', 'くるみ', 'ナッツ', 'ベリー', 'レモン', 'オレンジ', 'ピーナッツ', 'マーブル', 'デニッシュ'];
+    const TASTE_SALTY = ['塩', 'チーズ', 'ウィンナー', 'ソーセージ', 'ベーコン', 'カレー', 'コーン', 'ハム', 'ピザ', '明太', 'たらこ', 'ガーリック', 'オニオン', '枝豆', 'ツナ', 'マヨ', '焼きそば', 'じゃがいも', 'ポテト', 'バジル', 'ペッパー', 'グラタン', 'ハーブ', 'カルツォーネ'];
+    const TASTE_DRINK = ['ブレンド', 'コーヒー', '珈琲', 'ティー', 'ラテ', 'ジュース', 'ドリンク', '茶', '水', 'ソーダ', 'コーラ', 'スムージー', 'カフェ'];
+
+    function estimateTaste(name, type) {
+        const n = name || '';
+        if (type === 'drink' || TASTE_DRINK.some(k => n.includes(k))) return 'ドリンク';
+        const salty = TASTE_SALTY.some(k => n.includes(k));
+        const sweet = TASTE_SWEET.some(k => n.includes(k));
+        if (sweet && !salty) return '甘い系';
+        if (salty && !sweet) return 'しょっぱい系';
+        if (salty && sweet) return 'しょっぱい系';
+        return '不明';
+    }
+
+    // 閉店時の「次回インサイト」テキストを作る。
+    function computeInsights() {
+        if (salesHistory.length === 0) return null;
+        const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
+
+        // 在庫切れ（完売）時刻：記録された soldOutTime を使う
+        const soldOut = products.filter(p => p.soldOutTime)
+            .map(p => ({ name: p.name, t: new Date(p.soldOutTime) }))
+            .sort((a, b) => a.t - b.t);
+
+        const tasteAgg = {};
+        const typeAgg = {};
+        sorted.forEach(h => {
+            const ct = h.customerType || '不明';
+            if (!typeAgg[ct]) typeAgg[ct] = { items: {}, taste: {}, slots: {}, count: 0 };
+            typeAgg[ct].count++;
+            const d = new Date(h.time);
+            const slot = `${d.getHours()}:${String(Math.floor(d.getMinutes() / 15) * 15).padStart(2, '0')}`;
+            typeAgg[ct].slots[slot] = (typeAgg[ct].slots[slot] || 0) + 1;
+            h.items.forEach(i => {
+                const t = estimateTaste(i.name, i.type);
+                if (!tasteAgg[t]) tasteAgg[t] = { count: 0, rev: 0 };
+                tasteAgg[t].count++; tasteAgg[t].rev += i.price;
+                typeAgg[ct].items[i.name] = (typeAgg[ct].items[i.name] || 0) + 1;
+                typeAgg[ct].taste[t] = (typeAgg[ct].taste[t] || 0) + 1;
+            });
+        });
+        const totalTaste = Object.values(tasteAgg).reduce((s, v) => s + v.count, 0);
+
+        let res = `[在庫切れ（完売）時刻]\n`;
+        if (soldOut.length > 0) {
+            soldOut.forEach(s => { res += `・${s.name}: ${s.t.getHours()}:${String(s.t.getMinutes()).padStart(2, '0')} 完売\n`; });
+        } else {
+            res += `・完売した商品はありませんでした\n`;
+        }
+
+        res += `\n[客層別の傾向（次回の仕入れ目安）]\n`;
+        ['学生', '教員', '職員', 'その他', '不明'].forEach(ct => {
+            const d = typeAgg[ct];
+            if (!d || d.count === 0) return;
+            const topItems = Object.entries(d.items).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => `${x[0]}(${x[1]})`).join('、');
+            const peakSlot = Object.entries(d.slots).sort((a, b) => b[1] - a[1])[0];
+            const topTaste = Object.entries(d.taste).sort((a, b) => b[1] - a[1])[0];
+            res += `・${ct}（${d.count}人）: 来店ピーク ${peakSlot ? peakSlot[0] + '〜' : '-'} / 売れ筋 ${topItems || '-'} / 味の傾向 ${topTaste ? topTaste[0] : '-'}\n`;
+        });
+
+        res += `\n[味の傾向（商品名から簡易推定）別の売上]\n`;
+        ['甘い系', 'しょっぱい系', 'ドリンク', '不明'].forEach(t => {
+            if (tasteAgg[t]) {
+                const pct = totalTaste > 0 ? Math.round(tasteAgg[t].count / totalTaste * 100) : 0;
+                res += `・${t}: ¥${tasteAgg[t].rev}（${tasteAgg[t].count}個・${pct}%）\n`;
+            }
+        });
+
+        // 職員と学生で味の傾向が違えば一言ヒント
+        if (typeAgg['職員'] && typeAgg['学生']) {
+            const st = Object.entries(typeAgg['職員'].taste).sort((a, b) => b[1] - a[1])[0];
+            const gk = Object.entries(typeAgg['学生'].taste).sort((a, b) => b[1] - a[1])[0];
+            if (st && gk && st[0] !== gk[0]) {
+                res += `\n→ ヒント: 職員は${st[0]}、学生は${gk[0]}が多めでした。来店ピークの時間差と客層に合わせて配分すると良いかもしれません。\n`;
+            }
+        }
+        res += `\n※味の傾向は商品名のキーワードから推定した簡易判定です（クラウドAIではありません）。\n`;
+        return res;
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -1858,6 +1956,7 @@
         const p = products.find(prod => prod.id === id);
         if (!p) return;
         p.stock = Math.max(0, p.stock + delta);
+        reconcileSoldOut(p);
         saveData();
         init();
         renderLiveStock();
@@ -1867,9 +1966,16 @@
         const p = products.find(prod => prod.id === id);
         if (!p) return;
         p.stock = Math.max(0, parseInt(value) || 0);
+        reconcileSoldOut(p);
         saveData();
         init();
         renderLiveStock();
+    }
+
+    // 在庫調整後、在庫切れ日時を整合させる（0なら記録、1以上ならクリア）
+    function reconcileSoldOut(p) {
+        if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
+        else if (p.stock > 0) p.soldOutTime = null;
     }
     // ▲▲▲ ここまで ▲▲▲
 
