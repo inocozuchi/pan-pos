@@ -125,6 +125,7 @@
 
         #app-container {
             display: flex;
+            flex-direction: row-reverse; /* 商品ボタンを右、カート（小計）を左に配置（右利き向け） */
             flex: 1;
             overflow: hidden;
         }
@@ -177,10 +178,10 @@
         #sidebar {
             flex: 1;
             background-color: var(--white);
-            border-left: 2px solid #FFF0F0;
+            border-right: 2px solid #FFF0F0;
             display: flex;
             flex-direction: column;
-            box-shadow: -2px 0 15px rgba(0,0,0,0.02);
+            box-shadow: 2px 0 15px rgba(0,0,0,0.02);
             z-index: 5;
         }
 
@@ -288,7 +289,7 @@
         @media (max-width: 768px) {
             #app-container { flex-direction: column; }
             main { flex: 1.5; grid-template-columns: repeat(3, 1fr); }
-            #sidebar { flex: 1; border-left: none; border-top: 2px solid #FFF0F0; }
+            #sidebar { flex: 1; border-left: none; border-right: none; border-top: 2px solid #FFF0F0; }
             .action-row { display: flex; }
             .btn-checkout { padding: 12px; }
             .total-display .total-label { font-size: 18px; }
@@ -323,6 +324,116 @@
         }
         .analytics-menu-btn:active { background: #FFF0F0; }
         .analytics-sec { font-size: 14px; white-space: pre-wrap; line-height: 1.6; }
+
+        /* 設定タブの見出し・注釈・営業中バナー（余白を詰めて圧迫感を解消） */
+        .settings-hint { font-size: 13px; color: var(--text-light); margin: 0 0 8px; line-height: 1.5; }
+        .settings-label { font-size: 14px; font-weight: bold; margin: 12px 0 6px; }
+        #tab-session input#session-name-input { margin: 4px 0 6px; }
+        .active-banner {
+            background: #E2F0CB; color: var(--text-main); font-weight: bold;
+            border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; font-size: 15px;
+        }
+
+        /* 操作フィードバックのトースト（会計完了・取消など） */
+        #toast {
+            position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(16px);
+            background: rgba(90,78,77,0.94); color: #fff; padding: 12px 24px; border-radius: 999px;
+            font-weight: bold; font-size: 15px; box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+            opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+            z-index: 200; max-width: 90vw; text-align: center;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ▼ PDF（印刷）用レポート：画面では隠し、印刷時のみ本体を差し替える ▼ */
+        #print-report { display: none; }
+        @media print {
+            @page { size: A4; margin: 15mm; }
+            html, body {
+                position: static !important; height: auto !important; width: auto !important;
+                overflow: visible !important; display: block !important; background: #fff !important;
+            }
+            body > *:not(#print-report) { display: none !important; }
+            #print-report { display: block !important; }
+
+            /* 色はCSS変数で一元管理 */
+            .report-root {
+                --ink: #1f1f1f; --muted: #666; --accent: #c0405a; --line: #c9c4be;
+                --box-bg: #fbfbfa; --key-bg: #454545; --hatch: #e6e2dc;
+                font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+                color: var(--ink); font-size: 10.5px; line-height: 1.5;
+                font-variant-numeric: tabular-nums;
+            }
+
+            /* ヘッダー */
+            .report-header {
+                display: flex; justify-content: space-between; align-items: flex-end;
+                border-bottom: 2px solid var(--accent); padding-bottom: 6px; margin-bottom: 10px;
+            }
+            .report-header .title { font-size: 19px; font-weight: bold; letter-spacing: 0.04em; }
+            .report-header .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+            .report-header .meta { text-align: right; font-size: 10px; color: var(--muted); }
+            .report-header .grand { font-size: 15px; font-weight: bold; color: var(--accent); }
+
+            /* セクション（原則ページ内に収める。長い表を含むものは行単位で改ページ許可） */
+            .report-section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 9px; }
+            .report-section--long { break-inside: auto; page-break-inside: auto; }
+
+            /* 見出し（左に太い縦アクセントバー・直後の改ページ禁止） */
+            .report-heading {
+                font-size: 12.5px; font-weight: bold; margin: 0 0 5px; padding-left: 8px;
+                border-left: 5px solid var(--accent); break-after: avoid; page-break-after: avoid;
+            }
+            .sub-heading {
+                font-size: 11px; font-weight: bold; margin: 7px 0 3px; padding: 1px 6px;
+                background: var(--box-bg); border-bottom: 1px solid var(--line);
+            }
+
+            /* 概要ボックス */
+            .summary-box {
+                border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px;
+                display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px 22px;
+            }
+            .summary-box .stat { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--line); padding: 2px 0; }
+            .summary-box .stat-label { color: var(--muted); }
+            .summary-box .stat-val { font-weight: bold; }
+
+            /* インサイト（重要事項）ボックス：ヘッダーだけ濃い背景＋白文字 */
+            .key-box { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+            .key-box .key-head { background: var(--key-bg); color: #fff; font-weight: bold; padding: 4px 10px; font-size: 11px; }
+            .key-box .key-body { padding: 6px 10px; white-space: pre-wrap; }
+
+            /* 参考メモボックス：破線ボーダー */
+            .note-box { border: 1.5px dashed var(--accent); border-radius: 6px; padding: 6px 10px; }
+            .note-foot { font-size: 9px; color: var(--muted); margin-top: 4px; }
+
+            /* 表：表自体は改ページ可、行は分割しない */
+            table.rep-table { width: 100%; border-collapse: collapse; break-inside: auto; }
+            table.rep-table th { text-align: left; font-size: 9.5px; color: var(--muted); border-bottom: 1.5px solid var(--ink); padding: 3px 4px; }
+            table.rep-table td { padding: 2.5px 4px; border-bottom: 1px solid #eee; }
+            table.rep-table tr { break-inside: avoid; page-break-inside: avoid; }
+            table.rep-table td.num, table.rep-table th.num { text-align: right; }
+
+            /* ABCランク：色に依存せず「記号＋文字＋網掛け」で判別（モノクロ対応） */
+            .rank { font-weight: bold; white-space: nowrap; padding: 0 5px; border-radius: 3px; }
+            .rank.rank-a { background: repeating-linear-gradient(45deg, #d0d0d0, #d0d0d0 1.5px, transparent 1.5px, transparent 4px); }
+            .rank.rank-b { background: var(--hatch); }
+            .rank.rank-c { background: transparent; }
+
+            pre.rep-pre { white-space: pre-wrap; font-family: inherit; margin: 0; }
+
+            /* グラフ：ページをまたがせない・高さ固定 */
+            .chart-container { break-inside: avoid; page-break-inside: avoid; height: 190px; margin: 4px 0; text-align: center; }
+            .chart-container svg { height: 100% !important; width: auto !important; max-width: 100% !important; min-width: 0 !important; }
+
+            /* 残在庫グラフの凡例：グラフ下に2〜3列のHTMLリスト（線種で識別＝モノクロ可） */
+            .stock-legend { columns: 3; column-gap: 16px; font-size: 9px; margin-top: 5px; list-style: none; padding: 0; }
+            .stock-legend li { break-inside: avoid; display: flex; align-items: center; gap: 5px; margin-bottom: 1.5px; }
+            .lg-line { display: inline-block; width: 16px; border-top: 2px solid var(--ink); flex-shrink: 0; }
+            .lg-line.dashed { border-top-style: dashed; }
+
+            .two-col { display: flex; gap: 18px; }
+            .two-col > div { flex: 1; }
+        }
     </style>
 </head>
 <body>
@@ -423,26 +534,31 @@
         
         <div class="tab-content">
             <div id="tab-session">
-                <p style="font-size: 14px; color: var(--text-light);">新しい販売会を始める時に名前をつけて開店します。</p>
-                <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
-                
-                <div style="font-size: 14px; font-weight: bold; margin: 15px 0 5px 0;">当日の仕入れ数設定</div>
-                <div id="inventory-apply"></div>
-                <div id="inventory-setup-list" class="setup-list"></div>
+                <!-- 閉店中のみ表示：新しい販売会を開く -->
+                <div id="session-open-block">
+                    <p class="settings-hint">新しい販売会を始める時に名前をつけて開店します。</p>
+                    <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
 
-                <button class="action-btn btn-checkout" style="width:100%; margin-bottom:20px;" onclick="startSession()">開店する (データリセット)</button>
+                    <div class="settings-label">当日の仕入れ数設定</div>
+                    <div id="inventory-apply"></div>
+                    <div id="inventory-setup-list" class="setup-list"></div>
 
-                <details id="live-stock-details" style="margin-bottom:15px;">
-                    <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の在庫調整（追加搬入・数え直し）</summary>
-                    <div id="live-stock-list" style="max-height:200px; overflow-y:auto; background:#FAFAFA; border:2px solid #EEE; padding:10px; border-radius:12px; margin-top:10px;"></div>
-                </details>
+                    <button class="action-btn btn-checkout" style="width:100%; margin-top:4px;" onclick="startSession()">開店する (データリセット)</button>
+                </div>
 
-                <hr style="border: 1px dashed #EEE; margin-bottom: 20px;">
-                <button class="action-btn" style="width:100%; background: #FF9AA2; color: white;" onclick="endSession()">閉店する (集計して終了)</button>
+                <!-- 営業中のみ表示：在庫調整・閉店 -->
+                <div id="session-active-block" style="display:none;">
+                    <div class="active-banner">🟢 営業中：<span id="active-session-name"></span></div>
+                    <details id="live-stock-details">
+                        <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の在庫調整（追加搬入・数え直し）</summary>
+                        <div id="live-stock-list" style="max-height:220px; overflow-y:auto; background:#FAFAFA; border:2px solid #EEE; padding:10px; border-radius:12px; margin-top:8px;"></div>
+                    </details>
+                    <button class="action-btn" style="width:100%; margin-top:12px; background: #FF9AA2; color: white;" onclick="endSession()">閉店する (集計して終了)</button>
+                </div>
 
-                <hr style="border: 1px dashed #EEE; margin: 20px 0;">
-                <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">データのバックアップ</div>
-                <p style="font-size: 12px; color: var(--text-light); margin: 0 0 10px 0;">データは端末内にのみ保存されます。大切な販売会の記録は定期的に書き出して保管してください。</p>
+                <hr style="border: none; border-top: 1px dashed #E7E3DF; margin: 14px 0;">
+                <div class="settings-label" style="margin-top:0;">データのバックアップ</div>
+                <p class="settings-hint">データは端末内にのみ保存されます。大切な販売会の記録は定期的に書き出して保管してください。</p>
                 <div style="display:flex; gap:10px;">
                     <button class="action-btn btn-reserve" style="flex:1;" onclick="exportBackup()">💾 保存</button>
                     <button class="action-btn btn-undo" style="flex:1;" onclick="document.getElementById('import-file').click()">📂 復元</button>
@@ -479,7 +595,7 @@
                     <div id="sec-items" class="analytics-sec" style="display:none;"></div>
 
                     <div id="sec-time" class="analytics-sec" style="display:none;">
-                        <div id="customer-chart" style="background:#FFF; border:2px solid #EEE; border-radius:12px; padding:10px; margin-bottom:12px; overflow-x:auto;"></div>
+                        <div id="customer-chart" style="background:#FFF; border:2px solid #EEE; border-radius:12px; padding:10px; margin-bottom:12px; overflow-x:auto; text-align:center;"></div>
                         <div id="sec-time-text"></div>
                     </div>
 
@@ -514,6 +630,12 @@
         <button class="action-btn btn-undo" style="width:100%; margin-top:15px;" onclick="closeModal('settings-modal')">閉じる</button>
     </div>
 </div>
+
+<!-- 操作フィードバック用トースト -->
+<div id="toast"></div>
+
+<!-- PDF（印刷）用レポート：画面では非表示、印刷時のみ表示 -->
+<div id="print-report"></div>
 
 <script>
     // ▼▼▼ 操作音（電子音を鳴らす）▼▼▼
@@ -570,6 +692,17 @@
     function playError() { playSound(220, 0.25, 'square', 0.12); }
     // 会計完了の確認音（ポン♪と2音）
     function playSuccess() { playSound(880, 0.08); setTimeout(() => playSound(1320, 0.13), 90); }
+
+    // 画面下に短く表示する操作フィードバック（会計完了・取消など）
+    let toastTimer = null;
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        if (!t) return;
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+    }
     // ▲▲▲ ここまで ▲▲▲
 
     let products = [
@@ -600,6 +733,10 @@
         // ドリンク枠（今後の販売用プレースホルダ）
         { id: 23, name: "ドリンク（準備中）", price: 0, stock: 0, initialStock: 0, type: "drink" }
     ];
+
+    // 既定ラインナップの控え（loadDataで products が上書きされる前に保存）。
+    // 開店設定で「既定に戻す」時に使う。
+    const DEFAULT_PRODUCTS = JSON.parse(JSON.stringify(products));
 
     let cart = [];
     let salesHistory = [];
@@ -694,7 +831,7 @@
         init();
         renderRecords();
         updateAnalytics();
-        alert('会計を取り消しました。');
+        showToast('取り消しました');
     }
 
     function undoLast() {
@@ -786,8 +923,10 @@
 
         if (reservationId !== null) {
             const res = reservations.find(r => r.id === reservationId);
+            if (!res) { processingReservationId = null; return; } // 予約が既に清算/取消済みなら何もしない
             itemsToProcess = res.items;
         } else if (cart.length === 0) {
+            playError(); // 空のカートで「会計へ進む」を押した時のフィードバック
             return;
         }
 
@@ -902,6 +1041,7 @@
         saveData();
         init();
         renderReservations();
+        showToast(`✓ 記録しました（客No.${record.no} / お釣り¥${record.change}）`);
     }
 
     function promptReservation() {
@@ -973,12 +1113,12 @@
 
         const latest = getLatestRecommendationMap();
 
-        // 「推奨を反映」ボタンは横スクロール外（上部）に固定表示
+        // 「推奨を反映」「既定に戻す」ボタンは横スクロール外（上部）に固定表示
         const applyBox = document.getElementById('inventory-apply');
         if (applyBox) {
-            applyBox.innerHTML = latest
-                ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:10px; padding:10px; background:#B5EAD7; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-main);">✨ 前回「${latest.sessionName}」の実績を参考に反映</button>`
-                : '';
+            applyBox.innerHTML =
+                (latest ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:8px; padding:10px; background:#B5EAD7; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-main);">✨ 前回「${latest.sessionName}」の実績を参考に反映</button>` : '')
+                + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:#F3F3F3; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px;">↩️ 商品リストを既定のラインナップに戻す</button>`;
         }
 
         list.innerHTML = '';
@@ -1047,11 +1187,24 @@
         if (!nameInput.value) nameInput.value = defaultSessionName();
         // 設定画面を開くたびに、現在の商品の状態をコピーして編集画面にセットする
         tempSetupProducts = JSON.parse(JSON.stringify(products));
+        updateSessionTabView();
         renderInventorySetup();
         renderLiveStock();
         renderReservations();
         renderRecords();
         updateAnalytics();
+    }
+
+    // 営業状態に応じて営業管理タブの表示を切り替える
+    // （開店中は「開店」UIを隠し、閉店中は「在庫調整・閉店」UIを隠す）
+    function updateSessionTabView() {
+        const openBlock = document.getElementById('session-open-block');
+        const activeBlock = document.getElementById('session-active-block');
+        if (!openBlock || !activeBlock) return;
+        const isOpen = !!currentSession;
+        openBlock.style.display = isOpen ? 'none' : 'block';
+        activeBlock.style.display = isOpen ? 'block' : 'none';
+        if (isOpen) document.getElementById('active-session-name').innerText = currentSession;
     }
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -1108,6 +1261,7 @@
         const disp = document.getElementById('session-display');
         disp.innerText = "閉店中";
         disp.style.background = '';
+        updateSessionTabView();
         showTab('analytics');
         if (salesHistory.length > 0) showAnalyticsSection('insight'); // 閉店時は次回インサイトを表示
         saveData();
@@ -1496,6 +1650,14 @@
         renderInventorySetup();
         alert(`「${latest.sessionName}」の実績を参考に ${applied} 件の仕入れ数を反映しました。季節や天候に合わせて調整してください。`);
     }
+
+    // 商品リストをアプリ既定のラインナップに戻す（端末に古いデータが残っている時の保険）
+    function resetLineupToDefault() {
+        if (!confirm('商品リストをアプリ既定のラインナップ（パン12種＋クッキー10種＋ドリンク枠）に戻します。\n編集中の内容は破棄されます。よろしいですか？')) return;
+        tempSetupProducts = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+        renderInventorySetup();
+        showToast('既定のラインナップに戻しました');
+    }
     // ▲▲▲ ここまで ▲▲▲
 
     function showTab(tabId) {
@@ -1511,79 +1673,236 @@
         if(tabId === 'analytics') showAnalyticsMenu();
     }
 
-    // ▼▼▼ PDF保存用の関数を追加 ▼▼▼
-    function downloadPDF() {
-        const text = document.getElementById('analytics-result').innerText;
-        if (!text || text.includes("売上データがありません") || text.includes("まだ売上データが")) {
-            alert("印刷する売上データがありません。");
-            return;
-        }
+    // ▼▼▼ PDF出力：集計結果を構造化して組み立てる ▼▼▼
+    // salesHistory から、レポートに必要な数値を構造化オブジェクトで返す。
+    function buildReportData() {
+        if (salesHistory.length === 0) return null;
+        const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
+        const sessionStart = new Date(sorted[0].time);
+        const totalRev = sorted.reduce((s, h) => s + h.total, 0);
 
-        // 印刷用の新しいウィンドウ（タブ）を一時的に作成
-        const printWindow = window.open('', '_blank');
-        
-        // 印刷用画面のレイアウト（A4で見やすくなるようなデザイン）を書き込む
-        printWindow.document.write(`
-            <html>
-            <head>
-                <title>泰山木POS_売上報告書</title>
-                <style>
-                    body {
-                        font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
-                        color: #333;
-                        padding: 40px;
-                        line-height: 1.8;
-                    }
-                    .report-header {
-                        text-align: center;
-                        border-bottom: 3px double #FF9AA2;
-                        padding-bottom: 10px;
-                        margin-bottom: 30px;
-                    }
-                    .report-title {
-                        font-size: 26px;
-                        font-weight: bold;
-                        color: #5A4E4D;
-                        margin: 0;
-                    }
-                    .report-date {
-                        text-align: right;
-                        font-size: 14px;
-                        color: #887B7A;
-                        margin-top: 5px;
-                    }
-                    .report-content {
-                        font-size: 16px;
-                        white-space: pre-wrap;
-                        background: #FFF5F7;
-                        padding: 25px;
-                        border-radius: 12px;
-                        border: 1px solid #FFD1DC;
-                    }
-                    @media print {
-                        body { padding: 0; }
-                        .no-print { display: none; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="report-header">
-                    <h1 class="report-title">📊 泰山木POS 売上分析報告書</h1>
-                    <div class="report-date">出力日時: ${new Date().toLocaleString('ja-JP')}</div>
-                </div>
-                <div class="report-content">${text}</div>
-                <script>
-                    // 画面が開いたら自動で印刷ダイアログ（PDF保存）を起動
-                    window.onload = function() {
-                        window.print();
-                        // ダイアログを閉じたら自動的にこのタブを閉じる
-                        setTimeout(function() { window.close(); }, 500);
-                    };
-                <\/script>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
+        const itemCounts = {}, itemRev = {}, categoryRev = { sweet: 0, savory: 0, drink: 0 };
+        const catNames = { sweet: 'パン類', savory: 'クッキー類', drink: 'ドリンク' };
+        const timeSlotRev = {}, timeSlotItems = {};
+        const custTypes = { '学生': { count: 0, rev: 0 }, '教員': { count: 0, rev: 0 }, '職員': { count: 0, rev: 0 }, 'その他': { count: 0, rev: 0 }, '不明': { count: 0, rev: 0 } };
+        let totalItems = 0, cashTotal = 0, changeTotal = 0, cashKnown = 0;
+        const itemStats = {}, coPurchase = {};
+
+        sorted.forEach(h => {
+            const d = new Date(h.time);
+            const label = `${d.getHours()}:${String(Math.floor(d.getMinutes() / 15) * 15).padStart(2, '0')}`;
+            timeSlotRev[label] = (timeSlotRev[label] || 0) + h.total;
+            if (!timeSlotItems[label]) timeSlotItems[label] = {};
+            if (h.customerType && custTypes[h.customerType]) { custTypes[h.customerType].count++; custTypes[h.customerType].rev += h.total; }
+            if (h.cash != null) { cashTotal += h.cash; changeTotal += (h.change || 0); cashKnown++; }
+            const uniq = [...new Set(h.items.map(i => i.name))];
+            for (let i = 0; i < uniq.length; i++) for (let j = i + 1; j < uniq.length; j++) {
+                const pr = [uniq[i], uniq[j]].sort().join(' ＋ '); coPurchase[pr] = (coPurchase[pr] || 0) + 1;
+            }
+            h.items.forEach(i => {
+                itemCounts[i.name] = (itemCounts[i.name] || 0) + 1;
+                itemRev[i.name] = (itemRev[i.name] || 0) + i.price;
+                timeSlotItems[label][i.name] = (timeSlotItems[label][i.name] || 0) + 1;
+                totalItems++;
+                if (i.type) categoryRev[i.type] += i.price;
+                if (!itemStats[i.name]) itemStats[i.name] = { count: 0, lastTime: d };
+                itemStats[i.name].count++; itemStats[i.name].lastTime = d;
+            });
+        });
+
+        const customers = sorted.length;
+        const peak = Object.entries(timeSlotRev).sort((a, b) => b[1] - a[1])[0];
+
+        // ABC分析（売上降順・累積比率）
+        const abc = []; let cum = 0;
+        Object.entries(itemRev).sort((a, b) => b[1] - a[1]).forEach(([name, rev]) => {
+            cum += rev; const cp = cum / totalRev * 100;
+            const rank = cp <= 70 ? 'A' : (cp <= 90 ? 'B' : 'C');
+            const prod = products.find(p => p.name === name);
+            const initial = prod ? prod.initialStock : 0;
+            const sold = itemCounts[name];
+            abc.push({ name, rev, rank, sold, initial, sellThrough: initial > 0 ? Math.round(sold / initial * 100) : 0 });
+        });
+
+        // 完売時刻・販売スピード
+        const soldOut = [], inStock = [];
+        Object.keys(itemStats).forEach(name => {
+            const prod = products.find(p => p.name === name);
+            const out = prod ? prod.stock === 0 : false;
+            if (out) {
+                const t = (prod && prod.soldOutTime) ? new Date(prod.soldOutTime) : new Date(itemStats[name].lastTime);
+                const dur = Math.max(1, (t - sessionStart) / 60000);
+                soldOut.push({ name, timeStr: `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`, timeVal: t, pace: Math.round(itemStats[name].count / dur * 60) });
+            } else inStock.push(name);
+        });
+        soldOut.sort((a, b) => a.timeVal - b.timeVal);
+
+        const slots = Object.keys(timeSlotRev)
+            .sort((a, b) => parseInt(a.replace(':', '')) - parseInt(b.replace(':', '')))
+            .map(s => ({ label: s, rev: timeSlotRev[s], top: Object.entries(timeSlotItems[s]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => ({ name: n, count: c })) }));
+
+        const types = Object.entries(custTypes).filter(([, d]) => d.count > 0).map(([type, d]) => ({ type, count: d.count, avg: Math.floor(d.rev / d.count) }));
+        const categories = Object.keys(categoryRev).map(c => ({ name: catNames[c], rev: categoryRev[c], pct: totalRev > 0 ? Math.round(categoryRev[c] / totalRev * 100) : 0 }));
+        const copairs = Object.entries(coPurchase).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([pair, count]) => ({ pair, count }));
+
+        return {
+            summary: {
+                totalRev, customers, avg: Math.floor(totalRev / customers), avgItems: (totalItems / customers).toFixed(1),
+                maxSale: Math.max(...sorted.map(h => h.total)), minSale: Math.min(...sorted.map(h => h.total)),
+                peak: peak ? { label: peak[0], rev: peak[1] } : null, cashTotal, changeTotal, cashKnown, voidCount
+            },
+            abc, soldOut, inStock, slots, types, categories, copairs,
+            stock: buildStockTimeline(),
+            insight: computeInsights(),
+            recs: buildRestockRecommendations()
+        };
+    }
+
+    // 集計結果を1枚のHTMLレポートに組み立て、ブラウザの印刷でPDF化する。
+    function downloadPDF() {
+        const R = buildReportData();
+        if (!R) { alert('印刷する売上データがありません。'); return; }
+
+        // グラフ（SVG）を最新化して取り出す
+        renderCustomerChart();
+        renderStockChart();
+        const custSvg = document.getElementById('customer-chart').innerHTML;
+        const stockSvg = document.getElementById('stock-chart').innerHTML;
+
+        const esc = s => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const yen = n => '¥' + Number(n).toLocaleString();
+        const now = new Date().toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        const s = R.summary;
+
+        // 1. 概要
+        const summaryBox = `
+            <div class="summary-box">
+                <div class="stat"><span class="stat-label">総売上</span><span class="stat-val">${yen(s.totalRev)}</span></div>
+                <div class="stat"><span class="stat-label">来店人数</span><span class="stat-val">${s.customers}人</span></div>
+                <div class="stat"><span class="stat-label">平均客単価</span><span class="stat-val">${yen(s.avg)}</span></div>
+                <div class="stat"><span class="stat-label">平均買上点数</span><span class="stat-val">${s.avgItems}個</span></div>
+                <div class="stat"><span class="stat-label">最高売上／最低売上</span><span class="stat-val">${yen(s.maxSale)} / ${yen(s.minSale)}</span></div>
+                <div class="stat"><span class="stat-label">ピーク時間帯</span><span class="stat-val">${s.peak ? esc(s.peak.label) + '〜 ' + yen(s.peak.rev) : '-'}</span></div>
+                ${s.cashKnown > 0 ? `<div class="stat"><span class="stat-label">現金 お預り／お釣り</span><span class="stat-val">${yen(s.cashTotal)} / ${yen(s.changeTotal)}</span></div>` : ''}
+                <div class="stat"><span class="stat-label">会計取消</span><span class="stat-val">${s.voidCount}件</span></div>
+            </div>`;
+
+        // 2. 商品別（ABC表 ＋ 完売時刻）
+        const rankMark = { A: '●', B: '◐', C: '○' };
+        const abcRows = R.abc.map(r => `
+            <tr>
+                <td>${esc(r.name)}</td>
+                <td><span class="rank rank-${r.rank.toLowerCase()}">${rankMark[r.rank]} ${r.rank}</span></td>
+                <td class="num">${r.sold} / ${r.initial}</td>
+                <td class="num">${r.sellThrough}%</td>
+                <td class="num">${yen(r.rev)}</td>
+            </tr>`).join('');
+        const soldOutTxt = (R.soldOut.length
+            ? R.soldOut.map(o => `・${o.name}：${o.timeStr} 完売（ペース ${o.pace}個/時）`).join('\n')
+            : '・完売した商品はありませんでした')
+            + (R.inStock.length ? `\n・販売中：${R.inStock.join('、')}` : '');
+
+        // 3. 時間帯別
+        const slotTxt = R.slots.map(sl =>
+            `・${sl.label}〜：${yen(sl.rev)}` + (sl.top.length ? '　' + sl.top.map((t, i) => `${i + 1}位 ${t.name}(${t.count})`).join(' / ') : '')
+        ).join('\n');
+
+        // 4. 残在庫の推移（凡例をHTMLリストで別描画。線種で識別＝モノクロ可）
+        const legend = (R.stock ? R.stock.series : []).map((se, idx) =>
+            `<li><span class="lg-line ${idx >= 8 ? 'dashed' : 'solid'}"></span>${esc(se.name)}（残${se.final}）</li>`
+        ).join('');
+
+        // 5. 客層・カテゴリ
+        const typeRows = R.types.map(t => `<tr><td>${esc(t.type)}</td><td class="num">${t.count}人</td><td class="num">${yen(t.avg)}</td></tr>`).join('');
+        const catRows = R.categories.map(c => `<tr><td>${esc(c.name)}</td><td class="num">${yen(c.rev)}</td><td class="num">${c.pct}%</td></tr>`).join('');
+        const coTxt = R.copairs.length ? R.copairs.map(p => `・${p.pair}：${p.count}回`).join('\n') : '・データなし';
+
+        // 7. 参考メモ（推奨仕入れ）
+        const recRows = R.recs.map(r => {
+            const arr = r.recommended > r.initial ? '▲ 増' : (r.recommended < r.initial ? '▼ 減' : '→ 同');
+            return `<tr><td>${esc(r.name)}</td><td class="num">${r.initial}</td><td class="num">${r.sold}</td><td class="num">${r.recommended}</td><td>${arr}</td><td>${esc(r.reason)}</td></tr>`;
+        }).join('');
+
+        document.getElementById('print-report').innerHTML = `
+            <div class="report-root">
+                <header class="report-header">
+                    <div>
+                        <div class="title">販売会 集計結果</div>
+                        <div class="sub">${esc(currentSession || '前回の販売会')}</div>
+                    </div>
+                    <div class="meta">
+                        <div class="grand">総売上 ${yen(s.totalRev)}</div>
+                        <div>出力: ${now}　🥖 泰山木POS</div>
+                    </div>
+                </header>
+
+                <section class="report-section">
+                    <div class="report-heading">1. 概要</div>
+                    ${summaryBox}
+                </section>
+
+                <section class="report-section report-section--long">
+                    <div class="report-heading">2. 商品別（消化率・ABC分析・完売時刻）</div>
+                    <div class="sub-heading">ABC分析（売上への貢献度：● A＝上位 / ◐ B＝中位 / ○ C＝下位）</div>
+                    <table class="rep-table">
+                        <thead><tr><th>商品</th><th>ランク</th><th class="num">販売/仕入</th><th class="num">消化率</th><th class="num">売上</th></tr></thead>
+                        <tbody>${abcRows}</tbody>
+                    </table>
+                    <div class="sub-heading">完売時刻と販売スピード</div>
+                    <pre class="rep-pre">${esc(soldOutTxt)}</pre>
+                </section>
+
+                <section class="report-section">
+                    <div class="report-heading">3. 時間帯別の客数</div>
+                    <div class="chart-container">${custSvg}</div>
+                    <pre class="rep-pre">${esc(slotTxt)}</pre>
+                </section>
+
+                <section class="report-section">
+                    <div class="report-heading">4. 商品ごとの残在庫の推移</div>
+                    <div class="chart-container">${stockSvg}</div>
+                    <ul class="stock-legend">${legend}</ul>
+                </section>
+
+                <section class="report-section report-section--long">
+                    <div class="report-heading">5. 客層・カテゴリ</div>
+                    <div class="two-col">
+                        <div>
+                            <div class="sub-heading">客属性別 来店人数と客単価</div>
+                            <table class="rep-table"><thead><tr><th>客属性</th><th class="num">人数</th><th class="num">客単価</th></tr></thead><tbody>${typeRows}</tbody></table>
+                        </div>
+                        <div>
+                            <div class="sub-heading">カテゴリ別 売上と占有率</div>
+                            <table class="rep-table"><thead><tr><th>カテゴリ</th><th class="num">売上</th><th class="num">占有率</th></tr></thead><tbody>${catRows}</tbody></table>
+                        </div>
+                    </div>
+                    <div class="sub-heading">よく一緒に買われた商品（併売分析）</div>
+                    <pre class="rep-pre">${esc(coTxt)}</pre>
+                </section>
+
+                <section class="report-section">
+                    <div class="report-heading">6. 次回インサイト</div>
+                    <div class="key-box">
+                        <div class="key-head">🔮 次回インサイト（客層・味の傾向・在庫切れ）</div>
+                        <div class="key-body">${esc(R.insight)}</div>
+                    </div>
+                </section>
+
+                <section class="report-section report-section--long">
+                    <div class="report-heading">7. 次回準備の参考メモ</div>
+                    <div class="note-box">
+                        <table class="rep-table">
+                            <thead><tr><th>商品</th><th class="num">今回仕入</th><th class="num">販売</th><th class="num">参考仕入</th><th>増減</th><th>理由</th></tr></thead>
+                            <tbody>${recRows}</tbody>
+                        </table>
+                        <div class="note-foot">※今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変動するため参考程度にご利用ください。</div>
+                    </div>
+                </section>
+            </div>
+        `;
+
+        // 全要素の描画（レイアウト確定）を待ってから印刷ダイアログを開く
+        requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -1668,6 +1987,7 @@
                 }
                 saveData();
                 init();
+                updateSessionTabView();
                 renderInventorySetup();
                 renderLiveStock();
                 renderReservations();
@@ -1969,7 +2289,11 @@
         const H = mT + plotH + mB;
         const yOf = v => mT + (1 - v / data.maxCount) * plotH;
 
-        let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; min-width:${Math.max(W, 320)}px; height:auto; font-family:inherit;">`;
+        // 高さを固定し、幅はアスペクト比から算出（縦に巨大化するのを防ぐ）。
+        // 棒が多い場合はコンテナ側の横スクロールで対応する。
+        const dispH = 240;
+        const dispW = Math.round(dispH * W / H);
+        let svg = `<svg viewBox="0 0 ${W} ${H}" style="height:${dispH}px; width:${dispW}px; max-width:none; font-family:inherit;">`;
         // Y軸グリッド＆目盛り（整数の客数）
         const ySteps = Math.min(data.maxCount, 4);
         for (let i = 0; i <= ySteps; i++) {
