@@ -323,6 +323,43 @@
         }
         .analytics-menu-btn:active { background: #FFF0F0; }
         .analytics-sec { font-size: 14px; white-space: pre-wrap; line-height: 1.6; }
+
+        /* ▼ PDF（印刷）用レポート：画面では隠し、印刷時のみ本体を差し替える ▼ */
+        #print-report { display: none; }
+        @media print {
+            @page { size: A4; margin: 10mm 12mm; }
+            html, body {
+                position: static !important; height: auto !important; width: auto !important;
+                overflow: visible !important; display: block !important; background: #fff !important;
+            }
+            body > *:not(#print-report) { display: none !important; }
+            #print-report { display: block !important; }
+
+            .rep { font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif; color: #2b2b2b; font-size: 11px; line-height: 1.5; }
+            .rep-head {
+                display: flex; justify-content: space-between; align-items: flex-end;
+                border-bottom: 2px solid #FF9AA2; padding-bottom: 6px; margin-bottom: 10px;
+            }
+            .rep-title { font-size: 20px; font-weight: bold; letter-spacing: 0.04em; }
+            .rep-sub { font-size: 12px; color: #666; margin-top: 2px; }
+            .rep-info { text-align: right; }
+            .rep-total { font-size: 15px; font-weight: bold; color: #E5677A; }
+            .rep-date { font-size: 10px; color: #888; margin-top: 2px; }
+
+            .rep-sec { break-inside: avoid; margin-bottom: 9px; }
+            .rep-sec h2 {
+                font-size: 12.5px; font-weight: bold; color: #5A4E4D; margin: 0 0 3px;
+                border-left: 5px solid #FFD1DC; padding-left: 7px;
+            }
+            .rep-sec pre {
+                white-space: pre-wrap; font-family: inherit; font-size: 11px; line-height: 1.5;
+                margin: 0; padding: 4px 8px; background: #FBFBFA; border-radius: 4px;
+            }
+            .rep-chart { height: 200px; margin: 4px 0; }
+            .rep-chart svg { height: 100% !important; width: auto !important; max-width: 100% !important; min-width: 0 !important; display: block; }
+            .rep-legend { display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 10px; margin-top: 2px; }
+            .rep-legend span { display: inline-flex; align-items: center; gap: 4px; }
+        }
     </style>
 </head>
 <body>
@@ -514,6 +551,9 @@
         <button class="action-btn btn-undo" style="width:100%; margin-top:15px;" onclick="closeModal('settings-modal')">閉じる</button>
     </div>
 </div>
+
+<!-- PDF（印刷）用レポート：画面では非表示、印刷時のみ表示 -->
+<div id="print-report"></div>
 
 <script>
     // ▼▼▼ 操作音（電子音を鳴らす）▼▼▼
@@ -1511,79 +1551,58 @@
         if(tabId === 'analytics') showAnalyticsMenu();
     }
 
-    // ▼▼▼ PDF保存用の関数を追加 ▼▼▼
+    // ▼▼▼ PDF出力（ポップアップを使わず、印刷用スタイルで本体ページをPDF化）▼▼▼
     function downloadPDF() {
-        const text = document.getElementById('analytics-result').innerText;
-        if (!text || text.includes("売上データがありません") || text.includes("まだ売上データが")) {
-            alert("印刷する売上データがありません。");
+        if (salesHistory.length === 0 || !analyticsSections) {
+            alert('印刷する売上データがありません。');
             return;
         }
 
-        // 印刷用の新しいウィンドウ（タブ）を一時的に作成
-        const printWindow = window.open('', '_blank');
-        
-        // 印刷用画面のレイアウト（A4で見やすくなるようなデザイン）を書き込む
-        printWindow.document.write(`
-            <html>
-            <head>
-                <title>泰山木POS_売上報告書</title>
-                <style>
-                    body {
-                        font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
-                        color: #333;
-                        padding: 40px;
-                        line-height: 1.8;
-                    }
-                    .report-header {
-                        text-align: center;
-                        border-bottom: 3px double #FF9AA2;
-                        padding-bottom: 10px;
-                        margin-bottom: 30px;
-                    }
-                    .report-title {
-                        font-size: 26px;
-                        font-weight: bold;
-                        color: #5A4E4D;
-                        margin: 0;
-                    }
-                    .report-date {
-                        text-align: right;
-                        font-size: 14px;
-                        color: #887B7A;
-                        margin-top: 5px;
-                    }
-                    .report-content {
-                        font-size: 16px;
-                        white-space: pre-wrap;
-                        background: #FFF5F7;
-                        padding: 25px;
-                        border-radius: 12px;
-                        border: 1px solid #FFD1DC;
-                    }
-                    @media print {
-                        body { padding: 0; }
-                        .no-print { display: none; }
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="report-header">
-                    <h1 class="report-title">📊 泰山木POS 売上分析報告書</h1>
-                    <div class="report-date">出力日時: ${new Date().toLocaleString('ja-JP')}</div>
-                </div>
-                <div class="report-content">${text}</div>
-                <script>
-                    // 画面が開いたら自動で印刷ダイアログ（PDF保存）を起動
-                    window.onload = function() {
-                        window.print();
-                        // ダイアログを閉じたら自動的にこのタブを閉じる
-                        setTimeout(function() { window.close(); }, 500);
-                    };
-                <\/script>
-            </body>
-            </html>
-        `);
-        printWindow.document.close();
+        // グラフを最新化して SVG を取り出す
+        renderCustomerChart();
+        renderStockChart();
+        const custSvg = document.getElementById('customer-chart').innerHTML;
+        const stockSvg = document.getElementById('stock-chart').innerHTML;
+        const stockLegend = document.getElementById('stock-chart-legend').innerHTML;
+
+        const A = analyticsSections;
+        const esc = s => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const textSec = (title, body) => `<section class="rep-sec"><h2>${title}</h2><pre>${esc(body)}</pre></section>`;
+
+        const totalRev = salesHistory.reduce((s, h) => s + h.total, 0);
+        const now = new Date().toLocaleString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
+        document.getElementById('print-report').innerHTML = `
+            <div class="rep">
+                <header class="rep-head">
+                    <div>
+                        <div class="rep-title">販売会 集計結果</div>
+                        <div class="rep-sub">${esc(currentSession || '前回の販売会')}</div>
+                    </div>
+                    <div class="rep-info">
+                        <div class="rep-total">総売上 ¥${totalRev.toLocaleString()}</div>
+                        <div class="rep-date">出力: ${now}　🥖 泰山木POS</div>
+                    </div>
+                </header>
+                ${textSec('📊 概要', A.summary)}
+                ${textSec('🥐 商品別（消化率・ABC・完売時刻）', A.items)}
+                <section class="rep-sec">
+                    <h2>🕐 時間帯別の客数</h2>
+                    <div class="rep-chart">${custSvg}</div>
+                    <pre>${esc(A.time)}</pre>
+                </section>
+                <section class="rep-sec">
+                    <h2>📉 商品ごとの残在庫の推移</h2>
+                    <div class="rep-chart">${stockSvg}</div>
+                    <div class="rep-legend">${stockLegend}</div>
+                </section>
+                ${textSec('👥 客層・カテゴリ', A.segment)}
+                ${textSec('🔮 次回インサイト', A.insight)}
+                ${textSec('📝 次回準備の参考メモ', A.next)}
+            </div>
+        `;
+
+        window.print();
     }
     // ▲▲▲ ここまで ▲▲▲
 
