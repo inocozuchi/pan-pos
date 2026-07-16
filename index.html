@@ -162,7 +162,7 @@
             .product-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(90,78,77,0.14); }
         }
         .product-btn.out-of-stock { pointer-events: none; color: #B8B4AE; box-shadow: none; }
-        .product-btn .pname { line-height: 1.25; }
+        .product-btn .pname { line-height: 1.25; overflow-wrap: anywhere; word-break: break-word; }
         .product-btn .price { color: var(--accent); font-size: 18px; margin-top: 4px; font-variant-numeric: tabular-nums; }
         .product-btn.out-of-stock .price { color: #C9C4BD; }
         .product-btn .stock { font-size: 11px; color: var(--text-light); font-weight: normal; margin-top: 3px; }
@@ -573,19 +573,32 @@
     // ▲▲▲ ここまで ▲▲▲
 
     let products = [
-        { id: 1, name: "枝豆コーンパン", price: 160, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 2, name: "夏野菜ピザパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 3, name: "レモンはちみつパン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 4, name: "アップルシナモン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 5, name: "あんぱん", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 6, name: "ウィンナーパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 7, name: "クリームパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 8, name: "塩パン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 9, name: "チーズパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 10, name: "ミルクパン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 11, name: "メロンパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 12, name: "クッキー（未定）", price: 0, stock: 0, initialStock: 0, type: "savory" },
-        { id: 13, name: "ドリンク（準備中）", price: 0, stock: 0, initialStock: 0, type: "drink" }
+        // パン（type: sweet）
+        { id: 1, name: "アップルシナモン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 2, name: "あんぱん", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 3, name: "ウィンナーパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 4, name: "クリームパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 5, name: "塩パン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 6, name: "チーズパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 7, name: "ミルクパン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 8, name: "メロンパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 9, name: "枝豆コーンパン", price: 160, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 10, name: "夏野菜のピザパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 11, name: "コーンマヨピザパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 12, name: "レモンはちみつパン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
+        // クッキー・焼き菓子（type: savory）
+        { id: 13, name: "ふじもっちゃんの全粒粉クッキー", price: 200, stock: 50, initialStock: 50, type: "savory" },
+        { id: 14, name: "ダンちゃんのアーモンドクッキー", price: 200, stock: 50, initialStock: 50, type: "savory" },
+        { id: 15, name: "杉ちゃんのココナッツクッキー", price: 200, stock: 50, initialStock: 50, type: "savory" },
+        { id: 16, name: "ケンちゃんのフロランタン", price: 200, stock: 50, initialStock: 50, type: "savory" },
+        { id: 17, name: "なっちゃんのチョコクッキー", price: 100, stock: 50, initialStock: 50, type: "savory" },
+        { id: 18, name: "なっちゃんの紅茶クッキー", price: 100, stock: 50, initialStock: 50, type: "savory" },
+        { id: 19, name: "フィナンシェ", price: 150, stock: 50, initialStock: 50, type: "savory" },
+        { id: 20, name: "カップケーキ", price: 150, stock: 50, initialStock: 50, type: "savory" },
+        { id: 21, name: "ハイジのチーズケーキ", price: 300, stock: 50, initialStock: 50, type: "savory" },
+        { id: 22, name: "パウンドケーキ", price: 350, stock: 50, initialStock: 50, type: "savory" },
+        // ドリンク枠（今後の販売用プレースホルダ）
+        { id: 23, name: "ドリンク（準備中）", price: 0, stock: 0, initialStock: 0, type: "drink" }
     ];
 
     let cart = [];
@@ -1317,13 +1330,18 @@
 
     // 商品名から味の傾向（甘い/しょっぱい/ドリンク）を簡易推定する。
     // ※オフライン動作のため、クラウドAIではなくキーワードによるルール判定。
-    const TASTE_SWEET = ['チョコ', 'クリーム', 'あん', 'メロン', 'アップル', 'りんご', 'シナモン', 'ミルク', 'パウンド', 'ケーキ', 'フロランタン', 'ココナッツ', '紅茶', 'カスタード', 'ジャム', 'はちみつ', 'ハニー', '練乳', 'いちご', 'ストロベリー', '抹茶', 'きなこ', 'マロン', '栗', 'かぼちゃ', 'カボチャ', 'さつま', 'バナナ', 'レーズン', 'メープル', 'キャラメル', 'あんこ', 'シュガー', 'くるみ', 'ナッツ', 'ベリー', 'レモン', 'オレンジ', 'ピーナッツ', 'マーブル', 'デニッシュ'];
+    // スイーツ（焼き菓子）を示す語。これが含まれる場合は「チーズケーキ」等でも甘い系とみなす。
+    const DESSERT_SWEET = ['クッキー', 'ケーキ', 'フィナンシェ', 'フロランタン', 'パウンド', 'タルト', 'マフィン', 'スコーン', 'ドーナツ', 'プリン', 'マカロン', 'ビスケット', 'ガレット', 'ブラウニー'];
+    const TASTE_SWEET = ['チョコ', 'クリーム', 'あん', 'メロン', 'アップル', 'りんご', 'シナモン', 'ミルク', 'ココナッツ', '紅茶', 'カスタード', 'ジャム', 'はちみつ', 'ハニー', '練乳', 'いちご', 'ストロベリー', '抹茶', 'きなこ', 'マロン', '栗', 'かぼちゃ', 'カボチャ', 'さつま', 'バナナ', 'レーズン', 'メープル', 'キャラメル', 'あんこ', 'シュガー', 'くるみ', 'ナッツ', 'アーモンド', '全粒粉', 'ベリー', 'レモン', 'オレンジ', 'ピーナッツ', 'マーブル', 'デニッシュ'];
     const TASTE_SALTY = ['塩', 'チーズ', 'ウィンナー', 'ソーセージ', 'ベーコン', 'カレー', 'コーン', 'ハム', 'ピザ', '明太', 'たらこ', 'ガーリック', 'オニオン', '枝豆', 'ツナ', 'マヨ', '焼きそば', 'じゃがいも', 'ポテト', 'バジル', 'ペッパー', 'グラタン', 'ハーブ', 'カルツォーネ'];
     const TASTE_DRINK = ['ブレンド', 'コーヒー', '珈琲', 'ティー', 'ラテ', 'ジュース', 'ドリンク', '茶', '水', 'ソーダ', 'コーラ', 'スムージー', 'カフェ'];
 
     function estimateTaste(name, type) {
         const n = name || '';
-        if (type === 'drink' || TASTE_DRINK.some(k => n.includes(k))) return 'ドリンク';
+        if (type === 'drink') return 'ドリンク';
+        // 焼き菓子は甘い系を優先（例：チーズケーキ＝チーズより「ケーキ」、紅茶クッキー＝茶より「クッキー」）
+        if (DESSERT_SWEET.some(k => n.includes(k))) return '甘い系';
+        if (TASTE_DRINK.some(k => n.includes(k))) return 'ドリンク';
         const salty = TASTE_SALTY.some(k => n.includes(k));
         const sweet = TASTE_SWEET.some(k => n.includes(k));
         if (sweet && !salty) return '甘い系';
