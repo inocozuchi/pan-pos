@@ -334,6 +334,16 @@
             border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; font-size: 15px;
         }
 
+        /* 操作フィードバックのトースト（会計完了・取消など） */
+        #toast {
+            position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(16px);
+            background: rgba(90,78,77,0.94); color: #fff; padding: 12px 24px; border-radius: 999px;
+            font-weight: bold; font-size: 15px; box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+            opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+            z-index: 200; max-width: 90vw; text-align: center;
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
         /* ▼ PDF（印刷）用レポート：画面では隠し、印刷時のみ本体を差し替える ▼ */
         #print-report { display: none; }
         @media print {
@@ -621,6 +631,9 @@
     </div>
 </div>
 
+<!-- 操作フィードバック用トースト -->
+<div id="toast"></div>
+
 <!-- PDF（印刷）用レポート：画面では非表示、印刷時のみ表示 -->
 <div id="print-report"></div>
 
@@ -679,6 +692,17 @@
     function playError() { playSound(220, 0.25, 'square', 0.12); }
     // 会計完了の確認音（ポン♪と2音）
     function playSuccess() { playSound(880, 0.08); setTimeout(() => playSound(1320, 0.13), 90); }
+
+    // 画面下に短く表示する操作フィードバック（会計完了・取消など）
+    let toastTimer = null;
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        if (!t) return;
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+    }
     // ▲▲▲ ここまで ▲▲▲
 
     let products = [
@@ -709,6 +733,10 @@
         // ドリンク枠（今後の販売用プレースホルダ）
         { id: 23, name: "ドリンク（準備中）", price: 0, stock: 0, initialStock: 0, type: "drink" }
     ];
+
+    // 既定ラインナップの控え（loadDataで products が上書きされる前に保存）。
+    // 開店設定で「既定に戻す」時に使う。
+    const DEFAULT_PRODUCTS = JSON.parse(JSON.stringify(products));
 
     let cart = [];
     let salesHistory = [];
@@ -803,7 +831,7 @@
         init();
         renderRecords();
         updateAnalytics();
-        alert('会計を取り消しました。');
+        showToast('取り消しました');
     }
 
     function undoLast() {
@@ -895,8 +923,10 @@
 
         if (reservationId !== null) {
             const res = reservations.find(r => r.id === reservationId);
+            if (!res) { processingReservationId = null; return; } // 予約が既に清算/取消済みなら何もしない
             itemsToProcess = res.items;
         } else if (cart.length === 0) {
+            playError(); // 空のカートで「会計へ進む」を押した時のフィードバック
             return;
         }
 
@@ -1011,6 +1041,7 @@
         saveData();
         init();
         renderReservations();
+        showToast(`✓ 記録しました（客No.${record.no} / お釣り¥${record.change}）`);
     }
 
     function promptReservation() {
@@ -1082,12 +1113,12 @@
 
         const latest = getLatestRecommendationMap();
 
-        // 「推奨を反映」ボタンは横スクロール外（上部）に固定表示
+        // 「推奨を反映」「既定に戻す」ボタンは横スクロール外（上部）に固定表示
         const applyBox = document.getElementById('inventory-apply');
         if (applyBox) {
-            applyBox.innerHTML = latest
-                ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:10px; padding:10px; background:#B5EAD7; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-main);">✨ 前回「${latest.sessionName}」の実績を参考に反映</button>`
-                : '';
+            applyBox.innerHTML =
+                (latest ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:8px; padding:10px; background:#B5EAD7; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-main);">✨ 前回「${latest.sessionName}」の実績を参考に反映</button>` : '')
+                + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:#F3F3F3; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px;">↩️ 商品リストを既定のラインナップに戻す</button>`;
         }
 
         list.innerHTML = '';
@@ -1618,6 +1649,14 @@
         });
         renderInventorySetup();
         alert(`「${latest.sessionName}」の実績を参考に ${applied} 件の仕入れ数を反映しました。季節や天候に合わせて調整してください。`);
+    }
+
+    // 商品リストをアプリ既定のラインナップに戻す（端末に古いデータが残っている時の保険）
+    function resetLineupToDefault() {
+        if (!confirm('商品リストをアプリ既定のラインナップ（パン12種＋クッキー10種＋ドリンク枠）に戻します。\n編集中の内容は破棄されます。よろしいですか？')) return;
+        tempSetupProducts = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+        renderInventorySetup();
+        showToast('既定のラインナップに戻しました');
     }
     // ▲▲▲ ここまで ▲▲▲
 
