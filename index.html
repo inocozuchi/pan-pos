@@ -125,6 +125,7 @@
 
         #app-container {
             display: flex;
+            flex-direction: row-reverse; /* 商品ボタンを右、カート（小計）を左に配置（右利き向け） */
             flex: 1;
             overflow: hidden;
         }
@@ -177,10 +178,10 @@
         #sidebar {
             flex: 1;
             background-color: var(--white);
-            border-left: 2px solid #FFF0F0;
+            border-right: 2px solid #FFF0F0;
             display: flex;
             flex-direction: column;
-            box-shadow: -2px 0 15px rgba(0,0,0,0.02);
+            box-shadow: 2px 0 15px rgba(0,0,0,0.02);
             z-index: 5;
         }
 
@@ -288,7 +289,7 @@
         @media (max-width: 768px) {
             #app-container { flex-direction: column; }
             main { flex: 1.5; grid-template-columns: repeat(3, 1fr); }
-            #sidebar { flex: 1; border-left: none; border-top: 2px solid #FFF0F0; }
+            #sidebar { flex: 1; border-left: none; border-right: none; border-top: 2px solid #FFF0F0; }
             .action-row { display: flex; }
             .btn-checkout { padding: 12px; }
             .total-display .total-label { font-size: 18px; }
