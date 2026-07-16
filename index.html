@@ -86,27 +86,42 @@
         }
 
         header {
-            background-color: var(--header-bg);
-            padding: 15px 20px;
+            background: linear-gradient(180deg, #FFDCE4 0%, var(--header-bg) 100%);
+            padding: 14px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            gap: 12px;
+            box-shadow: 0 2px 12px rgba(90,78,77,0.08);
             z-index: 10;
         }
 
-        .app-title { font-size: 22px; font-weight: bold; color: var(--text-main); display: flex; align-items: center; gap: 15px; }
-        .session-info { font-size: 14px; background: var(--white); padding: 4px 10px; border-radius: 10px; color: var(--accent); }
-        .settings-btn { 
-            background: var(--white); 
-            border: 2px solid var(--white); 
-            color: var(--text-main); 
-            padding: 8px 20px; 
-            border-radius: 20px; 
-            font-weight: bold;
-            cursor: pointer; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        .app-title { font-size: 22px; font-weight: bold; color: var(--text-main); display: flex; align-items: center; gap: 12px; letter-spacing: 0.02em; min-width: 0; }
+        .session-info {
+            font-size: 13px; background: var(--white); padding: 5px 12px; border-radius: 999px;
+            color: var(--accent); font-weight: bold; white-space: nowrap; overflow: hidden;
+            text-overflow: ellipsis; max-width: 220px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
+
+        /* カテゴリ凡例（色の意味を明示） */
+        .cat-legend { display: flex; gap: 14px; align-items: center; }
+        .cat-legend span { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--text-main); font-weight: bold; }
+        .cat-legend i { width: 14px; height: 14px; border-radius: 5px; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
+        @media (max-width: 820px) { .cat-legend { display: none; } }
+
+        .settings-btn {
+            background: var(--white);
+            border: none;
+            color: var(--text-main);
+            padding: 9px 20px;
+            border-radius: 999px;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow: 0 2px 6px rgba(90,78,77,0.12);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .settings-btn:active { transform: translateY(1px); }
 
         #app-container {
             display: flex;
@@ -125,25 +140,39 @@
         }
 
         .product-btn {
+            position: relative;
+            overflow: hidden;
             border: none;
-            border-radius: 15px;
+            border-radius: 16px;
             color: var(--text-main);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 5px;
+            padding: 6px 8px;
             font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            transition: transform 0.1s, box-shadow 0.1s;
+            box-shadow: 0 3px 8px rgba(90,78,77,0.10);
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
         }
 
-        .product-btn:active { transform: translateY(2px); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .product-btn.out-of-stock { opacity: 0.4; pointer-events: none; filter: grayscale(100%); }
-        .product-btn .price { color: var(--accent); font-size: 16px; margin-top: 4px; }
-        .product-btn .stock { font-size: 11px; color: var(--text-light); font-weight: normal; margin-top: 2px; }
+        .product-btn:active { transform: translateY(2px) scale(0.99); box-shadow: 0 1px 3px rgba(90,78,77,0.08); }
+        @media (hover: hover) {
+            .product-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(90,78,77,0.14); }
+        }
+        .product-btn.out-of-stock { pointer-events: none; color: #B8B4AE; box-shadow: none; }
+        .product-btn .pname { line-height: 1.25; overflow-wrap: anywhere; word-break: break-word; }
+        .product-btn .price { color: var(--accent); font-size: 18px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+        .product-btn.out-of-stock .price { color: #C9C4BD; }
+        .product-btn .stock { font-size: 11px; color: var(--text-light); font-weight: normal; margin-top: 3px; }
+
+        .soldout-badge {
+            position: absolute; top: 8px; right: 8px;
+            background: var(--accent); color: #fff; font-size: 11px; font-weight: bold;
+            padding: 3px 9px; border-radius: 999px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        .soldout-badge.prep { background: #B0ABA4; }
 
         #sidebar {
             flex: 1;
@@ -178,21 +207,25 @@
             border-top: 2px solid #FFF0F0;
         }
 
-        .total-display { font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .total-display span { font-size: 32px; color: var(--accent); }
-        
+        .total-display { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+        .total-display .total-label { font-size: 20px; font-weight: bold; color: var(--text-main); }
+        .total-display .total-amount { font-size: 34px; font-weight: bold; color: var(--accent); font-variant-numeric: tabular-nums; }
+
         .action-row { display: flex; gap: 10px; }
-        .action-btn { 
-            padding: 12px; 
-            border-radius: 12px; 
-            font-weight: bold; 
+        .action-btn {
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: bold;
             font-size: 15px;
-            cursor: pointer; 
-            border: none; 
+            cursor: pointer;
+            border: none;
             color: var(--text-main);
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 6px rgba(90,78,77,0.10);
             text-align: center;
+            transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
         }
+        .action-btn:active { transform: translateY(1px); box-shadow: 0 1px 3px rgba(90,78,77,0.08); }
+        @media (hover: hover) { .action-btn:hover { filter: brightness(0.97); } }
         .btn-undo { background-color: #F3F3F3; flex: 1; }
         .btn-reserve { background-color: #FFDFBA; flex: 1; }
         .btn-checkout { background-color: #B5EAD7; width: 100%; font-size: 18px; padding: 15px; margin-top: 5px;}
@@ -258,8 +291,8 @@
             #sidebar { flex: 1; border-left: none; border-top: 2px solid #FFF0F0; }
             .action-row { display: flex; }
             .btn-checkout { padding: 12px; }
-            .total-display { font-size: 18px; }
-            .total-display span { font-size: 24px; }
+            .total-display .total-label { font-size: 18px; }
+            .total-display .total-amount { font-size: 26px; }
         }
 
         /* ▼ 設定/予約パネル：横長デバイス向けにワイド化＆横スクロール ▼ */
@@ -299,6 +332,11 @@
         🥖 泰山木POS
         <span class="session-info" id="session-display">閉店中</span>
     </div>
+    <div class="cat-legend">
+        <span><i style="background:var(--btn-sweet)"></i>パン</span>
+        <span><i style="background:var(--btn-savory)"></i>クッキー</span>
+        <span><i style="background:var(--btn-drink)"></i>ドリンク</span>
+    </div>
     <button class="settings-btn" onclick="openSettings()">設定 / 予約</button>
 </header>
 
@@ -311,8 +349,8 @@
         </div>
         <footer>
             <div class="total-display">
-                <span>合計 <span id="cart-count" style="font-size:15px; color:var(--text-light); font-weight:normal;"></span></span>
-                <div>¥<span id="cart-total">0</span></div>
+                <span class="total-label">合計 <span id="cart-count" style="font-size:14px; color:var(--text-light); font-weight:normal;"></span></span>
+                <span class="total-amount">¥<span id="cart-total">0</span></span>
             </div>
             <div class="action-row">
                 <button class="action-btn btn-undo" onclick="undoLast()">1つ戻す</button>
@@ -426,6 +464,7 @@
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('time')">🕐<br>時間帯別<br>（客数グラフ）</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('stock')">📉<br>残在庫の推移</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('segment')">👥<br>客層・カテゴリ</button>
+                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('insight')">🔮<br>次回インサイト</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('next')">📝<br>次回準備の<br>参考メモ</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('export')">💾<br>書き出し<br>（PDF/CSV）</button>
                     </div>
@@ -450,6 +489,7 @@
                     </div>
 
                     <div id="sec-segment" class="analytics-sec" style="display:none;"></div>
+                    <div id="sec-insight" class="analytics-sec" style="display:none;"></div>
                     <div id="sec-next" class="analytics-sec" style="display:none;"></div>
 
                     <div id="sec-export" class="analytics-sec" style="display:none;">
@@ -533,22 +573,32 @@
     // ▲▲▲ ここまで ▲▲▲
 
     let products = [
-        { id: 1, name: "アップルパイ", price: 200, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 2, name: "アップルシナモン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 3, name: "あんぱん", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 4, name: "ウィンナーパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 5, name: "クリームパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 6, name: "塩パン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 7, name: "チーズパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 8, name: "ミルクパン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 9, name: "メロンパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 10, name: "チョコチップ", price: 200, stock: 50, initialStock: 50, type: "savory" },
-        { id: 11, name: "フロランタン", price: 200, stock: 50, initialStock: 50, type: "savory" },
-        { id: 12, name: "ココナッツ", price: 200, stock: 50, initialStock: 50, type: "savory" },
-        { id: 13, name: "チョコクッキー", price: 100, stock: 50, initialStock: 50, type: "savory" },
-        { id: 14, name: "紅茶クッキー", price: 100, stock: 50, initialStock: 50, type: "savory" },
-        { id: 15, name: "パウンドケーキ", price: 350, stock: 50, initialStock: 50, type: "savory" },
-        { id: 16, name: "KENJIブレンド", price: 100, stock: 50, initialStock: 50, type: "drink" }
+        // パン（type: sweet）
+        { id: 1, name: "アップルシナモン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 2, name: "あんぱん", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 3, name: "ウィンナーパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 4, name: "クリームパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 5, name: "塩パン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 6, name: "チーズパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 7, name: "ミルクパン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 8, name: "メロンパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 9, name: "枝豆コーンパン", price: 160, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 10, name: "夏野菜のピザパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 11, name: "コーンマヨピザパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
+        { id: 12, name: "レモンはちみつパン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
+        // クッキー・焼き菓子（type: savory）
+        { id: 13, name: "ふじもっちゃんの全粒粉クッキー", price: 200, stock: 50, initialStock: 50, type: "savory" },
+        { id: 14, name: "ダンちゃんのアーモンドクッキー", price: 200, stock: 50, initialStock: 50, type: "savory" },
+        { id: 15, name: "杉ちゃんのココナッツクッキー", price: 200, stock: 50, initialStock: 50, type: "savory" },
+        { id: 16, name: "ケンちゃんのフロランタン", price: 200, stock: 50, initialStock: 50, type: "savory" },
+        { id: 17, name: "なっちゃんのチョコクッキー", price: 100, stock: 50, initialStock: 50, type: "savory" },
+        { id: 18, name: "なっちゃんの紅茶クッキー", price: 100, stock: 50, initialStock: 50, type: "savory" },
+        { id: 19, name: "フィナンシェ", price: 150, stock: 50, initialStock: 50, type: "savory" },
+        { id: 20, name: "カップケーキ", price: 150, stock: 50, initialStock: 50, type: "savory" },
+        { id: 21, name: "ハイジのチーズケーキ", price: 300, stock: 50, initialStock: 50, type: "savory" },
+        { id: 22, name: "パウンドケーキ", price: 350, stock: 50, initialStock: 50, type: "savory" },
+        // ドリンク枠（今後の販売用プレースホルダ）
+        { id: 23, name: "ドリンク（準備中）", price: 0, stock: 0, initialStock: 0, type: "drink" }
     ];
 
     let cart = [];
@@ -566,17 +616,27 @@
         grid.innerHTML = '';
         products.forEach(p => {
             const btn = document.createElement('button');
-            btn.className = `product-btn ${p.stock <= 0 ? 'out-of-stock' : ''}`;
-            
-            if(p.type === 'sweet') btn.style.backgroundColor = 'var(--btn-sweet)';
-            else if(p.type === 'savory') btn.style.backgroundColor = 'var(--btn-savory)';
+            const isOut = p.stock <= 0;
+            btn.className = `product-btn ${isOut ? 'out-of-stock' : ''}`;
+
+            if (isOut) btn.style.backgroundColor = '#EFEDEA';
+            else if (p.type === 'sweet') btn.style.backgroundColor = 'var(--btn-sweet)';
+            else if (p.type === 'savory') btn.style.backgroundColor = 'var(--btn-savory)';
             else btn.style.backgroundColor = 'var(--btn-drink)';
+
+            // 完売（初期在庫あり→0）と準備中（初期在庫なし＝未セット）を区別して表示
+            let badge = '';
+            if (isOut) {
+                const prep = !(p.initialStock > 0);
+                badge = `<span class="soldout-badge${prep ? ' prep' : ''}">${prep ? '準備中' : '完売'}</span>`;
+            }
 
             // 残りわずか（1〜5個）は在庫表示を強調して品切れ間近に気づけるように（位置は変えない）
             const lowStock = p.stock > 0 && p.stock <= 5;
             const stockStyle = lowStock ? 'color:#e06c00; font-weight:bold;' : '';
             btn.innerHTML = `
-                <span>${p.name}</span>
+                ${badge}
+                <span class="pname">${p.name}</span>
                 <span class="price">¥${p.price}</span>
                 <span class="stock" style="${stockStyle}">在庫:${p.stock}${lowStock ? ' ⚠️' : ''}</span>
             `;
@@ -587,10 +647,12 @@
     }
 
     function addToCart(p) {
+        if (!p) return;
         if (!currentSession) { playError(); alert('設定から先に開店してください'); return; }
         if (p.stock > 0) {
             playSound(); // 登録成功の合図（耳で確認できてミス防止）
             p.stock--;
+            if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString(); // 在庫切れ日時を記録
             cart.push({...p});
             saveData();
             init();
@@ -605,6 +667,13 @@
         if (p) addToCart(p);
     }
 
+    // 在庫を1つ戻す。在庫が復活したら「在庫切れ日時」の記録を消す。
+    function restockOne(p) {
+        if (!p) return;
+        p.stock++;
+        if (p.stock > 0) p.soldOutTime = null;
+    }
+
     // 指定した会計を取り消す（会計済一覧から呼ぶ／会計後に気づいたミスの訂正）
     function voidSale(idx) {
         const rec = salesHistory[idx];
@@ -615,7 +684,7 @@
         if (!confirm(`客No.${rec.no || ''} の会計を取り消します。\n［${summary}］ 合計¥${rec.total}\n※販売した商品は在庫に戻ります。よろしいですか？`)) return;
         rec.items.forEach(it => {
             const p = products.find(prod => prod.id === it.id);
-            if (p) p.stock++;
+            restockOne(p);
         });
         salesHistory.splice(idx, 1);
         if (rec.no === receiptCounter) receiptCounter--; // 末尾なら客No.を詰める（途中なら欠番のまま）
@@ -632,7 +701,7 @@
         if (cart.length > 0) {
             const lastItem = cart.pop();
             const product = products.find(p => p.id === lastItem.id);
-            if (product) product.stock++;
+            restockOne(product);
             saveData();
             init();
         }
@@ -645,7 +714,7 @@
         playSound(660, 0.08); // 取り消しの合図（追加音より低め）
         const removed = cart.splice(idx, 1)[0];
         const product = products.find(p => p.id === removed.id);
-        if (product) product.stock++;
+        restockOne(product);
         saveData();
         init();
     }
@@ -685,7 +754,7 @@
         }
         
         if(cart.length === 0) {
-            list.innerHTML = '<div style="color:var(--text-light); text-align:center; margin-top:20px;">注文がありません</div>';
+            list.innerHTML = '<div style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><div style="font-size:34px;">🧺</div>商品をタップして<br>お会計に追加してください</div>';
         }
 
         document.getElementById('cart-total').innerText = total;
@@ -887,7 +956,7 @@
         const res = reservations[resIndex];
         res.items.forEach(item => {
             const p = products.find(prod => prod.id === item.id);
-            if (p) p.stock++;
+            restockOne(p);
         });
         reservations.splice(resIndex, 1);
         renderReservations();
@@ -1004,7 +1073,7 @@
 
         // 編集した一時データを本番の商品データとして適用する
         products = JSON.parse(JSON.stringify(tempSetupProducts));
-        products.forEach(p => p.stock = p.initialStock);
+        products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; });
         
         document.getElementById('session-display').innerText = `営業中: ${name}`;
         document.getElementById('session-display').style.background = 'var(--white)';
@@ -1040,6 +1109,7 @@
         disp.innerText = "閉店中";
         disp.style.background = '';
         showTab('analytics');
+        if (salesHistory.length > 0) showAnalyticsSection('insight'); // 閉店時は次回インサイトを表示
         saveData();
     }
 
@@ -1156,7 +1226,8 @@
             let product = products.find(p => p.name === name);
             let isSoldOut = product ? (product.stock === 0) : false;
             if (isSoldOut) {
-                let lastTime = new Date(stat.lastTime);
+                // 記録された在庫切れ日時を優先（無ければ最後の販売時刻で近似）
+                let lastTime = (product && product.soldOutTime) ? new Date(product.soldOutTime) : new Date(stat.lastTime);
                 let tLabel = `${lastTime.getHours()}:${String(lastTime.getMinutes()).padStart(2, '0')}`;
                 let durationMin = Math.max(1, (lastTime - sessionStartTime) / 60000);
                 let paceHour = Math.round((stat.count / durationMin) * 60);
@@ -1207,13 +1278,15 @@
             nextText = 'データがありません';
         }
 
-        analyticsSections = { summary, items: itemsText, time: timeText, segment: segmentText, next: nextText };
+        const insight = computeInsights();
+
+        analyticsSections = { summary, items: itemsText, time: timeText, segment: segmentText, next: nextText, insight };
 
         // PDF出力用（全項目まとめ）
         const sep = '--------------------------\n';
         document.getElementById('analytics-result').innerText =
             summary + sep + itemsText + sep + timeText + sep + segmentText + sep +
-            '[次回準備の参考メモ]\n' + nextText;
+            '[次回準備の参考メモ]\n' + nextText + sep + '[次回インサイト]\n' + (insight || '');
 
         showAnalyticsMenu();
     }
@@ -1222,7 +1295,7 @@
     const ANALYTICS_TITLES = {
         summary: '📊 概要', items: '🥐 商品別', time: '🕐 時間帯別の客数',
         stock: '📉 残在庫の推移', segment: '👥 客層・カテゴリ', next: '📝 次回準備の参考メモ',
-        export: '💾 書き出し（PDF/CSV）'
+        insight: '🔮 次回インサイト', export: '💾 書き出し（PDF/CSV）'
     };
 
     function showAnalyticsMenu() {
@@ -1251,7 +1324,96 @@
         else if (key === 'next') document.getElementById('sec-next').innerText = analyticsSections.next;
         else if (key === 'time') { document.getElementById('sec-time-text').innerText = analyticsSections.time; renderCustomerChart(); }
         else if (key === 'stock') renderStockChart();
+        else if (key === 'insight') document.getElementById('sec-insight').innerText = analyticsSections.insight || 'データがありません';
         // export はボタンのみ（静的）
+    }
+
+    // 商品名から味の傾向（甘い/しょっぱい/ドリンク）を簡易推定する。
+    // ※オフライン動作のため、クラウドAIではなくキーワードによるルール判定。
+    // スイーツ（焼き菓子）を示す語。これが含まれる場合は「チーズケーキ」等でも甘い系とみなす。
+    const DESSERT_SWEET = ['クッキー', 'ケーキ', 'フィナンシェ', 'フロランタン', 'パウンド', 'タルト', 'マフィン', 'スコーン', 'ドーナツ', 'プリン', 'マカロン', 'ビスケット', 'ガレット', 'ブラウニー'];
+    const TASTE_SWEET = ['チョコ', 'クリーム', 'あん', 'メロン', 'アップル', 'りんご', 'シナモン', 'ミルク', 'ココナッツ', '紅茶', 'カスタード', 'ジャム', 'はちみつ', 'ハニー', '練乳', 'いちご', 'ストロベリー', '抹茶', 'きなこ', 'マロン', '栗', 'かぼちゃ', 'カボチャ', 'さつま', 'バナナ', 'レーズン', 'メープル', 'キャラメル', 'あんこ', 'シュガー', 'くるみ', 'ナッツ', 'アーモンド', '全粒粉', 'ベリー', 'レモン', 'オレンジ', 'ピーナッツ', 'マーブル', 'デニッシュ'];
+    const TASTE_SALTY = ['塩', 'チーズ', 'ウィンナー', 'ソーセージ', 'ベーコン', 'カレー', 'コーン', 'ハム', 'ピザ', '明太', 'たらこ', 'ガーリック', 'オニオン', '枝豆', 'ツナ', 'マヨ', '焼きそば', 'じゃがいも', 'ポテト', 'バジル', 'ペッパー', 'グラタン', 'ハーブ', 'カルツォーネ'];
+    const TASTE_DRINK = ['ブレンド', 'コーヒー', '珈琲', 'ティー', 'ラテ', 'ジュース', 'ドリンク', '茶', '水', 'ソーダ', 'コーラ', 'スムージー', 'カフェ'];
+
+    function estimateTaste(name, type) {
+        const n = name || '';
+        if (type === 'drink') return 'ドリンク';
+        // 焼き菓子は甘い系を優先（例：チーズケーキ＝チーズより「ケーキ」、紅茶クッキー＝茶より「クッキー」）
+        if (DESSERT_SWEET.some(k => n.includes(k))) return '甘い系';
+        if (TASTE_DRINK.some(k => n.includes(k))) return 'ドリンク';
+        const salty = TASTE_SALTY.some(k => n.includes(k));
+        const sweet = TASTE_SWEET.some(k => n.includes(k));
+        if (sweet && !salty) return '甘い系';
+        if (salty && !sweet) return 'しょっぱい系';
+        if (salty && sweet) return 'しょっぱい系';
+        return '不明';
+    }
+
+    // 閉店時の「次回インサイト」テキストを作る。
+    function computeInsights() {
+        if (salesHistory.length === 0) return null;
+        const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
+
+        // 在庫切れ（完売）時刻：記録された soldOutTime を使う
+        const soldOut = products.filter(p => p.soldOutTime)
+            .map(p => ({ name: p.name, t: new Date(p.soldOutTime) }))
+            .sort((a, b) => a.t - b.t);
+
+        const tasteAgg = {};
+        const typeAgg = {};
+        sorted.forEach(h => {
+            const ct = h.customerType || '不明';
+            if (!typeAgg[ct]) typeAgg[ct] = { items: {}, taste: {}, slots: {}, count: 0 };
+            typeAgg[ct].count++;
+            const d = new Date(h.time);
+            const slot = `${d.getHours()}:${String(Math.floor(d.getMinutes() / 15) * 15).padStart(2, '0')}`;
+            typeAgg[ct].slots[slot] = (typeAgg[ct].slots[slot] || 0) + 1;
+            h.items.forEach(i => {
+                const t = estimateTaste(i.name, i.type);
+                if (!tasteAgg[t]) tasteAgg[t] = { count: 0, rev: 0 };
+                tasteAgg[t].count++; tasteAgg[t].rev += i.price;
+                typeAgg[ct].items[i.name] = (typeAgg[ct].items[i.name] || 0) + 1;
+                typeAgg[ct].taste[t] = (typeAgg[ct].taste[t] || 0) + 1;
+            });
+        });
+        const totalTaste = Object.values(tasteAgg).reduce((s, v) => s + v.count, 0);
+
+        let res = `[在庫切れ（完売）時刻]\n`;
+        if (soldOut.length > 0) {
+            soldOut.forEach(s => { res += `・${s.name}: ${s.t.getHours()}:${String(s.t.getMinutes()).padStart(2, '0')} 完売\n`; });
+        } else {
+            res += `・完売した商品はありませんでした\n`;
+        }
+
+        res += `\n[客層別の傾向（次回の仕入れ目安）]\n`;
+        ['学生', '教員', '職員', 'その他', '不明'].forEach(ct => {
+            const d = typeAgg[ct];
+            if (!d || d.count === 0) return;
+            const topItems = Object.entries(d.items).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => `${x[0]}(${x[1]})`).join('、');
+            const peakSlot = Object.entries(d.slots).sort((a, b) => b[1] - a[1])[0];
+            const topTaste = Object.entries(d.taste).sort((a, b) => b[1] - a[1])[0];
+            res += `・${ct}（${d.count}人）: 来店ピーク ${peakSlot ? peakSlot[0] + '〜' : '-'} / 売れ筋 ${topItems || '-'} / 味の傾向 ${topTaste ? topTaste[0] : '-'}\n`;
+        });
+
+        res += `\n[味の傾向（商品名から簡易推定）別の売上]\n`;
+        ['甘い系', 'しょっぱい系', 'ドリンク', '不明'].forEach(t => {
+            if (tasteAgg[t]) {
+                const pct = totalTaste > 0 ? Math.round(tasteAgg[t].count / totalTaste * 100) : 0;
+                res += `・${t}: ¥${tasteAgg[t].rev}（${tasteAgg[t].count}個・${pct}%）\n`;
+            }
+        });
+
+        // 職員と学生で味の傾向が違えば一言ヒント
+        if (typeAgg['職員'] && typeAgg['学生']) {
+            const st = Object.entries(typeAgg['職員'].taste).sort((a, b) => b[1] - a[1])[0];
+            const gk = Object.entries(typeAgg['学生'].taste).sort((a, b) => b[1] - a[1])[0];
+            if (st && gk && st[0] !== gk[0]) {
+                res += `\n→ ヒント: 職員は${st[0]}、学生は${gk[0]}が多めでした。来店ピークの時間差と客層に合わせて配分すると良いかもしれません。\n`;
+            }
+        }
+        res += `\n※味の傾向は商品名のキーワードから推定した簡易判定です（クラウドAIではありません）。\n`;
+        return res;
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -1858,6 +2020,7 @@
         const p = products.find(prod => prod.id === id);
         if (!p) return;
         p.stock = Math.max(0, p.stock + delta);
+        reconcileSoldOut(p);
         saveData();
         init();
         renderLiveStock();
@@ -1867,9 +2030,16 @@
         const p = products.find(prod => prod.id === id);
         if (!p) return;
         p.stock = Math.max(0, parseInt(value) || 0);
+        reconcileSoldOut(p);
         saveData();
         init();
         renderLiveStock();
+    }
+
+    // 在庫調整後、在庫切れ日時を整合させる（0なら記録、1以上ならクリア）
+    function reconcileSoldOut(p) {
+        if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
+        else if (p.stock > 0) p.soldOutTime = null;
     }
     // ▲▲▲ ここまで ▲▲▲
 
