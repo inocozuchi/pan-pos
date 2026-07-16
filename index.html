@@ -324,6 +324,15 @@
         .analytics-menu-btn:active { background: #FFF0F0; }
         .analytics-sec { font-size: 14px; white-space: pre-wrap; line-height: 1.6; }
 
+        /* 設定タブの見出し・注釈・営業中バナー（余白を詰めて圧迫感を解消） */
+        .settings-hint { font-size: 13px; color: var(--text-light); margin: 0 0 8px; line-height: 1.5; }
+        .settings-label { font-size: 14px; font-weight: bold; margin: 12px 0 6px; }
+        #tab-session input#session-name-input { margin: 4px 0 6px; }
+        .active-banner {
+            background: #E2F0CB; color: var(--text-main); font-weight: bold;
+            border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; font-size: 15px;
+        }
+
         /* ▼ PDF（印刷）用レポート：画面では隠し、印刷時のみ本体を差し替える ▼ */
         #print-report { display: none; }
         @media print {
@@ -460,26 +469,31 @@
         
         <div class="tab-content">
             <div id="tab-session">
-                <p style="font-size: 14px; color: var(--text-light);">新しい販売会を始める時に名前をつけて開店します。</p>
-                <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
-                
-                <div style="font-size: 14px; font-weight: bold; margin: 15px 0 5px 0;">当日の仕入れ数設定</div>
-                <div id="inventory-apply"></div>
-                <div id="inventory-setup-list" class="setup-list"></div>
+                <!-- 閉店中のみ表示：新しい販売会を開く -->
+                <div id="session-open-block">
+                    <p class="settings-hint">新しい販売会を始める時に名前をつけて開店します。</p>
+                    <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
 
-                <button class="action-btn btn-checkout" style="width:100%; margin-bottom:20px;" onclick="startSession()">開店する (データリセット)</button>
+                    <div class="settings-label">当日の仕入れ数設定</div>
+                    <div id="inventory-apply"></div>
+                    <div id="inventory-setup-list" class="setup-list"></div>
 
-                <details id="live-stock-details" style="margin-bottom:15px;">
-                    <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の在庫調整（追加搬入・数え直し）</summary>
-                    <div id="live-stock-list" style="max-height:200px; overflow-y:auto; background:#FAFAFA; border:2px solid #EEE; padding:10px; border-radius:12px; margin-top:10px;"></div>
-                </details>
+                    <button class="action-btn btn-checkout" style="width:100%; margin-top:4px;" onclick="startSession()">開店する (データリセット)</button>
+                </div>
 
-                <hr style="border: 1px dashed #EEE; margin-bottom: 20px;">
-                <button class="action-btn" style="width:100%; background: #FF9AA2; color: white;" onclick="endSession()">閉店する (集計して終了)</button>
+                <!-- 営業中のみ表示：在庫調整・閉店 -->
+                <div id="session-active-block" style="display:none;">
+                    <div class="active-banner">🟢 営業中：<span id="active-session-name"></span></div>
+                    <details id="live-stock-details">
+                        <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の在庫調整（追加搬入・数え直し）</summary>
+                        <div id="live-stock-list" style="max-height:220px; overflow-y:auto; background:#FAFAFA; border:2px solid #EEE; padding:10px; border-radius:12px; margin-top:8px;"></div>
+                    </details>
+                    <button class="action-btn" style="width:100%; margin-top:12px; background: #FF9AA2; color: white;" onclick="endSession()">閉店する (集計して終了)</button>
+                </div>
 
-                <hr style="border: 1px dashed #EEE; margin: 20px 0;">
-                <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">データのバックアップ</div>
-                <p style="font-size: 12px; color: var(--text-light); margin: 0 0 10px 0;">データは端末内にのみ保存されます。大切な販売会の記録は定期的に書き出して保管してください。</p>
+                <hr style="border: none; border-top: 1px dashed #E7E3DF; margin: 14px 0;">
+                <div class="settings-label" style="margin-top:0;">データのバックアップ</div>
+                <p class="settings-hint">データは端末内にのみ保存されます。大切な販売会の記録は定期的に書き出して保管してください。</p>
                 <div style="display:flex; gap:10px;">
                     <button class="action-btn btn-reserve" style="flex:1;" onclick="exportBackup()">💾 保存</button>
                     <button class="action-btn btn-undo" style="flex:1;" onclick="document.getElementById('import-file').click()">📂 復元</button>
@@ -516,7 +530,7 @@
                     <div id="sec-items" class="analytics-sec" style="display:none;"></div>
 
                     <div id="sec-time" class="analytics-sec" style="display:none;">
-                        <div id="customer-chart" style="background:#FFF; border:2px solid #EEE; border-radius:12px; padding:10px; margin-bottom:12px; overflow-x:auto;"></div>
+                        <div id="customer-chart" style="background:#FFF; border:2px solid #EEE; border-radius:12px; padding:10px; margin-bottom:12px; overflow-x:auto; text-align:center;"></div>
                         <div id="sec-time-text"></div>
                     </div>
 
@@ -1087,11 +1101,24 @@
         if (!nameInput.value) nameInput.value = defaultSessionName();
         // 設定画面を開くたびに、現在の商品の状態をコピーして編集画面にセットする
         tempSetupProducts = JSON.parse(JSON.stringify(products));
+        updateSessionTabView();
         renderInventorySetup();
         renderLiveStock();
         renderReservations();
         renderRecords();
         updateAnalytics();
+    }
+
+    // 営業状態に応じて営業管理タブの表示を切り替える
+    // （開店中は「開店」UIを隠し、閉店中は「在庫調整・閉店」UIを隠す）
+    function updateSessionTabView() {
+        const openBlock = document.getElementById('session-open-block');
+        const activeBlock = document.getElementById('session-active-block');
+        if (!openBlock || !activeBlock) return;
+        const isOpen = !!currentSession;
+        openBlock.style.display = isOpen ? 'none' : 'block';
+        activeBlock.style.display = isOpen ? 'block' : 'none';
+        if (isOpen) document.getElementById('active-session-name').innerText = currentSession;
     }
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -1148,6 +1175,7 @@
         const disp = document.getElementById('session-display');
         disp.innerText = "閉店中";
         disp.style.background = '';
+        updateSessionTabView();
         showTab('analytics');
         if (salesHistory.length > 0) showAnalyticsSection('insight'); // 閉店時は次回インサイトを表示
         saveData();
@@ -1687,6 +1715,7 @@
                 }
                 saveData();
                 init();
+                updateSessionTabView();
                 renderInventorySetup();
                 renderLiveStock();
                 renderReservations();
@@ -1988,7 +2017,11 @@
         const H = mT + plotH + mB;
         const yOf = v => mT + (1 - v / data.maxCount) * plotH;
 
-        let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; min-width:${Math.max(W, 320)}px; height:auto; font-family:inherit;">`;
+        // 高さを固定し、幅はアスペクト比から算出（縦に巨大化するのを防ぐ）。
+        // 棒が多い場合はコンテナ側の横スクロールで対応する。
+        const dispH = 240;
+        const dispW = Math.round(dispH * W / H);
+        let svg = `<svg viewBox="0 0 ${W} ${H}" style="height:${dispH}px; width:${dispW}px; max-width:none; font-family:inherit;">`;
         // Y軸グリッド＆目盛り（整数の客数）
         const ySteps = Math.min(data.maxCount, 4);
         for (let i = 0; i <= ySteps; i++) {
