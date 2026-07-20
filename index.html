@@ -1391,7 +1391,7 @@
         Object.keys(itemStats).forEach(name => {
             let stat = itemStats[name];
             let product = products.find(p => p.name === name);
-            let isSoldOut = product ? (product.stock === 0) : false;
+            let isSoldOut = product ? (product.stock <= 0) : false;
             if (isSoldOut) {
                 // 記録された在庫切れ日時を優先（無ければ最後の販売時刻で近似）
                 let lastTime = (product && product.soldOutTime) ? new Date(product.soldOutTime) : new Date(stat.lastTime);
@@ -1741,7 +1741,7 @@
         const soldOut = [], inStock = [];
         Object.keys(itemStats).forEach(name => {
             const prod = products.find(p => p.name === name);
-            const out = prod ? prod.stock === 0 : false;
+            const out = prod ? prod.stock <= 0 : false;
             if (out) {
                 const t = (prod && prod.soldOutTime) ? new Date(prod.soldOutTime) : new Date(itemStats[name].lastTime);
                 const dur = Math.max(1, (t - sessionStart) / 60000);
@@ -1749,6 +1749,11 @@
             } else inStock.push(name);
         });
         soldOut.sort((a, b) => a.timeVal - b.timeVal);
+
+        // 販売数 > 仕入数（在庫過少入力の可能性）。備考があれば併記。
+        const oversoldItems = products
+            .filter(p => p.price > 0 && p.initialStock >= 0 && (itemCounts[p.name] || 0) > p.initialStock)
+            .map(p => ({ name: p.name, sold: itemCounts[p.name] || 0, initial: p.initialStock, note: p.note || '' }));
 
         const slots = Object.keys(timeSlotRev)
             .sort((a, b) => parseInt(a.replace(':', '')) - parseInt(b.replace(':', '')))
@@ -1764,7 +1769,7 @@
                 maxSale: Math.max(...sorted.map(h => h.total)), minSale: Math.min(...sorted.map(h => h.total)),
                 peak: peak ? { label: peak[0], rev: peak[1] } : null, cashTotal, changeTotal, cashKnown, voidCount
             },
-            abc, soldOut, inStock, slots, types, categories, copairs,
+            abc, soldOut, inStock, oversoldItems, slots, types, categories, copairs,
             stock: buildStockTimeline(),
             insight: computeInsights(),
             recs: buildRestockRecommendations()
@@ -1815,6 +1820,11 @@
             : '・完売した商品はありませんでした')
             + (R.inStock.length ? `\n・販売中：${R.inStock.join('、')}` : '');
 
+        // 販売数 > 仕入数（在庫入力の確認を促すソフト警告）
+        const oversoldTxt = R.oversoldItems.map(o =>
+            `・${o.name}：仕入 ${o.initial} / 販売 ${o.sold}（差 +${o.sold - o.initial}）${o.note ? '　備考: ' + o.note : '　備考: なし（入力ミスの可能性）'}`
+        ).join('\n');
+
         // 3. 時間帯別
         const slotTxt = R.slots.map(sl =>
             `・${sl.label}〜：${yen(sl.rev)}` + (sl.top.length ? '　' + sl.top.map((t, i) => `${i + 1}位 ${t.name}(${t.count})`).join(' / ') : '')
@@ -1863,6 +1873,9 @@
                     </table>
                     <div class="sub-heading">完売時刻と販売スピード</div>
                     <pre class="rep-pre">${esc(soldOutTxt)}</pre>
+                    ${R.oversoldItems.length ? `
+                    <div class="sub-heading" style="color:#c0392b; border-color:#e6b0aa;">⚠ 販売数 &gt; 仕入数（在庫入力の確認を推奨）</div>
+                    <pre class="rep-pre">${esc(oversoldTxt)}</pre>` : ''}
                 </section>
 
                 <section class="report-section">
@@ -2340,15 +2353,28 @@
         }
         list.innerHTML = '';
         products.forEach(p => {
+            const oversold = p.stock < 0; // 販売数>仕入数（過少入力の可能性）
+            const noteVal = (p.note || '').replace(/"/g, '&quot;');
             list.innerHTML += `
-                <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-                    <span style="flex:1; font-size:14px;">${p.name}</span>
-                    <button onclick="adjustLiveStock(${p.id}, -1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#F3F3F3; font-weight:bold; cursor:pointer;">−</button>
-                    <input type="number" value="${p.stock}" style="width:60px; padding:6px; text-align:center; font-size:14px; border:1px solid #CCC; border-radius:6px; margin:0;" onchange="setLiveStock(${p.id}, this.value)">
-                    <button onclick="adjustLiveStock(${p.id}, 1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#E2F0CB; font-weight:bold; cursor:pointer;">＋</button>
+                <div style="margin-bottom:8px; ${oversold ? 'background:#FFF0F0; border-radius:8px; padding:6px;' : ''}">
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span style="flex:1; font-size:14px;">${p.name}${oversold ? ' <b style="color:#d9534f; font-size:12px;">⚠ 販売&gt;仕入</b>' : ''}</span>
+                        <button onclick="adjustLiveStock(${p.id}, -1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#F3F3F3; font-weight:bold; cursor:pointer;">−</button>
+                        <input type="number" value="${p.stock}" style="width:60px; padding:6px; text-align:center; font-size:14px; border:1px solid #CCC; border-radius:6px; margin:0;" onchange="setLiveStock(${p.id}, this.value)">
+                        <button onclick="adjustLiveStock(${p.id}, 1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#E2F0CB; font-weight:bold; cursor:pointer;">＋</button>
+                    </div>
+                    ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:5px; padding:6px; font-size:12px; border:1px solid #DDD; border-radius:6px;" onchange="setProductNote(${p.id}, this.value)">` : ''}
                 </div>
             `;
         });
+    }
+
+    // 商品の備考（途中補充・数え直し等）を記録する
+    function setProductNote(id, value) {
+        const p = products.find(prod => prod.id === id);
+        if (!p) return;
+        p.note = value;
+        saveData();
     }
 
     function adjustLiveStock(id, delta) {
@@ -2371,9 +2397,9 @@
         renderLiveStock();
     }
 
-    // 在庫調整後、在庫切れ日時を整合させる（0なら記録、1以上ならクリア）
+    // 在庫調整後、在庫切れ日時を整合させる（0以下なら記録、1以上ならクリア）
     function reconcileSoldOut(p) {
-        if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
+        if (p.stock <= 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
         else if (p.stock > 0) p.soldOutTime = null;
     }
     // ▲▲▲ ここまで ▲▲▲
