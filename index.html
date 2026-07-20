@@ -163,6 +163,9 @@
             .product-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(90,78,77,0.14); }
         }
         .product-btn.out-of-stock { pointer-events: none; color: #B8B4AE; box-shadow: none; }
+        /* 完売した実商品：過少入力対策で押せる（超過販売可）。見た目は控えめ */
+        .product-btn.sold-open { color: #857f78; box-shadow: 0 1px 3px rgba(90,78,77,0.06); }
+        .product-btn.sold-open .price { color: #C4BFB8; }
         .product-btn .pname { line-height: 1.25; overflow-wrap: anywhere; word-break: break-word; }
         .product-btn .price { color: var(--accent); font-size: 18px; margin-top: 4px; font-variant-numeric: tabular-nums; }
         .product-btn.out-of-stock .price { color: #C9C4BD; }
@@ -174,6 +177,7 @@
             padding: 3px 9px; border-radius: 999px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
         .soldout-badge.prep { background: #B0ABA4; }
+        .soldout-badge.warn { background: #d9534f; } /* 販売数>仕入数（超過）の警告 */
 
         #sidebar {
             flex: 1;
@@ -756,29 +760,35 @@
         grid.innerHTML = '';
         products.forEach(p => {
             const btn = document.createElement('button');
+            const isPlaceholder = !(p.initialStock > 0) && p.price <= 0; // 未設定枠（例：準備中）
             const isOut = p.stock <= 0;
-            btn.className = `product-btn ${isOut ? 'out-of-stock' : ''}`;
+            const oversold = p.stock < 0; // 販売数 > 仕入数（過少入力の可能性）
 
-            if (isOut) btn.style.backgroundColor = '#EFEDEA';
+            // 準備中の枠だけ操作不可。完売した実商品は「過少入力対策」で押せる（超過販売）
+            let cls = 'product-btn';
+            if (isPlaceholder) cls += ' out-of-stock';
+            else if (isOut) cls += ' sold-open';
+            btn.className = cls;
+
+            if (isPlaceholder || isOut) btn.style.backgroundColor = '#EFEDEA';
             else if (p.type === 'sweet') btn.style.backgroundColor = 'var(--btn-sweet)';
             else if (p.type === 'savory') btn.style.backgroundColor = 'var(--btn-savory)';
             else btn.style.backgroundColor = 'var(--btn-drink)';
 
-            // 完売（初期在庫あり→0）と準備中（初期在庫なし＝未セット）を区別して表示
             let badge = '';
-            if (isOut) {
-                const prep = !(p.initialStock > 0);
-                badge = `<span class="soldout-badge${prep ? ' prep' : ''}">${prep ? '準備中' : '完売'}</span>`;
-            }
+            if (isPlaceholder) badge = `<span class="soldout-badge prep">準備中</span>`;
+            else if (oversold) badge = `<span class="soldout-badge warn">超過 ${-p.stock}</span>`;
+            else if (isOut) badge = `<span class="soldout-badge">完売</span>`;
 
-            // 残りわずか（1〜5個）は在庫表示を強調して品切れ間近に気づけるように（位置は変えない）
+            // 残りわずか（1〜5個）はオレンジ、超過（在庫マイナス）は赤で強調
             const lowStock = p.stock > 0 && p.stock <= 5;
-            const stockStyle = lowStock ? 'color:#e06c00; font-weight:bold;' : '';
+            const stockStyle = oversold ? 'color:#d9534f; font-weight:bold;' : (lowStock ? 'color:#e06c00; font-weight:bold;' : '');
+            const stockText = oversold ? `在庫:0（超過${-p.stock}）` : `在庫:${p.stock}${lowStock ? ' ⚠️' : ''}`;
             btn.innerHTML = `
                 ${badge}
                 <span class="pname">${p.name}</span>
                 <span class="price">¥${p.price}</span>
-                <span class="stock" style="${stockStyle}">在庫:${p.stock}${lowStock ? ' ⚠️' : ''}</span>
+                <span class="stock" style="${stockStyle}">${stockText}</span>
             `;
             btn.onclick = () => addToCart(p);
             grid.appendChild(btn);
@@ -789,16 +799,16 @@
     function addToCart(p) {
         if (!p) return;
         if (!currentSession) { playError(); alert('設定から先に開店してください'); return; }
-        if (p.stock > 0) {
-            playSound(); // 登録成功の合図（耳で確認できてミス防止）
-            p.stock--;
-            if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString(); // 在庫切れ日時を記録
-            cart.push({...p});
-            saveData();
-            init();
-        } else {
-            playError(); // 在庫切れで登録できなかった合図
-        }
+        // 未設定の枠（準備中：初期在庫なし＆価格0）は販売不可
+        if (!(p.initialStock > 0) && p.price <= 0) { playError(); return; }
+        // 在庫0でも登録可（開店前の在庫過少入力に備える）。在庫はマイナスまで許容し、
+        // マイナス＝「販売数 > 仕入数（超過販売）」として警告表示する。
+        if (p.stock > 0) playSound(); else playError(); // 完売後の登録は警告音で気づけるように
+        p.stock--;
+        if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
+        cart.push({...p});
+        saveData();
+        init();
     }
 
     // カート内の「＋」用：商品名から在庫を1つ追加する
