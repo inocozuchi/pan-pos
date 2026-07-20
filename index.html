@@ -1225,7 +1225,27 @@
     function startSession() {
         const name = document.getElementById('session-name-input').value;
         if (!name) { alert('名前を入力してください'); return; }
-        
+
+        // 開店前の仕入れ数の妥当性チェック（ミルクパンのような数え間違い・入力ミスの予防）
+        const warnings = [];
+        const latest = getLatestRecommendationMap();
+        tempSetupProducts.forEach(p => {
+            if (p.price <= 0) return; // 未設定枠は対象外
+            if (!(p.initialStock > 0)) {
+                warnings.push(`・${p.name}：仕入 0（販売しないなら「取扱商品」から外すと確実）`);
+            } else if (p.initialStock > 300) {
+                warnings.push(`・${p.name}：仕入 ${p.initialStock} 個（多すぎませんか？）`);
+            } else if (latest && latest.map[p.name] && latest.map[p.name].initial > 0) {
+                const prev = latest.map[p.name].initial;
+                if (p.initialStock >= prev * 3 || p.initialStock <= prev / 3) {
+                    warnings.push(`・${p.name}：今回 ${p.initialStock} / 前回 ${prev}（差が大きめ・要確認）`);
+                }
+            }
+        });
+        if (warnings.length > 0) {
+            if (!confirm('【仕入れ数の確認】数え間違い・入力ミスがないかご確認ください:\n\n' + warnings.join('\n') + '\n\nこのまま開店してよろしいですか？')) return;
+        }
+
         if (salesHistory.length > 0 || reservations.length > 0) {
             if (!confirm('新しい販売会を始めると、前回の売上データや予約はすべてリセットされます。よろしいですか？')) return;
         }
