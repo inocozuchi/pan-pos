@@ -397,17 +397,20 @@
             .summary-box .stat-label { color: var(--muted); }
             .summary-box .stat-val { font-weight: bold; }
 
-            /* インサイト（重要事項）ボックス：ヘッダーだけ濃い背景＋白文字 */
-            .key-box { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-            .key-box .key-head { background: var(--key-bg); color: #fff; font-weight: bold; padding: 4px 10px; font-size: 11px; }
+            /* インサイト（重要事項）ボックス：ヘッダーだけ濃い背景＋白文字
+               ※ overflow:hidden は使わない（ページ跨ぎ時に内容が切れるWebKit対策） */
+            .key-box { border: 1px solid var(--line); border-radius: 6px; }
+            .key-box .key-head { background: var(--key-bg); color: #fff; font-weight: bold; padding: 4px 10px; font-size: 11px; border-radius: 5px 5px 0 0; }
             .key-box .key-body { padding: 6px 10px; white-space: pre-wrap; }
 
-            /* 参考メモボックス：破線ボーダー */
-            .note-box { border: 1.5px dashed var(--accent); border-radius: 6px; padding: 6px 10px; }
-            .note-foot { font-size: 9px; color: var(--muted); margin-top: 4px; }
+            /* 参考メモの脚注ボックス：破線ボーダー（短い一文のみ入れる＝ページ跨ぎで切れない） */
+            .note-box { border: 1.5px dashed var(--accent); border-radius: 6px; padding: 6px 10px; margin-top: 6px; }
+            .note-foot { font-size: 9px; color: var(--muted); }
 
-            /* 表：表自体は改ページ可、行は分割しない */
-            table.rep-table { width: 100%; border-collapse: collapse; break-inside: auto; }
+            /* 表：表自体は改ページ可、行は分割しない。枠付きボックスの中には入れない
+               （WebKitで枠内の表がページ跨ぎで切れるため、表はセクション直下に置く） */
+            table.rep-table { width: 100%; border-collapse: collapse; break-inside: auto; page-break-inside: auto; }
+            table.rep-table thead { display: table-header-group; } /* 改ページ後にヘッダー行を再表示 */
             table.rep-table th { text-align: left; font-size: 9.5px; color: var(--muted); border-bottom: 1.5px solid var(--ink); padding: 3px 4px; }
             table.rep-table td { padding: 2.5px 4px; border-bottom: 1px solid #eee; }
             table.rep-table tr { break-inside: avoid; page-break-inside: avoid; }
@@ -1880,7 +1883,7 @@
                     <pre class="rep-pre">${esc(coTxt)}</pre>
                 </section>
 
-                <section class="report-section">
+                <section class="report-section report-section--long">
                     <div class="report-heading">6. 次回インサイト</div>
                     <div class="key-box">
                         <div class="key-head">🔮 次回インサイト（客層・味の傾向・在庫切れ）</div>
@@ -1890,13 +1893,11 @@
 
                 <section class="report-section report-section--long">
                     <div class="report-heading">7. 次回準備の参考メモ</div>
-                    <div class="note-box">
-                        <table class="rep-table">
-                            <thead><tr><th>商品</th><th class="num">今回仕入</th><th class="num">販売</th><th class="num">参考仕入</th><th>増減</th><th>理由</th></tr></thead>
-                            <tbody>${recRows}</tbody>
-                        </table>
-                        <div class="note-foot">※今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変動するため参考程度にご利用ください。</div>
-                    </div>
+                    <table class="rep-table">
+                        <thead><tr><th>商品</th><th class="num">今回仕入</th><th class="num">販売</th><th class="num">参考仕入</th><th>増減</th><th>理由</th></tr></thead>
+                        <tbody>${recRows}</tbody>
+                    </table>
+                    <div class="note-box"><div class="note-foot">※今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変動するため参考程度にご利用ください。</div></div>
                 </section>
             </div>
         `;
