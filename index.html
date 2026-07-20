@@ -1717,6 +1717,18 @@
 
     // ▼▼▼ PDF出力：集計結果を構造化して組み立てる ▼▼▼
     // salesHistory から、レポートに必要な数値を構造化オブジェクトで返す。
+    // データ整合性チェック（取消・部分修正が売上/在庫に矛盾なく反映されているか）
+    function checkIntegrity() {
+        const issues = [];
+        let itemSum = 0, totalSum = 0;
+        salesHistory.forEach(h => { totalSum += h.total; h.items.forEach(i => { itemSum += i.price; }); });
+        if (itemSum !== totalSum) issues.push(`金額不一致：品目合計 ¥${itemSum} ≠ 取引合計 ¥${totalSum}`);
+        const orphans = new Set();
+        salesHistory.forEach(h => h.items.forEach(i => { if (!products.find(p => p.id === i.id)) orphans.add(i.name); }));
+        if (orphans.size) issues.push(`商品マスタに無い品目：${[...orphans].join('、')}`);
+        return issues;
+    }
+
     function buildReportData() {
         if (salesHistory.length === 0) return null;
         const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
@@ -1798,7 +1810,7 @@
                 maxSale: Math.max(...sorted.map(h => h.total)), minSale: Math.min(...sorted.map(h => h.total)),
                 peak: peak ? { label: peak[0], rev: peak[1] } : null, cashTotal, changeTotal, cashKnown, voidCount
             },
-            abc, soldOut, inStock, oversoldItems, slots, types, categories, copairs,
+            abc, soldOut, inStock, oversoldItems, integrity: checkIntegrity(), slots, types, categories, copairs,
             stock: buildStockTimeline(),
             insight: computeInsights(),
             recs: buildRestockRecommendations()
@@ -1891,6 +1903,7 @@
                 <section class="report-section">
                     <div class="report-heading">1. 概要</div>
                     ${summaryBox}
+                    ${R.integrity.length ? `<div class="note-box" style="border-color:#c0392b; margin-top:6px;"><div class="note-foot" style="color:#c0392b;">⚠ 整合性チェック：${R.integrity.map(esc).join(' / ')}</div></div>` : ''}
                 </section>
 
                 <section class="report-section report-section--long">
