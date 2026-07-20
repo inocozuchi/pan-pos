@@ -754,6 +754,14 @@
     let receiptCounter = 0;  // 客No.（会計ごとの通し番号）
     let voidCount = 0;       // この販売会での会計取り消し件数
     let analyticsSections = null; // 集計結果（項目別テキスト）のキャッシュ
+    let operationLog = [];   // 事後編集・部分修正などの操作履歴（運用振り返り用）
+
+    // 操作ログを1件追加する
+    function logEdit(msg) {
+        operationLog.push({ time: new Date().toISOString(), msg });
+        if (operationLog.length > 500) operationLog = operationLog.slice(-500);
+        saveData();
+    }
 
     function init() {
         const grid = document.getElementById('product-grid');
@@ -1256,6 +1264,7 @@
         cart = [];
         receiptCounter = 0;
         voidCount = 0;
+        operationLog = [];
 
         // 編集した一時データを本番の商品データとして適用する
         products = JSON.parse(JSON.stringify(tempSetupProducts));
@@ -1951,7 +1960,7 @@
     // ▲▲▲ ここまで ▲▲▲
 
    function saveData() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog };
         localStorage.setItem('taizanboku_pos_data', JSON.stringify(data));
     }
 
@@ -1967,6 +1976,7 @@
             sessionArchive = data.sessionArchive || [];
             receiptCounter = data.receiptCounter || salesHistory.length;
             voidCount = data.voidCount || 0;
+            operationLog = data.operationLog || [];
 
             if (currentSession) {
                 document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
@@ -1996,7 +2006,7 @@
     }
 
     function exportBackup() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog };
         triggerDownload(`taizanboku_backup_${dateStamp()}.json`, JSON.stringify(data, null, 2), 'application/json');
     }
 
@@ -2020,6 +2030,7 @@
                 sessionArchive = data.sessionArchive || [];
                 receiptCounter = data.receiptCounter || salesHistory.length;
                 voidCount = data.voidCount || 0;
+            operationLog = data.operationLog || [];
 
                 const disp = document.getElementById('session-display');
                 if (currentSession) {
@@ -2126,17 +2137,34 @@
         list.innerHTML = rows.map(({ h, idx }) => {
             const t = new Date(h.time);
             const dtStr = `${t.getFullYear()}/${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')} ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
-            const lines = itemLines(h.items).map(l =>
-                `<div style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
-                    <span>${l.name} <span style="color:var(--text-light);">×${l.qty} (@¥${l.price})</span></span>
-                    <span style="font-weight:bold;">¥${l.subtotal}</span>
-                </div>`).join('');
+            const editing = editingRecordIdx === idx;
+            const lines = itemLines(h.items).map(l => {
+                const sn = l.name.replace(/'/g, "\\'");
+                return editing
+                    ? `<div style="display:flex; align-items:center; gap:6px; padding:3px 0; font-size:13px;">
+                        <button onclick="adjustRecordItem(${idx}, '${sn}', -1)" style="width:26px; height:26px; border:none; border-radius:6px; background:#F3F3F3; color:var(--accent); font-weight:bold; cursor:pointer; flex-shrink:0;">−</button>
+                        <button onclick="adjustRecordItem(${idx}, '${sn}', 1)" style="width:26px; height:26px; border:none; border-radius:6px; background:#E2F0CB; font-weight:bold; cursor:pointer; flex-shrink:0;">＋</button>
+                        <span style="flex:1;">${l.name} ×<b>${l.qty}</b></span>
+                        <span style="font-weight:bold;">¥${l.subtotal}</span>
+                    </div>`
+                    : `<div style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
+                        <span>${l.name} <span style="color:var(--text-light);">×${l.qty} (@¥${l.price})</span></span>
+                        <span style="font-weight:bold;">¥${l.subtotal}</span>
+                    </div>`;
+            }).join('');
             const cashStr = (h.cash != null) ? `¥${h.cash}` : '—';
             const changeStr = (h.change != null) ? `¥${h.change}` : '—';
+            const actions = editing
+                ? `<button class="action-btn btn-checkout" style="width:100%; padding:8px; font-size:14px; margin-top:0;" onclick="toggleEditRecord(null)">✅ 修正を終了</button>`
+                : `<div style="display:flex; gap:8px;">
+                        <button class="action-btn btn-undo" style="flex:1; padding:8px; font-size:14px;" onclick="voidSale(${idx})">↩️ 取り消し</button>
+                        <button class="action-btn btn-reserve" style="flex:1; padding:8px; font-size:14px;" onclick="printReceipt(${idx})">🧾 レシート</button>
+                    </div>
+                    <button class="action-btn btn-undo" style="width:100%; padding:7px; font-size:13px;" onclick="toggleEditRecord(${idx})">✏️ 品目・点数を修正</button>`;
             return `
-                <div class="res-card">
+                <div class="res-card"${editing ? ' style="outline:2px solid var(--accent);"' : ''}>
                     <div class="res-header">
-                        <span>客No. ${h.no || '-'}</span>
+                        <span>客No. ${h.no || '-'}${h.edited ? ' <span style="font-size:11px; color:#c0392b; font-weight:normal;">(修正済)</span>' : ''}</span>
                         <span style="color:var(--text-light); font-size:13px; font-weight:normal;">${dtStr}</span>
                     </div>
                     <div style="font-size:12px; color:var(--text-light);">客属性: ${h.customerType || '不明'}</div>
@@ -2147,12 +2175,50 @@
                     <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-light);">
                         <span>お預かり ${cashStr}</span><span>お釣り ${changeStr}</span>
                     </div>
-                    <div style="display:flex; gap:8px;">
-                        <button class="action-btn btn-undo" style="flex:1; padding:8px; font-size:14px;" onclick="voidSale(${idx})">↩️ 取り消し</button>
-                        <button class="action-btn btn-reserve" style="flex:1; padding:8px; font-size:14px;" onclick="printReceipt(${idx})">🧾 レシート</button>
-                    </div>
+                    ${actions}
                 </div>`;
         }).join('');
+    }
+
+    // 会計済の品目・点数を修正（在庫・客数・売上に反映）
+    let editingRecordIdx = null;
+    function toggleEditRecord(idx) {
+        editingRecordIdx = idx;
+        renderRecords();
+    }
+
+    function adjustRecordItem(idx, name, delta) {
+        const rec = salesHistory[idx];
+        if (!rec) return;
+        if (delta < 0) {
+            const i = rec.items.map(x => x.name).lastIndexOf(name);
+            if (i === -1) return;
+            const removed = rec.items.splice(i, 1)[0];
+            const prod = products.find(p => p.id === removed.id);
+            if (prod) restockOne(prod); // 在庫を戻す
+            rec.total -= removed.price;
+        } else {
+            const prod = products.find(p => p.name === name);
+            if (!prod) return;
+            rec.items.push({ id: prod.id, name: prod.name, price: prod.price, type: prod.type });
+            prod.stock--; // 在庫から引く（在庫0でも許容）
+            if (prod.stock === 0 && !prod.soldOutTime) prod.soldOutTime = new Date().toISOString();
+            rec.total += prod.price;
+        }
+        rec.edited = true;
+        logEdit(`会計修正 客No.${rec.no || '-'}：${name} ${delta < 0 ? '−1' : '＋1'}`);
+        playSound(660, 0.06);
+        if (rec.items.length === 0) {
+            // 全品目が無くなったら取引ごと削除（在庫は上で戻し済み）
+            if (rec.no === receiptCounter) receiptCounter--;
+            salesHistory.splice(idx, 1);
+            editingRecordIdx = null;
+            showToast('全品目が無くなったため会計を削除しました');
+        }
+        saveData();
+        init();
+        renderRecords();
+        updateAnalytics();
     }
 
     // 指定した会計のレシートを印刷用ウィンドウで開く（ブラウザのPDF保存が使える）
