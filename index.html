@@ -594,6 +594,7 @@
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('segment')">👥<br>客層・カテゴリ</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('insight')">🔮<br>次回インサイト</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('next')">📝<br>次回準備の<br>参考メモ</button>
+                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('log')">🧾<br>操作ログ</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('export')">💾<br>書き出し<br>（PDF/CSV）</button>
                     </div>
                 </div>
@@ -619,6 +620,7 @@
                     <div id="sec-segment" class="analytics-sec" style="display:none;"></div>
                     <div id="sec-insight" class="analytics-sec" style="display:none;"></div>
                     <div id="sec-next" class="analytics-sec" style="display:none;"></div>
+                    <div id="sec-log" class="analytics-sec" style="display:none;"></div>
 
                     <div id="sec-export" class="analytics-sec" style="display:none;">
                         <p style="font-size:13px; color:var(--text-light);">集計結果を書き出します。</p>
@@ -1513,7 +1515,7 @@
     const ANALYTICS_TITLES = {
         summary: '📊 概要', items: '🥐 商品別', time: '🕐 時間帯別の客数',
         stock: '📉 残在庫の推移', segment: '👥 客層・カテゴリ', next: '📝 次回準備の参考メモ',
-        insight: '🔮 次回インサイト', export: '💾 書き出し（PDF/CSV）'
+        insight: '🔮 次回インサイト', log: '🧾 操作ログ', export: '💾 書き出し（PDF/CSV）'
     };
 
     function showAnalyticsMenu() {
@@ -1543,7 +1545,21 @@
         else if (key === 'time') { document.getElementById('sec-time-text').innerText = analyticsSections.time; renderCustomerChart(); }
         else if (key === 'stock') renderStockChart();
         else if (key === 'insight') document.getElementById('sec-insight').innerText = analyticsSections.insight || 'データがありません';
+        else if (key === 'log') renderOperationLog();
         // export はボタンのみ（静的）
+    }
+
+    // 操作ログ（属性の事後入力・品目の部分修正など）を新しい順に表示
+    function renderOperationLog() {
+        const el = document.getElementById('sec-log');
+        if (!el) return;
+        if (!operationLog.length) { el.innerText = '操作ログはまだありません。'; return; }
+        const rows = [...operationLog].reverse().map(e => {
+            const t = new Date(e.time);
+            const ts = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+            return `<div style="display:flex; gap:8px; padding:3px 0; border-bottom:1px solid #F3F3F3; font-size:13px;"><span style="color:var(--text-light); flex-shrink:0;">${ts}</span><span>${e.msg.replace(/</g, '&lt;')}</span></div>`;
+        }).join('');
+        el.innerHTML = `<div style="font-size:12px; color:var(--text-light); margin-bottom:6px;">属性の事後入力・品目の部分修正などの履歴（${operationLog.length}件）</div>${rows}`;
     }
 
     // 商品名から味の傾向（甘い/しょっぱい/ドリンク）を簡易推定する。
@@ -1826,11 +1842,16 @@
         const categories = Object.keys(categoryRev).map(c => ({ name: catNames[c], rev: categoryRev[c], pct: totalRev > 0 ? Math.round(categoryRev[c] / totalRev * 100) : 0 }));
         const copairs = Object.entries(coPurchase).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([pair, count]) => ({ pair, count }));
 
+        const typeEditedLater = sorted.filter(h => h.typeEditedLater).length;
+        const itemEdited = sorted.filter(h => h.edited).length;
+        const pendingLeft = sorted.filter(h => h.pendingType).length;
+
         return {
             summary: {
                 totalRev, customers, avg: Math.floor(totalRev / customers), avgItems: (totalItems / customers).toFixed(1),
                 maxSale: Math.max(...sorted.map(h => h.total)), minSale: Math.min(...sorted.map(h => h.total)),
-                peak: peak ? { label: peak[0], rev: peak[1] } : null, cashTotal, changeTotal, cashKnown, voidCount
+                peak: peak ? { label: peak[0], rev: peak[1] } : null, cashTotal, changeTotal, cashKnown, voidCount,
+                typeEditedLater, itemEdited, pendingLeft
             },
             abc, soldOut, inStock, oversoldItems, integrity: checkIntegrity(), slots, types, categories, copairs,
             stock: buildStockTimeline(),
@@ -1866,6 +1887,9 @@
                 <div class="stat"><span class="stat-label">ピーク時間帯</span><span class="stat-val">${s.peak ? esc(s.peak.label) + '〜 ' + yen(s.peak.rev) : '-'}</span></div>
                 ${s.cashKnown > 0 ? `<div class="stat"><span class="stat-label">現金 お預り／お釣り</span><span class="stat-val">${yen(s.cashTotal)} / ${yen(s.changeTotal)}</span></div>` : ''}
                 <div class="stat"><span class="stat-label">会計取消</span><span class="stat-val">${s.voidCount}件</span></div>
+                <div class="stat"><span class="stat-label">属性の事後入力</span><span class="stat-val">${s.typeEditedLater}件（${s.customers ? Math.round(s.typeEditedLater / s.customers * 100) : 0}%）</span></div>
+                <div class="stat"><span class="stat-label">品目の事後修正</span><span class="stat-val">${s.itemEdited}件</span></div>
+                ${s.pendingLeft > 0 ? `<div class="stat"><span class="stat-label" style="color:#c0392b;">属性 未入力のまま</span><span class="stat-val" style="color:#c0392b;">${s.pendingLeft}件</span></div>` : ''}
             </div>`;
 
         // 2. 商品別（ABC表 ＋ 完売時刻）
