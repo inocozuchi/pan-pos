@@ -543,6 +543,7 @@
             <div id="tab-session">
                 <!-- 閉店中のみ表示：新しい販売会を開く -->
                 <div id="session-open-block">
+                    <div id="event-banner" style="background:#FFF5F7; border:2px solid #FFD1DC; border-radius:10px; padding:8px 12px; margin-bottom:10px; font-size:13px;"></div>
                     <p class="settings-hint">新しい販売会を始める時に名前をつけて開店します。</p>
                     <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
 
@@ -644,6 +645,11 @@
 <!-- PDF（印刷）用レポート：画面では非表示、印刷時のみ表示 -->
 <div id="print-report"></div>
 
+<!-- 商品データ（外部ファイル）。この app 本体より先に読み込む。 -->
+<script src="data/products.normal.js"></script>
+<script src="data/products.festival.js"></script>
+<script src="data/active-event.js"></script>
+
 <script>
     // ▼▼▼ 操作音（電子音を鳴らす）▼▼▼
     // iOS(iPad/iPhone)対策：AudioContextはユーザー操作の中でしか起動できず、
@@ -712,38 +718,45 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
-    let products = [
-        // パン（type: sweet）
-        { id: 1, name: "アップルシナモン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 2, name: "あんぱん", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 3, name: "ウィンナーパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 4, name: "クリームパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 5, name: "塩パン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 6, name: "チーズパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 7, name: "ミルクパン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 8, name: "メロンパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 9, name: "枝豆コーンパン", price: 160, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 10, name: "夏野菜のピザパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 11, name: "コーンマヨピザパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 12, name: "レモンはちみつパン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
-        // クッキー・焼き菓子（type: savory）
-        { id: 13, name: "ふじもっちゃんの全粒粉クッキー", price: 200, stock: 50, initialStock: 50, type: "savory" },
-        { id: 14, name: "ダンちゃんのアーモンドクッキー", price: 200, stock: 50, initialStock: 50, type: "savory" },
-        { id: 15, name: "杉ちゃんのココナッツクッキー", price: 200, stock: 50, initialStock: 50, type: "savory" },
-        { id: 16, name: "ケンちゃんのフロランタン", price: 200, stock: 50, initialStock: 50, type: "savory" },
-        { id: 17, name: "なっちゃんのチョコクッキー", price: 100, stock: 50, initialStock: 50, type: "savory" },
-        { id: 18, name: "なっちゃんの紅茶クッキー", price: 100, stock: 50, initialStock: 50, type: "savory" },
-        { id: 19, name: "フィナンシェ", price: 150, stock: 50, initialStock: 50, type: "savory" },
-        { id: 20, name: "カップケーキ", price: 150, stock: 50, initialStock: 50, type: "savory" },
-        { id: 21, name: "ハイジのチーズケーキ", price: 300, stock: 50, initialStock: 50, type: "savory" },
-        { id: 22, name: "パウンドケーキ", price: 350, stock: 50, initialStock: 50, type: "savory" },
-        // ドリンク枠（今後の販売用プレースホルダ）
-        { id: 23, name: "ドリンク（準備中）", price: 0, stock: 0, initialStock: 0, type: "drink" }
-    ];
+    // ▼▼▼ 商品データは外部ファイル（data/products.*.js）から読み込む ▼▼▼
+    // データ側の分類（"パン"/"クッキー"/"ドリンク"）→ 内部タイプ（表示色）の対応
+    const CATEGORY_MAP = { 'パン': 'sweet', 'クッキー': 'savory', 'ドリンク': 'drink' };
 
-    // 既定ラインナップの控え（loadDataで products が上書きされる前に保存）。
-    // 開店設定で「既定に戻す」時に使う。
-    const DEFAULT_PRODUCTS = JSON.parse(JSON.stringify(products));
+    // 外部データ（{name,price,category,stock?}）を、アプリ内部の商品オブジェクトに変換
+    function buildProductsFromSet(set) {
+        const items = (set && set.items) ? set.items : [];
+        return items.map((it, i) => {
+            const s = (it.stock != null) ? it.stock : 50;
+            return {
+                id: i + 1,
+                name: it.name,
+                price: it.price,
+                type: CATEGORY_MAP[it.category] || 'sweet',
+                stock: s,
+                initialStock: s,
+                note: it.note || ''
+            };
+        });
+    }
+
+    // 表示するイベントを決定：URL の ?event= が最優先、無ければ active-event.js の設定
+    function resolveActiveEvent() {
+        const sets = window.PRODUCT_SETS || {};
+        const urlEvent = new URLSearchParams(location.search).get('event');
+        if (urlEvent && sets[urlEvent]) return urlEvent;
+        if (window.ACTIVE_EVENT && sets[window.ACTIVE_EVENT]) return window.ACTIVE_EVENT;
+        return Object.keys(sets)[0] || null;
+    }
+
+    const ACTIVE_EVENT_KEY = resolveActiveEvent();
+    const ACTIVE_EVENT_SET = ((window.PRODUCT_SETS || {})[ACTIVE_EVENT_KEY]) || { label: '（データ未読込）', items: [] };
+    // 既定ラインナップ（開店設定の「既定に戻す」の戻し先。イベント切替はここに反映される）
+    const DEFAULT_PRODUCTS = buildProductsFromSet(ACTIVE_EVENT_SET);
+    let products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+    if (DEFAULT_PRODUCTS.length === 0) {
+        alert('商品データ（data/products.*.js）が読み込めませんでした。ファイルの配置をご確認ください。');
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     let cart = [];
     let salesHistory = [];
@@ -1139,7 +1152,7 @@
         if (applyBox) {
             applyBox.innerHTML =
                 (latest ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:8px; padding:10px; background:#B5EAD7; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-main);">✨ 前回「${latest.sessionName}」の実績を参考に反映</button>` : '')
-                + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:#F3F3F3; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px;">↩️ 商品リストを既定のラインナップに戻す</button>`;
+                + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:#F3F3F3; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px;">↩️ 商品リストを「${ACTIVE_EVENT_SET.label}」の既定に戻す</button>`;
         }
 
         list.innerHTML = '';
@@ -1226,6 +1239,8 @@
         openBlock.style.display = isOpen ? 'none' : 'block';
         activeBlock.style.display = isOpen ? 'block' : 'none';
         if (isOpen) document.getElementById('active-session-name').innerText = currentSession;
+        const banner = document.getElementById('event-banner');
+        if (banner) banner.innerHTML = `📋 イベント: <b>${ACTIVE_EVENT_SET.label}</b><br><span style="color:var(--text-light); font-size:12px;">切替は data/active-event.js（またはURLに ?event=festival）</span>`;
     }
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -1695,10 +1710,10 @@
 
     // 商品リストをアプリ既定のラインナップに戻す（端末に古いデータが残っている時の保険）
     function resetLineupToDefault() {
-        if (!confirm('商品リストをアプリ既定のラインナップ（パン12種＋クッキー10種＋ドリンク枠）に戻します。\n編集中の内容は破棄されます。よろしいですか？')) return;
+        if (!confirm(`商品リストを「${ACTIVE_EVENT_SET.label}」の既定ラインナップ（${DEFAULT_PRODUCTS.length}品）に戻します。\n編集中の内容は破棄されます。よろしいですか？`)) return;
         tempSetupProducts = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
         renderInventorySetup();
-        showToast('既定のラインナップに戻しました');
+        showToast(`「${ACTIVE_EVENT_SET.label}」の既定に戻しました`);
     }
     // ▲▲▲ ここまで ▲▲▲
 
