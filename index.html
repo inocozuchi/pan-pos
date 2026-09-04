@@ -70,6 +70,8 @@
         }
         .type-btn input[type="radio"] { display: none; } /* ラジオボタンの丸を隠す */
         .type-btn:has(input:checked) { background: var(--accent); color: white; border-color: var(--accent); }
+        .type-btn.type-later { background: #FFF6E5; border-color: #F0C674; color: #a06a00; } /* 後で入力（未入力フラグ） */
+        .type-btn.type-later:has(input:checked) { background: #F0AD4E; border-color: #F0AD4E; color: white; }
         
         @media (min-width: 769px) {
             .checkout-wide { max-width: 940px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
@@ -463,6 +465,7 @@
     </main>
 
     <aside id="sidebar">
+        <div id="pending-reminder" onclick="openSettings(); showTab('records');" style="display:none; background:#FFF6E5; color:#a06a00; font-weight:bold; font-size:13px; text-align:center; padding:8px; cursor:pointer; border-bottom:2px solid #F0C674;"></div>
         <div id="cart-list">
         </div>
         <footer>
@@ -495,7 +498,8 @@
                     <label class="type-btn"><input type="radio" name="customerType" value="教員"> 教員</label>
                     <label class="type-btn"><input type="radio" name="customerType" value="職員"> 職員</label>
                     <label class="type-btn"><input type="radio" name="customerType" value="その他"> その他</label>
-                    <label class="type-btn"><input type="radio" name="customerType" value="不明" checked> 不明</label>
+                    <label class="type-btn"><input type="radio" name="customerType" value="不明"> 不明</label>
+                    <label class="type-btn type-later"><input type="radio" name="customerType" value="__later__" checked> ⏭後で</label>
                 </div>
             </div>
             
@@ -815,6 +819,7 @@
             grid.appendChild(btn);
         });
         updateCartDisplay();
+        updatePendingReminder();
     }
 
     function addToCart(p) {
@@ -1047,13 +1052,13 @@
         }
 
         const typeRadios = document.getElementsByName('customerType');
-        let selectedType = "不明";
+        let selectedVal = "__later__";
         for (let i = 0; i < typeRadios.length; i++) {
-            if (typeRadios[i].checked) {
-                selectedType = typeRadios[i].value;
-                break;
-            }
+            if (typeRadios[i].checked) { selectedVal = typeRadios[i].value; break; }
         }
+        // 「⏭後で」または未選択のときは属性を後で入力するフラグを立てる
+        const pending = (selectedVal === "__later__");
+        const selectedType = pending ? "不明" : selectedVal;
 
         receiptCounter++;
         const record = {
@@ -1062,13 +1067,15 @@
             items: [...itemsRecorded],
             total: total,
             customerType: selectedType,
+            pendingType: pending,
             cash: cash,
             change: Math.max(0, cash - total)
         };
         salesHistory.push(record);
 
+        // 次の会計に備え、既定（後で）に戻す
         for (let i = 0; i < typeRadios.length; i++) {
-            if (typeRadios[i].value === "不明") typeRadios[i].checked = true;
+            typeRadios[i].checked = (typeRadios[i].value === "__later__");
         }
 
         closeModal('checkout-modal');
@@ -2158,11 +2165,16 @@
             list.innerHTML = '<p style="color:var(--text-light); text-align:center; margin-top:20px;">まだ会計済のデータはありません。</p>';
             return;
         }
-        // 新しい会計を上に。元の配列インデックスも保持（レシート発行用）
+        // 属性未入力（後で）を先頭に、次に新しい会計順
         const rows = salesHistory.map((h, idx) => ({ h, idx }))
-            .sort((a, b) => new Date(b.h.time) - new Date(a.h.time));
+            .sort((a, b) => (Number(!!b.h.pendingType) - Number(!!a.h.pendingType)) || (new Date(b.h.time) - new Date(a.h.time)));
+        const pendingCount = salesHistory.filter(h => h.pendingType).length;
+        const summary = pendingCount > 0
+            ? `<div style="background:#FFF6E5; border:2px solid #F0C674; border-radius:10px; padding:8px 12px; margin-bottom:10px; font-size:13px; color:#a06a00; font-weight:bold;">⏱ 属性「後で入力」の会計：${pendingCount}件（各カードの属性ボタンをタップして割り当て）</div>`
+            : '';
+        const TYPES = ['学生', '教員', '職員', 'その他', '不明'];
 
-        list.innerHTML = rows.map(({ h, idx }) => {
+        list.innerHTML = summary + rows.map(({ h, idx }) => {
             const t = new Date(h.time);
             const dtStr = `${t.getFullYear()}/${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')} ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
             const editing = editingRecordIdx === idx;
@@ -2195,7 +2207,10 @@
                         <span>客No. ${h.no || '-'}${h.edited ? ' <span style="font-size:11px; color:#c0392b; font-weight:normal;">(修正済)</span>' : ''}</span>
                         <span style="color:var(--text-light); font-size:13px; font-weight:normal;">${dtStr}</span>
                     </div>
-                    <div style="font-size:12px; color:var(--text-light);">客属性: ${h.customerType || '不明'}</div>
+                    <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin:3px 0;">
+                        ${h.pendingType ? '<span style="font-size:11px; color:#a06a00; font-weight:bold;">⏱後で入力</span>' : '<span style="font-size:12px; color:var(--text-light);">客属性:</span>'}
+                        ${TYPES.map(ty => { const on = h.customerType === ty && !h.pendingType; return `<button onclick="setRecordType(${idx}, '${ty}')" style="padding:3px 9px; font-size:12px; border-radius:6px; cursor:pointer; border:1px solid ${on ? 'var(--accent)' : '#DDD'}; background:${on ? 'var(--accent)' : '#FFF'}; color:${on ? '#FFF' : 'var(--text-main)'};">${ty}</button>`; }).join('')}
+                    </div>
                     <div style="border-top:1px dashed #EAEAEA; border-bottom:1px dashed #EAEAEA; padding:6px 0;">${lines}</div>
                     <div style="display:flex; justify-content:space-between; font-weight:bold;">
                         <span>合計</span><span style="color:var(--accent);">¥${h.total}</span>
@@ -2247,6 +2262,34 @@
         init();
         renderRecords();
         updateAnalytics();
+    }
+
+    // 会計後に客属性を入力/変更する（未入力フラグを解除、事後編集として記録）
+    function setRecordType(idx, type) {
+        const rec = salesHistory[idx];
+        if (!rec) return;
+        rec.customerType = type;
+        rec.pendingType = false;
+        rec.typeEditedLater = true; // 会計後に属性が入力・変更された
+        logEdit(`属性入力 客No.${rec.no || '-'}：${type}`);
+        playSound();
+        saveData();
+        renderRecords();
+        updatePendingReminder();
+        updateAnalytics();
+    }
+
+    // レジ画面に「属性 後で入力：N件」を常時表示（未入力のリマインド）
+    function updatePendingReminder() {
+        const el = document.getElementById('pending-reminder');
+        if (!el) return;
+        const n = salesHistory.filter(h => h.pendingType).length;
+        if (n > 0) {
+            el.style.display = 'block';
+            el.innerHTML = `⏱ 属性 後で入力：<b>${n}件</b>（タップで一覧）`;
+        } else {
+            el.style.display = 'none';
+        }
     }
 
     // 指定した会計のレシートを印刷用ウィンドウで開く（ブラウザのPDF保存が使える）
