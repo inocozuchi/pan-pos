@@ -740,7 +740,8 @@
                 type: CATEGORY_MAP[it.category] || 'sweet',
                 stock: s,
                 initialStock: s,
-                note: it.note || ''
+                note: it.note || '',
+                active: it.active !== false // この回で取り扱うか（既定: 取扱う）
             };
         });
     }
@@ -785,7 +786,7 @@
     function init() {
         const grid = document.getElementById('product-grid');
         grid.innerHTML = '';
-        products.forEach(p => {
+        products.filter(p => p.active !== false).forEach(p => {
             const btn = document.createElement('button');
             const isPlaceholder = !(p.initialStock > 0) && p.price <= 0; // 未設定枠（例：準備中）
             const isOut = p.stock <= 0;
@@ -1173,7 +1174,10 @@
                 hint = `<div style="font-size:11px; color:var(--text-light); margin-top:6px;">前回 仕入${r.initial}/販売${r.sold}${r.soldOut ? '(完売)' : ''} → 参考 <b style="color:var(--accent);">${r.recommended}</b> ${arrow}</div>`;
             }
             list.innerHTML += `
-                <div class="setup-card" style="border-left:6px solid ${catColor(p.type)};">
+                <div class="setup-card" style="border-left:6px solid ${catColor(p.type)}; ${p.active === false ? 'opacity:0.5;' : ''}">
+                    <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-light); margin-bottom:4px; cursor:pointer;">
+                        <input type="checkbox" ${p.active === false ? '' : 'checked'} onchange="updateTempProduct(${p.id}, 'active', this.checked)"> この回で販売する
+                    </label>
                     <div style="display:flex; gap:5px; align-items:center;">
                         <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px;" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
                         <button onclick="removeTempProduct(${p.id})" style="background:#FF9AA2; color:white; border:none; border-radius:4px; width:30px; height:30px; font-weight:bold; cursor:pointer; flex-shrink:0;">×</button>
@@ -1201,6 +1205,7 @@
         if (p) {
             if (field === 'name') p.name = value;
             if (field === 'price' || field === 'initialStock') p[field] = parseInt(value) || 0;
+            if (field === 'active') { p.active = value; renderInventorySetup(); }
         }
     }
 
@@ -1477,6 +1482,7 @@
         }
         segmentText += `\n[カテゴリ別 売上と占有率]\n`;
         for (let cat in categoryRev) {
+            if (categoryRev[cat] <= 0) continue; // 取り扱わなかったカテゴリ(¥0)は出さない
             let percent = totalRev > 0 ? Math.round((categoryRev[cat] / totalRev) * 100) : 0;
             segmentText += `・${catNames[cat]}: ¥${categoryRev[cat]} (${percent}%)\n`;
         }
@@ -1671,7 +1677,7 @@
         // 5個単位に切り上げ（最低5個）
         const roundUp5 = n => Math.max(5, Math.ceil(n / 5) * 5);
 
-        return products.map(p => {
+        return products.filter(p => p.active !== false && p.price > 0).map(p => {
             const sold = soldCount[p.name] || 0;
             const initial = p.initialStock || 0;
             const soldOut = initial > 0 && p.stock <= 0 && sold > 0;
@@ -1839,7 +1845,7 @@
             .map(s => ({ label: s, rev: timeSlotRev[s], top: Object.entries(timeSlotItems[s]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => ({ name: n, count: c })) }));
 
         const types = Object.entries(custTypes).filter(([, d]) => d.count > 0).map(([type, d]) => ({ type, count: d.count, avg: Math.floor(d.rev / d.count) }));
-        const categories = Object.keys(categoryRev).map(c => ({ name: catNames[c], rev: categoryRev[c], pct: totalRev > 0 ? Math.round(categoryRev[c] / totalRev * 100) : 0 }));
+        const categories = Object.keys(categoryRev).filter(c => categoryRev[c] > 0).map(c => ({ name: catNames[c], rev: categoryRev[c], pct: totalRev > 0 ? Math.round(categoryRev[c] / totalRev * 100) : 0 }));
         const copairs = Object.entries(coPurchase).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([pair, count]) => ({ pair, count }));
 
         const typeEditedLater = sorted.filter(h => h.typeEditedLater).length;
