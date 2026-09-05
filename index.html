@@ -775,6 +775,7 @@
     let voidCount = 0;       // この販売会での会計取り消し件数
     let analyticsSections = null; // 集計結果（項目別テキスト）のキャッシュ
     let operationLog = [];   // 事後編集・部分修正などの操作履歴（運用振り返り用）
+    let comparisonBaseline = null; // 今回の販売会と比較する「前回の実績」（開店時に確定）
 
     // 操作ログを1件追加する
     function logEdit(msg) {
@@ -1287,6 +1288,9 @@
             if (!confirm('新しい販売会を始めると、前回の売上データや予約はすべてリセットされます。よろしいですか？')) return;
         }
 
+        // 開店時に「前回の販売会」を確定（今回の集計と比較するため）
+        comparisonBaseline = sessionArchive.length ? sessionArchive[sessionArchive.length - 1] : null;
+
         currentSession = name;
         salesHistory = [];
         reservations = [];
@@ -1316,11 +1320,27 @@
 
         // ▼▼▼ この回の実績を次回の仕入れ推奨として保存（開店リセットでは消えない） ▼▼▼
         if (salesHistory.length > 0) {
+            // 商品別・客層別の実績を集計（次回比較のもと）
+            const itemMap = {};
+            const custMap = {};
+            salesHistory.forEach(h => {
+                (h.items || []).forEach(it => {
+                    if (!itemMap[it.name]) itemMap[it.name] = { name: it.name, qty: 0, rev: 0 };
+                    itemMap[it.name].qty += 1;
+                    itemMap[it.name].rev += it.price;
+                });
+                const ct = h.customerType || '不明';
+                custMap[ct] = (custMap[ct] || 0) + 1;
+            });
+            const totalRev = salesHistory.reduce((s, h) => s + h.total, 0);
             const summary = {
                 name: currentSession || '無題',
                 date: new Date().toISOString(),
-                totalRev: salesHistory.reduce((s, h) => s + h.total, 0),
+                totalRev: totalRev,
                 customerCount: salesHistory.length,
+                avgSpend: Math.round(totalRev / salesHistory.length),
+                itemStats: Object.values(itemMap).sort((a, b) => b.qty - a.qty),
+                customerStats: custMap,
                 recommendations: buildRestockRecommendations()
             };
             sessionArchive.push(summary);
@@ -1426,6 +1446,27 @@
         if (peakSlot) summary += `最も売れた時間帯: ${peakSlot[0]}〜（¥${peakSlot[1]}）\n`;
         if (cashKnown > 0) summary += `現金: お預かり計¥${cashTotal} / お釣り計¥${changeTotal}\n`;
         if (voidCount > 0) summary += `会計取り消し: ${voidCount}件\n`;
+
+        // --- 前回の販売会との比較（開店時に確定した前回データがある時のみ）---
+        const cmp = buildComparison();
+        if (cmp) {
+            const mk = d => d > 0 ? '▲' : (d < 0 ? '▼' : '→');
+            const pc = m => m.pct == null ? '' : `（前回比 ${m.pct > 0 ? '+' : ''}${m.pct}%）`;
+            const sgnY = m => `${m.diff > 0 ? '+¥' : (m.diff < 0 ? '−¥' : '±¥')}${Math.abs(m.diff)}`;
+            const sgnN = (m, u) => `${m.diff > 0 ? '+' : (m.diff < 0 ? '−' : '±')}${Math.abs(m.diff)}${u}`;
+            const dstr = cmp.prevDate ? new Date(cmp.prevDate).toLocaleDateString('ja-JP') : '';
+            summary += `\n【前回（${cmp.prevName}${dstr ? '・' + dstr : ''}）との比較】\n`;
+            summary += `総売上: ${mk(cmp.totalRev.diff)} ${sgnY(cmp.totalRev)} ${pc(cmp.totalRev)}\n`;
+            summary += `来店人数: ${mk(cmp.customerCount.diff)} ${sgnN(cmp.customerCount, '人')} ${pc(cmp.customerCount)}\n`;
+            summary += `平均客単価: ${mk(cmp.avgSpend.diff)} ${sgnY(cmp.avgSpend)} ${pc(cmp.avgSpend)}\n`;
+            if (cmp.hasItems) {
+                const movers = cmp.items.filter(it => it.diff !== 0).slice(0, 5);
+                if (movers.length) {
+                    summary += `商品別の変化（大きい順）:\n`;
+                    movers.forEach(it => { summary += `・${it.name}: ${mk(it.diff)} ${it.diff > 0 ? '+' : ''}${it.diff}個（今回${it.now}/前回${it.prev}）\n`; });
+                }
+            }
+        }
 
         // --- 商品別（消化率・ABC ＋ 完売時刻・販売スピード）---
         let itemsText = `[在庫消化率とABC分析]\n`;
@@ -1724,6 +1765,56 @@
         return { sessionName: last.name, map: map };
     }
 
+    // 今回の販売会の実績を集計する（比較のもと）
+    function currentSessionStats() {
+        const itemMap = {};
+        salesHistory.forEach(h => (h.items || []).forEach(it => {
+            if (!itemMap[it.name]) itemMap[it.name] = { name: it.name, qty: 0, rev: 0 };
+            itemMap[it.name].qty += 1;
+            itemMap[it.name].rev += it.price;
+        }));
+        const totalRev = salesHistory.reduce((s, h) => s + h.total, 0);
+        const customerCount = salesHistory.length;
+        return {
+            totalRev,
+            customerCount,
+            avgSpend: customerCount ? Math.round(totalRev / customerCount) : 0,
+            itemStats: Object.values(itemMap)
+        };
+    }
+
+    // 前回の販売会（開店時に確定した comparisonBaseline）と今回を比較する。
+    // 比較できない（前回データが無い・古い形式）場合は null を返す。
+    function buildComparison() {
+        const base = comparisonBaseline;
+        if (!base || typeof base.totalRev !== 'number' || base.customerCount == null) return null;
+        const now = currentSessionStats();
+        if (now.customerCount === 0) return null;
+        const metric = (n, p) => ({
+            now: n, prev: p, diff: n - p,
+            pct: p > 0 ? Math.round((n - p) / p * 100) : null
+        });
+        // 商品別：前回比の増減が大きい順（今回・前回どちらかに実績がある品）
+        const names = new Set();
+        (now.itemStats || []).forEach(i => names.add(i.name));
+        (base.itemStats || []).forEach(i => names.add(i.name));
+        const nowMap = {}; (now.itemStats || []).forEach(i => nowMap[i.name] = i.qty);
+        const baseMap = {}; (base.itemStats || []).forEach(i => baseMap[i.name] = i.qty);
+        const items = [...names].map(name => {
+            const nq = nowMap[name] || 0, pq = baseMap[name] || 0;
+            return { name, now: nq, prev: pq, diff: nq - pq };
+        }).sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+        return {
+            prevName: base.name || '前回',
+            prevDate: base.date || null,
+            hasItems: (base.itemStats || []).length > 0,
+            totalRev: metric(now.totalRev, base.totalRev),
+            customerCount: metric(now.customerCount, base.customerCount),
+            avgSpend: metric(now.avgSpend, base.avgSpend != null ? base.avgSpend : (base.customerCount ? Math.round(base.totalRev / base.customerCount) : 0)),
+            items
+        };
+    }
+
     // 開店設定画面で「推奨を適用」→ 前回実績に基づいて仕入れ数を自動入力
     function applyRecommendations() {
         const latest = getLatestRecommendationMap();
@@ -1862,6 +1953,7 @@
             abc, soldOut, inStock, oversoldItems, integrity: checkIntegrity(), slots, types, categories, copairs,
             stock: buildStockTimeline(),
             insight: computeInsights(),
+            comparison: buildComparison(),
             recs: buildRestockRecommendations()
         };
     }
@@ -1897,6 +1989,37 @@
                 <div class="stat"><span class="stat-label">品目の事後修正</span><span class="stat-val">${s.itemEdited}件</span></div>
                 ${s.pendingLeft > 0 ? `<div class="stat"><span class="stat-label" style="color:#c0392b;">属性 未入力のまま</span><span class="stat-val" style="color:#c0392b;">${s.pendingLeft}件</span></div>` : ''}
             </div>`;
+
+        // 1b. 前回の販売会との比較（前回データがある時だけ）
+        const comp = R.comparison;
+        let comparisonBox = '';
+        if (comp) {
+            const trendMark = d => d > 0 ? '▲' : (d < 0 ? '▼' : '→');
+            const pctTxt = m => m.pct == null ? '—' : `${m.pct > 0 ? '+' : ''}${m.pct}%`;
+            const diffYen = m => `${m.diff > 0 ? '+' : (m.diff < 0 ? '−' : '±')}${yen(Math.abs(m.diff)).replace('¥', '¥')}`;
+            const diffNum = (m, unit) => `${m.diff > 0 ? '+' : (m.diff < 0 ? '−' : '±')}${Math.abs(m.diff)}${unit}`;
+            const compDate = comp.prevDate ? new Date(comp.prevDate).toLocaleDateString('ja-JP') : '';
+            const moverRows = comp.hasItems
+                ? comp.items.filter(it => it.diff !== 0).slice(0, 6).map(it =>
+                    `<tr><td>${esc(it.name)}</td><td class="num">${it.now}</td><td class="num">${it.prev}</td><td class="num">${trendMark(it.diff)} ${it.diff > 0 ? '+' : ''}${it.diff}</td></tr>`).join('')
+                : '';
+            comparisonBox = `
+                <div class="sub-heading">前回（${esc(comp.prevName)}${compDate ? '・' + compDate : ''}）との比較</div>
+                <table class="rep-table">
+                    <thead><tr><th>指標</th><th class="num">今回</th><th class="num">前回</th><th class="num">増減</th><th class="num">前回比</th></tr></thead>
+                    <tbody>
+                        <tr><td>総売上</td><td class="num">${yen(comp.totalRev.now)}</td><td class="num">${yen(comp.totalRev.prev)}</td><td class="num">${trendMark(comp.totalRev.diff)} ${diffYen(comp.totalRev)}</td><td class="num">${pctTxt(comp.totalRev)}</td></tr>
+                        <tr><td>来店人数</td><td class="num">${comp.customerCount.now}人</td><td class="num">${comp.customerCount.prev}人</td><td class="num">${trendMark(comp.customerCount.diff)} ${diffNum(comp.customerCount, '人')}</td><td class="num">${pctTxt(comp.customerCount)}</td></tr>
+                        <tr><td>平均客単価</td><td class="num">${yen(comp.avgSpend.now)}</td><td class="num">${yen(comp.avgSpend.prev)}</td><td class="num">${trendMark(comp.avgSpend.diff)} ${diffYen(comp.avgSpend)}</td><td class="num">${pctTxt(comp.avgSpend)}</td></tr>
+                    </tbody>
+                </table>
+                ${moverRows ? `
+                <div class="sub-heading">商品別 前回比（増減の大きい順）</div>
+                <table class="rep-table">
+                    <thead><tr><th>商品</th><th class="num">今回</th><th class="num">前回</th><th class="num">増減</th></tr></thead>
+                    <tbody>${moverRows}</tbody>
+                </table>` : (comp.hasItems ? '' : '<div class="note-box"><div class="note-foot">※前回は商品別の記録が無いため、合計指標のみの比較です。</div></div>')}`;
+        }
 
         // 2. 商品別（ABC表 ＋ 完売時刻）
         const rankMark = { A: '●', B: '◐', C: '○' };
@@ -1952,10 +2075,11 @@
                     </div>
                 </header>
 
-                <section class="report-section">
+                <section class="report-section${comp ? ' report-section--long' : ''}">
                     <div class="report-heading">1. 概要</div>
                     ${summaryBox}
                     ${R.integrity.length ? `<div class="note-box" style="border-color:#c0392b; margin-top:6px;"><div class="note-foot" style="color:#c0392b;">⚠ 整合性チェック：${R.integrity.map(esc).join(' / ')}</div></div>` : ''}
+                    ${comparisonBox}
                 </section>
 
                 <section class="report-section report-section--long">
@@ -2025,7 +2149,7 @@
     // ▲▲▲ ここまで ▲▲▲
 
    function saveData() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline };
         localStorage.setItem('taizanboku_pos_data', JSON.stringify(data));
     }
 
@@ -2042,6 +2166,7 @@
             receiptCounter = data.receiptCounter || salesHistory.length;
             voidCount = data.voidCount || 0;
             operationLog = data.operationLog || [];
+            comparisonBaseline = data.comparisonBaseline || null;
 
             if (currentSession) {
                 document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
