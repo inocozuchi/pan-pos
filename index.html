@@ -656,6 +656,7 @@
 <script src="data/products.normal.js"></script>
 <script src="data/products.festival.js"></script>
 <script src="data/active-event.js"></script>
+<script src="data/taste-master.js"></script>
 
 <script>
     // ▼▼▼ 操作音（電子音を鳴らす）▼▼▼
@@ -743,7 +744,8 @@
                 initialStock: s,
                 note: it.note || '',
                 active: it.active !== false, // この回で取り扱うか（既定: 取扱う）
-                cost: (it.cost != null && it.cost !== '') ? Number(it.cost) : null // 原価（任意）
+                cost: (it.cost != null && it.cost !== '') ? Number(it.cost) : null, // 原価（任意）
+                taste: it.taste || null // 味タグの明示指定（任意。無ければ商品名から自動推定）
             };
         });
     }
@@ -1657,14 +1659,26 @@
 
     // 商品名から味の傾向（甘い/しょっぱい/ドリンク）を簡易推定する。
     // ※オフライン動作のため、クラウドAIではなくキーワードによるルール判定。
-    // スイーツ（焼き菓子）を示す語。これが含まれる場合は「チーズケーキ」等でも甘い系とみなす。
-    const DESSERT_SWEET = ['クッキー', 'ケーキ', 'フィナンシェ', 'フロランタン', 'パウンド', 'タルト', 'マフィン', 'スコーン', 'ドーナツ', 'プリン', 'マカロン', 'ビスケット', 'ガレット', 'ブラウニー'];
-    const TASTE_SWEET = ['チョコ', 'クリーム', 'あん', 'メロン', 'アップル', 'りんご', 'シナモン', 'ミルク', 'ココナッツ', '紅茶', 'カスタード', 'ジャム', 'はちみつ', 'ハニー', '練乳', 'いちご', 'ストロベリー', '抹茶', 'きなこ', 'マロン', '栗', 'かぼちゃ', 'カボチャ', 'さつま', 'バナナ', 'レーズン', 'メープル', 'キャラメル', 'あんこ', 'シュガー', 'くるみ', 'ナッツ', 'アーモンド', '全粒粉', 'ベリー', 'レモン', 'オレンジ', 'ピーナッツ', 'マーブル', 'デニッシュ'];
-    const TASTE_SALTY = ['塩', 'チーズ', 'ウィンナー', 'ソーセージ', 'ベーコン', 'カレー', 'コーン', 'ハム', 'ピザ', '明太', 'たらこ', 'ガーリック', 'オニオン', '枝豆', 'ツナ', 'マヨ', '焼きそば', 'じゃがいも', 'ポテト', 'バジル', 'ペッパー', 'グラタン', 'ハーブ', 'カルツォーネ'];
-    const TASTE_DRINK = ['ブレンド', 'コーヒー', '珈琲', 'ティー', 'ラテ', 'ジュース', 'ドリンク', '茶', '水', 'ソーダ', 'コーラ', 'スムージー', 'カフェ'];
+    // キーワード辞書は data/taste-master.js（window.TASTE_MASTER）でマスタ化。
+    // ファイルが無い場合に備え、本体側にも既定リストを持たせる（保険）。
+    const TASTE_DEFAULTS = {
+        dessertSweet: ['クッキー', 'ケーキ', 'フィナンシェ', 'フロランタン', 'パウンド', 'タルト', 'マフィン', 'スコーン', 'ドーナツ', 'プリン', 'マカロン', 'ビスケット', 'ガレット', 'ブラウニー'],
+        sweet: ['チョコ', 'クリーム', 'あん', 'メロン', 'アップル', 'りんご', 'シナモン', 'ミルク', 'ココナッツ', '紅茶', 'カスタード', 'ジャム', 'はちみつ', 'ハニー', '練乳', 'いちご', 'ストロベリー', '抹茶', 'きなこ', 'マロン', '栗', 'かぼちゃ', 'カボチャ', 'さつま', 'バナナ', 'レーズン', 'メープル', 'キャラメル', 'あんこ', 'シュガー', 'くるみ', 'ナッツ', 'アーモンド', '全粒粉', 'ベリー', 'レモン', 'オレンジ', 'ピーナッツ', 'マーブル', 'デニッシュ'],
+        salty: ['塩', 'チーズ', 'ウィンナー', 'ソーセージ', 'ベーコン', 'カレー', 'コーン', 'ハム', 'ピザ', '明太', 'たらこ', 'ガーリック', 'オニオン', '枝豆', 'ツナ', 'マヨ', '焼きそば', 'じゃがいも', 'ポテト', 'バジル', 'ペッパー', 'グラタン', 'ハーブ', 'カルツォーネ'],
+        drink: ['ブレンド', 'コーヒー', '珈琲', 'ティー', 'ラテ', 'ジュース', 'ドリンク', '茶', '水', 'ソーダ', 'コーラ', 'スムージー', 'カフェ']
+    };
+    const TM = (typeof window !== 'undefined' && window.TASTE_MASTER) ? window.TASTE_MASTER : {};
+    const DESSERT_SWEET = Array.isArray(TM.dessertSweet) ? TM.dessertSweet : TASTE_DEFAULTS.dessertSweet;
+    const TASTE_SWEET   = Array.isArray(TM.sweet)        ? TM.sweet        : TASTE_DEFAULTS.sweet;
+    const TASTE_SALTY   = Array.isArray(TM.salty)        ? TM.salty        : TASTE_DEFAULTS.salty;
+    const TASTE_DRINK   = Array.isArray(TM.drink)        ? TM.drink        : TASTE_DEFAULTS.drink;
+    const VALID_TASTES  = ['甘い系', 'しょっぱい系', 'ドリンク', '不明'];
 
     function estimateTaste(name, type) {
         const n = name || '';
+        // 明示指定の味タグ（商品データ／設定の taste）が最優先
+        const prod = products.find(p => p.name === n);
+        if (prod && prod.taste && VALID_TASTES.includes(prod.taste)) return prod.taste;
         if (type === 'drink') return 'ドリンク';
         // 焼き菓子は甘い系を優先（例：チーズケーキ＝チーズより「ケーキ」、紅茶クッキー＝茶より「クッキー」）
         if (DESSERT_SWEET.some(k => n.includes(k))) return '甘い系';
