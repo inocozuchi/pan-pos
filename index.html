@@ -742,7 +742,8 @@
                 stock: s,
                 initialStock: s,
                 note: it.note || '',
-                active: it.active !== false // この回で取り扱うか（既定: 取扱う）
+                active: it.active !== false, // この回で取り扱うか（既定: 取扱う）
+                cost: (it.cost != null && it.cost !== '') ? Number(it.cost) : null // 原価（任意）
             };
         });
     }
@@ -1225,6 +1226,10 @@
                             <div style="font-size:10px; color:var(--text-light);">仕入れ数</div>
                             <input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px; margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">
                         </div>
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-size:10px; color:var(--text-light);">原価（任意）</div>
+                            <input type="number" value="${p.cost != null ? p.cost : ''}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px; margin:0;" placeholder="—" onchange="updateTempProduct(${p.id}, 'cost', this.value)">
+                        </div>
                     </div>
                     ${hint}
                 </div>
@@ -1239,6 +1244,7 @@
         if (p) {
             if (field === 'name') p.name = value;
             if (field === 'price' || field === 'initialStock') p[field] = parseInt(value) || 0;
+            if (field === 'cost') { const n = parseInt(value); p.cost = (value === '' || isNaN(n)) ? null : n; }
             if (field === 'active') { p.active = value; renderInventorySetup(); }
         }
     }
@@ -1250,7 +1256,7 @@
 
     function addTempProduct() {
         const newId = Date.now();
-        tempSetupProducts.push({ id: newId, name: "", price: 0, stock: 0, initialStock: 0, type: "sweet" });
+        tempSetupProducts.push({ id: newId, name: "", price: 0, stock: 0, initialStock: 0, type: "sweet", cost: null });
         renderInventorySetup();
     }
     // ▲▲▲ ここまで ▲▲▲
@@ -1479,6 +1485,13 @@
         if (peakSlot) summary += `最も売れた時間帯: ${peakSlot[0]}〜（¥${peakSlot[1]}）\n`;
         if (cashKnown > 0) summary += `現金: お預かり計¥${cashTotal} / お釣り計¥${changeTotal}\n`;
         if (voidCount > 0) summary += `会計取り消し: ${voidCount}件\n`;
+
+        // --- 粗利（原価が入力された商品のみ）---
+        const prof = buildProfit();
+        if (prof) {
+            summary += `粗利: ¥${prof.profit}（粗利率 ${prof.margin}% / 原価合計 ¥${prof.cogs}）\n`;
+            if (prof.partial) summary += `　※原価入力品のみの集計（未入力: ${prof.uncovered.join('、')}）\n`;
+        }
 
         // --- 前回の販売会との比較（開店時に確定した前回データがある時のみ）---
         const cmp = buildComparison();
@@ -1917,6 +1930,27 @@
         };
     }
 
+    // 粗利の集計（原価が入力された商品のみ対象。1件も無ければ null）。
+    function buildProfit() {
+        const costMap = {};
+        products.forEach(p => { if (p.cost != null && p.cost >= 0) costMap[p.name] = p.cost; });
+        if (Object.keys(costMap).length === 0) return null;
+        let revCovered = 0, cogs = 0, coveredUnits = 0, uncoveredUnits = 0;
+        const uncovered = new Set();
+        salesHistory.forEach(h => h.items.forEach(i => {
+            if (costMap[i.name] != null) { cogs += costMap[i.name]; revCovered += i.price; coveredUnits++; }
+            else { uncoveredUnits++; uncovered.add(i.name); }
+        }));
+        const profit = revCovered - cogs;
+        return {
+            cogs, revCovered, profit,
+            margin: revCovered > 0 ? Math.round(profit / revCovered * 100) : 0,
+            coveredUnits, uncoveredUnits,
+            uncovered: [...uncovered],
+            partial: uncoveredUnits > 0
+        };
+    }
+
     // 開店設定画面で「推奨を適用」→ 前回実績に基づいて仕入れ数を自動入力
     function applyRecommendations() {
         const latest = getLatestRecommendationMap();
@@ -2056,6 +2090,7 @@
             stock: buildStockTimeline(),
             insight: computeInsights(),
             comparison: buildComparison(),
+            profit: buildProfit(),
             recs: buildRestockRecommendations()
         };
     }
@@ -2090,7 +2125,11 @@
                 <div class="stat"><span class="stat-label">属性の事後入力</span><span class="stat-val">${s.typeEditedLater}件（${s.customers ? Math.round(s.typeEditedLater / s.customers * 100) : 0}%）</span></div>
                 <div class="stat"><span class="stat-label">品目の事後修正</span><span class="stat-val">${s.itemEdited}件</span></div>
                 ${s.pendingLeft > 0 ? `<div class="stat"><span class="stat-label" style="color:#c0392b;">属性 未入力のまま</span><span class="stat-val" style="color:#c0392b;">${s.pendingLeft}件</span></div>` : ''}
-            </div>`;
+                ${R.profit ? `
+                <div class="stat"><span class="stat-label">原価合計（原価入力品）</span><span class="stat-val">${yen(R.profit.cogs)}</span></div>
+                <div class="stat"><span class="stat-label">粗利（原価入力品）</span><span class="stat-val">${yen(R.profit.profit)}（粗利率 ${R.profit.margin}%）</span></div>` : ''}
+            </div>
+            ${R.profit && R.profit.partial ? `<div class="note-box" style="margin-top:6px;"><div class="note-foot">※粗利は原価を入力した商品のみの集計です（未入力: ${R.profit.uncovered.map(esc).join('、')}）。原価をすべて入力すると全体の粗利になります。</div></div>` : ''}`;
 
         // 1b. 前回の販売会との比較（前回データがある時だけ）
         const comp = R.comparison;
