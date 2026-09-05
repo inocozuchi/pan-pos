@@ -1631,6 +1631,60 @@
         return '不明';
     }
 
+    // 完売による「取りこぼし（機会損失）」を推定する。
+    // 完売までのペース（個/分）を、完売後の残り営業時間に当てはめて概算する。
+    function buildLostSales() {
+        if (salesHistory.length === 0) return { items: [], totalUnits: 0, totalRev: 0 };
+        const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
+        const openTime = new Date(sorted[0].time);
+        const closeTime = new Date(sorted[sorted.length - 1].time);
+        const soldCount = {};
+        sorted.forEach(h => h.items.forEach(i => { soldCount[i.name] = (soldCount[i.name] || 0) + 1; }));
+
+        const items = [];
+        products.forEach(p => {
+            if (p.price <= 0) return;
+            const initial = p.initialStock || 0;
+            const sold = soldCount[p.name] || 0;
+            if (!(initial > 0 && p.stock <= 0 && sold > 0 && p.soldOutTime)) return; // 完売した品のみ
+            const soldOutT = new Date(p.soldOutTime);
+            const elapsed = Math.max(1, (soldOutT - openTime) / 60000);
+            const remain = (closeTime - soldOutT) / 60000;
+            if (remain < 5) return; // 終了間際の完売は取りこぼしとみなさない
+            const pace = sold / elapsed;              // 個/分（完売までの実測ペース）
+            const missed = Math.round(pace * remain); // 残り時間ぶんの推定未充足数
+            if (missed <= 0) return;
+            items.push({
+                name: p.name,
+                soldOutStr: `${soldOutT.getHours()}:${String(soldOutT.getMinutes()).padStart(2, '0')}`,
+                missed, price: p.price, lostRev: missed * p.price
+            });
+        });
+        items.sort((a, b) => b.lostRev - a.lostRev);
+        return {
+            items,
+            totalUnits: items.reduce((s, i) => s + i.missed, 0),
+            totalRev: items.reduce((s, i) => s + i.lostRev, 0)
+        };
+    }
+
+    // よく一緒に買われた組み合わせから、セット販売の提案文を1つ返す（無ければ null）。
+    function buildBundleSuggestion() {
+        if (salesHistory.length === 0) return null;
+        const co = {};
+        salesHistory.forEach(h => {
+            const uniq = [...new Set(h.items.map(i => i.name))];
+            for (let i = 0; i < uniq.length; i++) for (let j = i + 1; j < uniq.length; j++) {
+                const pair = [uniq[i], uniq[j]].sort().join(' ＋ ');
+                co[pair] = (co[pair] || 0) + 1;
+            }
+        });
+        const top = Object.entries(co).sort((a, b) => b[1] - a[1])[0];
+        if (!top || top[1] < 2) return null; // 2回未満は偶然の可能性が高いので提案しない
+        const names = top[0].split(' ＋ ');
+        return `「${names[0]}」と「${names[1]}」は${top[1]}回セットで購入されました。次回はこの2品をセット（例：セット購入で少し割引）にすると、客単価アップが見込めます。`;
+    }
+
     // 閉店時の「次回インサイト」テキストを作る。
     function computeInsights() {
         if (salesHistory.length === 0) return null;
@@ -1666,6 +1720,21 @@
         } else {
             res += `・完売した商品はありませんでした\n`;
         }
+
+        // 取りこぼし（機会損失）の推定
+        const lost = buildLostSales();
+        res += `\n[取りこぼし（完売による機会損失）の推定]\n`;
+        if (lost.items.length > 0) {
+            lost.items.forEach(l => { res += `・${l.name}: ${l.soldOutStr}完売 → あと約${l.missed}個（約¥${l.lostRev}）売れた可能性\n`; });
+            res += `→ 合計 約${lost.totalUnits}個・約¥${lost.totalRev} を取りこぼした可能性があります（早期完売品を次回は増量）\n`;
+            res += `※完売までの販売ペースを残り営業時間に当てはめた概算です。\n`;
+        } else {
+            res += `・早期完売による大きな取りこぼしは見当たりませんでした\n`;
+        }
+
+        // 併売セットの提案（1文）
+        const bundle = buildBundleSuggestion();
+        if (bundle) res += `\n[セット販売の提案]\n・${bundle}\n`;
 
         res += `\n[客層別の傾向（次回の仕入れ目安）]\n`;
         ['学生', '教員', '職員', 'その他', '不明'].forEach(ct => {
