@@ -2289,31 +2289,70 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
+    let lastSavedSnapshot = null; // 直近で保存に成功したJSON（保存失敗時の巻き戻し用）
+
    function saveData() {
         const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType };
-        localStorage.setItem('taizanboku_pos_data', JSON.stringify(data));
+        let json;
+        try {
+            json = JSON.stringify(data);
+        } catch (e) {
+            console.error('保存データの生成に失敗しました', e);
+            return;
+        }
+        try {
+            localStorage.setItem('taizanboku_pos_data', json);
+            lastSavedSnapshot = json;
+        } catch (e) {
+            // 容量超過やプライベートモード等で保存できない場合：
+            // 直前の保存内容を保持したまま、操作者に一度だけ警告する（データ消失を防ぐ）。
+            console.error('localStorage への保存に失敗しました', e);
+            try {
+                if (lastSavedSnapshot) localStorage.setItem('taizanboku_pos_data', lastSavedSnapshot);
+            } catch (_) { /* 復旧も失敗：これ以上はできることがない */ }
+            if (!saveData._warned) {
+                saveData._warned = true;
+                alert('【！】データの保存に失敗しました。端末の空き容量やブラウザ設定をご確認ください。\n念のため「設定 →バックアップ書き出し」でファイル保存することをおすすめします。');
+            }
+        }
     }
 
     function loadData() {
-        const saved = localStorage.getItem('taizanboku_pos_data');
-        if (saved) {
-            const data = JSON.parse(saved);
-            if (data.products) products = data.products;
-            cart = data.cart || [];
-            salesHistory = data.salesHistory || [];
-            reservations = data.reservations || [];
-            currentSession = data.currentSession || null;
-            sessionArchive = data.sessionArchive || [];
-            receiptCounter = data.receiptCounter || salesHistory.length;
-            voidCount = data.voidCount || 0;
-            operationLog = data.operationLog || [];
-            comparisonBaseline = data.comparisonBaseline || null;
-            lastCustomerType = data.lastCustomerType || null;
+        let saved;
+        try {
+            saved = localStorage.getItem('taizanboku_pos_data');
+        } catch (e) {
+            console.error('localStorage の読み込みに失敗しました', e);
+            return;
+        }
+        if (!saved) return;
+        let data;
+        try {
+            data = JSON.parse(saved);
+        } catch (e) {
+            // 保存データが壊れている場合：上書きで失わないよう別キーへ退避してから初期状態で続行。
+            console.error('保存データが壊れているため読み込めませんでした', e);
+            try { localStorage.setItem('taizanboku_pos_data_corrupt_' + Date.now(), saved); } catch (_) {}
+            alert('【！】保存データを読み込めませんでした（破損の可能性）。\n壊れたデータは退避し、初期状態で起動します。バックアップがあれば「設定 →バックアップ復元」から戻せます。');
+            return;
+        }
+        if (!data || typeof data !== 'object') return;
+        lastSavedSnapshot = saved;
+        if (Array.isArray(data.products)) products = data.products;
+        cart = Array.isArray(data.cart) ? data.cart : [];
+        salesHistory = Array.isArray(data.salesHistory) ? data.salesHistory : [];
+        reservations = Array.isArray(data.reservations) ? data.reservations : [];
+        currentSession = data.currentSession || null;
+        sessionArchive = Array.isArray(data.sessionArchive) ? data.sessionArchive : [];
+        receiptCounter = data.receiptCounter || salesHistory.length;
+        voidCount = data.voidCount || 0;
+        operationLog = Array.isArray(data.operationLog) ? data.operationLog : [];
+        comparisonBaseline = data.comparisonBaseline || null;
+        lastCustomerType = data.lastCustomerType || null;
 
-            if (currentSession) {
-                document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
-                document.getElementById('session-display').style.background = 'var(--white)';
-            }
+        if (currentSession) {
+            document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
+            document.getElementById('session-display').style.background = 'var(--white)';
         }
     }
 
