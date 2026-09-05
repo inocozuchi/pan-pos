@@ -1760,22 +1760,25 @@
         });
         const totalTaste = Object.values(tasteAgg).reduce((s, v) => s + v.count, 0);
 
-        let res = `[在庫切れ（完売）時刻]\n`;
+        // 完売時刻と取りこぼし（機会損失）をひとつにまとめて表示。
+        // ※販売ペース（消化の速さ）は「商品別」セクションに集約し、ここでは重複させない。
+        const lost = buildLostSales();
+        const lostMap = {};
+        lost.items.forEach(l => { lostMap[l.name] = l; });
+        let res = `[完売時刻と取りこぼし（機会損失）の推定]\n`;
         if (soldOut.length > 0) {
-            soldOut.forEach(s => { res += `・${s.name}: ${s.t.getHours()}:${String(s.t.getMinutes()).padStart(2, '0')} 完売\n`; });
+            soldOut.forEach(s => {
+                const tstr = `${s.t.getHours()}:${String(s.t.getMinutes()).padStart(2, '0')}`;
+                const l = lostMap[s.name];
+                if (l) res += `・${s.name}: ${tstr} 完売 → あと約${l.missed}個（約¥${l.lostRev}）売れた可能性\n`;
+                else res += `・${s.name}: ${tstr} 完売（終了間際のため取りこぼしは小）\n`;
+            });
+            if (lost.totalUnits > 0) {
+                res += `→ 合計 約${lost.totalUnits}個・約¥${lost.totalRev} を取りこぼした可能性があります（早期完売品は次回増量を検討）\n`;
+                res += `※完売までの販売ペースを残り営業時間に当てはめた概算です。\n`;
+            }
         } else {
             res += `・完売した商品はありませんでした\n`;
-        }
-
-        // 取りこぼし（機会損失）の推定
-        const lost = buildLostSales();
-        res += `\n[取りこぼし（完売による機会損失）の推定]\n`;
-        if (lost.items.length > 0) {
-            lost.items.forEach(l => { res += `・${l.name}: ${l.soldOutStr}完売 → あと約${l.missed}個（約¥${l.lostRev}）売れた可能性\n`; });
-            res += `→ 合計 約${lost.totalUnits}個・約¥${lost.totalRev} を取りこぼした可能性があります（早期完売品を次回は増量）\n`;
-            res += `※完売までの販売ペースを残り営業時間に当てはめた概算です。\n`;
-        } else {
-            res += `・早期完売による大きな取りこぼしは見当たりませんでした\n`;
         }
 
         // 併売セットの提案（1文）
