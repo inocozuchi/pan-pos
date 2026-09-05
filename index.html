@@ -629,7 +629,9 @@
                             <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#FFDFBA;" onclick="downloadPDF()">📄 PDF保存</button>
                             <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#B5EAD7;" onclick="exportFacilityCSV()">🏭 精算CSV</button>
                             <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#B5EAD7;" onclick="exportDetailCSV()">🧾 明細CSV</button>
+                            <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#C7CEEA;" onclick="exportReportJSON()">🗄 集計JSON</button>
                         </div>
+                        <p style="font-size:12px; color:var(--text-light); margin-top:8px;">精算CSV＝商品別（消化率・原価・粗利・味つき）／明細CSV＝会計ごと／集計JSON＝前回比較や取りこぼしまで含む全データ。</p>
                     </div>
                 </div>
 
@@ -2463,18 +2465,45 @@
         const rows = buildItemSalesRows();
         if (rows.length === 0) { alert('書き出す売上データがありません。'); return; }
 
+        const catNames = { sweet: 'パン類', savory: 'クッキー類', drink: 'ドリンク' };
         const total = rows.reduce((s, r) => s + r.revenue, 0);
         const totalCount = rows.reduce((s, r) => s + r.count, 0);
+        // 完売時刻の対応（記録があれば）
+        const cell = v => String(v == null ? '' : v).replace(/,/g, ' ');
+        let totalCogs = 0, cogsKnown = false;
         // Excel(日本語)で文字化けしないよう BOM を先頭に付与
         let csv = '﻿';
-        csv += `販売会,${(currentSession || '前回').replace(/,/g, ' ')}\n`;
+        csv += `販売会,${cell(currentSession || '前回')}\n`;
         csv += `出力日時,${new Date().toLocaleString('ja-JP')}\n\n`;
-        csv += `商品名,単価,販売数,売上\n`;
+        csv += `商品名,カテゴリ,単価,仕入れ数,販売数,消化率(%),完売時刻,原価,粗利,味,売上\n`;
         rows.forEach(r => {
-            csv += `${r.name.replace(/,/g, ' ')},${r.price},${r.count},${r.revenue}\n`;
+            const p = products.find(prod => prod.name === r.name);
+            const cat = p ? (catNames[p.type] || '') : '';
+            const initial = p ? (p.initialStock || 0) : 0;
+            const sellThrough = initial > 0 ? Math.round(r.count / initial * 100) : '';
+            const soldOutStr = (p && p.soldOutTime) ? new Date(p.soldOutTime).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '';
+            const cost = (p && p.cost != null) ? p.cost : '';
+            let profit = '';
+            if (p && p.cost != null) { profit = r.revenue - p.cost * r.count; totalCogs += p.cost * r.count; cogsKnown = true; }
+            const taste = estimateTaste(r.name, p ? p.type : null);
+            csv += `${cell(r.name)},${cat},${r.price},${initial},${r.count},${sellThrough},${soldOutStr},${cost},${profit},${taste},${r.revenue}\n`;
         });
-        csv += `合計,,${totalCount},${total}\n`;
+        const totalProfit = cogsKnown ? (total - totalCogs) : '';
+        csv += `合計,,,,${totalCount},,,${cogsKnown ? totalCogs : ''},${totalProfit},,${total}\n`;
         triggerDownload(`taizanboku_精算_${dateStamp()}.csv`, csv, 'text/csv');
+    }
+
+    // 集計結果（buildReportData の構造化データ）を JSON で書き出す。
+    // 後からの分析・別ツール取り込み・記録保存用（前回比較・粗利・取りこぼしなども含む）。
+    function exportReportJSON() {
+        const R = buildReportData();
+        if (!R) { alert('書き出す売上データがありません。'); return; }
+        const payload = {
+            session: currentSession || '前回',
+            exportedAt: new Date().toISOString(),
+            report: R
+        };
+        triggerDownload(`taizanboku_集計_${dateStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json');
     }
 
     // 一会計ごとの明細をすべて書き出す（記録の保存用）
