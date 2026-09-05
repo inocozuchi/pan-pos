@@ -88,6 +88,76 @@ eq('整合性チェックで問題なし', await page.evaluate(() => checkIntegr
 await page.evaluate(() => { openSettings(); showTab('analytics'); downloadPDF(); });
 eq('レポート7セクション生成', await page.evaluate(() => document.querySelectorAll('#print-report .report-section').length), 7);
 
+// ===== P2/P3 機能の回帰テスト =====
+
+// 味タグのマスタ化：辞書が外部ファイルから読み込まれ、明示指定が優先される
+eq('味マスタ読込＋明示タグ優先', await page.evaluate(() => {
+  const masterLoaded = !!(window.TASTE_MASTER && Array.isArray(window.TASTE_MASTER.sweet));
+  const kw = estimateTaste('あんぱん', 'sweet'); // キーワード判定＝甘い系
+  const p = products.find(x => x.name === 'あんぱん'); const save = p.taste;
+  p.taste = 'しょっぱい系'; const override = estimateTaste('あんぱん', 'sweet'); p.taste = save;
+  return { masterLoaded, kw, override };
+}), { masterLoaded: true, kw: '甘い系', override: 'しょっぱい系' });
+
+// 今回の販売会を締めてアーカイブ（次回比較のベースライン）
+await page.evaluate(() => { showTab('session'); endSession(); });
+eq('閉店で商品別実績つきアーカイブ生成',
+  await page.evaluate(() => { const a = sessionArchive[sessionArchive.length - 1]; return { hasItemStats: Array.isArray(a.itemStats), name: a.name }; }),
+  { hasItemStats: true, name: 'テスト販売会' });
+
+// 新しい販売会：取扱商品の選択（P2-1）、原価（P2-5）、残りわずか通知（P2-4）
+await page.evaluate(() => {
+  window.__toasts = []; const _t = window.showToast; window.showToast = m => { window.__toasts.push(m); return _t(m); };
+  openSettings();
+  document.getElementById('session-name-input').value = '第2回テスト';
+  // ドリンク（準備中）を「この回は販売しない」に
+  const drink = tempSetupProducts.find(x => x.type === 'drink'); if (drink) updateTempProduct(drink.id, 'active', false);
+  // あんぱんに原価80、塩パンは仕入5で開始（残り3の通知を確認するため4個以上）
+  const an = tempSetupProducts.find(x => x.name === 'あんぱん'); updateTempProduct(an.id, 'cost', '80');
+  tempSetupProducts.find(x => x.name === '塩パン').initialStock = 5;
+  startSession();
+});
+eq('P2-1 取扱OFF商品はグリッド対象外',
+  await page.evaluate(() => products.filter(p => p.active !== false).some(p => p.type === 'drink')), false);
+
+// 塩パン5個で完売（残り5→4→3(通知)→2→1→0(通知)）
+await page.evaluate(() => {
+  const s = products.find(x => x.name === '塩パン');
+  for (let i = 0; i < 5; i++) { addToCart(s); openCheckout(); document.getElementById('cash-input').value = '150'; completeTransaction(); }
+});
+eq('P2-4 残りわずか/完売の通知',
+  await page.evaluate(() => ({ low: window.__toasts.some(t => t.includes('残り3個')), out: window.__toasts.some(t => t.includes('完売')) })),
+  { low: true, out: true });
+
+// あんぱんを1個販売（原価入力品）→ 粗利集計
+await page.evaluate(() => {
+  const an = products.find(x => x.name === 'あんぱん'); addToCart(an);
+  openCheckout(); document.getElementById('cash-input').value = '180'; completeTransaction();
+});
+eq('P2-5 粗利（あんぱん180-80=100、他は原価未入力で部分集計）',
+  await page.evaluate(() => { const p = buildProfit(); return { profit: p.profit, partial: p.partial }; }),
+  { profit: 100, partial: true });
+
+// P2-2 前回比較（第2回 vs テスト販売会）
+eq('P2-2 前回比較が算出される',
+  await page.evaluate(() => { const c = buildComparison(); return { prev: c && c.prevName, hasItems: c && c.hasItems }; }),
+  { prev: 'テスト販売会', hasItems: true });
+
+// P2-3 取りこぼし推定と併売提案のヘルパが動作
+eq('P2-3 取りこぼし推定/併売提案が返る',
+  await page.evaluate(() => {
+    const lost = buildLostSales();
+    return { lostShape: lost && Array.isArray(lost.items), bundleType: (buildBundleSuggestion() === null || typeof buildBundleSuggestion() === 'string') };
+  }),
+  { lostShape: true, bundleType: true });
+
+// P3-3 精算CSVの拡充（列見出し）
+eq('P3-3 精算CSVヘッダ拡充', await page.evaluate(() => {
+  let captured = ''; const _d = window.triggerDownload; window.triggerDownload = (f, c) => { captured = c; };
+  exportFacilityCSV(); window.triggerDownload = _d;
+  return (captured.split('\n').find(l => l.startsWith('商品名')) || '');
+}), '商品名,カテゴリ,単価,仕入れ数,販売数,消化率(%),完売時刻,原価,粗利,味,売上');
+
 console.log(`\n${pass} passed, ${fail} failed`);
 console.log('runtime errors:', errors.length ? errors.join('\n') : 'none');
 await browser.close();
