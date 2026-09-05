@@ -1520,6 +1520,7 @@
 
         // --- 商品別（消化率・ABC ＋ 完売時刻・販売スピード）---
         let itemsText = `[在庫消化率とABC分析]\n`;
+        itemsText += `※ABC＝売上への貢献度。A＝上位（累計〜70%）/ B＝中位（〜90%）/ C＝下位。消化率＝販売数÷仕入れ数。\n`;
         let sortedRevItems = Object.entries(itemRev).sort((a, b) => b[1] - a[1]);
         let cumulativeRev = 0;
         sortedRevItems.forEach(item => {
@@ -2762,7 +2763,7 @@
             return;
         }
 
-        const W = 620, H = 300, mL = 40, mR = 12, mT = 12, mB = 40;
+        const W = 620, H = 300, mL = 40, mR = 12, mT = 22, mB = 40;
         const plotW = W - mL - mR, plotH = H - mT - mB;
         const xOf = t => mL + ((t - data.t0) / (data.t1 - data.t0)) * plotW;
         const yOf = v => mT + (1 - v / data.maxStock) * plotH;
@@ -2784,6 +2785,7 @@
             svg += `<text x="${x}" y="${H - mB + 20}" text-anchor="${anchor}" font-size="11" fill="#898781">${fmt(t)}</text>`;
         });
         svg += `<text x="${mL}" y="${H - 4}" font-size="11" fill="#898781">時刻 →</text>`;
+        svg += `<text x="4" y="${mT - 8}" font-size="11" fill="#898781">残数(個)</text>`;
         // 各商品の折れ線
         data.series.forEach((s, idx) => {
             const color = CHART_PALETTE[idx % 8];
@@ -2877,7 +2879,8 @@
             }
             svg += `<text x="${x + barW / 2}" y="${H - mB + 16}" text-anchor="middle" font-size="10" fill="#898781">${s.label}</text>`;
         });
-        svg += `<text x="${mL}" y="${H - 6}" font-size="11" fill="#898781">人</text>`;
+        svg += `<text x="${mL}" y="${H - 6}" font-size="11" fill="#898781">時刻 →</text>`;
+        svg += `<text x="2" y="${mT - 4}" font-size="11" fill="#898781">人数</text>`;
         svg += `</svg>`;
         box.innerHTML = svg;
     }
