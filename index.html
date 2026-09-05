@@ -501,6 +501,7 @@
                     <label class="type-btn"><input type="radio" name="customerType" value="不明"> 不明</label>
                     <label class="type-btn type-later"><input type="radio" name="customerType" value="__later__" checked> ⏭後で</label>
                 </div>
+                <button type="button" id="last-type-quick" style="display:none; width:100%; margin-top:8px; padding:8px; font-size:14px; font-weight:bold; border:2px dashed var(--accent); border-radius:10px; background:#FFF; color:var(--accent); cursor:pointer;" onclick="applyLastCustomerType()"></button>
             </div>
             
             <input type="text" id="cash-input" placeholder="預かり金額" readonly>
@@ -776,6 +777,7 @@
     let analyticsSections = null; // 集計結果（項目別テキスト）のキャッシュ
     let operationLog = [];   // 事後編集・部分修正などの操作履歴（運用振り返り用）
     let comparisonBaseline = null; // 今回の販売会と比較する「前回の実績」（開店時に確定）
+    let lastCustomerType = null;   // 直前に選ばれた客属性（属性入力の高速化用）
 
     // 操作ログを1件追加する
     function logEdit(msg) {
@@ -826,6 +828,7 @@
         updatePendingReminder();
     }
 
+    const LOW_STOCK_ALERT = 3; // この残数に到達したら「残りわずか」を通知
     function addToCart(p) {
         if (!p) return;
         if (!currentSession) { playError(); alert('設定から先に開店してください'); return; }
@@ -836,6 +839,14 @@
         if (p.stock > 0) playSound(); else playError(); // 完売後の登録は警告音で気づけるように
         p.stock--;
         if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
+        // 残りわずか／完売のしきい値アラート（在庫がその値に「到達した瞬間」に1回だけ通知）
+        if (p.stock === 0) {
+            playSound(494, 0.12); setTimeout(() => playSound(370, 0.16), 120); // 完売の下降音
+            showToast(`🔔 ${p.name} が完売しました`);
+        } else if (p.stock === LOW_STOCK_ALERT) {
+            playSound(1046, 0.09); // 残りわずかの高音
+            showToast(`⚠️ ${p.name} 残り${LOW_STOCK_ALERT}個`);
+        }
         cart.push({...p});
         saveData();
         init();
@@ -979,7 +990,27 @@
         document.getElementById('cash-input').value = '';
         document.getElementById('change-amount').innerText = '0';
         renderCashSuggestions(total);
+        renderLastTypeQuick();
         document.getElementById('checkout-modal').style.display = 'flex';
+    }
+
+    // 「直前と同じ客属性」ワンタップ設定（属性入力の高速化）
+    function renderLastTypeQuick() {
+        const btn = document.getElementById('last-type-quick');
+        if (!btn) return;
+        if (lastCustomerType && lastCustomerType !== '__later__') {
+            btn.textContent = `👥 直前と同じ：${lastCustomerType}`;
+            btn.style.display = 'block';
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function applyLastCustomerType() {
+        if (!lastCustomerType) return;
+        const radios = document.getElementsByName('customerType');
+        for (let i = 0; i < radios.length; i++) radios[i].checked = (radios[i].value === lastCustomerType);
+        playSound(880, 0.05);
     }
 
     // ▼▼▼ スマート預かり金：合計額から「出されやすい金額」を提案（会計速度アップ）▼▼▼
@@ -1063,6 +1094,8 @@
         // 「⏭後で」または未選択のときは属性を後で入力するフラグを立てる
         const pending = (selectedVal === "__later__");
         const selectedType = pending ? "不明" : selectedVal;
+        // 実際に属性を選んだ場合は「直前値」として記憶（次回の会計でワンタップ設定できる）
+        if (!pending) lastCustomerType = selectedVal;
 
         receiptCounter++;
         const record = {
@@ -2218,7 +2251,7 @@
     // ▲▲▲ ここまで ▲▲▲
 
    function saveData() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType };
         localStorage.setItem('taizanboku_pos_data', JSON.stringify(data));
     }
 
@@ -2236,6 +2269,7 @@
             voidCount = data.voidCount || 0;
             operationLog = data.operationLog || [];
             comparisonBaseline = data.comparisonBaseline || null;
+            lastCustomerType = data.lastCustomerType || null;
 
             if (currentSession) {
                 document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
@@ -2495,6 +2529,7 @@
         rec.customerType = type;
         rec.pendingType = false;
         rec.typeEditedLater = true; // 会計後に属性が入力・変更された
+        if (type && type !== '不明') lastCustomerType = type; // 直前値として記憶
         logEdit(`属性入力 客No.${rec.no || '-'}：${type}`);
         playSound();
         saveData();
