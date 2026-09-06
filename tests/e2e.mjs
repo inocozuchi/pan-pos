@@ -12,7 +12,8 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const indexUrl = 'file://' + path.resolve(__dirname, '..', 'index.html');
+// ?event=normal で通常ラインナップに固定（data/active-event.js の切替に依存せずテストを安定させる）
+const indexUrl = 'file://' + path.resolve(__dirname, '..', 'index.html') + '?event=normal';
 
 let pass = 0, fail = 0;
 const eq = (name, got, want) => {

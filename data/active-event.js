@@ -6,4 +6,5 @@
  *
  * ※ URL に ?event=festival を付けると、このファイルを変えずに一時的に切り替えて確認できます。
  */
-window.ACTIVE_EVENT = "normal";
+// ★お祭り期間中は "festival"。お祭りが終わったら "normal" に戻してください。
+window.ACTIVE_EVENT = "festival";
