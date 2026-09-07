@@ -22,12 +22,13 @@ window.PRODUCT_SETS.festival = {
   items: [
     // フード（温かい食べ物）＝パン枠
     { name: "やきとり",       price: 150, category: "パン", note: "土曜のみ" },
-    { name: "フランクフルト", price: 200, category: "パン", note: "日曜のみ" },
+    { name: "フランクフルト", price: 300, category: "パン", note: "日曜のみ" },
     // 飲み物＝ドリンク枠
     { name: "飲み物",         price: 200, category: "ドリンク" },
     // 焼き菓子・物販＝クッキー枠
     { name: "クッキー①",     price: 300, category: "クッキー" },
     { name: "クッキー②",     price: 500, category: "クッキー" },
-    { name: "小物",           price: 100, category: "クッキー" }
+    { name: "小物",           price: 100, category: "クッキー" },
+    { name: "バッグ",         price: 200, category: "クッキー" }
   ]
 };
