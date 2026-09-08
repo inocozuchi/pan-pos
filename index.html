@@ -70,6 +70,8 @@
         }
         .type-btn input[type="radio"] { display: none; } /* ラジオボタンの丸を隠す */
         .type-btn:has(input:checked) { background: var(--accent); color: white; border-color: var(--accent); }
+        .type-btn.type-later { background: #FFF6E5; border-color: #F0C674; color: #a06a00; } /* 後で入力（未入力フラグ） */
+        .type-btn.type-later:has(input:checked) { background: #F0AD4E; border-color: #F0AD4E; color: white; }
         
         @media (min-width: 769px) {
             .checkout-wide { max-width: 940px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
@@ -163,6 +165,9 @@
             .product-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(90,78,77,0.14); }
         }
         .product-btn.out-of-stock { pointer-events: none; color: #B8B4AE; box-shadow: none; }
+        /* 完売した実商品：過少入力対策で押せる（超過販売可）。見た目は控えめ */
+        .product-btn.sold-open { color: #857f78; box-shadow: 0 1px 3px rgba(90,78,77,0.06); }
+        .product-btn.sold-open .price { color: #C4BFB8; }
         .product-btn .pname { line-height: 1.25; overflow-wrap: anywhere; word-break: break-word; }
         .product-btn .price { color: var(--accent); font-size: 18px; margin-top: 4px; font-variant-numeric: tabular-nums; }
         .product-btn.out-of-stock .price { color: #C9C4BD; }
@@ -174,6 +179,7 @@
             padding: 3px 9px; border-radius: 999px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
         .soldout-badge.prep { background: #B0ABA4; }
+        .soldout-badge.warn { background: #d9534f; } /* 販売数>仕入数（超過）の警告 */
 
         #sidebar {
             flex: 1;
@@ -397,17 +403,20 @@
             .summary-box .stat-label { color: var(--muted); }
             .summary-box .stat-val { font-weight: bold; }
 
-            /* インサイト（重要事項）ボックス：ヘッダーだけ濃い背景＋白文字 */
-            .key-box { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
-            .key-box .key-head { background: var(--key-bg); color: #fff; font-weight: bold; padding: 4px 10px; font-size: 11px; }
+            /* インサイト（重要事項）ボックス：ヘッダーだけ濃い背景＋白文字
+               ※ overflow:hidden は使わない（ページ跨ぎ時に内容が切れるWebKit対策） */
+            .key-box { border: 1px solid var(--line); border-radius: 6px; }
+            .key-box .key-head { background: var(--key-bg); color: #fff; font-weight: bold; padding: 4px 10px; font-size: 11px; border-radius: 5px 5px 0 0; }
             .key-box .key-body { padding: 6px 10px; white-space: pre-wrap; }
 
-            /* 参考メモボックス：破線ボーダー */
-            .note-box { border: 1.5px dashed var(--accent); border-radius: 6px; padding: 6px 10px; }
-            .note-foot { font-size: 9px; color: var(--muted); margin-top: 4px; }
+            /* 参考メモの脚注ボックス：破線ボーダー（短い一文のみ入れる＝ページ跨ぎで切れない） */
+            .note-box { border: 1.5px dashed var(--accent); border-radius: 6px; padding: 6px 10px; margin-top: 6px; }
+            .note-foot { font-size: 9px; color: var(--muted); }
 
-            /* 表：表自体は改ページ可、行は分割しない */
-            table.rep-table { width: 100%; border-collapse: collapse; break-inside: auto; }
+            /* 表：表自体は改ページ可、行は分割しない。枠付きボックスの中には入れない
+               （WebKitで枠内の表がページ跨ぎで切れるため、表はセクション直下に置く） */
+            table.rep-table { width: 100%; border-collapse: collapse; break-inside: auto; page-break-inside: auto; }
+            table.rep-table thead { display: table-header-group; } /* 改ページ後にヘッダー行を再表示 */
             table.rep-table th { text-align: left; font-size: 9.5px; color: var(--muted); border-bottom: 1.5px solid var(--ink); padding: 3px 4px; }
             table.rep-table td { padding: 2.5px 4px; border-bottom: 1px solid #eee; }
             table.rep-table tr { break-inside: avoid; page-break-inside: avoid; }
@@ -456,6 +465,7 @@
     </main>
 
     <aside id="sidebar">
+        <div id="pending-reminder" onclick="openSettings(); showTab('records');" style="display:none; background:#FFF6E5; color:#a06a00; font-weight:bold; font-size:13px; text-align:center; padding:8px; cursor:pointer; border-bottom:2px solid #F0C674;"></div>
         <div id="cart-list">
         </div>
         <footer>
@@ -488,8 +498,10 @@
                     <label class="type-btn"><input type="radio" name="customerType" value="教員"> 教員</label>
                     <label class="type-btn"><input type="radio" name="customerType" value="職員"> 職員</label>
                     <label class="type-btn"><input type="radio" name="customerType" value="その他"> その他</label>
-                    <label class="type-btn"><input type="radio" name="customerType" value="不明" checked> 不明</label>
+                    <label class="type-btn"><input type="radio" name="customerType" value="不明"> 不明</label>
+                    <label class="type-btn type-later"><input type="radio" name="customerType" value="__later__" checked> ⏭後で</label>
                 </div>
+                <button type="button" id="last-type-quick" style="display:none; width:100%; margin-top:8px; padding:8px; font-size:14px; font-weight:bold; border:2px dashed var(--accent); border-radius:10px; background:#FFF; color:var(--accent); cursor:pointer;" onclick="applyLastCustomerType()"></button>
             </div>
             
             <input type="text" id="cash-input" placeholder="預かり金額" readonly>
@@ -536,6 +548,7 @@
             <div id="tab-session">
                 <!-- 閉店中のみ表示：新しい販売会を開く -->
                 <div id="session-open-block">
+                    <div id="event-banner" style="background:#FFF5F7; border:2px solid #FFD1DC; border-radius:10px; padding:8px 12px; margin-bottom:10px; font-size:13px;"></div>
                     <p class="settings-hint">新しい販売会を始める時に名前をつけて開店します。</p>
                     <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
 
@@ -582,6 +595,7 @@
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('segment')">👥<br>客層・カテゴリ</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('insight')">🔮<br>次回インサイト</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('next')">📝<br>次回準備の<br>参考メモ</button>
+                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('log')">🧾<br>操作ログ</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('export')">💾<br>書き出し<br>（PDF/CSV）</button>
                     </div>
                 </div>
@@ -607,6 +621,7 @@
                     <div id="sec-segment" class="analytics-sec" style="display:none;"></div>
                     <div id="sec-insight" class="analytics-sec" style="display:none;"></div>
                     <div id="sec-next" class="analytics-sec" style="display:none;"></div>
+                    <div id="sec-log" class="analytics-sec" style="display:none;"></div>
 
                     <div id="sec-export" class="analytics-sec" style="display:none;">
                         <p style="font-size:13px; color:var(--text-light);">集計結果を書き出します。</p>
@@ -614,7 +629,9 @@
                             <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#FFDFBA;" onclick="downloadPDF()">📄 PDF保存</button>
                             <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#B5EAD7;" onclick="exportFacilityCSV()">🏭 精算CSV</button>
                             <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#B5EAD7;" onclick="exportDetailCSV()">🧾 明細CSV</button>
+                            <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#C7CEEA;" onclick="exportReportJSON()">🗄 集計JSON</button>
                         </div>
+                        <p style="font-size:12px; color:var(--text-light); margin-top:8px;">精算CSV＝商品別（消化率・原価・粗利・味つき）／明細CSV＝会計ごと／集計JSON＝前回比較や取りこぼしまで含む全データ。</p>
                     </div>
                 </div>
 
@@ -636,6 +653,12 @@
 
 <!-- PDF（印刷）用レポート：画面では非表示、印刷時のみ表示 -->
 <div id="print-report"></div>
+
+<!-- 商品データ（外部ファイル）。この app 本体より先に読み込む。 -->
+<script src="data/products.normal.js"></script>
+<script src="data/products.festival.js"></script>
+<script src="data/active-event.js"></script>
+<script src="data/taste-master.js"></script>
 
 <script>
     // ▼▼▼ 操作音（電子音を鳴らす）▼▼▼
@@ -705,38 +728,48 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
-    let products = [
-        // パン（type: sweet）
-        { id: 1, name: "アップルシナモン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 2, name: "あんぱん", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 3, name: "ウィンナーパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 4, name: "クリームパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 5, name: "塩パン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 6, name: "チーズパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 7, name: "ミルクパン", price: 150, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 8, name: "メロンパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 9, name: "枝豆コーンパン", price: 160, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 10, name: "夏野菜のピザパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 11, name: "コーンマヨピザパン", price: 180, stock: 50, initialStock: 50, type: "sweet" },
-        { id: 12, name: "レモンはちみつパン", price: 200, stock: 50, initialStock: 50, type: "sweet" },
-        // クッキー・焼き菓子（type: savory）
-        { id: 13, name: "ふじもっちゃんの全粒粉クッキー", price: 200, stock: 50, initialStock: 50, type: "savory" },
-        { id: 14, name: "ダンちゃんのアーモンドクッキー", price: 200, stock: 50, initialStock: 50, type: "savory" },
-        { id: 15, name: "杉ちゃんのココナッツクッキー", price: 200, stock: 50, initialStock: 50, type: "savory" },
-        { id: 16, name: "ケンちゃんのフロランタン", price: 200, stock: 50, initialStock: 50, type: "savory" },
-        { id: 17, name: "なっちゃんのチョコクッキー", price: 100, stock: 50, initialStock: 50, type: "savory" },
-        { id: 18, name: "なっちゃんの紅茶クッキー", price: 100, stock: 50, initialStock: 50, type: "savory" },
-        { id: 19, name: "フィナンシェ", price: 150, stock: 50, initialStock: 50, type: "savory" },
-        { id: 20, name: "カップケーキ", price: 150, stock: 50, initialStock: 50, type: "savory" },
-        { id: 21, name: "ハイジのチーズケーキ", price: 300, stock: 50, initialStock: 50, type: "savory" },
-        { id: 22, name: "パウンドケーキ", price: 350, stock: 50, initialStock: 50, type: "savory" },
-        // ドリンク枠（今後の販売用プレースホルダ）
-        { id: 23, name: "ドリンク（準備中）", price: 0, stock: 0, initialStock: 0, type: "drink" }
-    ];
+    // ▼▼▼ 商品データは外部ファイル（data/products.*.js）から読み込む ▼▼▼
+    // データ側の分類（"パン"/"クッキー"/"ドリンク"）→ 内部タイプ（表示色）の対応
+    const CATEGORY_MAP = { 'パン': 'sweet', 'クッキー': 'savory', 'ドリンク': 'drink' };
 
-    // 既定ラインナップの控え（loadDataで products が上書きされる前に保存）。
-    // 開店設定で「既定に戻す」時に使う。
-    const DEFAULT_PRODUCTS = JSON.parse(JSON.stringify(products));
+    // 外部データ（{name,price,category,stock?}）を、アプリ内部の商品オブジェクトに変換
+    function buildProductsFromSet(set) {
+        const items = (set && set.items) ? set.items : [];
+        return items.map((it, i) => {
+            const s = (it.stock != null) ? it.stock : 50;
+            return {
+                id: i + 1,
+                name: it.name,
+                price: it.price,
+                type: CATEGORY_MAP[it.category] || 'sweet',
+                stock: s,
+                initialStock: s,
+                note: it.note || '',
+                active: it.active !== false, // この回で取り扱うか（既定: 取扱う）
+                cost: (it.cost != null && it.cost !== '') ? Number(it.cost) : null, // 原価（任意）
+                taste: it.taste || null // 味タグの明示指定（任意。無ければ商品名から自動推定）
+            };
+        });
+    }
+
+    // 表示するイベントを決定：URL の ?event= が最優先、無ければ active-event.js の設定
+    function resolveActiveEvent() {
+        const sets = window.PRODUCT_SETS || {};
+        const urlEvent = new URLSearchParams(location.search).get('event');
+        if (urlEvent && sets[urlEvent]) return urlEvent;
+        if (window.ACTIVE_EVENT && sets[window.ACTIVE_EVENT]) return window.ACTIVE_EVENT;
+        return Object.keys(sets)[0] || null;
+    }
+
+    const ACTIVE_EVENT_KEY = resolveActiveEvent();
+    const ACTIVE_EVENT_SET = ((window.PRODUCT_SETS || {})[ACTIVE_EVENT_KEY]) || { label: '（データ未読込）', items: [] };
+    // 既定ラインナップ（開店設定の「既定に戻す」の戻し先。イベント切替はここに反映される）
+    const DEFAULT_PRODUCTS = buildProductsFromSet(ACTIVE_EVENT_SET);
+    let products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+    if (DEFAULT_PRODUCTS.length === 0) {
+        alert('商品データ（data/products.*.js）が読み込めませんでした。ファイルの配置をご確認ください。');
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     let cart = [];
     let salesHistory = [];
@@ -747,55 +780,81 @@
     let receiptCounter = 0;  // 客No.（会計ごとの通し番号）
     let voidCount = 0;       // この販売会での会計取り消し件数
     let analyticsSections = null; // 集計結果（項目別テキスト）のキャッシュ
+    let operationLog = [];   // 事後編集・部分修正などの操作履歴（運用振り返り用）
+    let comparisonBaseline = null; // 今回の販売会と比較する「前回の実績」（開店時に確定）
+    let lastCustomerType = null;   // 直前に選ばれた客属性（属性入力の高速化用）
+
+    // 操作ログを1件追加する
+    function logEdit(msg) {
+        operationLog.push({ time: new Date().toISOString(), msg });
+        if (operationLog.length > 500) operationLog = operationLog.slice(-500);
+        saveData();
+    }
 
     function init() {
         const grid = document.getElementById('product-grid');
         grid.innerHTML = '';
-        products.forEach(p => {
+        products.filter(p => p.active !== false).forEach(p => {
             const btn = document.createElement('button');
+            const isPlaceholder = !(p.initialStock > 0) && p.price <= 0; // 未設定枠（例：準備中）
             const isOut = p.stock <= 0;
-            btn.className = `product-btn ${isOut ? 'out-of-stock' : ''}`;
+            const oversold = p.stock < 0; // 販売数 > 仕入数（過少入力の可能性）
 
-            if (isOut) btn.style.backgroundColor = '#EFEDEA';
+            // 準備中の枠だけ操作不可。完売した実商品は「過少入力対策」で押せる（超過販売）
+            let cls = 'product-btn';
+            if (isPlaceholder) cls += ' out-of-stock';
+            else if (isOut) cls += ' sold-open';
+            btn.className = cls;
+
+            if (isPlaceholder || isOut) btn.style.backgroundColor = '#EFEDEA';
             else if (p.type === 'sweet') btn.style.backgroundColor = 'var(--btn-sweet)';
             else if (p.type === 'savory') btn.style.backgroundColor = 'var(--btn-savory)';
             else btn.style.backgroundColor = 'var(--btn-drink)';
 
-            // 完売（初期在庫あり→0）と準備中（初期在庫なし＝未セット）を区別して表示
             let badge = '';
-            if (isOut) {
-                const prep = !(p.initialStock > 0);
-                badge = `<span class="soldout-badge${prep ? ' prep' : ''}">${prep ? '準備中' : '完売'}</span>`;
-            }
+            if (isPlaceholder) badge = `<span class="soldout-badge prep">準備中</span>`;
+            else if (oversold) badge = `<span class="soldout-badge warn">超過 ${-p.stock}</span>`;
+            else if (isOut) badge = `<span class="soldout-badge">完売</span>`;
 
-            // 残りわずか（1〜5個）は在庫表示を強調して品切れ間近に気づけるように（位置は変えない）
+            // 残りわずか（1〜5個）はオレンジ、超過（在庫マイナス）は赤で強調
             const lowStock = p.stock > 0 && p.stock <= 5;
-            const stockStyle = lowStock ? 'color:#e06c00; font-weight:bold;' : '';
+            const stockStyle = oversold ? 'color:#d9534f; font-weight:bold;' : (lowStock ? 'color:#e06c00; font-weight:bold;' : '');
+            const stockText = oversold ? `在庫:0（超過${-p.stock}）` : `在庫:${p.stock}${lowStock ? ' ⚠️' : ''}`;
             btn.innerHTML = `
                 ${badge}
                 <span class="pname">${p.name}</span>
                 <span class="price">¥${p.price}</span>
-                <span class="stock" style="${stockStyle}">在庫:${p.stock}${lowStock ? ' ⚠️' : ''}</span>
+                <span class="stock" style="${stockStyle}">${stockText}</span>
             `;
             btn.onclick = () => addToCart(p);
             grid.appendChild(btn);
         });
         updateCartDisplay();
+        updatePendingReminder();
     }
 
+    const LOW_STOCK_ALERT = 3; // この残数に到達したら「残りわずか」を通知
     function addToCart(p) {
         if (!p) return;
         if (!currentSession) { playError(); alert('設定から先に開店してください'); return; }
-        if (p.stock > 0) {
-            playSound(); // 登録成功の合図（耳で確認できてミス防止）
-            p.stock--;
-            if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString(); // 在庫切れ日時を記録
-            cart.push({...p});
-            saveData();
-            init();
-        } else {
-            playError(); // 在庫切れで登録できなかった合図
+        // 未設定の枠（準備中：初期在庫なし＆価格0）は販売不可
+        if (!(p.initialStock > 0) && p.price <= 0) { playError(); return; }
+        // 在庫0でも登録可（開店前の在庫過少入力に備える）。在庫はマイナスまで許容し、
+        // マイナス＝「販売数 > 仕入数（超過販売）」として警告表示する。
+        if (p.stock > 0) playSound(); else playError(); // 完売後の登録は警告音で気づけるように
+        p.stock--;
+        if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
+        // 残りわずか／完売のしきい値アラート（在庫がその値に「到達した瞬間」に1回だけ通知）
+        if (p.stock === 0) {
+            playSound(494, 0.12); setTimeout(() => playSound(370, 0.16), 120); // 完売の下降音
+            showToast(`🔔 ${p.name} が完売しました`);
+        } else if (p.stock === LOW_STOCK_ALERT) {
+            playSound(1046, 0.09); // 残りわずかの高音
+            showToast(`⚠️ ${p.name} 残り${LOW_STOCK_ALERT}個`);
         }
+        cart.push({...p});
+        saveData();
+        init();
     }
 
     // カート内の「＋」用：商品名から在庫を1つ追加する
@@ -936,7 +995,27 @@
         document.getElementById('cash-input').value = '';
         document.getElementById('change-amount').innerText = '0';
         renderCashSuggestions(total);
+        renderLastTypeQuick();
         document.getElementById('checkout-modal').style.display = 'flex';
+    }
+
+    // 「直前と同じ客属性」ワンタップ設定（属性入力の高速化）
+    function renderLastTypeQuick() {
+        const btn = document.getElementById('last-type-quick');
+        if (!btn) return;
+        if (lastCustomerType && lastCustomerType !== '__later__') {
+            btn.textContent = `👥 直前と同じ：${lastCustomerType}`;
+            btn.style.display = 'block';
+        } else {
+            btn.style.display = 'none';
+        }
+    }
+
+    function applyLastCustomerType() {
+        if (!lastCustomerType) return;
+        const radios = document.getElementsByName('customerType');
+        for (let i = 0; i < radios.length; i++) radios[i].checked = (radios[i].value === lastCustomerType);
+        playSound(880, 0.05);
     }
 
     // ▼▼▼ スマート預かり金：合計額から「出されやすい金額」を提案（会計速度アップ）▼▼▼
@@ -1013,13 +1092,15 @@
         }
 
         const typeRadios = document.getElementsByName('customerType');
-        let selectedType = "不明";
+        let selectedVal = "__later__";
         for (let i = 0; i < typeRadios.length; i++) {
-            if (typeRadios[i].checked) {
-                selectedType = typeRadios[i].value;
-                break;
-            }
+            if (typeRadios[i].checked) { selectedVal = typeRadios[i].value; break; }
         }
+        // 「⏭後で」または未選択のときは属性を後で入力するフラグを立てる
+        const pending = (selectedVal === "__later__");
+        const selectedType = pending ? "不明" : selectedVal;
+        // 実際に属性を選んだ場合は「直前値」として記憶（次回の会計でワンタップ設定できる）
+        if (!pending) lastCustomerType = selectedVal;
 
         receiptCounter++;
         const record = {
@@ -1028,13 +1109,15 @@
             items: [...itemsRecorded],
             total: total,
             customerType: selectedType,
+            pendingType: pending,
             cash: cash,
             change: Math.max(0, cash - total)
         };
         salesHistory.push(record);
 
+        // 次の会計に備え、既定（後で）に戻す
         for (let i = 0; i < typeRadios.length; i++) {
-            if (typeRadios[i].value === "不明") typeRadios[i].checked = true;
+            typeRadios[i].checked = (typeRadios[i].value === "__later__");
         }
 
         closeModal('checkout-modal');
@@ -1118,7 +1201,7 @@
         if (applyBox) {
             applyBox.innerHTML =
                 (latest ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:8px; padding:10px; background:#B5EAD7; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-main);">✨ 前回「${latest.sessionName}」の実績を参考に反映</button>` : '')
-                + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:#F3F3F3; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px;">↩️ 商品リストを既定のラインナップに戻す</button>`;
+                + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:#F3F3F3; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px;">↩️ 商品リストを「${ACTIVE_EVENT_SET.label}」の既定に戻す</button>`;
         }
 
         list.innerHTML = '';
@@ -1130,7 +1213,10 @@
                 hint = `<div style="font-size:11px; color:var(--text-light); margin-top:6px;">前回 仕入${r.initial}/販売${r.sold}${r.soldOut ? '(完売)' : ''} → 参考 <b style="color:var(--accent);">${r.recommended}</b> ${arrow}</div>`;
             }
             list.innerHTML += `
-                <div class="setup-card" style="border-left:6px solid ${catColor(p.type)};">
+                <div class="setup-card" style="border-left:6px solid ${catColor(p.type)}; ${p.active === false ? 'opacity:0.5;' : ''}">
+                    <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-light); margin-bottom:4px; cursor:pointer;">
+                        <input type="checkbox" ${p.active === false ? '' : 'checked'} onchange="updateTempProduct(${p.id}, 'active', this.checked)"> この回で販売する
+                    </label>
                     <div style="display:flex; gap:5px; align-items:center;">
                         <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px;" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
                         <button onclick="removeTempProduct(${p.id})" style="background:#FF9AA2; color:white; border:none; border-radius:4px; width:30px; height:30px; font-weight:bold; cursor:pointer; flex-shrink:0;">×</button>
@@ -1143,6 +1229,10 @@
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">仕入れ数</div>
                             <input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px; margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <div style="font-size:10px; color:var(--text-light);">原価（任意）</div>
+                            <input type="number" value="${p.cost != null ? p.cost : ''}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px; margin:0;" placeholder="—" onchange="updateTempProduct(${p.id}, 'cost', this.value)">
                         </div>
                     </div>
                     ${hint}
@@ -1158,6 +1248,8 @@
         if (p) {
             if (field === 'name') p.name = value;
             if (field === 'price' || field === 'initialStock') p[field] = parseInt(value) || 0;
+            if (field === 'cost') { const n = parseInt(value); p.cost = (value === '' || isNaN(n)) ? null : n; }
+            if (field === 'active') { p.active = value; renderInventorySetup(); }
         }
     }
 
@@ -1168,7 +1260,7 @@
 
     function addTempProduct() {
         const newId = Date.now();
-        tempSetupProducts.push({ id: newId, name: "", price: 0, stock: 0, initialStock: 0, type: "sweet" });
+        tempSetupProducts.push({ id: newId, name: "", price: 0, stock: 0, initialStock: 0, type: "sweet", cost: null });
         renderInventorySetup();
     }
     // ▲▲▲ ここまで ▲▲▲
@@ -1205,6 +1297,8 @@
         openBlock.style.display = isOpen ? 'none' : 'block';
         activeBlock.style.display = isOpen ? 'block' : 'none';
         if (isOpen) document.getElementById('active-session-name').innerText = currentSession;
+        const banner = document.getElementById('event-banner');
+        if (banner) banner.innerHTML = `📋 イベント: <b>${ACTIVE_EVENT_SET.label}</b><br><span style="color:var(--text-light); font-size:12px;">切替は data/active-event.js（またはURLに ?event=festival）</span>`;
     }
 
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
@@ -1212,10 +1306,33 @@
     function startSession() {
         const name = document.getElementById('session-name-input').value;
         if (!name) { alert('名前を入力してください'); return; }
-        
+
+        // 開店前の仕入れ数の妥当性チェック（ミルクパンのような数え間違い・入力ミスの予防）
+        const warnings = [];
+        const latest = getLatestRecommendationMap();
+        tempSetupProducts.forEach(p => {
+            if (p.price <= 0) return; // 未設定枠は対象外
+            if (!(p.initialStock > 0)) {
+                warnings.push(`・${p.name}：仕入 0（販売しないなら「取扱商品」から外すと確実）`);
+            } else if (p.initialStock > 300) {
+                warnings.push(`・${p.name}：仕入 ${p.initialStock} 個（多すぎませんか？）`);
+            } else if (latest && latest.map[p.name] && latest.map[p.name].initial > 0) {
+                const prev = latest.map[p.name].initial;
+                if (p.initialStock >= prev * 3 || p.initialStock <= prev / 3) {
+                    warnings.push(`・${p.name}：今回 ${p.initialStock} / 前回 ${prev}（差が大きめ・要確認）`);
+                }
+            }
+        });
+        if (warnings.length > 0) {
+            if (!confirm('【仕入れ数の確認】数え間違い・入力ミスがないかご確認ください:\n\n' + warnings.join('\n') + '\n\nこのまま開店してよろしいですか？')) return;
+        }
+
         if (salesHistory.length > 0 || reservations.length > 0) {
             if (!confirm('新しい販売会を始めると、前回の売上データや予約はすべてリセットされます。よろしいですか？')) return;
         }
+
+        // 開店時に「前回の販売会」を確定（今回の集計と比較するため）
+        comparisonBaseline = sessionArchive.length ? sessionArchive[sessionArchive.length - 1] : null;
 
         currentSession = name;
         salesHistory = [];
@@ -1223,6 +1340,7 @@
         cart = [];
         receiptCounter = 0;
         voidCount = 0;
+        operationLog = [];
 
         // 編集した一時データを本番の商品データとして適用する
         products = JSON.parse(JSON.stringify(tempSetupProducts));
@@ -1245,11 +1363,27 @@
 
         // ▼▼▼ この回の実績を次回の仕入れ推奨として保存（開店リセットでは消えない） ▼▼▼
         if (salesHistory.length > 0) {
+            // 商品別・客層別の実績を集計（次回比較のもと）
+            const itemMap = {};
+            const custMap = {};
+            salesHistory.forEach(h => {
+                (h.items || []).forEach(it => {
+                    if (!itemMap[it.name]) itemMap[it.name] = { name: it.name, qty: 0, rev: 0 };
+                    itemMap[it.name].qty += 1;
+                    itemMap[it.name].rev += it.price;
+                });
+                const ct = h.customerType || '不明';
+                custMap[ct] = (custMap[ct] || 0) + 1;
+            });
+            const totalRev = salesHistory.reduce((s, h) => s + h.total, 0);
             const summary = {
                 name: currentSession || '無題',
                 date: new Date().toISOString(),
-                totalRev: salesHistory.reduce((s, h) => s + h.total, 0),
+                totalRev: totalRev,
                 customerCount: salesHistory.length,
+                avgSpend: Math.round(totalRev / salesHistory.length),
+                itemStats: Object.values(itemMap).sort((a, b) => b.qty - a.qty),
+                customerStats: custMap,
                 recommendations: buildRestockRecommendations()
             };
             sessionArchive.push(summary);
@@ -1356,8 +1490,37 @@
         if (cashKnown > 0) summary += `現金: お預かり計¥${cashTotal} / お釣り計¥${changeTotal}\n`;
         if (voidCount > 0) summary += `会計取り消し: ${voidCount}件\n`;
 
+        // --- 粗利（原価が入力された商品のみ）---
+        const prof = buildProfit();
+        if (prof) {
+            summary += `粗利: ¥${prof.profit}（粗利率 ${prof.margin}% / 原価合計 ¥${prof.cogs}）\n`;
+            if (prof.partial) summary += `　※原価入力品のみの集計（未入力: ${prof.uncovered.join('、')}）\n`;
+        }
+
+        // --- 前回の販売会との比較（開店時に確定した前回データがある時のみ）---
+        const cmp = buildComparison();
+        if (cmp) {
+            const mk = d => d > 0 ? '▲' : (d < 0 ? '▼' : '→');
+            const pc = m => m.pct == null ? '' : `（前回比 ${m.pct > 0 ? '+' : ''}${m.pct}%）`;
+            const sgnY = m => `${m.diff > 0 ? '+¥' : (m.diff < 0 ? '−¥' : '±¥')}${Math.abs(m.diff)}`;
+            const sgnN = (m, u) => `${m.diff > 0 ? '+' : (m.diff < 0 ? '−' : '±')}${Math.abs(m.diff)}${u}`;
+            const dstr = cmp.prevDate ? new Date(cmp.prevDate).toLocaleDateString('ja-JP') : '';
+            summary += `\n【前回（${cmp.prevName}${dstr ? '・' + dstr : ''}）との比較】\n`;
+            summary += `総売上: ${mk(cmp.totalRev.diff)} ${sgnY(cmp.totalRev)} ${pc(cmp.totalRev)}\n`;
+            summary += `来店人数: ${mk(cmp.customerCount.diff)} ${sgnN(cmp.customerCount, '人')} ${pc(cmp.customerCount)}\n`;
+            summary += `平均客単価: ${mk(cmp.avgSpend.diff)} ${sgnY(cmp.avgSpend)} ${pc(cmp.avgSpend)}\n`;
+            if (cmp.hasItems) {
+                const movers = cmp.items.filter(it => it.diff !== 0).slice(0, 5);
+                if (movers.length) {
+                    summary += `商品別の変化（大きい順）:\n`;
+                    movers.forEach(it => { summary += `・${it.name}: ${mk(it.diff)} ${it.diff > 0 ? '+' : ''}${it.diff}個（今回${it.now}/前回${it.prev}）\n`; });
+                }
+            }
+        }
+
         // --- 商品別（消化率・ABC ＋ 完売時刻・販売スピード）---
         let itemsText = `[在庫消化率とABC分析]\n`;
+        itemsText += `※ABC＝売上への貢献度。A＝上位（累計〜70%）/ B＝中位（〜90%）/ C＝下位。消化率＝販売数÷仕入れ数。\n`;
         let sortedRevItems = Object.entries(itemRev).sort((a, b) => b[1] - a[1]);
         let cumulativeRev = 0;
         sortedRevItems.forEach(item => {
@@ -1378,7 +1541,7 @@
         Object.keys(itemStats).forEach(name => {
             let stat = itemStats[name];
             let product = products.find(p => p.name === name);
-            let isSoldOut = product ? (product.stock === 0) : false;
+            let isSoldOut = product ? (product.stock <= 0) : false;
             if (isSoldOut) {
                 // 記録された在庫切れ日時を優先（無ければ最後の販売時刻で近似）
                 let lastTime = (product && product.soldOutTime) ? new Date(product.soldOutTime) : new Date(stat.lastTime);
@@ -1411,6 +1574,7 @@
         }
         segmentText += `\n[カテゴリ別 売上と占有率]\n`;
         for (let cat in categoryRev) {
+            if (categoryRev[cat] <= 0) continue; // 取り扱わなかったカテゴリ(¥0)は出さない
             let percent = totalRev > 0 ? Math.round((categoryRev[cat] / totalRev) * 100) : 0;
             segmentText += `・${catNames[cat]}: ¥${categoryRev[cat]} (${percent}%)\n`;
         }
@@ -1449,7 +1613,7 @@
     const ANALYTICS_TITLES = {
         summary: '📊 概要', items: '🥐 商品別', time: '🕐 時間帯別の客数',
         stock: '📉 残在庫の推移', segment: '👥 客層・カテゴリ', next: '📝 次回準備の参考メモ',
-        insight: '🔮 次回インサイト', export: '💾 書き出し（PDF/CSV）'
+        insight: '🔮 次回インサイト', log: '🧾 操作ログ', export: '💾 書き出し（PDF/CSV）'
     };
 
     function showAnalyticsMenu() {
@@ -1479,19 +1643,45 @@
         else if (key === 'time') { document.getElementById('sec-time-text').innerText = analyticsSections.time; renderCustomerChart(); }
         else if (key === 'stock') renderStockChart();
         else if (key === 'insight') document.getElementById('sec-insight').innerText = analyticsSections.insight || 'データがありません';
+        else if (key === 'log') renderOperationLog();
         // export はボタンのみ（静的）
+    }
+
+    // 操作ログ（属性の事後入力・品目の部分修正など）を新しい順に表示
+    function renderOperationLog() {
+        const el = document.getElementById('sec-log');
+        if (!el) return;
+        if (!operationLog.length) { el.innerText = '操作ログはまだありません。'; return; }
+        const rows = [...operationLog].reverse().map(e => {
+            const t = new Date(e.time);
+            const ts = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
+            return `<div style="display:flex; gap:8px; padding:3px 0; border-bottom:1px solid #F3F3F3; font-size:13px;"><span style="color:var(--text-light); flex-shrink:0;">${ts}</span><span>${e.msg.replace(/</g, '&lt;')}</span></div>`;
+        }).join('');
+        el.innerHTML = `<div style="font-size:12px; color:var(--text-light); margin-bottom:6px;">属性の事後入力・品目の部分修正などの履歴（${operationLog.length}件）</div>${rows}`;
     }
 
     // 商品名から味の傾向（甘い/しょっぱい/ドリンク）を簡易推定する。
     // ※オフライン動作のため、クラウドAIではなくキーワードによるルール判定。
-    // スイーツ（焼き菓子）を示す語。これが含まれる場合は「チーズケーキ」等でも甘い系とみなす。
-    const DESSERT_SWEET = ['クッキー', 'ケーキ', 'フィナンシェ', 'フロランタン', 'パウンド', 'タルト', 'マフィン', 'スコーン', 'ドーナツ', 'プリン', 'マカロン', 'ビスケット', 'ガレット', 'ブラウニー'];
-    const TASTE_SWEET = ['チョコ', 'クリーム', 'あん', 'メロン', 'アップル', 'りんご', 'シナモン', 'ミルク', 'ココナッツ', '紅茶', 'カスタード', 'ジャム', 'はちみつ', 'ハニー', '練乳', 'いちご', 'ストロベリー', '抹茶', 'きなこ', 'マロン', '栗', 'かぼちゃ', 'カボチャ', 'さつま', 'バナナ', 'レーズン', 'メープル', 'キャラメル', 'あんこ', 'シュガー', 'くるみ', 'ナッツ', 'アーモンド', '全粒粉', 'ベリー', 'レモン', 'オレンジ', 'ピーナッツ', 'マーブル', 'デニッシュ'];
-    const TASTE_SALTY = ['塩', 'チーズ', 'ウィンナー', 'ソーセージ', 'ベーコン', 'カレー', 'コーン', 'ハム', 'ピザ', '明太', 'たらこ', 'ガーリック', 'オニオン', '枝豆', 'ツナ', 'マヨ', '焼きそば', 'じゃがいも', 'ポテト', 'バジル', 'ペッパー', 'グラタン', 'ハーブ', 'カルツォーネ'];
-    const TASTE_DRINK = ['ブレンド', 'コーヒー', '珈琲', 'ティー', 'ラテ', 'ジュース', 'ドリンク', '茶', '水', 'ソーダ', 'コーラ', 'スムージー', 'カフェ'];
+    // キーワード辞書は data/taste-master.js（window.TASTE_MASTER）でマスタ化。
+    // ファイルが無い場合に備え、本体側にも既定リストを持たせる（保険）。
+    const TASTE_DEFAULTS = {
+        dessertSweet: ['クッキー', 'ケーキ', 'フィナンシェ', 'フロランタン', 'パウンド', 'タルト', 'マフィン', 'スコーン', 'ドーナツ', 'プリン', 'マカロン', 'ビスケット', 'ガレット', 'ブラウニー'],
+        sweet: ['チョコ', 'クリーム', 'あん', 'メロン', 'アップル', 'りんご', 'シナモン', 'ミルク', 'ココナッツ', '紅茶', 'カスタード', 'ジャム', 'はちみつ', 'ハニー', '練乳', 'いちご', 'ストロベリー', '抹茶', 'きなこ', 'マロン', '栗', 'かぼちゃ', 'カボチャ', 'さつま', 'バナナ', 'レーズン', 'メープル', 'キャラメル', 'あんこ', 'シュガー', 'くるみ', 'ナッツ', 'アーモンド', '全粒粉', 'ベリー', 'レモン', 'オレンジ', 'ピーナッツ', 'マーブル', 'デニッシュ'],
+        salty: ['塩', 'チーズ', 'ウィンナー', 'ソーセージ', 'ベーコン', 'カレー', 'コーン', 'ハム', 'ピザ', '明太', 'たらこ', 'ガーリック', 'オニオン', '枝豆', 'ツナ', 'マヨ', '焼きそば', 'じゃがいも', 'ポテト', 'バジル', 'ペッパー', 'グラタン', 'ハーブ', 'カルツォーネ'],
+        drink: ['ブレンド', 'コーヒー', '珈琲', 'ティー', 'ラテ', 'ジュース', 'ドリンク', '茶', '水', 'ソーダ', 'コーラ', 'スムージー', 'カフェ']
+    };
+    const TM = (typeof window !== 'undefined' && window.TASTE_MASTER) ? window.TASTE_MASTER : {};
+    const DESSERT_SWEET = Array.isArray(TM.dessertSweet) ? TM.dessertSweet : TASTE_DEFAULTS.dessertSweet;
+    const TASTE_SWEET   = Array.isArray(TM.sweet)        ? TM.sweet        : TASTE_DEFAULTS.sweet;
+    const TASTE_SALTY   = Array.isArray(TM.salty)        ? TM.salty        : TASTE_DEFAULTS.salty;
+    const TASTE_DRINK   = Array.isArray(TM.drink)        ? TM.drink        : TASTE_DEFAULTS.drink;
+    const VALID_TASTES  = ['甘い系', 'しょっぱい系', 'ドリンク', '不明'];
 
     function estimateTaste(name, type) {
         const n = name || '';
+        // 明示指定の味タグ（商品データ／設定の taste）が最優先
+        const prod = products.find(p => p.name === n);
+        if (prod && prod.taste && VALID_TASTES.includes(prod.taste)) return prod.taste;
         if (type === 'drink') return 'ドリンク';
         // 焼き菓子は甘い系を優先（例：チーズケーキ＝チーズより「ケーキ」、紅茶クッキー＝茶より「クッキー」）
         if (DESSERT_SWEET.some(k => n.includes(k))) return '甘い系';
@@ -1502,6 +1692,60 @@
         if (salty && !sweet) return 'しょっぱい系';
         if (salty && sweet) return 'しょっぱい系';
         return '不明';
+    }
+
+    // 完売による「取りこぼし（機会損失）」を推定する。
+    // 完売までのペース（個/分）を、完売後の残り営業時間に当てはめて概算する。
+    function buildLostSales() {
+        if (salesHistory.length === 0) return { items: [], totalUnits: 0, totalRev: 0 };
+        const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
+        const openTime = new Date(sorted[0].time);
+        const closeTime = new Date(sorted[sorted.length - 1].time);
+        const soldCount = {};
+        sorted.forEach(h => h.items.forEach(i => { soldCount[i.name] = (soldCount[i.name] || 0) + 1; }));
+
+        const items = [];
+        products.forEach(p => {
+            if (p.price <= 0) return;
+            const initial = p.initialStock || 0;
+            const sold = soldCount[p.name] || 0;
+            if (!(initial > 0 && p.stock <= 0 && sold > 0 && p.soldOutTime)) return; // 完売した品のみ
+            const soldOutT = new Date(p.soldOutTime);
+            const elapsed = Math.max(1, (soldOutT - openTime) / 60000);
+            const remain = (closeTime - soldOutT) / 60000;
+            if (remain < 5) return; // 終了間際の完売は取りこぼしとみなさない
+            const pace = sold / elapsed;              // 個/分（完売までの実測ペース）
+            const missed = Math.round(pace * remain); // 残り時間ぶんの推定未充足数
+            if (missed <= 0) return;
+            items.push({
+                name: p.name,
+                soldOutStr: `${soldOutT.getHours()}:${String(soldOutT.getMinutes()).padStart(2, '0')}`,
+                missed, price: p.price, lostRev: missed * p.price
+            });
+        });
+        items.sort((a, b) => b.lostRev - a.lostRev);
+        return {
+            items,
+            totalUnits: items.reduce((s, i) => s + i.missed, 0),
+            totalRev: items.reduce((s, i) => s + i.lostRev, 0)
+        };
+    }
+
+    // よく一緒に買われた組み合わせから、セット販売の提案文を1つ返す（無ければ null）。
+    function buildBundleSuggestion() {
+        if (salesHistory.length === 0) return null;
+        const co = {};
+        salesHistory.forEach(h => {
+            const uniq = [...new Set(h.items.map(i => i.name))];
+            for (let i = 0; i < uniq.length; i++) for (let j = i + 1; j < uniq.length; j++) {
+                const pair = [uniq[i], uniq[j]].sort().join(' ＋ ');
+                co[pair] = (co[pair] || 0) + 1;
+            }
+        });
+        const top = Object.entries(co).sort((a, b) => b[1] - a[1])[0];
+        if (!top || top[1] < 2) return null; // 2回未満は偶然の可能性が高いので提案しない
+        const names = top[0].split(' ＋ ');
+        return `「${names[0]}」と「${names[1]}」は${top[1]}回セットで購入されました。次回はこの2品をセット（例：セット購入で少し割引）にすると、客単価アップが見込めます。`;
     }
 
     // 閉店時の「次回インサイト」テキストを作る。
@@ -1533,12 +1777,30 @@
         });
         const totalTaste = Object.values(tasteAgg).reduce((s, v) => s + v.count, 0);
 
-        let res = `[在庫切れ（完売）時刻]\n`;
+        // 完売時刻と取りこぼし（機会損失）をひとつにまとめて表示。
+        // ※販売ペース（消化の速さ）は「商品別」セクションに集約し、ここでは重複させない。
+        const lost = buildLostSales();
+        const lostMap = {};
+        lost.items.forEach(l => { lostMap[l.name] = l; });
+        let res = `[完売時刻と取りこぼし（機会損失）の推定]\n`;
         if (soldOut.length > 0) {
-            soldOut.forEach(s => { res += `・${s.name}: ${s.t.getHours()}:${String(s.t.getMinutes()).padStart(2, '0')} 完売\n`; });
+            soldOut.forEach(s => {
+                const tstr = `${s.t.getHours()}:${String(s.t.getMinutes()).padStart(2, '0')}`;
+                const l = lostMap[s.name];
+                if (l) res += `・${s.name}: ${tstr} 完売 → あと約${l.missed}個（約¥${l.lostRev}）売れた可能性\n`;
+                else res += `・${s.name}: ${tstr} 完売（終了間際のため取りこぼしは小）\n`;
+            });
+            if (lost.totalUnits > 0) {
+                res += `→ 合計 約${lost.totalUnits}個・約¥${lost.totalRev} を取りこぼした可能性があります（早期完売品は次回増量を検討）\n`;
+                res += `※完売までの販売ペースを残り営業時間に当てはめた概算です。\n`;
+            }
         } else {
             res += `・完売した商品はありませんでした\n`;
         }
+
+        // 併売セットの提案（1文）
+        const bundle = buildBundleSuggestion();
+        if (bundle) res += `\n[セット販売の提案]\n・${bundle}\n`;
 
         res += `\n[客層別の傾向（次回の仕入れ目安）]\n`;
         ['学生', '教員', '職員', 'その他', '不明'].forEach(ct => {
@@ -1591,7 +1853,7 @@
         // 5個単位に切り上げ（最低5個）
         const roundUp5 = n => Math.max(5, Math.ceil(n / 5) * 5);
 
-        return products.map(p => {
+        return products.filter(p => p.active !== false && p.price > 0).map(p => {
             const sold = soldCount[p.name] || 0;
             const initial = p.initialStock || 0;
             const soldOut = initial > 0 && p.stock <= 0 && sold > 0;
@@ -1638,6 +1900,77 @@
         return { sessionName: last.name, map: map };
     }
 
+    // 今回の販売会の実績を集計する（比較のもと）
+    function currentSessionStats() {
+        const itemMap = {};
+        salesHistory.forEach(h => (h.items || []).forEach(it => {
+            if (!itemMap[it.name]) itemMap[it.name] = { name: it.name, qty: 0, rev: 0 };
+            itemMap[it.name].qty += 1;
+            itemMap[it.name].rev += it.price;
+        }));
+        const totalRev = salesHistory.reduce((s, h) => s + h.total, 0);
+        const customerCount = salesHistory.length;
+        return {
+            totalRev,
+            customerCount,
+            avgSpend: customerCount ? Math.round(totalRev / customerCount) : 0,
+            itemStats: Object.values(itemMap)
+        };
+    }
+
+    // 前回の販売会（開店時に確定した comparisonBaseline）と今回を比較する。
+    // 比較できない（前回データが無い・古い形式）場合は null を返す。
+    function buildComparison() {
+        const base = comparisonBaseline;
+        if (!base || typeof base.totalRev !== 'number' || base.customerCount == null) return null;
+        const now = currentSessionStats();
+        if (now.customerCount === 0) return null;
+        const metric = (n, p) => ({
+            now: n, prev: p, diff: n - p,
+            pct: p > 0 ? Math.round((n - p) / p * 100) : null
+        });
+        // 商品別：前回比の増減が大きい順（今回・前回どちらかに実績がある品）
+        const names = new Set();
+        (now.itemStats || []).forEach(i => names.add(i.name));
+        (base.itemStats || []).forEach(i => names.add(i.name));
+        const nowMap = {}; (now.itemStats || []).forEach(i => nowMap[i.name] = i.qty);
+        const baseMap = {}; (base.itemStats || []).forEach(i => baseMap[i.name] = i.qty);
+        const items = [...names].map(name => {
+            const nq = nowMap[name] || 0, pq = baseMap[name] || 0;
+            return { name, now: nq, prev: pq, diff: nq - pq };
+        }).sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+        return {
+            prevName: base.name || '前回',
+            prevDate: base.date || null,
+            hasItems: (base.itemStats || []).length > 0,
+            totalRev: metric(now.totalRev, base.totalRev),
+            customerCount: metric(now.customerCount, base.customerCount),
+            avgSpend: metric(now.avgSpend, base.avgSpend != null ? base.avgSpend : (base.customerCount ? Math.round(base.totalRev / base.customerCount) : 0)),
+            items
+        };
+    }
+
+    // 粗利の集計（原価が入力された商品のみ対象。1件も無ければ null）。
+    function buildProfit() {
+        const costMap = {};
+        products.forEach(p => { if (p.cost != null && p.cost >= 0) costMap[p.name] = p.cost; });
+        if (Object.keys(costMap).length === 0) return null;
+        let revCovered = 0, cogs = 0, coveredUnits = 0, uncoveredUnits = 0;
+        const uncovered = new Set();
+        salesHistory.forEach(h => h.items.forEach(i => {
+            if (costMap[i.name] != null) { cogs += costMap[i.name]; revCovered += i.price; coveredUnits++; }
+            else { uncoveredUnits++; uncovered.add(i.name); }
+        }));
+        const profit = revCovered - cogs;
+        return {
+            cogs, revCovered, profit,
+            margin: revCovered > 0 ? Math.round(profit / revCovered * 100) : 0,
+            coveredUnits, uncoveredUnits,
+            uncovered: [...uncovered],
+            partial: uncoveredUnits > 0
+        };
+    }
+
     // 開店設定画面で「推奨を適用」→ 前回実績に基づいて仕入れ数を自動入力
     function applyRecommendations() {
         const latest = getLatestRecommendationMap();
@@ -1653,10 +1986,10 @@
 
     // 商品リストをアプリ既定のラインナップに戻す（端末に古いデータが残っている時の保険）
     function resetLineupToDefault() {
-        if (!confirm('商品リストをアプリ既定のラインナップ（パン12種＋クッキー10種＋ドリンク枠）に戻します。\n編集中の内容は破棄されます。よろしいですか？')) return;
+        if (!confirm(`商品リストを「${ACTIVE_EVENT_SET.label}」の既定ラインナップ（${DEFAULT_PRODUCTS.length}品）に戻します。\n編集中の内容は破棄されます。よろしいですか？`)) return;
         tempSetupProducts = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
         renderInventorySetup();
-        showToast('既定のラインナップに戻しました');
+        showToast(`「${ACTIVE_EVENT_SET.label}」の既定に戻しました`);
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -1675,6 +2008,18 @@
 
     // ▼▼▼ PDF出力：集計結果を構造化して組み立てる ▼▼▼
     // salesHistory から、レポートに必要な数値を構造化オブジェクトで返す。
+    // データ整合性チェック（取消・部分修正が売上/在庫に矛盾なく反映されているか）
+    function checkIntegrity() {
+        const issues = [];
+        let itemSum = 0, totalSum = 0;
+        salesHistory.forEach(h => { totalSum += h.total; h.items.forEach(i => { itemSum += i.price; }); });
+        if (itemSum !== totalSum) issues.push(`金額不一致：品目合計 ¥${itemSum} ≠ 取引合計 ¥${totalSum}`);
+        const orphans = new Set();
+        salesHistory.forEach(h => h.items.forEach(i => { if (!products.find(p => p.id === i.id)) orphans.add(i.name); }));
+        if (orphans.size) issues.push(`商品マスタに無い品目：${[...orphans].join('、')}`);
+        return issues;
+    }
+
     function buildReportData() {
         if (salesHistory.length === 0) return null;
         const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
@@ -1728,7 +2073,7 @@
         const soldOut = [], inStock = [];
         Object.keys(itemStats).forEach(name => {
             const prod = products.find(p => p.name === name);
-            const out = prod ? prod.stock === 0 : false;
+            const out = prod ? prod.stock <= 0 : false;
             if (out) {
                 const t = (prod && prod.soldOutTime) ? new Date(prod.soldOutTime) : new Date(itemStats[name].lastTime);
                 const dur = Math.max(1, (t - sessionStart) / 60000);
@@ -1737,23 +2082,35 @@
         });
         soldOut.sort((a, b) => a.timeVal - b.timeVal);
 
+        // 販売数 > 仕入数（在庫過少入力の可能性）。備考があれば併記。
+        const oversoldItems = products
+            .filter(p => p.price > 0 && p.initialStock >= 0 && (itemCounts[p.name] || 0) > p.initialStock)
+            .map(p => ({ name: p.name, sold: itemCounts[p.name] || 0, initial: p.initialStock, note: p.note || '' }));
+
         const slots = Object.keys(timeSlotRev)
             .sort((a, b) => parseInt(a.replace(':', '')) - parseInt(b.replace(':', '')))
             .map(s => ({ label: s, rev: timeSlotRev[s], top: Object.entries(timeSlotItems[s]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => ({ name: n, count: c })) }));
 
         const types = Object.entries(custTypes).filter(([, d]) => d.count > 0).map(([type, d]) => ({ type, count: d.count, avg: Math.floor(d.rev / d.count) }));
-        const categories = Object.keys(categoryRev).map(c => ({ name: catNames[c], rev: categoryRev[c], pct: totalRev > 0 ? Math.round(categoryRev[c] / totalRev * 100) : 0 }));
+        const categories = Object.keys(categoryRev).filter(c => categoryRev[c] > 0).map(c => ({ name: catNames[c], rev: categoryRev[c], pct: totalRev > 0 ? Math.round(categoryRev[c] / totalRev * 100) : 0 }));
         const copairs = Object.entries(coPurchase).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([pair, count]) => ({ pair, count }));
+
+        const typeEditedLater = sorted.filter(h => h.typeEditedLater).length;
+        const itemEdited = sorted.filter(h => h.edited).length;
+        const pendingLeft = sorted.filter(h => h.pendingType).length;
 
         return {
             summary: {
                 totalRev, customers, avg: Math.floor(totalRev / customers), avgItems: (totalItems / customers).toFixed(1),
                 maxSale: Math.max(...sorted.map(h => h.total)), minSale: Math.min(...sorted.map(h => h.total)),
-                peak: peak ? { label: peak[0], rev: peak[1] } : null, cashTotal, changeTotal, cashKnown, voidCount
+                peak: peak ? { label: peak[0], rev: peak[1] } : null, cashTotal, changeTotal, cashKnown, voidCount,
+                typeEditedLater, itemEdited, pendingLeft
             },
-            abc, soldOut, inStock, slots, types, categories, copairs,
+            abc, soldOut, inStock, oversoldItems, integrity: checkIntegrity(), slots, types, categories, copairs,
             stock: buildStockTimeline(),
             insight: computeInsights(),
+            comparison: buildComparison(),
+            profit: buildProfit(),
             recs: buildRestockRecommendations()
         };
     }
@@ -1785,7 +2142,45 @@
                 <div class="stat"><span class="stat-label">ピーク時間帯</span><span class="stat-val">${s.peak ? esc(s.peak.label) + '〜 ' + yen(s.peak.rev) : '-'}</span></div>
                 ${s.cashKnown > 0 ? `<div class="stat"><span class="stat-label">現金 お預り／お釣り</span><span class="stat-val">${yen(s.cashTotal)} / ${yen(s.changeTotal)}</span></div>` : ''}
                 <div class="stat"><span class="stat-label">会計取消</span><span class="stat-val">${s.voidCount}件</span></div>
-            </div>`;
+                <div class="stat"><span class="stat-label">属性の事後入力</span><span class="stat-val">${s.typeEditedLater}件（${s.customers ? Math.round(s.typeEditedLater / s.customers * 100) : 0}%）</span></div>
+                <div class="stat"><span class="stat-label">品目の事後修正</span><span class="stat-val">${s.itemEdited}件</span></div>
+                ${s.pendingLeft > 0 ? `<div class="stat"><span class="stat-label" style="color:#c0392b;">属性 未入力のまま</span><span class="stat-val" style="color:#c0392b;">${s.pendingLeft}件</span></div>` : ''}
+                ${R.profit ? `
+                <div class="stat"><span class="stat-label">原価合計（原価入力品）</span><span class="stat-val">${yen(R.profit.cogs)}</span></div>
+                <div class="stat"><span class="stat-label">粗利（原価入力品）</span><span class="stat-val">${yen(R.profit.profit)}（粗利率 ${R.profit.margin}%）</span></div>` : ''}
+            </div>
+            ${R.profit && R.profit.partial ? `<div class="note-box" style="margin-top:6px;"><div class="note-foot">※粗利は原価を入力した商品のみの集計です（未入力: ${R.profit.uncovered.map(esc).join('、')}）。原価をすべて入力すると全体の粗利になります。</div></div>` : ''}`;
+
+        // 1b. 前回の販売会との比較（前回データがある時だけ）
+        const comp = R.comparison;
+        let comparisonBox = '';
+        if (comp) {
+            const trendMark = d => d > 0 ? '▲' : (d < 0 ? '▼' : '→');
+            const pctTxt = m => m.pct == null ? '—' : `${m.pct > 0 ? '+' : ''}${m.pct}%`;
+            const diffYen = m => `${m.diff > 0 ? '+' : (m.diff < 0 ? '−' : '±')}${yen(Math.abs(m.diff)).replace('¥', '¥')}`;
+            const diffNum = (m, unit) => `${m.diff > 0 ? '+' : (m.diff < 0 ? '−' : '±')}${Math.abs(m.diff)}${unit}`;
+            const compDate = comp.prevDate ? new Date(comp.prevDate).toLocaleDateString('ja-JP') : '';
+            const moverRows = comp.hasItems
+                ? comp.items.filter(it => it.diff !== 0).slice(0, 6).map(it =>
+                    `<tr><td>${esc(it.name)}</td><td class="num">${it.now}</td><td class="num">${it.prev}</td><td class="num">${trendMark(it.diff)} ${it.diff > 0 ? '+' : ''}${it.diff}</td></tr>`).join('')
+                : '';
+            comparisonBox = `
+                <div class="sub-heading">前回（${esc(comp.prevName)}${compDate ? '・' + compDate : ''}）との比較</div>
+                <table class="rep-table">
+                    <thead><tr><th>指標</th><th class="num">今回</th><th class="num">前回</th><th class="num">増減</th><th class="num">前回比</th></tr></thead>
+                    <tbody>
+                        <tr><td>総売上</td><td class="num">${yen(comp.totalRev.now)}</td><td class="num">${yen(comp.totalRev.prev)}</td><td class="num">${trendMark(comp.totalRev.diff)} ${diffYen(comp.totalRev)}</td><td class="num">${pctTxt(comp.totalRev)}</td></tr>
+                        <tr><td>来店人数</td><td class="num">${comp.customerCount.now}人</td><td class="num">${comp.customerCount.prev}人</td><td class="num">${trendMark(comp.customerCount.diff)} ${diffNum(comp.customerCount, '人')}</td><td class="num">${pctTxt(comp.customerCount)}</td></tr>
+                        <tr><td>平均客単価</td><td class="num">${yen(comp.avgSpend.now)}</td><td class="num">${yen(comp.avgSpend.prev)}</td><td class="num">${trendMark(comp.avgSpend.diff)} ${diffYen(comp.avgSpend)}</td><td class="num">${pctTxt(comp.avgSpend)}</td></tr>
+                    </tbody>
+                </table>
+                ${moverRows ? `
+                <div class="sub-heading">商品別 前回比（増減の大きい順）</div>
+                <table class="rep-table">
+                    <thead><tr><th>商品</th><th class="num">今回</th><th class="num">前回</th><th class="num">増減</th></tr></thead>
+                    <tbody>${moverRows}</tbody>
+                </table>` : (comp.hasItems ? '' : '<div class="note-box"><div class="note-foot">※前回は商品別の記録が無いため、合計指標のみの比較です。</div></div>')}`;
+        }
 
         // 2. 商品別（ABC表 ＋ 完売時刻）
         const rankMark = { A: '●', B: '◐', C: '○' };
@@ -1801,6 +2196,11 @@
             ? R.soldOut.map(o => `・${o.name}：${o.timeStr} 完売（ペース ${o.pace}個/時）`).join('\n')
             : '・完売した商品はありませんでした')
             + (R.inStock.length ? `\n・販売中：${R.inStock.join('、')}` : '');
+
+        // 販売数 > 仕入数（在庫入力の確認を促すソフト警告）
+        const oversoldTxt = R.oversoldItems.map(o =>
+            `・${o.name}：仕入 ${o.initial} / 販売 ${o.sold}（差 +${o.sold - o.initial}）${o.note ? '　備考: ' + o.note : '　備考: なし（入力ミスの可能性）'}`
+        ).join('\n');
 
         // 3. 時間帯別
         const slotTxt = R.slots.map(sl =>
@@ -1836,9 +2236,11 @@
                     </div>
                 </header>
 
-                <section class="report-section">
+                <section class="report-section${comp ? ' report-section--long' : ''}">
                     <div class="report-heading">1. 概要</div>
                     ${summaryBox}
+                    ${R.integrity.length ? `<div class="note-box" style="border-color:#c0392b; margin-top:6px;"><div class="note-foot" style="color:#c0392b;">⚠ 整合性チェック：${R.integrity.map(esc).join(' / ')}</div></div>` : ''}
+                    ${comparisonBox}
                 </section>
 
                 <section class="report-section report-section--long">
@@ -1850,6 +2252,9 @@
                     </table>
                     <div class="sub-heading">完売時刻と販売スピード</div>
                     <pre class="rep-pre">${esc(soldOutTxt)}</pre>
+                    ${R.oversoldItems.length ? `
+                    <div class="sub-heading" style="color:#c0392b; border-color:#e6b0aa;">⚠ 販売数 &gt; 仕入数（在庫入力の確認を推奨）</div>
+                    <pre class="rep-pre">${esc(oversoldTxt)}</pre>` : ''}
                 </section>
 
                 <section class="report-section">
@@ -1880,7 +2285,7 @@
                     <pre class="rep-pre">${esc(coTxt)}</pre>
                 </section>
 
-                <section class="report-section">
+                <section class="report-section report-section--long">
                     <div class="report-heading">6. 次回インサイト</div>
                     <div class="key-box">
                         <div class="key-head">🔮 次回インサイト（客層・味の傾向・在庫切れ）</div>
@@ -1890,13 +2295,11 @@
 
                 <section class="report-section report-section--long">
                     <div class="report-heading">7. 次回準備の参考メモ</div>
-                    <div class="note-box">
-                        <table class="rep-table">
-                            <thead><tr><th>商品</th><th class="num">今回仕入</th><th class="num">販売</th><th class="num">参考仕入</th><th>増減</th><th>理由</th></tr></thead>
-                            <tbody>${recRows}</tbody>
-                        </table>
-                        <div class="note-foot">※今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変動するため参考程度にご利用ください。</div>
-                    </div>
+                    <table class="rep-table">
+                        <thead><tr><th>商品</th><th class="num">今回仕入</th><th class="num">販売</th><th class="num">参考仕入</th><th>増減</th><th>理由</th></tr></thead>
+                        <tbody>${recRows}</tbody>
+                    </table>
+                    <div class="note-box"><div class="note-foot">※今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変動するため参考程度にご利用ください。</div></div>
                 </section>
             </div>
         `;
@@ -1906,28 +2309,70 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
+    let lastSavedSnapshot = null; // 直近で保存に成功したJSON（保存失敗時の巻き戻し用）
+
    function saveData() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount };
-        localStorage.setItem('taizanboku_pos_data', JSON.stringify(data));
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType };
+        let json;
+        try {
+            json = JSON.stringify(data);
+        } catch (e) {
+            console.error('保存データの生成に失敗しました', e);
+            return;
+        }
+        try {
+            localStorage.setItem('taizanboku_pos_data', json);
+            lastSavedSnapshot = json;
+        } catch (e) {
+            // 容量超過やプライベートモード等で保存できない場合：
+            // 直前の保存内容を保持したまま、操作者に一度だけ警告する（データ消失を防ぐ）。
+            console.error('localStorage への保存に失敗しました', e);
+            try {
+                if (lastSavedSnapshot) localStorage.setItem('taizanboku_pos_data', lastSavedSnapshot);
+            } catch (_) { /* 復旧も失敗：これ以上はできることがない */ }
+            if (!saveData._warned) {
+                saveData._warned = true;
+                alert('【！】データの保存に失敗しました。端末の空き容量やブラウザ設定をご確認ください。\n念のため「設定 →バックアップ書き出し」でファイル保存することをおすすめします。');
+            }
+        }
     }
 
     function loadData() {
-        const saved = localStorage.getItem('taizanboku_pos_data');
-        if (saved) {
-            const data = JSON.parse(saved);
-            if (data.products) products = data.products;
-            cart = data.cart || [];
-            salesHistory = data.salesHistory || [];
-            reservations = data.reservations || [];
-            currentSession = data.currentSession || null;
-            sessionArchive = data.sessionArchive || [];
-            receiptCounter = data.receiptCounter || salesHistory.length;
-            voidCount = data.voidCount || 0;
+        let saved;
+        try {
+            saved = localStorage.getItem('taizanboku_pos_data');
+        } catch (e) {
+            console.error('localStorage の読み込みに失敗しました', e);
+            return;
+        }
+        if (!saved) return;
+        let data;
+        try {
+            data = JSON.parse(saved);
+        } catch (e) {
+            // 保存データが壊れている場合：上書きで失わないよう別キーへ退避してから初期状態で続行。
+            console.error('保存データが壊れているため読み込めませんでした', e);
+            try { localStorage.setItem('taizanboku_pos_data_corrupt_' + Date.now(), saved); } catch (_) {}
+            alert('【！】保存データを読み込めませんでした（破損の可能性）。\n壊れたデータは退避し、初期状態で起動します。バックアップがあれば「設定 →バックアップ復元」から戻せます。');
+            return;
+        }
+        if (!data || typeof data !== 'object') return;
+        lastSavedSnapshot = saved;
+        if (Array.isArray(data.products)) products = data.products;
+        cart = Array.isArray(data.cart) ? data.cart : [];
+        salesHistory = Array.isArray(data.salesHistory) ? data.salesHistory : [];
+        reservations = Array.isArray(data.reservations) ? data.reservations : [];
+        currentSession = data.currentSession || null;
+        sessionArchive = Array.isArray(data.sessionArchive) ? data.sessionArchive : [];
+        receiptCounter = data.receiptCounter || salesHistory.length;
+        voidCount = data.voidCount || 0;
+        operationLog = Array.isArray(data.operationLog) ? data.operationLog : [];
+        comparisonBaseline = data.comparisonBaseline || null;
+        lastCustomerType = data.lastCustomerType || null;
 
-            if (currentSession) {
-                document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
-                document.getElementById('session-display').style.background = 'var(--white)';
-            }
+        if (currentSession) {
+            document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
+            document.getElementById('session-display').style.background = 'var(--white)';
         }
     }
 
@@ -1952,7 +2397,7 @@
     }
 
     function exportBackup() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount };
+        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog };
         triggerDownload(`taizanboku_backup_${dateStamp()}.json`, JSON.stringify(data, null, 2), 'application/json');
     }
 
@@ -1976,6 +2421,7 @@
                 sessionArchive = data.sessionArchive || [];
                 receiptCounter = data.receiptCounter || salesHistory.length;
                 voidCount = data.voidCount || 0;
+            operationLog = data.operationLog || [];
 
                 const disp = document.getElementById('session-display');
                 if (currentSession) {
@@ -2020,18 +2466,45 @@
         const rows = buildItemSalesRows();
         if (rows.length === 0) { alert('書き出す売上データがありません。'); return; }
 
+        const catNames = { sweet: 'パン類', savory: 'クッキー類', drink: 'ドリンク' };
         const total = rows.reduce((s, r) => s + r.revenue, 0);
         const totalCount = rows.reduce((s, r) => s + r.count, 0);
+        // 完売時刻の対応（記録があれば）
+        const cell = v => String(v == null ? '' : v).replace(/,/g, ' ');
+        let totalCogs = 0, cogsKnown = false;
         // Excel(日本語)で文字化けしないよう BOM を先頭に付与
         let csv = '﻿';
-        csv += `販売会,${(currentSession || '前回').replace(/,/g, ' ')}\n`;
+        csv += `販売会,${cell(currentSession || '前回')}\n`;
         csv += `出力日時,${new Date().toLocaleString('ja-JP')}\n\n`;
-        csv += `商品名,単価,販売数,売上\n`;
+        csv += `商品名,カテゴリ,単価,仕入れ数,販売数,消化率(%),完売時刻,原価,粗利,味,売上\n`;
         rows.forEach(r => {
-            csv += `${r.name.replace(/,/g, ' ')},${r.price},${r.count},${r.revenue}\n`;
+            const p = products.find(prod => prod.name === r.name);
+            const cat = p ? (catNames[p.type] || '') : '';
+            const initial = p ? (p.initialStock || 0) : 0;
+            const sellThrough = initial > 0 ? Math.round(r.count / initial * 100) : '';
+            const soldOutStr = (p && p.soldOutTime) ? new Date(p.soldOutTime).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '';
+            const cost = (p && p.cost != null) ? p.cost : '';
+            let profit = '';
+            if (p && p.cost != null) { profit = r.revenue - p.cost * r.count; totalCogs += p.cost * r.count; cogsKnown = true; }
+            const taste = estimateTaste(r.name, p ? p.type : null);
+            csv += `${cell(r.name)},${cat},${r.price},${initial},${r.count},${sellThrough},${soldOutStr},${cost},${profit},${taste},${r.revenue}\n`;
         });
-        csv += `合計,,${totalCount},${total}\n`;
+        const totalProfit = cogsKnown ? (total - totalCogs) : '';
+        csv += `合計,,,,${totalCount},,,${cogsKnown ? totalCogs : ''},${totalProfit},,${total}\n`;
         triggerDownload(`taizanboku_精算_${dateStamp()}.csv`, csv, 'text/csv');
+    }
+
+    // 集計結果（buildReportData の構造化データ）を JSON で書き出す。
+    // 後からの分析・別ツール取り込み・記録保存用（前回比較・粗利・取りこぼしなども含む）。
+    function exportReportJSON() {
+        const R = buildReportData();
+        if (!R) { alert('書き出す売上データがありません。'); return; }
+        const payload = {
+            session: currentSession || '前回',
+            exportedAt: new Date().toISOString(),
+            report: R
+        };
+        triggerDownload(`taizanboku_集計_${dateStamp()}.json`, JSON.stringify(payload, null, 2), 'application/json');
     }
 
     // 一会計ごとの明細をすべて書き出す（記録の保存用）
@@ -2075,27 +2548,52 @@
             list.innerHTML = '<p style="color:var(--text-light); text-align:center; margin-top:20px;">まだ会計済のデータはありません。</p>';
             return;
         }
-        // 新しい会計を上に。元の配列インデックスも保持（レシート発行用）
+        // 属性未入力（後で）を先頭に、次に新しい会計順
         const rows = salesHistory.map((h, idx) => ({ h, idx }))
-            .sort((a, b) => new Date(b.h.time) - new Date(a.h.time));
+            .sort((a, b) => (Number(!!b.h.pendingType) - Number(!!a.h.pendingType)) || (new Date(b.h.time) - new Date(a.h.time)));
+        const pendingCount = salesHistory.filter(h => h.pendingType).length;
+        const summary = pendingCount > 0
+            ? `<div style="background:#FFF6E5; border:2px solid #F0C674; border-radius:10px; padding:8px 12px; margin-bottom:10px; font-size:13px; color:#a06a00; font-weight:bold;">⏱ 属性「後で入力」の会計：${pendingCount}件（各カードの属性ボタンをタップして割り当て）</div>`
+            : '';
+        const TYPES = ['学生', '教員', '職員', 'その他', '不明'];
 
-        list.innerHTML = rows.map(({ h, idx }) => {
+        list.innerHTML = summary + rows.map(({ h, idx }) => {
             const t = new Date(h.time);
             const dtStr = `${t.getFullYear()}/${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')} ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
-            const lines = itemLines(h.items).map(l =>
-                `<div style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
-                    <span>${l.name} <span style="color:var(--text-light);">×${l.qty} (@¥${l.price})</span></span>
-                    <span style="font-weight:bold;">¥${l.subtotal}</span>
-                </div>`).join('');
+            const editing = editingRecordIdx === idx;
+            const lines = itemLines(h.items).map(l => {
+                const sn = l.name.replace(/'/g, "\\'");
+                return editing
+                    ? `<div style="display:flex; align-items:center; gap:6px; padding:3px 0; font-size:13px;">
+                        <button onclick="adjustRecordItem(${idx}, '${sn}', -1)" style="width:26px; height:26px; border:none; border-radius:6px; background:#F3F3F3; color:var(--accent); font-weight:bold; cursor:pointer; flex-shrink:0;">−</button>
+                        <button onclick="adjustRecordItem(${idx}, '${sn}', 1)" style="width:26px; height:26px; border:none; border-radius:6px; background:#E2F0CB; font-weight:bold; cursor:pointer; flex-shrink:0;">＋</button>
+                        <span style="flex:1;">${l.name} ×<b>${l.qty}</b></span>
+                        <span style="font-weight:bold;">¥${l.subtotal}</span>
+                    </div>`
+                    : `<div style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
+                        <span>${l.name} <span style="color:var(--text-light);">×${l.qty} (@¥${l.price})</span></span>
+                        <span style="font-weight:bold;">¥${l.subtotal}</span>
+                    </div>`;
+            }).join('');
             const cashStr = (h.cash != null) ? `¥${h.cash}` : '—';
             const changeStr = (h.change != null) ? `¥${h.change}` : '—';
+            const actions = editing
+                ? `<button class="action-btn btn-checkout" style="width:100%; padding:8px; font-size:14px; margin-top:0;" onclick="toggleEditRecord(null)">✅ 修正を終了</button>`
+                : `<div style="display:flex; gap:8px;">
+                        <button class="action-btn btn-undo" style="flex:1; padding:8px; font-size:14px;" onclick="voidSale(${idx})">↩️ 取り消し</button>
+                        <button class="action-btn btn-reserve" style="flex:1; padding:8px; font-size:14px;" onclick="printReceipt(${idx})">🧾 レシート</button>
+                    </div>
+                    <button class="action-btn btn-undo" style="width:100%; padding:7px; font-size:13px;" onclick="toggleEditRecord(${idx})">✏️ 品目・点数を修正</button>`;
             return `
-                <div class="res-card">
+                <div class="res-card"${editing ? ' style="outline:2px solid var(--accent);"' : ''}>
                     <div class="res-header">
-                        <span>客No. ${h.no || '-'}</span>
+                        <span>客No. ${h.no || '-'}${h.edited ? ' <span style="font-size:11px; color:#c0392b; font-weight:normal;">(修正済)</span>' : ''}</span>
                         <span style="color:var(--text-light); font-size:13px; font-weight:normal;">${dtStr}</span>
                     </div>
-                    <div style="font-size:12px; color:var(--text-light);">客属性: ${h.customerType || '不明'}</div>
+                    <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin:3px 0;">
+                        ${h.pendingType ? '<span style="font-size:11px; color:#a06a00; font-weight:bold;">⏱後で入力</span>' : '<span style="font-size:12px; color:var(--text-light);">客属性:</span>'}
+                        ${TYPES.map(ty => { const on = h.customerType === ty && !h.pendingType; return `<button onclick="setRecordType(${idx}, '${ty}')" style="padding:3px 9px; font-size:12px; border-radius:6px; cursor:pointer; border:1px solid ${on ? 'var(--accent)' : '#DDD'}; background:${on ? 'var(--accent)' : '#FFF'}; color:${on ? '#FFF' : 'var(--text-main)'};">${ty}</button>`; }).join('')}
+                    </div>
                     <div style="border-top:1px dashed #EAEAEA; border-bottom:1px dashed #EAEAEA; padding:6px 0;">${lines}</div>
                     <div style="display:flex; justify-content:space-between; font-weight:bold;">
                         <span>合計</span><span style="color:var(--accent);">¥${h.total}</span>
@@ -2103,12 +2601,79 @@
                     <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-light);">
                         <span>お預かり ${cashStr}</span><span>お釣り ${changeStr}</span>
                     </div>
-                    <div style="display:flex; gap:8px;">
-                        <button class="action-btn btn-undo" style="flex:1; padding:8px; font-size:14px;" onclick="voidSale(${idx})">↩️ 取り消し</button>
-                        <button class="action-btn btn-reserve" style="flex:1; padding:8px; font-size:14px;" onclick="printReceipt(${idx})">🧾 レシート</button>
-                    </div>
+                    ${actions}
                 </div>`;
         }).join('');
+    }
+
+    // 会計済の品目・点数を修正（在庫・客数・売上に反映）
+    let editingRecordIdx = null;
+    function toggleEditRecord(idx) {
+        editingRecordIdx = idx;
+        renderRecords();
+    }
+
+    function adjustRecordItem(idx, name, delta) {
+        const rec = salesHistory[idx];
+        if (!rec) return;
+        if (delta < 0) {
+            const i = rec.items.map(x => x.name).lastIndexOf(name);
+            if (i === -1) return;
+            const removed = rec.items.splice(i, 1)[0];
+            const prod = products.find(p => p.id === removed.id);
+            if (prod) restockOne(prod); // 在庫を戻す
+            rec.total -= removed.price;
+        } else {
+            const prod = products.find(p => p.name === name);
+            if (!prod) return;
+            rec.items.push({ id: prod.id, name: prod.name, price: prod.price, type: prod.type });
+            prod.stock--; // 在庫から引く（在庫0でも許容）
+            if (prod.stock === 0 && !prod.soldOutTime) prod.soldOutTime = new Date().toISOString();
+            rec.total += prod.price;
+        }
+        rec.edited = true;
+        logEdit(`会計修正 客No.${rec.no || '-'}：${name} ${delta < 0 ? '−1' : '＋1'}`);
+        playSound(660, 0.06);
+        if (rec.items.length === 0) {
+            // 全品目が無くなったら取引ごと削除（在庫は上で戻し済み）
+            if (rec.no === receiptCounter) receiptCounter--;
+            salesHistory.splice(idx, 1);
+            editingRecordIdx = null;
+            showToast('全品目が無くなったため会計を削除しました');
+        }
+        saveData();
+        init();
+        renderRecords();
+        updateAnalytics();
+    }
+
+    // 会計後に客属性を入力/変更する（未入力フラグを解除、事後編集として記録）
+    function setRecordType(idx, type) {
+        const rec = salesHistory[idx];
+        if (!rec) return;
+        rec.customerType = type;
+        rec.pendingType = false;
+        rec.typeEditedLater = true; // 会計後に属性が入力・変更された
+        if (type && type !== '不明') lastCustomerType = type; // 直前値として記憶
+        logEdit(`属性入力 客No.${rec.no || '-'}：${type}`);
+        playSound();
+        saveData();
+        renderRecords();
+        updatePendingReminder();
+        updateAnalytics();
+    }
+
+    // レジ画面に「属性 後で入力：N件」を常時表示（未入力のリマインド）
+    function updatePendingReminder() {
+        const el = document.getElementById('pending-reminder');
+        if (!el) return;
+        const n = salesHistory.filter(h => h.pendingType).length;
+        if (n > 0) {
+            el.style.display = 'block';
+            el.innerHTML = `⏱ 属性 後で入力：<b>${n}件</b>（タップで一覧）`;
+        } else {
+            el.style.display = 'none';
+        }
     }
 
     // 指定した会計のレシートを印刷用ウィンドウで開く（ブラウザのPDF保存が使える）
@@ -2198,7 +2763,7 @@
             return;
         }
 
-        const W = 620, H = 300, mL = 40, mR = 12, mT = 12, mB = 40;
+        const W = 620, H = 300, mL = 40, mR = 12, mT = 22, mB = 40;
         const plotW = W - mL - mR, plotH = H - mT - mB;
         const xOf = t => mL + ((t - data.t0) / (data.t1 - data.t0)) * plotW;
         const yOf = v => mT + (1 - v / data.maxStock) * plotH;
@@ -2220,6 +2785,7 @@
             svg += `<text x="${x}" y="${H - mB + 20}" text-anchor="${anchor}" font-size="11" fill="#898781">${fmt(t)}</text>`;
         });
         svg += `<text x="${mL}" y="${H - 4}" font-size="11" fill="#898781">時刻 →</text>`;
+        svg += `<text x="4" y="${mT - 8}" font-size="11" fill="#898781">残数(個)</text>`;
         // 各商品の折れ線
         data.series.forEach((s, idx) => {
             const color = CHART_PALETTE[idx % 8];
@@ -2313,7 +2879,8 @@
             }
             svg += `<text x="${x + barW / 2}" y="${H - mB + 16}" text-anchor="middle" font-size="10" fill="#898781">${s.label}</text>`;
         });
-        svg += `<text x="${mL}" y="${H - 6}" font-size="11" fill="#898781">人</text>`;
+        svg += `<text x="${mL}" y="${H - 6}" font-size="11" fill="#898781">時刻 →</text>`;
+        svg += `<text x="2" y="${mT - 4}" font-size="11" fill="#898781">人数</text>`;
         svg += `</svg>`;
         box.innerHTML = svg;
     }
@@ -2329,15 +2896,28 @@
         }
         list.innerHTML = '';
         products.forEach(p => {
+            const oversold = p.stock < 0; // 販売数>仕入数（過少入力の可能性）
+            const noteVal = (p.note || '').replace(/"/g, '&quot;');
             list.innerHTML += `
-                <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
-                    <span style="flex:1; font-size:14px;">${p.name}</span>
-                    <button onclick="adjustLiveStock(${p.id}, -1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#F3F3F3; font-weight:bold; cursor:pointer;">−</button>
-                    <input type="number" value="${p.stock}" style="width:60px; padding:6px; text-align:center; font-size:14px; border:1px solid #CCC; border-radius:6px; margin:0;" onchange="setLiveStock(${p.id}, this.value)">
-                    <button onclick="adjustLiveStock(${p.id}, 1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#E2F0CB; font-weight:bold; cursor:pointer;">＋</button>
+                <div style="margin-bottom:8px; ${oversold ? 'background:#FFF0F0; border-radius:8px; padding:6px;' : ''}">
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span style="flex:1; font-size:14px;">${p.name}${oversold ? ' <b style="color:#d9534f; font-size:12px;">⚠ 販売&gt;仕入</b>' : ''}</span>
+                        <button onclick="adjustLiveStock(${p.id}, -1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#F3F3F3; font-weight:bold; cursor:pointer;">−</button>
+                        <input type="number" value="${p.stock}" style="width:60px; padding:6px; text-align:center; font-size:14px; border:1px solid #CCC; border-radius:6px; margin:0;" onchange="setLiveStock(${p.id}, this.value)">
+                        <button onclick="adjustLiveStock(${p.id}, 1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#E2F0CB; font-weight:bold; cursor:pointer;">＋</button>
+                    </div>
+                    ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:5px; padding:6px; font-size:12px; border:1px solid #DDD; border-radius:6px;" onchange="setProductNote(${p.id}, this.value)">` : ''}
                 </div>
             `;
         });
+    }
+
+    // 商品の備考（途中補充・数え直し等）を記録する
+    function setProductNote(id, value) {
+        const p = products.find(prod => prod.id === id);
+        if (!p) return;
+        p.note = value;
+        saveData();
     }
 
     function adjustLiveStock(id, delta) {
@@ -2360,9 +2940,9 @@
         renderLiveStock();
     }
 
-    // 在庫調整後、在庫切れ日時を整合させる（0なら記録、1以上ならクリア）
+    // 在庫調整後、在庫切れ日時を整合させる（0以下なら記録、1以上ならクリア）
     function reconcileSoldOut(p) {
-        if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
+        if (p.stock <= 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
         else if (p.stock > 0) p.soldOutTime = null;
     }
     // ▲▲▲ ここまで ▲▲▲
