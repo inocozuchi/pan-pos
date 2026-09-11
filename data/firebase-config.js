@@ -24,4 +24,11 @@
  * ※ Web用のAPIキーは公開前提の識別子で、貼り付けても問題ありません。
  *   データ保護は上記5)の「セキュリティルール（匿名認証必須）」で行います。
  */
-window.FIREBASE_CONFIG = null;
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBeM2lU-6N0H2fM0KXoBt1Iywlzg--FlmI",
+  authDomain: "zemipos.firebaseapp.com",
+  projectId: "zemipos",
+  storageBucket: "zemipos.firebasestorage.app",
+  messagingSenderId: "1092656588118",
+  appId: "1:1092656588118:web:0aae7fe0dbebf7c8a922f7"
+};
