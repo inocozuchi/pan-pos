@@ -296,12 +296,57 @@
 
         @media (max-width: 768px) {
             #app-container { flex-direction: column; }
-            main { flex: 1.5; grid-template-columns: repeat(3, 1fr); }
+            main { flex: 1.4; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(80px, 108px); padding: 10px; gap: 8px; }
             #sidebar { flex: 1; border-left: none; border-right: none; border-top: 2px solid #FFF0F0; }
             .action-row { display: flex; }
             .btn-checkout { padding: 12px; }
             .total-display .total-label { font-size: 18px; }
-            .total-display .total-amount { font-size: 26px; }
+            .total-display .total-amount { font-size: 28px; }
+
+            /* 商品ボタンの文字を読みやすく（タッチ運用向け） */
+            .product-btn { padding: 6px 6px; }
+            .product-btn .pname { font-size: 15px; }
+            .product-btn .price { font-size: 19px; }
+            .product-btn .stock { font-size: 12px; }
+            .cart-item { font-size: 16px; }
+
+            /* カート／フッターを詰めて、会計ボタンまで常に見えるように */
+            #cart-list { padding: 10px 12px; }
+            footer { padding: 10px 12px; gap: 8px; }
+            footer .btn-checkout { font-size: 18px; padding: 14px; }
+
+            /* ▼ 会計モーダルを全画面化して1画面に収める（見切れ・スクロール解消）▼ */
+            #checkout-modal .modal-content {
+                width: 100%; max-width: none; height: 100dvh; max-height: 100dvh;
+                border-radius: 0; padding: 10px 14px calc(8px + env(safe-area-inset-bottom, 0px));
+                gap: 4px;
+            }
+            #checkout-modal .checkout-left { flex: 0 0 auto; }
+            #checkout-modal .checkout-right { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+            #checkout-modal h2 { font-size: 20px; margin-bottom: 2px !important; }
+            #checkout-modal .receipt-list { max-height: 18vh; margin: 6px 0; }
+            #checkout-modal .receipt-item { font-size: 15px; }
+            /* 合計表示（左区画）を少し詰める */
+            #checkout-modal .checkout-left > div:last-child { font-size: 20px !important; }
+
+            /* 客属性ボックスを薄く */
+            #checkout-modal .checkout-right > div:first-child { padding: 8px !important; margin-bottom: 6px !important; }
+            .type-btn { font-size: 13px; padding: 9px 2px; }
+            #cash-input { font-size: 26px; padding: 12px 14px; margin: 6px 0; }
+            #cash-suggestions { margin-top: 4px !important; }
+            #cash-suggestions .action-btn { padding: 9px !important; font-size: 15px !important; }
+
+            /* テンキーを縮めて全キーを画面内に収める */
+            .tenkey-grid { gap: 7px; margin-top: 7px; }
+            .tenkey-btn { font-size: 22px; padding: 0; min-height: 46px; }
+            .change-display { font-size: 24px; margin: 8px 0 6px; }
+
+            /* 戻る・完了は常に画面下に固定（押せない問題を解消）*/
+            #checkout-modal .checkout-right > div:last-child {
+                position: sticky; bottom: 0; margin-top: auto;
+                background: var(--white); padding-top: 8px; z-index: 1;
+            }
+            #checkout-modal .checkout-right > div:last-child .btn-checkout { font-size: 18px; }
         }
 
         /* ▼ 設定/予約パネル：横長デバイス向けにワイド化＆横スクロール ▼ */
