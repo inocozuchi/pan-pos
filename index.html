@@ -83,7 +83,7 @@
 
         @media (min-width: 769px) {
             main {
-                grid-auto-rows: minmax(50px, 1fr) !important; 
+                grid-auto-rows: minmax(96px, 150px) !important;
             }
         }
 
@@ -130,13 +130,15 @@
             flex-direction: row-reverse; /* 商品ボタンを右、カート（小計）を左に配置（右利き向け） */
             flex: 1;
             overflow: hidden;
+            position: relative; /* 閉店中CTA(#closed-cta)の重ね合わせ基準 */
         }
 
         main {
             flex: 2;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            grid-auto-rows: minmax(80px, 1fr);
+            grid-auto-rows: minmax(88px, 150px);
+            align-content: start; /* 商品が少なくても上詰め（縦に伸びすぎない） */
             gap: 10px;
             padding: 15px;
             overflow-y: auto;
@@ -294,12 +296,57 @@
 
         @media (max-width: 768px) {
             #app-container { flex-direction: column; }
-            main { flex: 1.5; grid-template-columns: repeat(3, 1fr); }
+            main { flex: 1.4; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(80px, 108px); padding: 10px; gap: 8px; }
             #sidebar { flex: 1; border-left: none; border-right: none; border-top: 2px solid #FFF0F0; }
             .action-row { display: flex; }
             .btn-checkout { padding: 12px; }
             .total-display .total-label { font-size: 18px; }
-            .total-display .total-amount { font-size: 26px; }
+            .total-display .total-amount { font-size: 28px; }
+
+            /* 商品ボタンの文字を読みやすく（タッチ運用向け） */
+            .product-btn { padding: 6px 6px; }
+            .product-btn .pname { font-size: 15px; }
+            .product-btn .price { font-size: 19px; }
+            .product-btn .stock { font-size: 12px; }
+            .cart-item { font-size: 16px; }
+
+            /* カート／フッターを詰めて、会計ボタンまで常に見えるように */
+            #cart-list { padding: 10px 12px; }
+            footer { padding: 10px 12px; gap: 8px; }
+            footer .btn-checkout { font-size: 18px; padding: 14px; }
+
+            /* ▼ 会計モーダルを全画面化して1画面に収める（見切れ・スクロール解消）▼ */
+            #checkout-modal .modal-content {
+                width: 100%; max-width: none; height: 100dvh; max-height: 100dvh;
+                border-radius: 0; padding: 10px 14px calc(8px + env(safe-area-inset-bottom, 0px));
+                gap: 4px;
+            }
+            #checkout-modal .checkout-left { flex: 0 0 auto; }
+            #checkout-modal .checkout-right { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+            #checkout-modal h2 { font-size: 20px; margin-bottom: 2px !important; }
+            #checkout-modal .receipt-list { max-height: 18vh; margin: 6px 0; }
+            #checkout-modal .receipt-item { font-size: 15px; }
+            /* 合計表示（左区画）を少し詰める */
+            #checkout-modal .checkout-left > div:last-child { font-size: 20px !important; }
+
+            /* 客属性ボックスを薄く */
+            #checkout-modal .checkout-right > div:first-child { padding: 8px !important; margin-bottom: 6px !important; }
+            .type-btn { font-size: 13px; padding: 9px 2px; }
+            #cash-input { font-size: 26px; padding: 12px 14px; margin: 6px 0; }
+            #cash-suggestions { margin-top: 4px !important; }
+            #cash-suggestions .action-btn { padding: 9px !important; font-size: 15px !important; }
+
+            /* テンキーを縮めて全キーを画面内に収める */
+            .tenkey-grid { gap: 7px; margin-top: 7px; }
+            .tenkey-btn { font-size: 22px; padding: 0; min-height: 46px; }
+            .change-display { font-size: 24px; margin: 8px 0 6px; }
+
+            /* 戻る・完了は常に画面下に固定（押せない問題を解消）*/
+            #checkout-modal .checkout-right > div:last-child {
+                position: sticky; bottom: 0; margin-top: auto;
+                background: var(--white); padding-top: 8px; z-index: 1;
+            }
+            #checkout-modal .checkout-right > div:last-child .btn-checkout { font-size: 18px; }
         }
 
         /* ▼ 設定/予約パネル：横長デバイス向けにワイド化＆横スクロール ▼ */
@@ -349,6 +396,53 @@
             z-index: 200; max-width: 90vw; text-align: center;
         }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* ▼▼▼ 常設ボトムナビ：主要画面へ1タップで到達（初見でも導線が見える）▼▼▼ */
+        #bottom-nav {
+            display: flex; background: var(--white); border-top: 2px solid #FFE3E9;
+            box-shadow: 0 -3px 14px rgba(90,78,77,0.08); z-index: 150; flex-shrink: 0;
+            padding: 5px 6px calc(5px + env(safe-area-inset-bottom, 0px));
+        }
+        .nav-item {
+            flex: 1; border: none; background: none; cursor: pointer; font-family: inherit;
+            display: flex; flex-direction: column; align-items: center; gap: 3px;
+            padding: 6px 2px 5px; color: var(--text-light); font-weight: bold; font-size: 11px;
+            border-radius: 14px; position: relative; transition: color .12s ease, background .12s ease;
+        }
+        .nav-item .nav-ico { font-size: 23px; line-height: 1; }
+        .nav-item.active { color: var(--accent); background: #FFF0F3; }
+        @media (hover: hover) { .nav-item:hover { background: #FFF6F8; } }
+        .nav-item:active { background: #FFE3E9; }
+        .nav-badge {
+            position: absolute; top: 3px; left: 50%; margin-left: 6px;
+            min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+            background: var(--accent); color: #fff; font-size: 11px; line-height: 18px;
+            text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,.18); display: none;
+        }
+
+        /* 閉店中のオンボーディング：レジ上に「開店する」大CTAを重ねる */
+        #closed-cta {
+            position: absolute; inset: 0; z-index: 20; display: none;
+            align-items: center; justify-content: center; padding: 24px;
+            background: rgba(255,245,247,0.96);
+        }
+        #closed-cta.show { display: flex; }
+        .closed-card {
+            background: var(--white); border-radius: 22px; padding: 30px 26px; text-align: center;
+            max-width: 380px; width: 100%; box-shadow: 0 10px 28px rgba(90,78,77,0.14);
+            display: flex; flex-direction: column; gap: 12px; align-items: center;
+        }
+        .closed-card .cc-emoji { font-size: 46px; line-height: 1; }
+        .closed-card .cc-title { font-size: 21px; font-weight: bold; color: var(--text-main); }
+        .closed-card .cc-sub { font-size: 14px; color: var(--text-light); line-height: 1.7; }
+        .closed-card .cc-steps { text-align: left; font-size: 13px; color: var(--text-light); line-height: 1.9; margin: 2px 0 6px; }
+
+        /* 設定モーダル：ボトムナビと重ならないよう下に余白、ナビはモーダルより前面 */
+        #settings-modal { align-items: center; padding-bottom: 74px; box-sizing: border-box; }
+        #settings-modal .modal-content { max-height: calc(100dvh - 100px); }
+        #settings-modal .tab-menu { display: none; } /* 画面切替はボトムナビが担う（互換のためDOMは残す） */
+        #settings-title { font-size: 18px; font-weight: bold; color: var(--text-main); margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+        /* ▲▲▲ ここまで ▲▲▲ */
 
         /* ▼ PDF（印刷）用レポート：画面では隠し、印刷時のみ本体を差し替える ▼ */
         #print-report { display: none; }
@@ -457,12 +551,22 @@
         <span><i style="background:var(--btn-savory)"></i>クッキー</span>
         <span><i style="background:var(--btn-drink)"></i>ドリンク</span>
     </div>
-    <button class="settings-btn" onclick="openSettings()">設定 / 予約</button>
 </header>
 
 <div id="app-container">
     <main id="product-grid">
     </main>
+
+    <!-- 閉店中に表示：まず開店へ誘導する大CTA -->
+    <div id="closed-cta">
+        <div class="closed-card">
+            <div class="cc-emoji">🥖</div>
+            <div class="cc-title">まだ開店していません</div>
+            <div class="cc-sub">「開店」すると商品ボタンが押せるようになり、会計を始められます。</div>
+            <div class="cc-steps">① 開店する（販売会の名前と仕入れ数を設定）<br>② 商品をタップしてお会計<br>③ 閉店すると売上が自動で集計されます</div>
+            <button class="action-btn btn-checkout" style="max-width:300px; width:100%; margin-top:2px;" onclick="navTo('session')">🏪 開店する</button>
+        </div>
+    </div>
 
     <aside id="sidebar">
         <div id="pending-reminder" onclick="openSettings(); showTab('records');" style="display:none; background:#FFF6E5; color:#a06a00; font-weight:bold; font-size:13px; text-align:center; padding:8px; cursor:pointer; border-bottom:2px solid #F0C674;"></div>
@@ -481,6 +585,15 @@
         </footer>
     </aside>
 </div>
+
+<!-- 常設ボトムナビ：主要画面への導線を常に表示 -->
+<nav id="bottom-nav">
+    <button class="nav-item active" id="nav-register" onclick="navTo('register')"><span class="nav-ico">🧾</span>レジ</button>
+    <button class="nav-item" id="nav-reservations" onclick="navTo('reservations')"><span class="nav-ico">🗓️</span>予約<span class="nav-badge"></span></button>
+    <button class="nav-item" id="nav-records" onclick="navTo('records')"><span class="nav-ico">🧮</span>会計履歴<span class="nav-badge"></span></button>
+    <button class="nav-item" id="nav-analytics" onclick="navTo('analytics')"><span class="nav-ico">📊</span>売上</button>
+    <button class="nav-item" id="nav-session" onclick="navTo('session')"><span class="nav-ico">🏪</span>開店・設定</button>
+</nav>
 
 <div id="checkout-modal" class="modal">
     <div class="modal-content checkout-wide">
@@ -543,7 +656,9 @@
             <div class="tab-item" onclick="showTab('analytics')" id="tab-btn-analytics">売上確認</div>
             <div class="tab-item" onclick="showTab('records')" id="tab-btn-records">会計済</div>
         </div>
-        
+
+        <div id="settings-title"></div>
+
         <div class="tab-content">
             <div id="tab-session">
                 <!-- 閉店中のみ表示：新しい販売会を開く -->
@@ -556,7 +671,8 @@
                     <div id="inventory-apply"></div>
                     <div id="inventory-setup-list" class="setup-list"></div>
 
-                    <button class="action-btn btn-checkout" style="width:100%; margin-top:4px;" onclick="startSession()">開店する (データリセット)</button>
+                    <button class="action-btn btn-checkout" style="width:100%; margin-top:4px;" onclick="startSession()">🏪 この内容で開店する</button>
+                    <p class="settings-hint" style="margin-top:6px; text-align:center;">開店すると前回の売上データはリセットされます（確認画面が出ます）。</p>
                 </div>
 
                 <!-- 営業中のみ表示：在庫調整・閉店 -->
@@ -644,7 +760,7 @@
             </div>
             </div>
 
-        <button class="action-btn btn-undo" style="width:100%; margin-top:15px;" onclick="closeModal('settings-modal')">閉じる</button>
+        <button class="action-btn btn-undo" style="width:100%; margin-top:15px;" onclick="navTo('register')">🧾 レジに戻る</button>
     </div>
 </div>
 
@@ -831,6 +947,8 @@
         });
         updateCartDisplay();
         updatePendingReminder();
+        updateNavBadges();
+        updateClosedState();
     }
 
     const LOW_STOCK_ALERT = 3; // この残数に到達したら「残りわずか」を通知
@@ -996,6 +1114,7 @@
         document.getElementById('change-amount').innerText = '0';
         renderCashSuggestions(total);
         renderLastTypeQuick();
+        showNav(false); // 会計中はナビを隠して集中できるように
         document.getElementById('checkout-modal').style.display = 'flex';
     }
 
@@ -1301,7 +1420,11 @@
         if (banner) banner.innerHTML = `📋 イベント: <b>${ACTIVE_EVENT_SET.label}</b><br><span style="color:var(--text-light); font-size:12px;">切替は data/active-event.js（またはURLに ?event=festival）</span>`;
     }
 
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+        if (id === 'checkout-modal') showNav(true);       // 会計の集中モード解除でナビ復帰
+        if (id === 'settings-modal') setActiveNav('register');
+    }
 
     function startSession() {
         const name = document.getElementById('session-name-input').value;
@@ -1993,18 +2116,67 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
+    const SECTION_TITLES = {
+        session: '🏪 開店・設定',
+        reservations: '🗓️ 予約',
+        analytics: '📊 売上・分析',
+        records: '🧮 会計履歴（記録・レシート・取消）'
+    };
+
     function showTab(tabId) {
         document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
-        document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+        const btn = document.getElementById(`tab-btn-${tabId}`);
+        if (btn) btn.classList.add('active');
         document.getElementById('tab-session').style.display = 'none';
         document.getElementById('tab-reservations').style.display = 'none';
         document.getElementById('tab-analytics').style.display = 'none';
         document.getElementById('tab-records').style.display = 'none';
         document.getElementById(`tab-${tabId}`).style.display = 'block';
+        const titleEl = document.getElementById('settings-title');
+        if (titleEl) titleEl.textContent = SECTION_TITLES[tabId] || '';
+        setActiveNav(tabId);
         if(tabId === 'reservations') renderReservations();
         if(tabId === 'records') renderRecords();
         if(tabId === 'analytics') showAnalyticsMenu();
     }
+
+    // ▼▼▼ ボトムナビ：主要画面への導線 ▼▼▼
+    // section は register / session / reservations / analytics / records
+    function navTo(section) {
+        if (section === 'register') { closeModal('settings-modal'); setActiveNav('register'); return; }
+        openSettings();
+        showTab(section);
+    }
+
+    function setActiveNav(section) {
+        document.querySelectorAll('#bottom-nav .nav-item').forEach(el => el.classList.remove('active'));
+        const el = document.getElementById('nav-' + section);
+        if (el) el.classList.add('active');
+    }
+
+    function showNav(show) {
+        const nav = document.getElementById('bottom-nav');
+        if (nav) nav.style.display = show ? 'flex' : 'none';
+    }
+
+    // 予約件数・属性未入力件数をナビにバッジ表示（気づける導線）
+    function updateNavBadges() {
+        const set = (id, n) => {
+            const b = document.querySelector('#' + id + ' .nav-badge');
+            if (!b) return;
+            if (n > 0) { b.textContent = n > 99 ? '99+' : n; b.style.display = 'block'; }
+            else b.style.display = 'none';
+        };
+        set('nav-reservations', reservations.length);
+        set('nav-records', salesHistory.filter(h => h.pendingType).length);
+    }
+
+    // 閉店中はレジ上に「開店する」CTAを重ねる（初見でも次の一手が分かる）
+    function updateClosedState() {
+        const el = document.getElementById('closed-cta');
+        if (el) el.classList.toggle('show', !currentSession);
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     // ▼▼▼ PDF出力：集計結果を構造化して組み立てる ▼▼▼
     // salesHistory から、レポートに必要な数値を構造化オブジェクトで返す。
