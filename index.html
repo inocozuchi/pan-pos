@@ -675,6 +675,14 @@
                     <p class="settings-hint">新しい販売会を始める時に名前をつけて開店します。</p>
                     <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
 
+                    <!-- 複数端末同期：Firebase設定がある時だけ表示 -->
+                    <div id="sync-code-row" style="display:none; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px;">
+                        <div class="settings-sublabel" style="margin-top:0;">🔗 複数端末で同時に会計する（任意）</div>
+                        <p class="settings-hint">同じ「共有コード」を入れた端末どうしで、売上をリアルタイムに共有します。<b>一緒に使う全端末で同じコード</b>にしてください（新しい販売会は新しいコードで）。</p>
+                        <input type="text" id="sync-event-code-input" placeholder="共有コード（例: pansale-1101）">
+                        <div id="sync-status" class="settings-hint" style="margin:6px 0 0;"></div>
+                    </div>
+
                     <div class="settings-label">当日の仕入れ数設定</div>
                     <div id="inventory-apply"></div>
                     <div id="inventory-setup-list" class="setup-list"></div>
@@ -686,6 +694,7 @@
                 <!-- 営業中のみ表示：在庫調整・閉店 -->
                 <div id="session-active-block" style="display:none;">
                     <div class="active-banner">🟢 営業中：<span id="active-session-name"></span></div>
+                    <div id="sync-status-active" class="settings-hint" style="margin:-4px 0 10px;"></div>
                     <details id="live-stock-details">
                         <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の在庫調整（追加搬入・数え直し）</summary>
                         <div id="live-stock-list" style="max-height:220px; overflow-y:auto; background:#F7F5F1; border:2px solid var(--line); padding:10px; border-radius:12px; margin-top:8px;"></div>
@@ -791,6 +800,7 @@
 <script src="data/products.festival.js"></script>
 <script src="data/active-event.js"></script>
 <script src="data/taste-master.js"></script>
+<script src="data/firebase-config.js"></script>
 
 <script>
     // ▼▼▼ 操作音（電子音を鳴らす）▼▼▼
@@ -916,6 +926,25 @@
     let comparisonBaseline = null; // 今回の販売会と比較する「前回の実績」（開店時に確定）
     let lastCustomerType = null;   // 直前に選ばれた客属性（属性入力の高速化用）
 
+    // ▼ 複数端末リアルタイム同期（Cloud Firestore）用の状態 ▼
+    // syncMode が true の間だけ、salesHistory は Firestore（events/{code}/sales）を正とする。
+    // 未設定・接続不可なら false のままで、従来の localStorage 単独運用に一致する。
+    let syncReady = false;      // Firebase初期化＋匿名ログイン完了
+    let syncMode = false;       // 現在この販売会で同期中か（イベントコード購読中）
+    let syncEventCode = null;   // 共有する販売会コード
+    let fbApp = null, fbDb = null, fbAuth = null, fbSalesUnsub = null;
+    let deviceId = null;        // 端末識別子（客No.の重複判定・自分の書き込み識別用）
+    function getDeviceId() {
+        if (deviceId) return deviceId;
+        try { deviceId = localStorage.getItem('taizanboku_device_id'); } catch (e) {}
+        if (!deviceId) {
+            deviceId = 'D' + Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
+            try { localStorage.setItem('taizanboku_device_id', deviceId); } catch (e) {}
+        }
+        return deviceId;
+    }
+    function deviceLabel() { const id = getDeviceId(); return id.slice(1, 3).toUpperCase(); } // 端末の短いラベル（客No.に併記）
+
     // 操作ログを1件追加する
     function logEdit(msg) {
         operationLog.push({ time: new Date().toISOString(), msg });
@@ -976,15 +1005,19 @@
         // 在庫0でも登録可（開店前の在庫過少入力に備える）。在庫はマイナスまで許容し、
         // マイナス＝「販売数 > 仕入数（超過販売）」として警告表示する。
         if (p.stock > 0) playSound(); else playError(); // 完売後の登録は警告音で気づけるように
-        p.stock--;
-        if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
-        // 残りわずか／完売のしきい値アラート（在庫がその値に「到達した瞬間」に1回だけ通知）
-        if (p.stock === 0) {
-            playSound(494, 0.12); setTimeout(() => playSound(370, 0.16), 120); // 完売の下降音
-            showToast(`🔔 ${p.name} が完売しました`);
-        } else if (p.stock === LOW_STOCK_ALERT) {
-            playSound(1046, 0.09); // 残りわずかの高音
-            showToast(`⚠️ ${p.name} 残り${LOW_STOCK_ALERT}個`);
+        // 同期中は在庫を「全端末の販売実績」から算出するため、ここでは在庫を減らさない
+        // （会計確定時にFirestoreへ送信 → 購読の再計算で全端末の残数が更新される）
+        if (!syncMode) {
+            p.stock--;
+            if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
+            // 残りわずか／完売のしきい値アラート（在庫がその値に「到達した瞬間」に1回だけ通知）
+            if (p.stock === 0) {
+                playSound(494, 0.12); setTimeout(() => playSound(370, 0.16), 120); // 完売の下降音
+                showToast(`🔔 ${p.name} が完売しました`);
+            } else if (p.stock === LOW_STOCK_ALERT) {
+                playSound(1046, 0.09); // 残りわずかの高音
+                showToast(`⚠️ ${p.name} 残り${LOW_STOCK_ALERT}個`);
+            }
         }
         cart.push({...p});
         saveData();
@@ -1012,6 +1045,14 @@
         rec.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
         const summary = Object.entries(counts).map(([n, c]) => `${n}×${c}`).join('、');
         if (!confirm(`客No.${rec.no || ''} の会計を取り消します。\n［${summary}］ 合計¥${rec.total}\n※販売した商品は在庫に戻ります。よろしいですか？`)) return;
+        if (syncMode) {
+            // 同期中：Firestoreで取消フラグを立てる（全端末に反映）。在庫は購読の再計算で戻る。
+            syncUpdateSale(rec.remoteId, { voided: true, voidedAt: Date.now() });
+            voidCount++;
+            playSound(660, 0.08);
+            showToast('取り消しました（全端末に反映）');
+            return;
+        }
         rec.items.forEach(it => {
             const p = products.find(prod => prod.id === it.id);
             restockOne(p);
@@ -1248,7 +1289,13 @@
             cash: cash,
             change: Math.max(0, cash - total)
         };
-        salesHistory.push(record);
+        if (syncMode) {
+            // 同期中：Firestoreへ送信し、salesHistoryは購読の再構築に任せる（全端末で共有）
+            record.deviceLabel = deviceLabel();
+            syncPushSale(record);
+        } else {
+            salesHistory.push(record);
+        }
 
         // 次の会計に備え、既定（後で）に戻す
         for (let i = 0; i < typeRadios.length; i++) {
@@ -1485,11 +1532,28 @@
         products = JSON.parse(JSON.stringify(tempSetupProducts));
         products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; });
         
+        // 同期：共有コードを確定して購読開始（Firebase設定があり接続できている時のみ）
+        if (syncReady && window.FIREBASE_CONFIG) {
+            const codeInput = document.getElementById('sync-event-code-input');
+            let code = (codeInput && codeInput.value || '').trim();
+            if (!code) code = sanitizeEventCode(name) || ('event-' + Date.now());
+            code = sanitizeEventCode(code);
+            startSalesSubscription(code); // 以後 salesHistory は全端末の共有結果で上書きされる
+        } else {
+            stopSalesSubscription();
+            syncEventCode = null;
+        }
+
         document.getElementById('session-display').innerText = `営業中: ${name}`;
         document.getElementById('session-display').style.background = 'var(--white)';
         closeModal('settings-modal');
         saveData();
         init();
+    }
+
+    // FirestoreのドキュメントID/コードに使える形へ整える
+    function sanitizeEventCode(s) {
+        return (s || '').toString().trim().replace(/[\/\.\#\$\[\]\s]+/g, '-').slice(0, 60);
     }
 
     function endSession() {
@@ -1529,6 +1593,9 @@
             if (sessionArchive.length > 20) sessionArchive = sessionArchive.slice(-20);
         }
         // ▲▲▲ ここまで ▲▲▲
+
+        stopSalesSubscription(); // 同期購読を停止（他端末には影響しない。リモートの記録は保持）
+        syncEventCode = null;
 
         currentSession = null;
         const disp = document.getElementById('session-display');
@@ -2606,7 +2673,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType };
+        return { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -2623,6 +2690,7 @@
         operationLog = Array.isArray(data.operationLog) ? data.operationLog : [];
         comparisonBaseline = data.comparisonBaseline || null;
         lastCustomerType = data.lastCustomerType || null;
+        syncEventCode = data.syncEventCode || null;
         return true;
     }
 
@@ -2873,6 +2941,30 @@
     function adjustRecordItem(idx, name, delta) {
         const rec = salesHistory[idx];
         if (!rec) return;
+        if (syncMode) {
+            // 同期中：品目・合計をFirestoreで更新（全端末に反映。在庫は再計算）
+            const items = rec.items.slice();
+            if (delta < 0) {
+                const i = items.map(x => x.name).lastIndexOf(name);
+                if (i === -1) return;
+                items.splice(i, 1);
+            } else {
+                const prod = products.find(p => p.name === name);
+                if (!prod) return;
+                items.push({ id: prod.id, name: prod.name, price: prod.price, type: prod.type });
+            }
+            const total = items.reduce((s, i) => s + i.price, 0);
+            if (items.length === 0) {
+                syncUpdateSale(rec.remoteId, { voided: true, voidedAt: Date.now() });
+                editingRecordIdx = null;
+                showToast('全品目が無くなったため会計を削除しました');
+            } else {
+                syncUpdateSale(rec.remoteId, { items, total, edited: true });
+            }
+            logEdit(`会計修正 客No.${rec.no || '-'}：${name} ${delta < 0 ? '−1' : '＋1'}`);
+            playSound(660, 0.06);
+            return;
+        }
         if (delta < 0) {
             const i = rec.items.map(x => x.name).lastIndexOf(name);
             if (i === -1) return;
@@ -2908,6 +3000,13 @@
     function setRecordType(idx, type) {
         const rec = salesHistory[idx];
         if (!rec) return;
+        if (syncMode) {
+            if (type && type !== '不明') lastCustomerType = type;
+            syncUpdateSale(rec.remoteId, { customerType: type, pendingType: false, typeEditedLater: true });
+            logEdit(`属性入力 客No.${rec.no || '-'}：${type}`);
+            playSound();
+            return;
+        }
         rec.customerType = type;
         rec.pendingType = false;
         rec.typeEditedLater = true; // 会計後に属性が入力・変更された
@@ -3204,7 +3303,163 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
+    // ▼▼▼ 複数端末リアルタイム同期（Cloud Firestore・任意）▼▼▼
+    // data/firebase-config.js に設定がある時だけ有効。未設定・オフライン・失敗時は
+    // 何もせず従来のlocalStorage単独運用のまま（既存機能は一切変わらない）。
+
+    // Firebase SDK（compat版）をCDNから動的読込。オフライン等で失敗しても無視。
+    function loadFirebaseSdk() {
+        return new Promise((resolve, reject) => {
+            if (window.firebase && firebase.firestore) return resolve();
+            const base = 'https://www.gstatic.com/firebasejs/10.12.5/';
+            const files = ['firebase-app-compat.js', 'firebase-auth-compat.js', 'firebase-firestore-compat.js'];
+            let i = 0;
+            const next = () => {
+                if (i >= files.length) return resolve();
+                const s = document.createElement('script');
+                s.src = base + files[i++];
+                s.onload = next;
+                s.onerror = () => reject(new Error('firebase sdk load failed'));
+                document.head.appendChild(s);
+            };
+            next();
+        });
+    }
+
+    async function initFirebase() {
+        if (!window.FIREBASE_CONFIG) return; // 未設定＝同期オフ（従来運用）
+        try {
+            await loadFirebaseSdk();
+            fbApp = firebase.initializeApp(window.FIREBASE_CONFIG);
+            fbAuth = firebase.auth();
+            fbDb = firebase.firestore();
+            try { await fbDb.enablePersistence({ synchronizeTabs: true }); } catch (e) { /* 複数タブ等で無効でも続行 */ }
+            await fbAuth.signInAnonymously();
+            syncReady = true;
+            updateSyncUi();
+            // すでに販売会が開いていて同期コードが保存済みなら購読を再開
+            if (currentSession && syncEventCode) startSalesSubscription(syncEventCode);
+        } catch (e) {
+            console.warn('Firebase同期は利用できません（オフライン/設定不備等）。ローカル運用で続行します。', e);
+            syncReady = false; syncMode = false;
+            updateSyncUi();
+        }
+    }
+
+    // イベント（販売会）コードの売上コレクションを購読し、salesHistory を組み立て直す
+    function startSalesSubscription(code) {
+        if (!syncReady || !code) return;
+        syncEventCode = code;
+        syncMode = true;
+        if (fbSalesUnsub) { try { fbSalesUnsub(); } catch (e) {} fbSalesUnsub = null; }
+        const col = fbDb.collection('events').doc(code).collection('sales');
+        fbSalesUnsub = col.onSnapshot(snap => {
+            const docs = [];
+            snap.forEach(d => { const v = d.data() || {}; v.__id = d.id; docs.push(v); });
+            applyRemoteSales(docs);
+        }, err => {
+            console.warn('同期の購読でエラー。ローカル表示を継続します。', err);
+        });
+        updateSyncUi();
+    }
+
+    function stopSalesSubscription() {
+        if (fbSalesUnsub) { try { fbSalesUnsub(); } catch (e) {} fbSalesUnsub = null; }
+        syncMode = false;
+        updateSyncUi();
+    }
+
+    // リモート（全端末）の売上ドキュメントから salesHistory を再構築（取消は除外）
+    function applyRemoteSales(docs) {
+        const rebuilt = docs
+            .filter(d => !d.voided)
+            .map(d => ({
+                no: d.no,
+                deviceLabel: d.deviceLabel || '',
+                time: new Date(d.createdAt || Date.now()),
+                items: Array.isArray(d.items) ? d.items : [],
+                total: d.total || 0,
+                customerType: d.customerType || '不明',
+                pendingType: !!d.pendingType,
+                typeEditedLater: !!d.typeEditedLater,
+                edited: !!d.edited,
+                cash: (d.cash != null) ? d.cash : null,
+                change: (d.change != null) ? d.change : null,
+                remoteId: d.__id,
+                localId: d.localId
+            }))
+            .sort((a, b) => a.time - b.time);
+        salesHistory = rebuilt;
+        recomputeStockFromSales();
+        saveData(); // ローカルにも控え（オフライン時の保険）
+        init();
+        renderRecords();
+        updateAnalytics();
+        updatePendingReminder();
+    }
+
+    // 同期中は在庫を「全端末の販売実績」から算出（仕入れ数 − 合計販売数）
+    function recomputeStockFromSales() {
+        if (!syncMode) return;
+        const sold = {};
+        salesHistory.forEach(h => (h.items || []).forEach(i => { sold[i.name] = (sold[i.name] || 0) + 1; }));
+        products.forEach(p => {
+            const initial = p.initialStock || 0;
+            p.stock = initial - (sold[p.name] || 0);
+            if (p.stock <= 0 && initial > 0) { if (!p.soldOutTime) p.soldOutTime = new Date().toISOString(); }
+            else p.soldOutTime = null;
+        });
+    }
+
+    // 会計1件をFirestoreへ追加（同期中のみ）。ローカルには push せず、購読の再構築に任せる。
+    function syncPushSale(record) {
+        const code = syncEventCode;
+        const doc = {
+            no: record.no,
+            deviceId: getDeviceId(),
+            deviceLabel: deviceLabel(),
+            localId: getDeviceId() + ':' + record.no,
+            createdAt: Date.now(),
+            time: firebase.firestore.FieldValue.serverTimestamp(),
+            items: record.items.map(i => ({ id: i.id, name: i.name, price: i.price, type: i.type || '' })),
+            total: record.total,
+            customerType: record.customerType,
+            pendingType: !!record.pendingType,
+            typeEditedLater: false,
+            edited: false,
+            cash: record.cash,
+            change: record.change,
+            voided: false
+        };
+        fbDb.collection('events').doc(code).collection('sales').add(doc)
+            .catch(e => { console.warn('売上の同期送信に失敗（オフライン時は復帰後に自動送信）', e); });
+    }
+
+    function syncUpdateSale(remoteId, changes) {
+        if (!remoteId) return;
+        fbDb.collection('events').doc(syncEventCode).collection('sales').doc(remoteId).update(changes)
+            .catch(e => { console.warn('売上の更新同期に失敗', e); });
+    }
+
+    // 同期状態の表示（開店画面のバッジ等）を更新
+    function updateSyncUi() {
+        let msg;
+        if (!window.FIREBASE_CONFIG) msg = '';
+        else if (syncMode) msg = `🔗 同期中：コード「<b>${(syncEventCode||'').replace(/</g,'')}</b>」／この端末 ${deviceLabel()}`;
+        else if (syncReady) msg = '🟢 同期の準備OK（開店時に共有コードを入れてください）';
+        else msg = '⏳ 同期サーバーに接続中…（つながらない場合はこの端末のみで動作します）';
+        ['sync-status', 'sync-status-active'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = msg;
+        });
+        const row = document.getElementById('sync-code-row');
+        if (row) row.style.display = window.FIREBASE_CONFIG ? 'block' : 'none';
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     loadData();
+    updateSyncUi();
+    initFirebase();
 
     init();
 </script>
