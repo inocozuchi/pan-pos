@@ -15,6 +15,8 @@
             --text-main: #5A4E4D;
             --text-light: #887B7A;
             --white: #FFFFFF;
+            --surface: #FFFFFF;
+            --line: #E7E3DF;
         }
 
        body {
@@ -381,6 +383,7 @@
         /* 設定タブの見出し・注釈・営業中バナー（余白を詰めて圧迫感を解消） */
         .settings-hint { font-size: 13px; color: var(--text-light); margin: 0 0 8px; line-height: 1.5; }
         .settings-label { font-size: 14px; font-weight: bold; margin: 12px 0 6px; }
+        .settings-sublabel { font-size: 13px; font-weight: bold; color: var(--text-main); margin: 8px 0 6px; }
         #tab-session input#session-name-input { margin: 4px 0 6px; }
         .active-banner {
             background: #E2F0CB; color: var(--text-main); font-weight: bold;
@@ -444,7 +447,10 @@
         #settings-title { font-size: 18px; font-weight: bold; color: var(--text-main); margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
         /* ▲▲▲ ここまで ▲▲▲ */
 
-        /* ▼ PDF（印刷）用レポート：画面では隠し、印刷時のみ本体を差し替える ▼ */
+        /* ▼ PDF（印刷）用レポート ▼
+           画面では隠す。スタイルは別ウィンドウ印刷でも再利用するため、下の
+           <style id="report-css"> に @media print の外で定義（.report-root 配下のみに効く）。
+           ここには「その場印刷」フォールバック用のスコープ制御だけを置く。 */
         #print-report { display: none; }
         @media print {
             @page { size: A4; margin: 15mm; }
@@ -454,89 +460,66 @@
             }
             body > *:not(#print-report) { display: none !important; }
             #print-report { display: block !important; }
-
-            /* 色はCSS変数で一元管理 */
-            .report-root {
-                --ink: #1f1f1f; --muted: #666; --accent: #c0405a; --line: #c9c4be;
-                --box-bg: #fbfbfa; --key-bg: #454545; --hatch: #e6e2dc;
-                font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
-                color: var(--ink); font-size: 10.5px; line-height: 1.5;
-                font-variant-numeric: tabular-nums;
-            }
-
-            /* ヘッダー */
-            .report-header {
-                display: flex; justify-content: space-between; align-items: flex-end;
-                border-bottom: 2px solid var(--accent); padding-bottom: 6px; margin-bottom: 10px;
-            }
-            .report-header .title { font-size: 19px; font-weight: bold; letter-spacing: 0.04em; }
-            .report-header .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-            .report-header .meta { text-align: right; font-size: 10px; color: var(--muted); }
-            .report-header .grand { font-size: 15px; font-weight: bold; color: var(--accent); }
-
-            /* セクション（原則ページ内に収める。長い表を含むものは行単位で改ページ許可） */
-            .report-section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 9px; }
-            .report-section--long { break-inside: auto; page-break-inside: auto; }
-
-            /* 見出し（左に太い縦アクセントバー・直後の改ページ禁止） */
-            .report-heading {
-                font-size: 12.5px; font-weight: bold; margin: 0 0 5px; padding-left: 8px;
-                border-left: 5px solid var(--accent); break-after: avoid; page-break-after: avoid;
-            }
-            .sub-heading {
-                font-size: 11px; font-weight: bold; margin: 7px 0 3px; padding: 1px 6px;
-                background: var(--box-bg); border-bottom: 1px solid var(--line);
-            }
-
-            /* 概要ボックス */
-            .summary-box {
-                border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px;
-                display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px 22px;
-            }
-            .summary-box .stat { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--line); padding: 2px 0; }
-            .summary-box .stat-label { color: var(--muted); }
-            .summary-box .stat-val { font-weight: bold; }
-
-            /* インサイト（重要事項）ボックス：ヘッダーだけ濃い背景＋白文字
-               ※ overflow:hidden は使わない（ページ跨ぎ時に内容が切れるWebKit対策） */
-            .key-box { border: 1px solid var(--line); border-radius: 6px; }
-            .key-box .key-head { background: var(--key-bg); color: #fff; font-weight: bold; padding: 4px 10px; font-size: 11px; border-radius: 5px 5px 0 0; }
-            .key-box .key-body { padding: 6px 10px; white-space: pre-wrap; }
-
-            /* 参考メモの脚注ボックス：破線ボーダー（短い一文のみ入れる＝ページ跨ぎで切れない） */
-            .note-box { border: 1.5px dashed var(--accent); border-radius: 6px; padding: 6px 10px; margin-top: 6px; }
-            .note-foot { font-size: 9px; color: var(--muted); }
-
-            /* 表：表自体は改ページ可、行は分割しない。枠付きボックスの中には入れない
-               （WebKitで枠内の表がページ跨ぎで切れるため、表はセクション直下に置く） */
-            table.rep-table { width: 100%; border-collapse: collapse; break-inside: auto; page-break-inside: auto; }
-            table.rep-table thead { display: table-header-group; } /* 改ページ後にヘッダー行を再表示 */
-            table.rep-table th { text-align: left; font-size: 9.5px; color: var(--muted); border-bottom: 1.5px solid var(--ink); padding: 3px 4px; }
-            table.rep-table td { padding: 2.5px 4px; border-bottom: 1px solid #eee; }
-            table.rep-table tr { break-inside: avoid; page-break-inside: avoid; }
-            table.rep-table td.num, table.rep-table th.num { text-align: right; }
-
-            /* ABCランク：色に依存せず「記号＋文字＋網掛け」で判別（モノクロ対応） */
-            .rank { font-weight: bold; white-space: nowrap; padding: 0 5px; border-radius: 3px; }
-            .rank.rank-a { background: repeating-linear-gradient(45deg, #d0d0d0, #d0d0d0 1.5px, transparent 1.5px, transparent 4px); }
-            .rank.rank-b { background: var(--hatch); }
-            .rank.rank-c { background: transparent; }
-
-            pre.rep-pre { white-space: pre-wrap; font-family: inherit; margin: 0; }
-
-            /* グラフ：ページをまたがせない・高さ固定 */
-            .chart-container { break-inside: avoid; page-break-inside: avoid; height: 190px; margin: 4px 0; text-align: center; }
-            .chart-container svg { height: 100% !important; width: auto !important; max-width: 100% !important; min-width: 0 !important; }
-
-            /* 残在庫グラフの凡例：グラフ下に2〜3列のHTMLリスト（線種で識別＝モノクロ可） */
-            .stock-legend { columns: 3; column-gap: 16px; font-size: 9px; margin-top: 5px; list-style: none; padding: 0; }
-            .stock-legend li { break-inside: avoid; display: flex; align-items: center; gap: 5px; margin-bottom: 1.5px; }
-            .lg-line { display: inline-block; width: 16px; border-top: 2px solid var(--ink); flex-shrink: 0; }
-            .lg-line.dashed { border-top-style: dashed; }
-
-            .two-col { display: flex; gap: 18px; }
-            .two-col > div { flex: 1; }
         }
+    </style>
+    <!-- レポート本体のスタイル（別ウィンドウ印刷でも読み込むため独立させる。.report-root 配下限定でアプリ画面に影響なし） -->
+    <style id="report-css">
+        .report-root {
+            --ink: #1f1f1f; --muted: #666; --accent: #c0405a; --line: #c9c4be;
+            --box-bg: #fbfbfa; --key-bg: #454545; --hatch: #e6e2dc;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
+            color: var(--ink); font-size: 10.5px; line-height: 1.5;
+            font-variant-numeric: tabular-nums;
+        }
+        .report-header {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            border-bottom: 2px solid var(--accent); padding-bottom: 6px; margin-bottom: 10px;
+        }
+        .report-header .title { font-size: 19px; font-weight: bold; letter-spacing: 0.04em; }
+        .report-header .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+        .report-header .meta { text-align: right; font-size: 10px; color: var(--muted); }
+        .report-header .grand { font-size: 15px; font-weight: bold; color: var(--accent); }
+        .report-section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 9px; }
+        .report-section--long { break-inside: auto; page-break-inside: auto; }
+        .report-heading {
+            font-size: 12.5px; font-weight: bold; margin: 0 0 5px; padding-left: 8px;
+            border-left: 5px solid var(--accent); break-after: avoid; page-break-after: avoid;
+        }
+        .sub-heading {
+            font-size: 11px; font-weight: bold; margin: 7px 0 3px; padding: 1px 6px;
+            background: var(--box-bg); border-bottom: 1px solid var(--line);
+        }
+        .summary-box {
+            border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px 22px;
+        }
+        .summary-box .stat { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--line); padding: 2px 0; }
+        .summary-box .stat-label { color: var(--muted); }
+        .summary-box .stat-val { font-weight: bold; }
+        .key-box { border: 1px solid var(--line); border-radius: 6px; }
+        .key-box .key-head { background: var(--key-bg); color: #fff; font-weight: bold; padding: 4px 10px; font-size: 11px; border-radius: 5px 5px 0 0; }
+        .key-box .key-body { padding: 6px 10px; white-space: pre-wrap; }
+        .note-box { border: 1.5px dashed var(--accent); border-radius: 6px; padding: 6px 10px; margin-top: 6px; }
+        .note-foot { font-size: 9px; color: var(--muted); }
+        table.rep-table { width: 100%; border-collapse: collapse; break-inside: auto; page-break-inside: auto; }
+        table.rep-table thead { display: table-header-group; }
+        table.rep-table th { text-align: left; font-size: 9.5px; color: var(--muted); border-bottom: 1.5px solid var(--ink); padding: 3px 4px; }
+        table.rep-table td { padding: 2.5px 4px; border-bottom: 1px solid #eee; }
+        table.rep-table tr { break-inside: avoid; page-break-inside: avoid; }
+        table.rep-table td.num, table.rep-table th.num { text-align: right; }
+        .rank { font-weight: bold; white-space: nowrap; padding: 0 5px; border-radius: 3px; }
+        .rank.rank-a { background: repeating-linear-gradient(45deg, #d0d0d0, #d0d0d0 1.5px, transparent 1.5px, transparent 4px); }
+        .rank.rank-b { background: var(--hatch); }
+        .rank.rank-c { background: transparent; }
+        pre.rep-pre { white-space: pre-wrap; font-family: inherit; margin: 0; }
+        .chart-container { break-inside: avoid; page-break-inside: avoid; height: 190px; margin: 4px 0; text-align: center; }
+        .chart-container svg { height: 100% !important; width: auto !important; max-width: 100% !important; min-width: 0 !important; }
+        .stock-legend { columns: 3; column-gap: 16px; font-size: 9px; margin-top: 5px; list-style: none; padding: 0; }
+        .stock-legend li { break-inside: avoid; display: flex; align-items: center; gap: 5px; margin-bottom: 1.5px; }
+        .lg-line { display: inline-block; width: 16px; border-top: 2px solid var(--ink); flex-shrink: 0; }
+        .lg-line.dashed { border-top-style: dashed; }
+        .two-col { display: flex; gap: 18px; }
+        .two-col > div { flex: 1; }
     </style>
 </head>
 <body>
@@ -685,14 +668,22 @@
                     <button class="action-btn" style="width:100%; margin-top:12px; background: #FF9AA2; color: white;" onclick="endSession()">閉店する (集計して終了)</button>
                 </div>
 
-                <hr style="border: none; border-top: 1px dashed #E7E3DF; margin: 14px 0;">
-                <div class="settings-label" style="margin-top:0;">データのバックアップ</div>
-                <p class="settings-hint">データは端末内にのみ保存されます。大切な販売会の記録は定期的に書き出して保管してください。</p>
+                <hr style="border: none; border-top: 1px dashed var(--line); margin: 14px 0;">
+                <div class="settings-label" style="margin-top:0;">データの保存・引き継ぎ</div>
+                <p class="settings-hint">データはこの端末の中だけに保存されます。別の端末へ移すには、下の「バックアップ」または「端末間の引き継ぎ」を使います。</p>
+
+                <div class="settings-sublabel">① バックアップ（ファイルで保存・復元）</div>
                 <div style="display:flex; gap:10px;">
-                    <button class="action-btn btn-reserve" style="flex:1;" onclick="exportBackup()">💾 保存</button>
-                    <button class="action-btn btn-undo" style="flex:1;" onclick="document.getElementById('import-file').click()">📂 復元</button>
+                    <button class="action-btn btn-reserve" style="flex:1;" onclick="exportBackup()">💾 バックアップを保存</button>
+                    <button class="action-btn btn-checkout" style="flex:1; margin-top:0;" onclick="document.getElementById('import-file').click()">📂 バックアップから復元</button>
                 </div>
                 <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importBackup(event)">
+
+                <div class="settings-sublabel" style="margin-top:14px;">② 端末間の引き継ぎ（コピー＆貼り付け）</div>
+                <p class="settings-hint">元の端末で「コピー」→ メモ/メッセージ等に貼って新しい端末へ送る →新しい端末の下の欄に貼り付けて「取り込む」。</p>
+                <button class="action-btn btn-reserve" style="width:100%;" onclick="copyHandoffData()">📋 この端末のデータをコピー</button>
+                <textarea id="handoff-paste" placeholder="別の端末でコピーしたデータをここに貼り付け" style="width:100%; box-sizing:border-box; height:70px; margin:8px 0 0; padding:10px; font-size:13px; border:2px solid var(--line); border-radius:12px; background:var(--surface); color:var(--text-main); resize:vertical;"></textarea>
+                <button class="action-btn btn-checkout" style="width:100%; margin-top:8px;" onclick="importHandoffData()">📥 貼り付けたデータを取り込む</button>
             </div>
 
             <div id="tab-reservations" style="display:none;">
@@ -2476,15 +2467,46 @@
             </div>
         `;
 
-        // 全要素の描画（レイアウト確定）を待ってから印刷ダイアログを開く
-        requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+        openReportWindow();
+    }
+
+    // レポートを独立したウィンドウ（通常のHTML文書）として開いて印刷する。
+    // タブレット(iPad等)で「印刷はできるが端末に保存できない」問題への対策：
+    // アプリ本体は position:fixed の1画面構成で保存に回しにくいため、レシートと同じく
+    // 別文書として開くことで、印刷プレビューから「PDFとして保存 / ファイルに保存」を確実に使える。
+    function openReportWindow() {
+        const inner = document.getElementById('print-report').innerHTML;
+        const css = (document.getElementById('report-css') || {}).textContent || '';
+        const win = window.open('', '_blank');
+        if (!win) {
+            // ポップアップがブロックされた場合は従来どおりその場で印刷（フォールバック）
+            requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
+            return;
+        }
+        win.document.open();
+        win.document.write(
+            '<!doctype html><html lang="ja"><head><meta charset="utf-8">' +
+            '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+            '<title>販売会 集計結果</title>' +
+            '<style>' + css + '</style>' +
+            '<style>@page{size:A4;margin:15mm;} html,body{margin:0;background:#fff;} ' +
+            'body{padding:16px;} @media print{body{padding:0;}} ' +
+            '.report-note{background:#eef; color:#334; font-size:13px; padding:10px 14px; border-radius:8px; margin-bottom:14px;} ' +
+            '@media print{.report-note{display:none;}}</style>' +
+            '</head><body>' +
+            '<div class="report-note">🖨 印刷ダイアログが自動で開きます。閉じてしまった場合はこのページで印刷（またはブラウザの共有）から「PDFとして保存 / ファイルに保存」を選べます。</div>' +
+            inner +
+            '<' + 'script>window.onload=function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},400);};<' + '/script>' +
+            '</body></html>'
+        );
+        win.document.close();
     }
     // ▲▲▲ ここまで ▲▲▲
 
     let lastSavedSnapshot = null; // 直近で保存に成功したJSON（保存失敗時の巻き戻し用）
 
    function saveData() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType };
+        const data = collectData();
         let json;
         try {
             json = JSON.stringify(data);
@@ -2528,19 +2550,8 @@
             alert('【！】保存データを読み込めませんでした（破損の可能性）。\n壊れたデータは退避し、初期状態で起動します。バックアップがあれば「設定 →バックアップ復元」から戻せます。');
             return;
         }
-        if (!data || typeof data !== 'object') return;
+        if (!applyData(data)) return;
         lastSavedSnapshot = saved;
-        if (Array.isArray(data.products)) products = data.products;
-        cart = Array.isArray(data.cart) ? data.cart : [];
-        salesHistory = Array.isArray(data.salesHistory) ? data.salesHistory : [];
-        reservations = Array.isArray(data.reservations) ? data.reservations : [];
-        currentSession = data.currentSession || null;
-        sessionArchive = Array.isArray(data.sessionArchive) ? data.sessionArchive : [];
-        receiptCounter = data.receiptCounter || salesHistory.length;
-        voidCount = data.voidCount || 0;
-        operationLog = Array.isArray(data.operationLog) ? data.operationLog : [];
-        comparisonBaseline = data.comparisonBaseline || null;
-        lastCustomerType = data.lastCustomerType || null;
 
         if (currentSession) {
             document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
@@ -2568,9 +2579,51 @@
         return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
     }
 
+    // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
+    function collectData() {
+        return { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType };
+    }
+
+    // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
+    function applyData(data) {
+        if (!data || typeof data !== 'object' || !Array.isArray(data.products)) return false;
+        products = data.products;
+        cart = Array.isArray(data.cart) ? data.cart : [];
+        salesHistory = Array.isArray(data.salesHistory) ? data.salesHistory : [];
+        reservations = Array.isArray(data.reservations) ? data.reservations : [];
+        currentSession = data.currentSession || null;
+        sessionArchive = Array.isArray(data.sessionArchive) ? data.sessionArchive : [];
+        receiptCounter = data.receiptCounter || salesHistory.length;
+        voidCount = data.voidCount || 0;
+        operationLog = Array.isArray(data.operationLog) ? data.operationLog : [];
+        comparisonBaseline = data.comparisonBaseline || null;
+        lastCustomerType = data.lastCustomerType || null;
+        return true;
+    }
+
     function exportBackup() {
-        const data = { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog };
-        triggerDownload(`taizanboku_backup_${dateStamp()}.json`, JSON.stringify(data, null, 2), 'application/json');
+        triggerDownload(`taizanboku_backup_${dateStamp()}.json`, JSON.stringify(collectData(), null, 2), 'application/json');
+    }
+
+    // データ差し替え後の画面更新をまとめて行う（復元・引き継ぎで共用）
+    function afterDataReplaced(msg) {
+        const disp = document.getElementById('session-display');
+        if (currentSession) {
+            disp.innerText = `営業中: ${currentSession}`;
+            disp.style.background = 'var(--white)';
+        } else {
+            disp.innerText = '閉店中';
+            disp.style.background = '';
+        }
+        saveData();
+        init();
+        updateSessionTabView();
+        renderInventorySetup();
+        renderLiveStock();
+        renderReservations();
+        renderRecords();
+        updateAnalytics();
+        if (msg) showToast(msg);
     }
 
     function importBackup(event) {
@@ -2585,33 +2638,8 @@
                     return;
                 }
                 if (!confirm('現在のデータを、選んだバックアップの内容で上書きします。よろしいですか？')) return;
-                products = data.products;
-                cart = data.cart || [];
-                salesHistory = data.salesHistory || [];
-                reservations = data.reservations || [];
-                currentSession = data.currentSession || null;
-                sessionArchive = data.sessionArchive || [];
-                receiptCounter = data.receiptCounter || salesHistory.length;
-                voidCount = data.voidCount || 0;
-            operationLog = data.operationLog || [];
-
-                const disp = document.getElementById('session-display');
-                if (currentSession) {
-                    disp.innerText = `営業中: ${currentSession}`;
-                    disp.style.background = 'var(--white)';
-                } else {
-                    disp.innerText = '閉店中';
-                    disp.style.background = '';
-                }
-                saveData();
-                init();
-                updateSessionTabView();
-                renderInventorySetup();
-                renderLiveStock();
-                renderReservations();
-                renderRecords();
-                updateAnalytics();
-                alert('バックアップを復元しました。');
+                applyData(data);
+                afterDataReplaced('✓ バックアップから復元しました');
             } catch (err) {
                 alert('ファイルの読み込みに失敗しました。');
             } finally {
@@ -2619,6 +2647,38 @@
             }
         };
         reader.readAsText(file);
+    }
+
+    // ▼ 端末間の引き継ぎ（コピー＆貼り付け）：ファイルを使わずにデータを移す ▼
+    async function copyHandoffData() {
+        const text = JSON.stringify(collectData());
+        let ok = false;
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(text);
+                ok = true;
+            }
+        } catch (e) { ok = false; }
+        if (!ok) {
+            const ta = document.getElementById('handoff-paste');
+            if (ta) { ta.value = text; ta.focus(); ta.select(); }
+            try { ok = document.execCommand && document.execCommand('copy'); } catch (e) { ok = false; }
+        }
+        showToast(ok ? '✓ データをコピーしました（別端末で貼り付け）' : 'コピー欄に出しました。手動でコピーしてください');
+    }
+
+    function importHandoffData() {
+        const ta = document.getElementById('handoff-paste');
+        const text = (ta && ta.value || '').trim();
+        if (!text) { alert('引き継ぎデータを貼り付けてください。'); return; }
+        let data;
+        try { data = JSON.parse(text); }
+        catch (e) { alert('データの形式が正しくないようです。コピーした内容をそのまま貼り付けてください。'); return; }
+        if (!data || !Array.isArray(data.products)) { alert('このデータは泰山木POSの引き継ぎデータではないようです。'); return; }
+        if (!confirm('現在のデータを、貼り付けた内容で上書きします。よろしいですか？')) return;
+        applyData(data);
+        if (ta) ta.value = '';
+        afterDataReplaced('✓ 引き継ぎデータを取り込みました');
     }
     // ▲▲▲ ここまで ▲▲▲
 
