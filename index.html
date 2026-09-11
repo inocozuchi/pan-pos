@@ -6,21 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <style>
         :root {
-            --bg-color: #FFF5F7;
-            --header-bg: #FFD1DC;
-            --btn-sweet: #FFDAC1;
-            --btn-savory: #E2F0CB;
-            --btn-drink: #B5EAD7;
-            --accent: #FF9AA2;
-            --text-main: #5A4E4D;
-            --text-light: #887B7A;
-            --white: #FFFFFF;
+            --bg-color: #F4F3F0;      /* 温かみのあるライトニュートラル */
             --surface: #FFFFFF;
-            --line: #E7E3DF;
+            --white: #FFFFFF;
+            --header-bg: #FFFFFF;
+            --line: #E7E3DD;          /* 区切り線・枠 */
+            --line-strong: #D9D4CC;
+            /* カテゴリ3色（落ち着いたトーンで色分けは継続） */
+            --btn-sweet: #EBD0A6;     /* パン（ウィート） */
+            --btn-savory: #CBD8AC;    /* クッキー（セージ） */
+            --btn-drink: #AAD0CC;     /* ドリンク（ダスティティール） */
+            /* 主要アクション・強調（テラコッタ） */
+            --accent: #C25E3E;
+            --accent-ink: #A44C30;    /* 文字・価格用に少し濃く */
+            --accent-soft: #F3E5DE;   /* 選択中の淡い背景 */
+            --btn-neutral: #EFEDE8;   /* 補助ボタン */
+            --text-main: #2E2A26;     /* 濃い暖色チャコール（可読性重視） */
+            --text-light: #857D74;
         }
 
        body {
-            font-family: 'Hiragino Rounded W3 JIS2004', 'ヒラギノ丸ゴ ProN', 'Quicksand', sans-serif;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
@@ -48,8 +54,8 @@
             margin-top: 15px;
         }
         .tenkey-btn {
-            background-color: #FAFAFA;
-            border: 2px solid #EEE;
+            background-color: #F7F5F1;
+            border: 2px solid var(--line);
             font-size: 30px;
             font-weight: bold;
             padding: 18px;
@@ -59,7 +65,7 @@
             font-family: inherit;
         }
         .tenkey-btn.clear-btn {
-            background-color: #FFDAC1;
+            background-color: var(--accent-soft); color: var(--accent-ink);
         }
         /* 追加ここまで */
 
@@ -77,7 +83,7 @@
         
         @media (min-width: 769px) {
             .checkout-wide { max-width: 940px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
-            .checkout-left { flex: 1; display: flex; flex-direction: column; border-right: 2px dashed #EEE; padding-right: 20px; }
+            .checkout-left { flex: 1; display: flex; flex-direction: column; border-right: 2px dashed var(--line); padding-right: 20px; }
             .checkout-right { flex: 1.2; display: flex; flex-direction: column; justify-content: space-between; }
             .checkout-left .receipt-list { flex: 1; max-height: none; }
         }
@@ -90,21 +96,21 @@
         }
 
         header {
-            background: linear-gradient(180deg, #FFDCE4 0%, var(--header-bg) 100%);
-            padding: 14px 20px;
+            background: var(--surface);
+            padding: 12px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 12px;
-            box-shadow: 0 2px 12px rgba(90,78,77,0.08);
+            border-bottom: 1px solid var(--line);
             z-index: 10;
         }
 
-        .app-title { font-size: 22px; font-weight: bold; color: var(--text-main); display: flex; align-items: center; gap: 12px; letter-spacing: 0.02em; min-width: 0; }
+        .app-title { font-size: 20px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 12px; letter-spacing: 0.01em; min-width: 0; }
         .session-info {
-            font-size: 13px; background: var(--white); padding: 5px 12px; border-radius: 999px;
-            color: var(--accent); font-weight: bold; white-space: nowrap; overflow: hidden;
-            text-overflow: ellipsis; max-width: 220px; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            font-size: 13px; background: var(--accent-soft); padding: 5px 13px; border-radius: 999px;
+            color: var(--accent-ink); font-weight: 700; white-space: nowrap; overflow: hidden;
+            text-overflow: ellipsis; max-width: 220px;
         }
 
         /* カテゴリ凡例（色の意味を明示） */
@@ -149,8 +155,8 @@
         .product-btn {
             position: relative;
             overflow: hidden;
-            border: none;
-            border-radius: 16px;
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 14px;
             color: var(--text-main);
             display: flex;
             flex-direction: column;
@@ -158,22 +164,22 @@
             align-items: center;
             padding: 6px 8px;
             font-size: 14px;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 3px 8px rgba(90,78,77,0.10);
-            transition: transform 0.12s ease, box-shadow 0.12s ease;
+            box-shadow: 0 1px 2px rgba(46,42,38,0.06);
+            transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
         }
 
-        .product-btn:active { transform: translateY(2px) scale(0.99); box-shadow: 0 1px 3px rgba(90,78,77,0.08); }
+        .product-btn:active { transform: translateY(1px) scale(0.995); box-shadow: 0 1px 2px rgba(46,42,38,0.05); }
         @media (hover: hover) {
-            .product-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 14px rgba(90,78,77,0.14); }
+            .product-btn:hover { filter: brightness(0.98); box-shadow: 0 3px 8px rgba(46,42,38,0.10); }
         }
         .product-btn.out-of-stock { pointer-events: none; color: #B8B4AE; box-shadow: none; }
         /* 完売した実商品：過少入力対策で押せる（超過販売可）。見た目は控えめ */
         .product-btn.sold-open { color: #857f78; box-shadow: 0 1px 3px rgba(90,78,77,0.06); }
         .product-btn.sold-open .price { color: #C4BFB8; }
         .product-btn .pname { line-height: 1.25; overflow-wrap: anywhere; word-break: break-word; }
-        .product-btn .price { color: var(--accent); font-size: 18px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+        .product-btn .price { color: var(--accent-ink); font-size: 18px; margin-top: 4px; font-variant-numeric: tabular-nums; }
         .product-btn.out-of-stock .price { color: #C9C4BD; }
         .product-btn .stock { font-size: 11px; color: var(--text-light); font-weight: normal; margin-top: 3px; }
 
@@ -188,7 +194,7 @@
         #sidebar {
             flex: 1;
             background-color: var(--white);
-            border-right: 2px solid #FFF0F0;
+            border-right: 1px solid var(--line);
             display: flex;
             flex-direction: column;
             box-shadow: 2px 0 15px rgba(0,0,0,0.02);
@@ -205,17 +211,17 @@
             display: flex;
             justify-content: space-between;
             padding: 10px 0;
-            border-bottom: 2px dashed #FFF0F0;
+            border-bottom: 1px dashed var(--line);
             font-size: 16px;
         }
 
         footer {
-            background-color: #FAFAFA;
+            background-color: #FBFAF7;
             padding: 15px;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            border-top: 2px solid #FFF0F0;
+            border-top: 1px solid var(--line);
         }
 
         .total-display { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
@@ -237,9 +243,9 @@
         }
         .action-btn:active { transform: translateY(1px); box-shadow: 0 1px 3px rgba(90,78,77,0.08); }
         @media (hover: hover) { .action-btn:hover { filter: brightness(0.97); } }
-        .btn-undo { background-color: #F3F3F3; flex: 1; }
-        .btn-reserve { background-color: #FFDFBA; flex: 1; }
-        .btn-checkout { background-color: #B5EAD7; width: 100%; font-size: 18px; padding: 15px; margin-top: 5px;}
+        .btn-undo { background-color: var(--btn-neutral); flex: 1; }
+        .btn-reserve { background-color: var(--btn-neutral); flex: 1; }
+        .btn-checkout { background-color: var(--accent); color: #fff; width: 100%; font-size: 18px; padding: 15px; margin-top: 5px;}
 
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -262,17 +268,17 @@
         .receipt-list {
             list-style: none; padding: 0; margin: 15px 0;
             max-height: 150px; overflow-y: auto;
-            border-top: 2px dashed #EEE; border-bottom: 2px dashed #EEE;
+            border-top: 2px dashed var(--line); border-bottom: 2px dashed var(--line);
         }
         .receipt-item {
             display: flex; justify-content: space-between;
-            padding: 8px 0; font-size: 15px; border-bottom: 1px solid #FAFAFA;
+            padding: 8px 0; font-size: 15px; border-bottom: 1px solid #F7F5F1;
         }
 
         input[type="number"], input[type="text"] {
             width: calc(100% - 30px); padding: 12px 15px; font-size: 18px;
-            margin: 10px 0; border-radius: 12px; border: 2px solid #EEE;
-            background: #FAFAFA; color: var(--text-main); outline: none;
+            margin: 10px 0; border-radius: 12px; border: 2px solid var(--line);
+            background: #F7F5F1; color: var(--text-main); outline: none;
         }
         input:focus { border-color: var(--accent); }
 
@@ -284,7 +290,7 @@
 
         .change-display { font-size: 36px; color: var(--accent); margin: 15px 0; font-weight: bold; text-align: center; }
         
-        .tab-menu { display: flex; border-bottom: 2px solid #EEE; margin-bottom: 15px; flex-shrink: 0; }
+        .tab-menu { display: flex; border-bottom: 2px solid var(--line); margin-bottom: 15px; flex-shrink: 0; }
         .tab-item { flex: 1; padding: 12px 4px; color: var(--text-light); cursor: pointer; text-align: center; font-weight: bold; font-size: 15px; }
         .tab-item.active { color: var(--accent); border-bottom: 3px solid var(--accent); }
         .tab-content { flex: 1; overflow-y: auto; padding-bottom: 10px; }
@@ -299,7 +305,7 @@
         @media (max-width: 768px) {
             #app-container { flex-direction: column; }
             main { flex: 1.4; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(80px, 108px); padding: 10px; gap: 8px; }
-            #sidebar { flex: 1; border-left: none; border-right: none; border-top: 2px solid #FFF0F0; }
+            #sidebar { flex: 1; border-left: none; border-right: none; border-top: 1px solid var(--line); }
             .action-row { display: flex; }
             .btn-checkout { padding: 12px; }
             .total-display .total-label { font-size: 18px; }
@@ -349,6 +355,23 @@
                 background: var(--white); padding-top: 8px; z-index: 1;
             }
             #checkout-modal .checkout-right > div:last-child .btn-checkout { font-size: 18px; }
+
+            /* スマホでは無駄な余白を削り、情報を詰めて見やすく */
+            header { padding: 9px 14px; }
+            .app-title { font-size: 18px; gap: 8px; }
+            .session-info { font-size: 12px; padding: 4px 10px; max-width: 46vw; }
+            #bottom-nav { padding: 3px 4px calc(3px + env(safe-area-inset-bottom, 0px)); }
+            .nav-item { font-size: 10px; padding: 5px 2px 4px; gap: 2px; border-radius: 10px; }
+            .nav-item .nav-ico { font-size: 20px; }
+            .product-btn { border-radius: 12px; }
+            .product-btn .pname { line-height: 1.2; }
+            .product-btn .stock { margin-top: 2px; }
+            /* 空カートの案内をコンパクトに（縦の占有を削減） */
+            .cart-empty { margin-top: 16px !important; font-size: 14px !important; line-height: 1.5 !important; }
+            .cart-empty .ce-emoji { font-size: 26px !important; }
+            .total-display { margin-bottom: 2px; }
+            .action-row { gap: 8px; }
+            footer .action-row .action-btn { padding: 11px; font-size: 14px; }
         }
 
         /* ▼ 設定/予約パネル：横長デバイス向けにワイド化＆横スクロール ▼ */
@@ -360,12 +383,12 @@
             .card-strip > p { flex: 1; }
         }
         /* 仕入れ数設定：横長デバイスでは商品をカード横並び＋横スクロール */
-        .setup-list { background:#FAFAFA; border:2px solid #EEE; padding:10px; border-radius:12px; margin-bottom:15px; max-height:230px; overflow-y:auto; }
-        .setup-card { padding:0 0 8px 8px; margin-bottom:8px; border-bottom:1px solid #EEE; }
+        .setup-list { background:#F7F5F1; border:2px solid var(--line); padding:10px; border-radius:12px; margin-bottom:15px; max-height:230px; overflow-y:auto; }
+        .setup-card { padding:0 0 8px 8px; margin-bottom:8px; border-bottom:1px solid var(--line); }
         .setup-add-btn { width:100%; margin-top:10px; }
         @media (min-width: 769px) {
             .setup-list { display:flex; flex-wrap:nowrap; gap:10px; overflow-x:auto; overflow-y:hidden; max-height:none; align-items:flex-start; }
-            .setup-card { min-width:190px; max-width:210px; flex-shrink:0; border:2px solid #EEE; border-radius:10px; padding:10px 10px 10px 8px; margin-bottom:0; background:#FFF; }
+            .setup-card { min-width:190px; max-width:210px; flex-shrink:0; border:2px solid var(--line); border-radius:10px; padding:10px 10px 10px 8px; margin-bottom:0; background:#FFF; }
             .setup-add-btn { width:auto; min-width:100px; flex-shrink:0; align-self:stretch; margin-top:0; }
         }
 
@@ -373,11 +396,11 @@
         .analytics-menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         @media (min-width: 769px) { .analytics-menu-grid { grid-template-columns: repeat(3, 1fr); } }
         .analytics-menu-btn {
-            background: #FAFAFA; border: 2px solid #EEE; border-radius: 12px; padding: 16px 10px;
+            background: #F7F5F1; border: 2px solid var(--line); border-radius: 12px; padding: 16px 10px;
             font-size: 15px; font-weight: bold; color: var(--text-main); cursor: pointer;
             font-family: inherit; text-align: center; line-height: 1.5;
         }
-        .analytics-menu-btn:active { background: #FFF0F0; }
+        .analytics-menu-btn:active { background: var(--accent-soft); }
         .analytics-sec { font-size: 14px; white-space: pre-wrap; line-height: 1.6; }
 
         /* 設定タブの見出し・注釈・営業中バナー（余白を詰めて圧迫感を解消） */
@@ -386,14 +409,14 @@
         .settings-sublabel { font-size: 13px; font-weight: bold; color: var(--text-main); margin: 8px 0 6px; }
         #tab-session input#session-name-input { margin: 4px 0 6px; }
         .active-banner {
-            background: #E2F0CB; color: var(--text-main); font-weight: bold;
+            background: #E6EBD8; color: var(--text-main); font-weight: bold;
             border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; font-size: 15px;
         }
 
         /* 操作フィードバックのトースト（会計完了・取消など） */
         #toast {
             position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(16px);
-            background: rgba(90,78,77,0.94); color: #fff; padding: 12px 24px; border-radius: 999px;
+            background: rgba(38,34,30,0.95); color: #fff; padding: 12px 24px; border-radius: 999px;
             font-weight: bold; font-size: 15px; box-shadow: 0 6px 20px rgba(0,0,0,0.22);
             opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
             z-index: 200; max-width: 90vw; text-align: center;
@@ -402,7 +425,7 @@
 
         /* ▼▼▼ 常設ボトムナビ：主要画面へ1タップで到達（初見でも導線が見える）▼▼▼ */
         #bottom-nav {
-            display: flex; background: var(--white); border-top: 2px solid #FFE3E9;
+            display: flex; background: var(--white); border-top: 1px solid var(--line);
             box-shadow: 0 -3px 14px rgba(90,78,77,0.08); z-index: 150; flex-shrink: 0;
             padding: 5px 6px calc(5px + env(safe-area-inset-bottom, 0px));
         }
@@ -413,9 +436,9 @@
             border-radius: 14px; position: relative; transition: color .12s ease, background .12s ease;
         }
         .nav-item .nav-ico { font-size: 23px; line-height: 1; }
-        .nav-item.active { color: var(--accent); background: #FFF0F3; }
-        @media (hover: hover) { .nav-item:hover { background: #FFF6F8; } }
-        .nav-item:active { background: #FFE3E9; }
+        .nav-item.active { color: var(--accent-ink); background: var(--accent-soft); }
+        @media (hover: hover) { .nav-item:hover { background: var(--btn-neutral); } }
+        .nav-item:active { background: var(--accent-soft); }
         .nav-badge {
             position: absolute; top: 3px; left: 50%; margin-left: 6px;
             min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
@@ -427,7 +450,7 @@
         #closed-cta {
             position: absolute; inset: 0; z-index: 20; display: none;
             align-items: center; justify-content: center; padding: 24px;
-            background: rgba(255,245,247,0.96);
+            background: rgba(244,243,240,0.96);
         }
         #closed-cta.show { display: flex; }
         .closed-card {
@@ -587,7 +610,7 @@
         </div>
         
         <div class="checkout-right">
-            <div style="margin-bottom: 10px; text-align: left; background: #FAFAFA; padding: 10px; border-radius: 12px; border: 2px solid #EEE;">
+            <div style="margin-bottom: 10px; text-align: left; background: #F7F5F1; padding: 10px; border-radius: 12px; border: 2px solid var(--line);">
                 <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">客属性 (任意)</div>
                 <div class="customer-type-group">
                     <label class="type-btn"><input type="radio" name="customerType" value="学生"> 学生</label>
@@ -646,7 +669,7 @@
             <div id="tab-session">
                 <!-- 閉店中のみ表示：新しい販売会を開く -->
                 <div id="session-open-block">
-                    <div id="event-banner" style="background:#FFF5F7; border:2px solid #FFD1DC; border-radius:10px; padding:8px 12px; margin-bottom:10px; font-size:13px;"></div>
+                    <div id="event-banner" style="background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:8px 12px; margin-bottom:10px; font-size:13px;"></div>
                     <p class="settings-hint">新しい販売会を始める時に名前をつけて開店します。</p>
                     <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
 
@@ -663,9 +686,9 @@
                     <div class="active-banner">🟢 営業中：<span id="active-session-name"></span></div>
                     <details id="live-stock-details">
                         <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の在庫調整（追加搬入・数え直し）</summary>
-                        <div id="live-stock-list" style="max-height:220px; overflow-y:auto; background:#FAFAFA; border:2px solid #EEE; padding:10px; border-radius:12px; margin-top:8px;"></div>
+                        <div id="live-stock-list" style="max-height:220px; overflow-y:auto; background:#F7F5F1; border:2px solid var(--line); padding:10px; border-radius:12px; margin-top:8px;"></div>
                     </details>
-                    <button class="action-btn" style="width:100%; margin-top:12px; background: #FF9AA2; color: white;" onclick="endSession()">閉店する (集計して終了)</button>
+                    <button class="action-btn" style="width:100%; margin-top:12px; background: var(--accent); color: white;" onclick="endSession()">閉店する (集計して終了)</button>
                 </div>
 
                 <hr style="border: none; border-top: 1px dashed var(--line); margin: 14px 0;">
@@ -716,12 +739,12 @@
                     <div id="sec-items" class="analytics-sec" style="display:none;"></div>
 
                     <div id="sec-time" class="analytics-sec" style="display:none;">
-                        <div id="customer-chart" style="background:#FFF; border:2px solid #EEE; border-radius:12px; padding:10px; margin-bottom:12px; overflow-x:auto; text-align:center;"></div>
+                        <div id="customer-chart" style="background:#FFF; border:2px solid var(--line); border-radius:12px; padding:10px; margin-bottom:12px; overflow-x:auto; text-align:center;"></div>
                         <div id="sec-time-text"></div>
                     </div>
 
                     <div id="sec-stock" class="analytics-sec" style="display:none;">
-                        <div id="stock-chart" style="background:#FFF; border:2px solid #EEE; border-radius:12px; padding:10px; margin-bottom:8px; overflow-x:auto;"></div>
+                        <div id="stock-chart" style="background:#FFF; border:2px solid var(--line); border-radius:12px; padding:10px; margin-bottom:8px; overflow-x:auto;"></div>
                         <div id="stock-chart-legend" style="display:flex; flex-wrap:wrap; gap:6px 12px;"></div>
                     </div>
 
@@ -733,10 +756,10 @@
                     <div id="sec-export" class="analytics-sec" style="display:none;">
                         <p style="font-size:13px; color:var(--text-light);">集計結果を書き出します。</p>
                         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                            <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#FFDFBA;" onclick="downloadPDF()">📄 PDF保存</button>
-                            <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#B5EAD7;" onclick="exportFacilityCSV()">🏭 精算CSV</button>
-                            <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#B5EAD7;" onclick="exportDetailCSV()">🧾 明細CSV</button>
-                            <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; background-color:#C7CEEA;" onclick="exportReportJSON()">🗄 集計JSON</button>
+                            <button class="action-btn" style="flex:1; min-width:110px; margin-top:0; background-color:var(--accent); color:#fff;" onclick="downloadPDF()">📄 PDF保存</button>
+                            <button class="action-btn" style="flex:1; min-width:110px; margin-top:0; background-color:var(--btn-neutral);" onclick="exportFacilityCSV()">🏭 精算CSV</button>
+                            <button class="action-btn" style="flex:1; min-width:110px; margin-top:0; background-color:var(--btn-neutral);" onclick="exportDetailCSV()">🧾 明細CSV</button>
+                            <button class="action-btn" style="flex:1; min-width:110px; margin-top:0; background-color:var(--btn-neutral);" onclick="exportReportJSON()">🗄 集計JSON</button>
                         </div>
                         <p style="font-size:12px; color:var(--text-light); margin-top:8px;">精算CSV＝商品別（消化率・原価・粗利・味つき）／明細CSV＝会計ごと／集計JSON＝前回比較や取りこぼしまで含む全データ。</p>
                     </div>
@@ -1049,7 +1072,7 @@
             list.innerHTML += `
                 <div class="cart-item" style="border-left:8px solid ${catColor(data.type)}; padding-left:8px;">
                     <span style="display:flex; align-items:center; gap:6px;">
-                        <button onclick="removeOneFromCart('${safeName}')" style="background:#F3F3F3; border:none; border-radius:6px; width:28px; height:28px; font-weight:bold; cursor:pointer; color:var(--accent); flex-shrink:0;">−</button>
+                        <button onclick="removeOneFromCart('${safeName}')" style="background:var(--btn-neutral); border:none; border-radius:6px; width:28px; height:28px; font-weight:bold; cursor:pointer; color:var(--accent); flex-shrink:0;">−</button>
                         <button onclick="addOneToCart('${safeName}')" style="background:#E2F0CB; border:none; border-radius:6px; width:28px; height:28px; font-weight:bold; cursor:pointer; color:var(--text-main); flex-shrink:0;">＋</button>
                         <span>${name} × <b>${data.count}</b></span>
                     </span>
@@ -1059,7 +1082,7 @@
         }
         
         if(cart.length === 0) {
-            list.innerHTML = '<div style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><div style="font-size:34px;">🧺</div>商品をタップして<br>お会計に追加してください</div>';
+            list.innerHTML = '<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><div class="ce-emoji" style="font-size:34px;">🧺</div>商品をタップして<br>お会計に追加してください</div>';
         }
 
         document.getElementById('cart-total').innerText = total;
@@ -1144,7 +1167,7 @@
         if (!box) return;
         let html = `<button class="action-btn" style="flex:1; padding:10px; font-size:16px; background-color:#E2F0CB;" onclick="setCashExact()">ちょうど</button>`;
         suggestCashAmounts(total).forEach(v => {
-            html += `<button class="action-btn" style="flex:1; padding:10px; font-size:16px; background-color:#FFF; border:2px solid #EEE;" onclick="setCash(${v})">¥${v}</button>`;
+            html += `<button class="action-btn" style="flex:1; padding:10px; font-size:16px; background-color:#FFF; border:2px solid var(--line);" onclick="setCash(${v})">¥${v}</button>`;
         });
         box.innerHTML = html;
     }
@@ -1310,8 +1333,8 @@
         const applyBox = document.getElementById('inventory-apply');
         if (applyBox) {
             applyBox.innerHTML =
-                (latest ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:8px; padding:10px; background:#B5EAD7; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-main);">✨ 前回「${latest.sessionName}」の実績を参考に反映</button>` : '')
-                + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:#F3F3F3; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px;">↩️ 商品リストを「${ACTIVE_EVENT_SET.label}」の既定に戻す</button>`;
+                (latest ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:8px; padding:10px; background:var(--accent-soft); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--accent-ink);">✨ 前回「${latest.sessionName}」の実績を参考に反映</button>` : '')
+                + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:var(--btn-neutral); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px;">↩️ 商品リストを「${ACTIVE_EVENT_SET.label}」の既定に戻す</button>`;
         }
 
         list.innerHTML = '';
@@ -1329,7 +1352,7 @@
                     </label>
                     <div style="display:flex; gap:5px; align-items:center;">
                         <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px;" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
-                        <button onclick="removeTempProduct(${p.id})" style="background:#FF9AA2; color:white; border:none; border-radius:4px; width:30px; height:30px; font-weight:bold; cursor:pointer; flex-shrink:0;">×</button>
+                        <button onclick="removeTempProduct(${p.id})" style="background:#C0574A; color:white; border:none; border-radius:4px; width:30px; height:30px; font-weight:bold; cursor:pointer; flex-shrink:0;">×</button>
                     </div>
                     <div style="display:flex; gap:5px; margin-top:5px;">
                         <div style="flex:1; min-width:0;">
@@ -1769,7 +1792,7 @@
         const rows = [...operationLog].reverse().map(e => {
             const t = new Date(e.time);
             const ts = `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`;
-            return `<div style="display:flex; gap:8px; padding:3px 0; border-bottom:1px solid #F3F3F3; font-size:13px;"><span style="color:var(--text-light); flex-shrink:0;">${ts}</span><span>${e.msg.replace(/</g, '&lt;')}</span></div>`;
+            return `<div style="display:flex; gap:8px; padding:3px 0; border-bottom:1px solid var(--btn-neutral); font-size:13px;"><span style="color:var(--text-light); flex-shrink:0;">${ts}</span><span>${e.msg.replace(/</g, '&lt;')}</span></div>`;
         }).join('');
         el.innerHTML = `<div style="font-size:12px; color:var(--text-light); margin-bottom:6px;">属性の事後入力・品目の部分修正などの履歴（${operationLog.length}件）</div>${rows}`;
     }
@@ -2797,7 +2820,7 @@
                 const sn = l.name.replace(/'/g, "\\'");
                 return editing
                     ? `<div style="display:flex; align-items:center; gap:6px; padding:3px 0; font-size:13px;">
-                        <button onclick="adjustRecordItem(${idx}, '${sn}', -1)" style="width:26px; height:26px; border:none; border-radius:6px; background:#F3F3F3; color:var(--accent); font-weight:bold; cursor:pointer; flex-shrink:0;">−</button>
+                        <button onclick="adjustRecordItem(${idx}, '${sn}', -1)" style="width:26px; height:26px; border:none; border-radius:6px; background:var(--btn-neutral); color:var(--accent); font-weight:bold; cursor:pointer; flex-shrink:0;">−</button>
                         <button onclick="adjustRecordItem(${idx}, '${sn}', 1)" style="width:26px; height:26px; border:none; border-radius:6px; background:#E2F0CB; font-weight:bold; cursor:pointer; flex-shrink:0;">＋</button>
                         <span style="flex:1;">${l.name} ×<b>${l.qty}</b></span>
                         <span style="font-weight:bold;">¥${l.subtotal}</span>
@@ -3040,7 +3063,7 @@
                     ? `<svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="${color}" stroke-width="3" stroke-dasharray="5 3"/></svg>`
                     : `<svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="${color}" stroke-width="3"/></svg>`;
                 const active = chartHighlight === s.name;
-                return `<span onclick="toggleChartHighlight('${s.name.replace(/'/g, "\\'")}')" style="display:inline-flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; padding:2px 6px; border-radius:6px; background:${active ? '#FFF0F0' : 'transparent'}; color:var(--text-main); font-weight:${active ? 'bold' : 'normal'};">${dashLine}${s.name}（残${s.final}）</span>`;
+                return `<span onclick="toggleChartHighlight('${s.name.replace(/'/g, "\\'")}')" style="display:inline-flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; padding:2px 6px; border-radius:6px; background:${active ? 'var(--accent-soft)' : 'transparent'}; color:var(--text-main); font-weight:${active ? 'bold' : 'normal'};">${dashLine}${s.name}（残${s.final}）</span>`;
             }).join('');
         }
     }
@@ -3131,10 +3154,10 @@
             const oversold = p.stock < 0; // 販売数>仕入数（過少入力の可能性）
             const noteVal = (p.note || '').replace(/"/g, '&quot;');
             list.innerHTML += `
-                <div style="margin-bottom:8px; ${oversold ? 'background:#FFF0F0; border-radius:8px; padding:6px;' : ''}">
+                <div style="margin-bottom:8px; ${oversold ? 'background:#FBEDE9; border-radius:8px; padding:6px;' : ''}">
                     <div style="display:flex; gap:8px; align-items:center;">
                         <span style="flex:1; font-size:14px;">${p.name}${oversold ? ' <b style="color:#d9534f; font-size:12px;">⚠ 販売&gt;仕入</b>' : ''}</span>
-                        <button onclick="adjustLiveStock(${p.id}, -1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#F3F3F3; font-weight:bold; cursor:pointer;">−</button>
+                        <button onclick="adjustLiveStock(${p.id}, -1)" style="width:30px; height:30px; border:none; border-radius:6px; background:var(--btn-neutral); font-weight:bold; cursor:pointer;">−</button>
                         <input type="number" value="${p.stock}" style="width:60px; padding:6px; text-align:center; font-size:14px; border:1px solid #CCC; border-radius:6px; margin:0;" onchange="setLiveStock(${p.id}, this.value)">
                         <button onclick="adjustLiveStock(${p.id}, 1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#E2F0CB; font-weight:bold; cursor:pointer;">＋</button>
                     </div>
