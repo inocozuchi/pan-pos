@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <title>泰山木POS</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <!-- ホーム画面に追加した時、ブラウザの戻る/アドレスバー等を出さずフルスクリーンで起動する設定
+         （iPad/iPhone: 共有 → ホーム画面に追加／Android: メニュー → ホーム画面に追加、またはアプリをインストール） -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="泰山木POS">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" href="icons/icon-192.png">
     <style>
         :root {
             --bg-color: #F4F3F0;      /* 温かみのあるライトニュートラル */
@@ -25,6 +34,17 @@
             --text-light: #857D74;
         }
 
+        /* 画面全体が左右・上下に不必要に動く（ラバーバンド/バウンス）のを防止。
+           body だけでなく html 側にも同じ制約をかけないと、iPad/iPhoneのSafariでは
+           端末の外側（htmlのビューポート）が揺れてしまうことがある。 */
+        html {
+            height: 100%;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            overscroll-behavior: none;
+        }
+
        body {
             font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-color);
@@ -38,7 +58,7 @@
             overflow: hidden;
             position: fixed;
             width: 100%;
-            overscroll-behavior-y: none;
+            overscroll-behavior: none;
         }
         
         /* ダブルタップでの画面拡大を防止する設定 */
@@ -722,6 +742,18 @@
                 <button class="action-btn btn-reserve" style="width:100%;" onclick="copyHandoffData()">📋 この端末のデータをコピー</button>
                 <textarea id="handoff-paste" placeholder="別の端末でコピーしたデータをここに貼り付け" style="width:100%; box-sizing:border-box; height:70px; margin:8px 0 0; padding:10px; font-size:13px; border:2px solid var(--line); border-radius:12px; background:var(--surface); color:var(--text-main); resize:vertical;"></textarea>
                 <button class="action-btn btn-checkout" style="width:100%; margin-top:8px;" onclick="importHandoffData()">📥 貼り付けたデータを取り込む</button>
+
+                <div style="margin-top:16px; padding:12px; border:1.5px dashed #C0574A; border-radius:12px; background:#FBEDE9;">
+                    <div class="settings-sublabel" style="margin-top:0; color:#A44030;">③ データの初期化（注意）</div>
+                    <p class="settings-hint">この端末に保存されている売上履歴・設定などをすべて削除し、まっさらな状態に戻します。<b>ブラウザの「閲覧履歴とCookieの削除」は不要です</b>（このアプリはCookieを使っておらず、削除すべきデータはこのボタンで消せるものだけです）。実行前に「① バックアップを保存」しておくことをおすすめします。</p>
+                    <button class="action-btn" style="width:100%; background:#C0574A; color:#fff;" onclick="factoryResetApp()">🗑 この端末のデータを初期化する</button>
+                </div>
+
+                <div style="margin-top:16px; padding:12px; border:1px solid var(--line); border-radius:12px; background:var(--surface);">
+                    <div class="settings-sublabel" style="margin-top:0;">④ 画面をすっきり使う（ブラウザの表示を消す）</div>
+                    <p class="settings-hint"><b>おすすめ：ホーム画面に追加</b>（iPad/iPhone：共有ボタン →「ホーム画面に追加」／Android：メニュー →「ホーム画面に追加」）。アイコンから起動すると、アドレスバーや戻るボタンが表示されない全画面表示になります。</p>
+                    <button id="btn-fullscreen" class="action-btn btn-reserve" style="width:100%; display:none;" onclick="toggleFullscreen()">⤢ 今すぐ全画面表示にする</button>
+                </div>
             </div>
 
             <div id="tab-reservations" style="display:none;">
@@ -1471,7 +1503,40 @@
         renderReservations();
         renderRecords();
         updateAnalytics();
+        updateFullscreenButton();
     }
+
+    // ▼ 全画面表示（対応端末のみ。iPad Safariは非対応のため「ホーム画面に追加」を案内）▼
+    function isFullscreenSupported() {
+        const el = document.documentElement;
+        return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled) &&
+               !!(el.requestFullscreen || el.webkitRequestFullscreen);
+    }
+    function currentFullscreenElement() {
+        return document.fullscreenElement || document.webkitFullscreenElement || null;
+    }
+    function toggleFullscreen() {
+        const el = document.documentElement;
+        if (!currentFullscreenElement()) {
+            const req = el.requestFullscreen || el.webkitRequestFullscreen;
+            if (req) {
+                const p = req.call(el);
+                if (p && p.catch) p.catch(() => showToast('この端末では全画面表示にできませんでした'));
+            }
+        } else {
+            const exit = document.exitFullscreen || document.webkitExitFullscreen;
+            if (exit) exit.call(document);
+        }
+    }
+    function updateFullscreenButton() {
+        const btn = document.getElementById('btn-fullscreen');
+        if (!btn) return;
+        btn.style.display = isFullscreenSupported() ? 'block' : 'none';
+        btn.textContent = currentFullscreenElement() ? '⤢ 全画面表示を終了する' : '⤢ 今すぐ全画面表示にする';
+    }
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+    // ▲▲▲ ここまで ▲▲▲
 
     // 営業状態に応じて営業管理タブの表示を切り替える
     // （開店中は「開店」UIを隠し、閉店中は「在庫調整・閉店」UIを隠す）
@@ -2859,6 +2924,25 @@
         applyData(data);
         if (ta) ta.value = '';
         afterDataReplaced('✓ 引き継ぎデータを取り込みました');
+    }
+
+    // この端末に保存されているアプリのデータをすべて削除し、初期状態に戻す。
+    // ブラウザの「閲覧履歴とCookieの削除」の代わりに使える（このアプリはCookieを使わない）。
+    function factoryResetApp() {
+        if (!confirm('【注意】この端末に保存されている売上履歴・設定などをすべて削除し、初期状態に戻します。\n\n先に「① バックアップを保存」で控えを取ることをおすすめします。\n\nこのまま初期化を始めますか？')) return;
+        if (!confirm('最終確認：本当に削除してよろしいですか？この操作は取り消せません。')) return;
+        try {
+            Object.keys(localStorage).forEach(k => {
+                if (k === 'taizanboku_pos_data' || k === 'taizanboku_device_id' || k.indexOf('taizanboku_pos_data_corrupt_') === 0) {
+                    localStorage.removeItem(k);
+                }
+            });
+        } catch (e) {
+            console.warn('初期化中にエラーが発生しました', e);
+            alert('初期化に失敗しました。手動でブラウザの設定からデータを削除してください。');
+            return;
+        }
+        location.reload();
     }
     // ▲▲▲ ここまで ▲▲▲
 
