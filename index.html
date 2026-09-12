@@ -678,7 +678,10 @@
                     <!-- 複数端末同期：Firebase設定がある時だけ表示 -->
                     <div id="sync-code-row" style="display:none; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px;">
                         <div class="settings-sublabel" style="margin-top:0;">🔗 複数端末で同時に会計する（任意）</div>
-                        <p class="settings-hint">同じ「共有コード」を入れた端末どうしで、売上をリアルタイムに共有します。<b>一緒に使う全端末で同じコード</b>にしてください（新しい販売会は新しいコードで）。</p>
+                        <p class="settings-hint">同じ「共有コード」を入れた端末どうしで、売上をリアルタイムに共有します。<b>一緒に使う全端末で同じコード</b>にしてください。<br>
+                        ・最初にこのコードで開店した端末が商品構成の元になります。<br>
+                        ・あとから同じコードで開店すると、その販売会に「参加」します（商品リストは共有中の内容を使用）。<br>
+                        ・新しい販売会は必ず新しいコードで（同じコードを使い回すと前回の集計と混ざるおそれがあるため、閉店済みのコードは警告が出ます）。</p>
                         <input type="text" id="sync-event-code-input" placeholder="共有コード（例: pansale-1101）">
                         <div id="sync-status" class="settings-hint" style="margin:6px 0 0;"></div>
                     </div>
@@ -700,6 +703,7 @@
                         <div id="live-stock-list" style="max-height:220px; overflow-y:auto; background:#F7F5F1; border:2px solid var(--line); padding:10px; border-radius:12px; margin-top:8px;"></div>
                     </details>
                     <button class="action-btn" style="width:100%; margin-top:12px; background: var(--accent); color: white;" onclick="endSession()">閉店する (集計して終了)</button>
+                    <button id="btn-leave-device" class="action-btn btn-undo" style="width:100%; margin-top:8px; display:none;" onclick="leaveDeviceOnly()">🚪 この端末の利用を終える（他の端末は継続）</button>
                 </div>
 
                 <hr style="border: none; border-top: 1px dashed var(--line); margin: 14px 0;">
@@ -932,7 +936,7 @@
     let syncReady = false;      // Firebase初期化＋匿名ログイン完了
     let syncMode = false;       // 現在この販売会で同期中か（イベントコード購読中）
     let syncEventCode = null;   // 共有する販売会コード
-    let fbApp = null, fbDb = null, fbAuth = null, fbSalesUnsub = null;
+    let fbApp = null, fbDb = null, fbAuth = null, fbSalesUnsub = null, fbSessionUnsub = null;
     let deviceId = null;        // 端末識別子（客No.の重複判定・自分の書き込み識別用）
     function getDeviceId() {
         if (deviceId) return deviceId;
@@ -1489,28 +1493,70 @@
         if (id === 'settings-modal') setActiveNav('register');
     }
 
-    function startSession() {
+    async function startSession() {
         const name = document.getElementById('session-name-input').value;
         if (!name) { alert('名前を入力してください'); return; }
 
-        // 開店前の仕入れ数の妥当性チェック（ミルクパンのような数え間違い・入力ミスの予防）
-        const warnings = [];
-        const latest = getLatestRecommendationMap();
-        tempSetupProducts.forEach(p => {
-            if (p.price <= 0) return; // 未設定枠は対象外
-            if (!(p.initialStock > 0)) {
-                warnings.push(`・${p.name}：仕入 0（販売しないなら「取扱商品」から外すと確実）`);
-            } else if (p.initialStock > 300) {
-                warnings.push(`・${p.name}：仕入 ${p.initialStock} 個（多すぎませんか？）`);
-            } else if (latest && latest.map[p.name] && latest.map[p.name].initial > 0) {
-                const prev = latest.map[p.name].initial;
-                if (p.initialStock >= prev * 3 || p.initialStock <= prev / 3) {
-                    warnings.push(`・${p.name}：今回 ${p.initialStock} / 前回 ${prev}（差が大きめ・要確認）`);
+        // 同期：共有コードが既に「開店中」の販売会なら参加、「閉店済み」なら警告、
+        // 存在しなければこの端末が新規作成（＝商品構成の共有元になる）。
+        const useSync = syncReady && window.FIREBASE_CONFIG;
+        let code = null, joinedProducts = null, sharedName = name, isJoining = false;
+        if (useSync) {
+            const codeInput = document.getElementById('sync-event-code-input');
+            code = sanitizeEventCode((codeInput && codeInput.value || '').trim() || name) || ('event-' + Date.now());
+            try {
+                const snap = await fbDb.collection('events').doc(code).get();
+                if (snap.exists) {
+                    const data = snap.data() || {};
+                    if (data.status === 'closed') {
+                        const makeNew = confirm(
+                            `共有コード「${code}」の販売会（${data.name || '無題'}）は既に閉店（集計）済みです。\n` +
+                            `続けて同じコードを使うと、前回の集計と混ざるおそれがあります。\n\n` +
+                            `[OK] 新しいコードを自動で作って開店する\n[キャンセル] 中止する（コードを直してから再度お試しください）`
+                        );
+                        if (!makeNew) return;
+                        code = sanitizeEventCode(code + '-' + Date.now());
+                    } else if (Array.isArray(data.products) && data.products.length > 0) {
+                        const ok = confirm(
+                            `共有コード「${code}」は既に「${data.name || '無題'}」として開店中です。\n` +
+                            `この端末から参加しますか？\n` +
+                            `※商品リストは共有中の内容を使用します。この画面で設定した商品名・価格・仕入れ数は使われません。`
+                        );
+                        if (!ok) return;
+                        joinedProducts = data.products;
+                        sharedName = data.name || name;
+                        isJoining = true;
+                    } else {
+                        alert('共有データの形式が正しくないため参加できません。別のコードをお試しください。');
+                        return;
+                    }
                 }
+            } catch (e) {
+                console.warn('共有販売会の確認に失敗しました。通常どおり開店します。', e);
             }
-        });
-        if (warnings.length > 0) {
-            if (!confirm('【仕入れ数の確認】数え間違い・入力ミスがないかご確認ください:\n\n' + warnings.join('\n') + '\n\nこのまま開店してよろしいですか？')) return;
+        }
+
+        if (!isJoining) {
+            // 開店前の仕入れ数の妥当性チェック（ミルクパンのような数え間違い・入力ミスの予防）
+            // ※参加(join)の場合は共有済みの商品構成を使うため対象外。
+            const warnings = [];
+            const latest = getLatestRecommendationMap();
+            tempSetupProducts.forEach(p => {
+                if (p.price <= 0) return; // 未設定枠は対象外
+                if (!(p.initialStock > 0)) {
+                    warnings.push(`・${p.name}：仕入 0（販売しないなら「取扱商品」から外すと確実）`);
+                } else if (p.initialStock > 300) {
+                    warnings.push(`・${p.name}：仕入 ${p.initialStock} 個（多すぎませんか？）`);
+                } else if (latest && latest.map[p.name] && latest.map[p.name].initial > 0) {
+                    const prev = latest.map[p.name].initial;
+                    if (p.initialStock >= prev * 3 || p.initialStock <= prev / 3) {
+                        warnings.push(`・${p.name}：今回 ${p.initialStock} / 前回 ${prev}（差が大きめ・要確認）`);
+                    }
+                }
+            });
+            if (warnings.length > 0) {
+                if (!confirm('【仕入れ数の確認】数え間違い・入力ミスがないかご確認ください:\n\n' + warnings.join('\n') + '\n\nこのまま開店してよろしいですか？')) return;
+            }
         }
 
         if (salesHistory.length > 0 || reservations.length > 0) {
@@ -1520,7 +1566,7 @@
         // 開店時に「前回の販売会」を確定（今回の集計と比較するため）
         comparisonBaseline = sessionArchive.length ? sessionArchive[sessionArchive.length - 1] : null;
 
-        currentSession = name;
+        currentSession = sharedName;
         salesHistory = [];
         reservations = [];
         cart = [];
@@ -1528,23 +1574,37 @@
         voidCount = 0;
         operationLog = [];
 
-        // 編集した一時データを本番の商品データとして適用する
-        products = JSON.parse(JSON.stringify(tempSetupProducts));
-        products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; });
-        
-        // 同期：共有コードを確定して購読開始（Firebase設定があり接続できている時のみ）
-        if (syncReady && window.FIREBASE_CONFIG) {
-            const codeInput = document.getElementById('sync-event-code-input');
-            let code = (codeInput && codeInput.value || '').trim();
-            if (!code) code = sanitizeEventCode(name) || ('event-' + Date.now());
-            code = sanitizeEventCode(code);
-            startSalesSubscription(code); // 以後 salesHistory は全端末の共有結果で上書きされる
+        if (isJoining) {
+            // 参加：共有中の商品構成をそのまま採用（在庫は同期購読の再計算に任せる）
+            products = JSON.parse(JSON.stringify(joinedProducts));
+            products.forEach(p => { if (p.stock == null) p.stock = p.initialStock; if (p.soldOutTime === undefined) p.soldOutTime = null; });
+        } else {
+            // 新規作成：編集した一時データを本番の商品データとして適用する
+            products = JSON.parse(JSON.stringify(tempSetupProducts));
+            products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; });
+        }
+
+        if (useSync) {
+            if (!isJoining) {
+                // 新規作成：この端末が共有元になり、商品構成をFirestoreへ書き込む
+                try {
+                    await fbDb.collection('events').doc(code).set({
+                        name: sharedName, status: 'open', products: products,
+                        openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
+                    });
+                } catch (e) {
+                    console.warn('共有販売会の作成に失敗しました。この端末だけで開店します。', e);
+                }
+            }
+            startSalesSubscription(code);       // 以後 salesHistory は全端末の共有結果で上書きされる
+            startSessionDocSubscription(code);  // 他端末での閉店（集計終了）を検知するため
         } else {
             stopSalesSubscription();
+            stopSessionDocSubscription();
             syncEventCode = null;
         }
 
-        document.getElementById('session-display').innerText = `営業中: ${name}`;
+        document.getElementById('session-display').innerText = `営業中: ${sharedName}`;
         document.getElementById('session-display').style.background = 'var(--white)';
         closeModal('settings-modal');
         saveData();
@@ -1561,7 +1621,10 @@
             alert('【！】未精算の予約が残っています。予約管理を確認してください');
             return;
         }
-        if (!confirm('営業を終了して売上を集計します。')) return;
+        const confirmMsg = syncMode
+            ? '営業を終了して売上を集計します。\n\n※これは共有販売会そのものを終了する操作です。同じコードを使っている他の端末があれば、先にそちらへ伝えてから閉店してください。\n（この端末だけ操作を終える場合は、下の「この端末の利用を終える」をお使いください）'
+            : '営業を終了して売上を集計します。';
+        if (!confirm(confirmMsg)) return;
         updateAnalytics();
 
         // ▼▼▼ この回の実績を次回の仕入れ推奨として保存（開店リセットでは消えない） ▼▼▼
@@ -1594,7 +1657,13 @@
         }
         // ▲▲▲ ここまで ▲▲▲
 
-        stopSalesSubscription(); // 同期購読を停止（他端末には影響しない。リモートの記録は保持）
+        // 同期中：共有販売会そのものを「閉店済み」にする（同じコードの使い回し事故を防ぐ）
+        if (syncMode && syncEventCode && fbDb) {
+            fbDb.collection('events').doc(syncEventCode).set({ status: 'closed', closedAt: Date.now() }, { merge: true })
+                .catch(e => console.warn('共有販売会の終了フラグの書き込みに失敗しました', e));
+        }
+        stopSalesSubscription();
+        stopSessionDocSubscription();
         syncEventCode = null;
 
         currentSession = null;
@@ -1605,6 +1674,24 @@
         showTab('analytics');
         if (salesHistory.length > 0) showAnalyticsSection('insight'); // 閉店時は次回インサイトを表示
         saveData();
+    }
+
+    // 【複数端末同期中のみ】この端末だけレジ操作を終える（共有販売会そのものは終了しない）。
+    // シフト交代（午前:端末A→午後:端末B）や、ピーク時だけ増やした応援端末を外す時に使う。
+    function leaveDeviceOnly() {
+        if (!syncMode) { alert('この操作は複数端末同期が有効な時だけ使えます。'); return; }
+        if (!confirm('この端末でのレジ操作を終えます。\n共有販売会そのものは終了せず、他の端末はそのまま続けられます。\n（この端末は次に開店するまで会計できません）\n\nよろしいですか？')) return;
+        stopSalesSubscription();
+        stopSessionDocSubscription();
+        syncEventCode = null;
+        currentSession = null;
+        const disp = document.getElementById('session-display');
+        disp.innerText = "閉店中";
+        disp.style.background = '';
+        updateSessionTabView();
+        saveData();
+        init();
+        showToast('この端末の利用を終えました（共有販売会は継続中）');
     }
 
     // 売上データを集計し、項目ごとのテキストを analyticsSections に格納する。
@@ -2912,7 +2999,7 @@
             return `
                 <div class="res-card"${editing ? ' style="outline:2px solid var(--accent);"' : ''}>
                     <div class="res-header">
-                        <span>客No. ${h.no || '-'}${h.edited ? ' <span style="font-size:11px; color:#c0392b; font-weight:normal;">(修正済)</span>' : ''}</span>
+                        <span>客No. ${h.no || '-'}${h.deviceLabel ? ` <span style="font-size:11px; color:var(--text-light); font-weight:normal;">［${h.deviceLabel}］</span>` : ''}${h.edited ? ' <span style="font-size:11px; color:#c0392b; font-weight:normal;">(修正済)</span>' : ''}</span>
                         <span style="color:var(--text-light); font-size:13px; font-weight:normal;">${dtStr}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin:3px 0;">
@@ -3338,7 +3425,10 @@
             syncReady = true;
             updateSyncUi();
             // すでに販売会が開いていて同期コードが保存済みなら購読を再開
-            if (currentSession && syncEventCode) startSalesSubscription(syncEventCode);
+            if (currentSession && syncEventCode) {
+                startSalesSubscription(syncEventCode);
+                startSessionDocSubscription(syncEventCode);
+            }
         } catch (e) {
             console.warn('Firebase同期は利用できません（オフライン/設定不備等）。ローカル運用で続行します。', e);
             syncReady = false; syncMode = false;
@@ -3369,12 +3459,31 @@
         updateSyncUi();
     }
 
+    // 共有販売会(events/{code})自体の状態を購読し、他端末による「閉店」を検知する（強制終了はしない）
+    function startSessionDocSubscription(code) {
+        if (!syncReady || !code || !fbDb) return;
+        if (fbSessionUnsub) { try { fbSessionUnsub(); } catch (e) {} fbSessionUnsub = null; }
+        let firstSnapshot = true;
+        fbSessionUnsub = fbDb.collection('events').doc(code).onSnapshot(doc => {
+            const d = doc.data();
+            // 初回の受信（この端末が今まさに開店/参加した瞬間）は通知しない。以降の変化だけ知らせる。
+            if (!firstSnapshot && d && d.status === 'closed' && syncMode) {
+                showToast('⚠ 他の端末でこの販売会は閉店（集計）されました');
+            }
+            firstSnapshot = false;
+        }, err => { console.warn('共有販売会の状態購読でエラー', err); });
+    }
+
+    function stopSessionDocSubscription() {
+        if (fbSessionUnsub) { try { fbSessionUnsub(); } catch (e) {} fbSessionUnsub = null; }
+    }
+
     // リモート（全端末）の売上ドキュメントから salesHistory を再構築（取消は除外）
     function applyRemoteSales(docs) {
         const rebuilt = docs
             .filter(d => !d.voided)
             .map(d => ({
-                no: d.no,
+                localNo: d.no, // 送信端末内での連番（参考値。端末をまたぐと重複しうるため表示には使わない）
                 deviceLabel: d.deviceLabel || '',
                 time: new Date(d.createdAt || Date.now()),
                 items: Array.isArray(d.items) ? d.items : [],
@@ -3389,6 +3498,9 @@
                 localId: d.localId
             }))
             .sort((a, b) => a.time - b.time);
+        // 客No.は「全端末を時刻順に統合した通し番号」で採番し直す（重複しない）。
+        // 端末ごとの連番(localNo)は複数端末では必ず重複するため表示に使わない。
+        rebuilt.forEach((h, i) => { h.no = i + 1; });
         salesHistory = rebuilt;
         recomputeStockFromSales();
         saveData(); // ローカルにも控え（オフライン時の保険）
@@ -3454,6 +3566,8 @@
         });
         const row = document.getElementById('sync-code-row');
         if (row) row.style.display = window.FIREBASE_CONFIG ? 'block' : 'none';
+        const leaveBtn = document.getElementById('btn-leave-device');
+        if (leaveBtn) leaveBtn.style.display = syncMode ? 'block' : 'none';
     }
     // ▲▲▲ ここまで ▲▲▲
 
