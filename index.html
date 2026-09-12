@@ -32,7 +32,31 @@
             --btn-neutral: #EFEDE8;   /* 補助ボタン */
             --text-main: #2E2A26;     /* 濃い暖色チャコール（可読性重視） */
             --text-light: #857D74;
+
+            /* ▼ ここから下は「機能を少しずつ足した結果ばらけていた色」を
+                 1か所に集約したもの。新しく色を足すときも必ずこの変数を使う。 */
+            --sunken: #F7F5F1;        /* 一段へこんだ面（入力欄・情報ボックスの背景） */
+            --sunken-deep: #FBFAF7;   /* ごく薄いへこみ（フッター等） */
+            --positive: #E6EBD8;      /* 「増やす・進める」補助ボタン／営業中バナー */
+            --positive-line: #CBD8AC;
+            --warn-bg: #FFF6E5;       /* 注意（未入力の残りなど） */
+            --warn-line: #F0C674;
+            --warn-ink: #9A6A14;
+            --warn-solid: #E8A33D;
+            --danger: #C0574A;        /* 危険・警告（取消・初期化・超過販売） */
+            --danger-bg: #FBEDE9;
+            --danger-ink: #A44030;
+            --low-ink: #E06C00;       /* 残りわずかの強調 */
+
+            /* 角丸は 3段階＋ピルに統一（細かいパーツ=sm／箱・ボタン=md／モーダル=lg） */
+            --r-sm: 8px;
+            --r-md: 12px;
+            --r-lg: 18px;
+            --r-pill: 999px;
         }
+
+        /* 金額は桁が揃う等幅数字で表示する（アプリ全体で統一） */
+        .num, .total-amount, .co-summary .co-val, .change-display { font-variant-numeric: tabular-nums; }
 
         /* 画面全体が左右・上下に不必要に動く（ラバーバンド/バウンス）のを防止。
            body だけでなく html 側にも同じ制約をかけないと、iPad/iPhoneのSafariでは
@@ -74,13 +98,13 @@
             margin-top: 15px;
         }
         .tenkey-btn {
-            background-color: #F7F5F1;
+            background-color: var(--sunken);
             border: 2px solid var(--line);
             font-size: 30px;
             font-weight: bold;
             padding: 18px;
             min-height: 68px;
-            border-radius: 12px;
+            border-radius: var(--r-md);
             color: var(--text-main);
             font-family: inherit;
         }
@@ -92,20 +116,32 @@
         /* ▼▼▼ お会計画面の横長化＆客属性ボタン化 ▼▼▼ */
         .customer-type-group { display: flex; gap: 5px; width: 100%; }
         .type-btn {
-            flex: 1; text-align: center; background: #FFF; border: 2px solid #CCC; 
-            border-radius: 8px; padding: 10px 2px; font-weight: bold; cursor: pointer;
+            flex: 1; text-align: center; background: var(--white); border: 2px solid var(--line-strong);
+            border-radius: var(--r-sm); padding: 10px 2px; font-weight: bold; cursor: pointer;
             font-size: 14px; transition: all 0.2s;
         }
         .type-btn input[type="radio"] { display: none; } /* ラジオボタンの丸を隠す */
         .type-btn:has(input:checked) { background: var(--accent); color: white; border-color: var(--accent); }
-        .type-btn.type-later { background: #FFF6E5; border-color: #F0C674; color: #a06a00; } /* 後で入力（未入力フラグ） */
-        .type-btn.type-later:has(input:checked) { background: #F0AD4E; border-color: #F0AD4E; color: white; }
+        .type-btn.type-later { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-ink); } /* 後で入力（未入力フラグ） */
+        .type-btn.type-later:has(input:checked) { background: var(--warn-solid); border-color: var(--warn-solid); color: white; }
         
         @media (min-width: 769px) {
             .checkout-wide { max-width: 940px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
             .checkout-left { flex: 1; display: flex; flex-direction: column; border-right: 2px dashed var(--line); padding-right: 20px; }
             .checkout-right { flex: 1.2; display: flex; flex-direction: column; justify-content: space-between; }
             .checkout-left .receipt-list { flex: 1; max-height: none; }
+        }
+        /* 横画面タブレットでも、縦の余裕が少ない機種（iPad 1024×768 等）では
+           お会計画面が縦に収まりきらず「完了・記録」まで届かないことがある。
+           配置は変えずに、テンキーと余白だけを詰めて1画面に収める。 */
+        @media (min-width: 769px) and (max-height: 860px) {
+            #checkout-modal .modal-content { padding: 18px; }
+            #checkout-modal h2 { font-size: 22px; margin-bottom: 6px; }
+            #cash-input { font-size: 26px; padding: 12px 16px; margin: 8px 0; }
+            .tenkey-grid { gap: 9px; margin-top: 10px; }
+            .tenkey-btn { min-height: 54px; padding: 10px; font-size: 26px; }
+            .change-display { margin: 10px 0; padding: 8px 10px; }
+            .change-display .chg-amount { font-size: 28px; }
         }
         /* ▲▲▲ ここまで ▲▲▲ */
 
@@ -128,7 +164,7 @@
 
         .app-title { font-size: 20px; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 12px; letter-spacing: 0.01em; min-width: 0; }
         .session-info {
-            font-size: 13px; background: var(--accent-soft); padding: 5px 13px; border-radius: 999px;
+            font-size: 13px; background: var(--accent-soft); padding: 5px 13px; border-radius: var(--r-pill);
             color: var(--accent-ink); font-weight: 700; white-space: nowrap; overflow: hidden;
             text-overflow: ellipsis; max-width: 220px;
         }
@@ -144,7 +180,7 @@
             border: none;
             color: var(--text-main);
             padding: 9px 20px;
-            border-radius: 999px;
+            border-radius: var(--r-pill);
             font-weight: bold;
             cursor: pointer;
             white-space: nowrap;
@@ -176,7 +212,7 @@
             position: relative;
             overflow: hidden;
             border: 1px solid rgba(0,0,0,0.05);
-            border-radius: 14px;
+            border-radius: var(--r-md);
             color: var(--text-main);
             display: flex;
             flex-direction: column;
@@ -201,15 +237,15 @@
         .product-btn .pname { line-height: 1.25; overflow-wrap: anywhere; word-break: break-word; letter-spacing: 0.01em; }
         .product-btn .price { color: var(--accent-ink); font-size: 19px; font-weight: 800; margin-top: 5px; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
         .product-btn.out-of-stock .price { color: #C9C4BD; }
-        .product-btn .stock { font-size: 11px; color: var(--text-main); font-weight: 600; margin-top: 6px; background: rgba(255,255,255,0.55); border-radius: 999px; padding: 2px 9px; }
+        .product-btn .stock { font-size: 11px; color: var(--text-main); font-weight: 600; margin-top: 6px; background: rgba(255,255,255,0.55); border-radius: var(--r-pill); padding: 2px 9px; }
 
         .soldout-badge {
             position: absolute; top: 8px; right: 8px;
             background: var(--accent); color: #fff; font-size: 11px; font-weight: bold;
-            padding: 3px 9px; border-radius: 999px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+            padding: 3px 9px; border-radius: var(--r-pill); box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
         .soldout-badge.prep { background: #B0ABA4; }
-        .soldout-badge.warn { background: #d9534f; } /* 販売数>仕入数（超過）の警告 */
+        .soldout-badge.warn { background: var(--danger); } /* 販売数>仕入数（超過）の警告 */
 
         #sidebar {
             flex: 1;
@@ -236,7 +272,7 @@
         }
 
         footer {
-            background-color: #FBFAF7;
+            background-color: var(--sunken-deep);
             padding: 15px;
             display: flex;
             flex-direction: column;
@@ -251,7 +287,7 @@
         .action-row { display: flex; gap: 10px; }
         .action-btn {
             padding: 13px;
-            border-radius: 12px;
+            border-radius: var(--r-md);
             font-weight: 700;
             font-size: 15px;
             cursor: pointer;
@@ -269,6 +305,29 @@
         .btn-checkout { background-color: var(--accent); color: #fff; width: 100%; font-size: 18px; padding: 16px; margin-top: 6px; box-shadow: 0 4px 12px rgba(194,94,62,0.28); }
         @media (hover: hover) { .btn-checkout:hover { filter: brightness(1.03); } }
 
+        /* ▼▼▼ ボタンの役割を3段階に統一（既存のレジアプリと同じ考え方）▼▼▼
+           機能を足すたびにボタンの色がばらけていたので、以下のどれかに必ず当てはめる。
+             ① 塗り（--accent）= その画面で一番進めたい操作。1画面に1つだけ  → .btn-checkout
+             ② 枠線＋淡い背景  = ①と同じ方向の「別の入口」（ショートカット等） → .btn-accent-outline
+             ③ うすいグレー    = 補助・戻る・書き出しなど                     → .btn-undo / .btn-reserve / .btn-secondary
+             ④ 赤             = 消す・戻せない操作                           → .btn-danger（枠線）/ .btn-danger-solid（塗り）
+           枠線は box-shadow の inset で描く（border を足すと高さがずれるため）。*/
+        .btn-secondary { background-color: var(--btn-neutral); }
+        .btn-accent-outline { background: var(--accent-soft); color: var(--accent-ink); box-shadow: inset 0 0 0 2px var(--accent); }
+        .btn-positive { background-color: var(--positive); box-shadow: inset 0 0 0 1px var(--positive-line); }
+        .btn-danger { background: var(--white); color: var(--danger-ink); box-shadow: inset 0 0 0 2px var(--danger); }
+        .btn-danger-solid { background: var(--danger); color: #fff; }
+        /* 数量の ± など小さな四角ボタン（カート・会計履歴・在庫調整で共通） */
+        .step-btn {
+            width: 30px; height: 30px; flex-shrink: 0; border: none; cursor: pointer;
+            border-radius: var(--r-sm); font-weight: bold; font-size: 16px; line-height: 1;
+            font-family: inherit; background: var(--btn-neutral); color: var(--text-main);
+        }
+        .step-btn.minus { color: var(--accent-ink); }
+        .step-btn.plus { background: var(--positive); box-shadow: inset 0 0 0 1px var(--positive-line); }
+        .step-btn:active { transform: translateY(1px); }
+        /* ▲▲▲ ここまで ▲▲▲ */
+
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(90, 78, 77, 0.6);
@@ -279,7 +338,7 @@
             background: var(--white);
             width: 90%; max-width: 450px;
             padding: 24px;
-            border-radius: 18px;
+            border-radius: var(--r-lg);
             box-shadow: 0 18px 50px rgba(38,34,30,0.22);
             max-height: 92vh;
             overflow-y: auto;
@@ -294,13 +353,26 @@
         }
         .receipt-item {
             display: flex; justify-content: space-between;
-            padding: 8px 0; font-size: 15px; border-bottom: 1px solid #F7F5F1;
+            padding: 8px 0; font-size: 15px; border-bottom: 1px solid var(--sunken);
         }
+
+        /* お会計画面の明細サマリー（点数・小計・合計を右揃えで縦に並べる） */
+        .co-summary { margin-top: auto; }
+        .co-summary .co-row {
+            display: flex; justify-content: space-between; align-items: baseline;
+            padding: 4px 0; font-size: 14px; color: var(--text-light);
+        }
+        .co-summary .co-row .co-val { color: var(--text-main); font-weight: 700; }
+        .co-summary .co-row.co-grand {
+            border-top: 2px solid var(--line-strong); margin-top: 6px; padding-top: 8px;
+            font-size: 17px; color: var(--text-main); font-weight: 700;
+        }
+        .co-summary .co-row.co-grand .co-val { font-size: 30px; font-weight: 800; letter-spacing: 0.01em; }
 
         input[type="number"], input[type="text"] {
             width: calc(100% - 30px); padding: 12px 15px; font-size: 18px;
-            margin: 10px 0; border-radius: 12px; border: 2px solid var(--line);
-            background: #F7F5F1; color: var(--text-main); outline: none;
+            margin: 10px 0; border-radius: var(--r-md); border: 2px solid var(--line);
+            background: var(--sunken); color: var(--text-main); outline: none;
         }
         input:focus { border-color: var(--accent); }
 
@@ -310,18 +382,32 @@
             padding: 16px 18px; width: calc(100% - 36px);
         }
 
-        .change-display { font-size: 36px; color: var(--accent); margin: 15px 0; font-weight: bold; text-align: center; }
-        
+        /* お釣り表示：金額＋「何をいくつ返すか」の内訳（渡し間違い・もたつきの防止） */
+        .change-display {
+            margin: 15px 0; text-align: center; background: var(--accent-soft);
+            border-radius: var(--r-md); padding: 10px 12px;
+        }
+        .change-display .chg-amount { font-size: 32px; color: var(--accent-ink); font-weight: bold; }
+        .change-display .chg-label { font-size: 14px; color: var(--accent-ink); font-weight: bold; margin-right: 6px; }
+        .change-display .chg-breakdown {
+            display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: center; margin-top: 7px;
+        }
+        .change-display .chg-breakdown span {
+            background: var(--white); color: var(--text-main); border-radius: var(--r-pill);
+            padding: 3px 10px; font-size: 13px; font-weight: 700; white-space: nowrap;
+        }
+        .change-display .chg-none { font-size: 13px; font-weight: bold; color: var(--accent-ink); margin-top: 4px; }
+
         .tab-menu { display: flex; border-bottom: 2px solid var(--line); margin-bottom: 15px; flex-shrink: 0; }
         .tab-item { flex: 1; padding: 12px 4px; color: var(--text-light); cursor: pointer; text-align: center; font-weight: bold; font-size: 15px; }
         .tab-item.active { color: var(--accent); border-bottom: 3px solid var(--accent); }
         .tab-content { flex: 1; overflow-y: auto; padding-bottom: 10px; }
 
         .res-card {
-            background: var(--bg-color); border-radius: 12px; padding: 15px;
+            background: var(--bg-color); border-radius: var(--r-md); padding: 15px;
             margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;
         }
-        .res-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid #EAEAEA; padding-bottom: 5px; }
+        .res-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid var(--line); padding-bottom: 5px; }
         .res-actions { display: flex; gap: 10px; }
 
         @media (max-width: 768px) {
@@ -357,7 +443,9 @@
             #checkout-modal .receipt-list { max-height: 18vh; margin: 6px 0; }
             #checkout-modal .receipt-item { font-size: 15px; }
             /* 合計表示（左区画）を少し詰める */
-            #checkout-modal .checkout-left > div:last-child { font-size: 20px !important; }
+            #checkout-modal .co-summary .co-row { padding: 2px 0; font-size: 13px; }
+            #checkout-modal .co-summary .co-row.co-grand { font-size: 15px; margin-top: 4px; padding-top: 5px; }
+            #checkout-modal .co-summary .co-row.co-grand .co-val { font-size: 24px; }
 
             /* 客属性ボックスを薄く */
             #checkout-modal .checkout-right > div:first-child { padding: 8px !important; margin-bottom: 6px !important; }
@@ -369,7 +457,10 @@
             /* テンキーを縮めて全キーを画面内に収める */
             .tenkey-grid { gap: 7px; margin-top: 7px; }
             .tenkey-btn { font-size: 22px; padding: 0; min-height: 46px; }
-            .change-display { font-size: 24px; margin: 8px 0 6px; }
+            .change-display { margin: 8px 0 6px; padding: 7px 10px; }
+            .change-display .chg-amount { font-size: 24px; }
+            .change-display .chg-breakdown { margin-top: 5px; gap: 3px 5px; }
+            .change-display .chg-breakdown span { font-size: 12px; padding: 2px 8px; }
 
             /* 戻る・完了は常に画面下に固定（押せない問題を解消）*/
             #checkout-modal .checkout-right > div:last-child {
@@ -383,9 +474,8 @@
             .app-title { font-size: 18px; gap: 8px; }
             .session-info { font-size: 12px; padding: 4px 10px; max-width: 46vw; }
             #bottom-nav { padding: 3px 4px calc(3px + env(safe-area-inset-bottom, 0px)); }
-            .nav-item { font-size: 10px; padding: 5px 2px 4px; gap: 2px; border-radius: 10px; }
+            .nav-item { font-size: 10px; padding: 5px 2px 4px; gap: 2px; border-radius: var(--r-sm); }
             .nav-item .nav-ico { font-size: 20px; }
-            .product-btn { border-radius: 12px; }
             .product-btn .pname { line-height: 1.2; }
             .product-btn .stock { margin-top: 2px; }
             /* 空カートの案内をコンパクトに（縦の占有を削減） */
@@ -394,6 +484,31 @@
             .total-display { margin-bottom: 2px; }
             .action-row { gap: 8px; }
             footer .action-row .action-btn { padding: 11px; font-size: 14px; }
+        }
+
+        /* ▼ 画面が短いスマホ（iPhone SE 等 = 縦667px前後）だけ、お会計画面をさらに詰める。
+             お釣りの内訳や点数を足したぶん、小さい端末では「完了・記録」が画面外に出てしまう
+             ため。縦に余裕のある端末（844px以上）は読みやすい余白のままにしておく。 */
+        @media (max-width: 768px) and (max-height: 740px) {
+            #checkout-modal h2 { font-size: 16px; }
+            #checkout-modal .receipt-list { max-height: 15vh; margin: 4px 0; }
+            /* 点数はレシート明細と左下のカートで確認できるので、狭い端末では合計だけ出す */
+            #checkout-modal .co-summary .co-row:not(.co-grand) { display: none; }
+            #checkout-modal .co-summary .co-row.co-grand { font-size: 13px; margin-top: 2px; padding-top: 4px; }
+            #checkout-modal .co-summary .co-row.co-grand .co-val { font-size: 21px; }
+            #checkout-modal .checkout-right > div:first-child { padding: 6px !important; margin-bottom: 4px !important; }
+            .type-btn { font-size: 12px; padding: 7px 1px; }
+            #cash-input { font-size: 22px; padding: 9px 12px; margin: 4px 0; }
+            #cash-suggestions .action-btn { padding: 7px !important; font-size: 14px !important; }
+            .tenkey-grid { gap: 5px; margin-top: 5px; }
+            .tenkey-btn { font-size: 20px; min-height: 40px; }
+            .change-display { margin: 5px 0 4px; padding: 5px 8px; }
+            .change-display .chg-amount { font-size: 20px; }
+            .change-display .chg-label { font-size: 13px; }
+            .change-display .chg-breakdown { margin-top: 3px; }
+            .change-display .chg-breakdown span { font-size: 11px; padding: 1px 7px; }
+            .change-display .chg-none { font-size: 12px; margin-top: 2px; }
+            #checkout-modal .checkout-right > div:last-child .btn-checkout { font-size: 17px; padding: 13px; }
         }
 
         /* ▼ 設定/予約パネル：横長デバイス向けにワイド化＆横スクロール ▼ */
@@ -405,12 +520,12 @@
             .card-strip > p { flex: 1; }
         }
         /* 仕入れ数設定：横長デバイスでは商品をカード横並び＋横スクロール */
-        .setup-list { background:#F7F5F1; border:2px solid var(--line); padding:10px; border-radius:12px; margin-bottom:15px; max-height:230px; overflow-y:auto; }
+        .setup-list { background:var(--sunken); border:2px solid var(--line); padding:10px; border-radius:var(--r-md); margin-bottom:15px; max-height:230px; overflow-y:auto; }
         .setup-card { padding:0 0 8px 8px; margin-bottom:8px; border-bottom:1px solid var(--line); }
         .setup-add-btn { width:100%; margin-top:10px; }
         @media (min-width: 769px) {
             .setup-list { display:flex; flex-wrap:nowrap; gap:10px; overflow-x:auto; overflow-y:hidden; max-height:none; align-items:flex-start; }
-            .setup-card { min-width:190px; max-width:210px; flex-shrink:0; border:2px solid var(--line); border-radius:10px; padding:10px 10px 10px 8px; margin-bottom:0; background:#FFF; }
+            .setup-card { min-width:190px; max-width:210px; flex-shrink:0; border:2px solid var(--line); border-radius:var(--r-md); padding:10px 10px 10px 8px; margin-bottom:0; background:var(--white); }
             .setup-add-btn { width:auto; min-width:100px; flex-shrink:0; align-self:stretch; margin-top:0; }
         }
 
@@ -418,7 +533,7 @@
         .analytics-menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         @media (min-width: 769px) { .analytics-menu-grid { grid-template-columns: repeat(3, 1fr); } }
         .analytics-menu-btn {
-            background: #F7F5F1; border: 2px solid var(--line); border-radius: 12px; padding: 16px 10px;
+            background: var(--sunken); border: 2px solid var(--line); border-radius: var(--r-md); padding: 16px 10px;
             font-size: 15px; font-weight: bold; color: var(--text-main); cursor: pointer;
             font-family: inherit; text-align: center; line-height: 1.5;
         }
@@ -431,14 +546,14 @@
         .settings-sublabel { font-size: 13px; font-weight: bold; color: var(--text-main); margin: 8px 0 6px; }
         #tab-session input#session-name-input { margin: 4px 0 6px; }
         .active-banner {
-            background: #E6EBD8; color: var(--text-main); font-weight: bold;
-            border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; font-size: 15px;
+            background: var(--positive); color: var(--text-main); font-weight: bold;
+            border-radius: var(--r-md); padding: 12px 14px; margin-bottom: 12px; font-size: 15px;
         }
 
         /* 操作フィードバックのトースト（会計完了・取消など） */
         #toast {
             position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(16px);
-            background: rgba(38,34,30,0.95); color: #fff; padding: 12px 24px; border-radius: 999px;
+            background: rgba(38,34,30,0.95); color: #fff; padding: 12px 24px; border-radius: var(--r-pill);
             font-weight: bold; font-size: 15px; box-shadow: 0 6px 20px rgba(0,0,0,0.22);
             opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
             z-index: 200; max-width: 90vw; text-align: center;
@@ -455,7 +570,7 @@
             flex: 1; border: none; background: none; cursor: pointer; font-family: inherit;
             display: flex; flex-direction: column; align-items: center; gap: 3px;
             padding: 6px 2px 5px; color: var(--text-light); font-weight: bold; font-size: 11px;
-            border-radius: 14px; position: relative; transition: color .12s ease, background .12s ease;
+            border-radius: var(--r-md); position: relative; transition: color .12s ease, background .12s ease;
         }
         .nav-item .nav-ico { font-size: 23px; line-height: 1; }
         .nav-item.active { color: var(--accent-ink); background: var(--accent-soft); }
@@ -463,7 +578,7 @@
         .nav-item:active { background: var(--accent-soft); }
         .nav-badge {
             position: absolute; top: 3px; left: 50%; margin-left: 6px;
-            min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+            min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-pill);
             background: var(--accent); color: #fff; font-size: 11px; line-height: 18px;
             text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,.18); display: none;
         }
@@ -476,7 +591,7 @@
         }
         #closed-cta.show { display: flex; }
         .closed-card {
-            background: var(--white); border-radius: 22px; padding: 30px 26px; text-align: center;
+            background: var(--white); border-radius: var(--r-lg); padding: 30px 26px; text-align: center;
             max-width: 380px; width: 100%; box-shadow: 0 10px 28px rgba(90,78,77,0.14);
             display: flex; flex-direction: column; gap: 12px; align-items: center;
         }
@@ -597,7 +712,7 @@
     </div>
 
     <aside id="sidebar">
-        <div id="pending-reminder" onclick="openSettings(); showTab('records');" style="display:none; background:#FFF6E5; color:#a06a00; font-weight:bold; font-size:13px; text-align:center; padding:8px; cursor:pointer; border-bottom:2px solid #F0C674;"></div>
+        <div id="pending-reminder" onclick="openSettings(); showTab('records');" style="display:none; background:var(--warn-bg); color:var(--warn-ink); font-weight:bold; font-size:13px; text-align:center; padding:8px; cursor:pointer; border-bottom:2px solid var(--warn-line);"></div>
         <div id="cart-list">
         </div>
         <footer>
@@ -628,11 +743,18 @@
         <div class="checkout-left">
             <h2 style="margin-top:0; text-align:center;">お会計</h2>
             <ul class="receipt-list" id="checkout-receipt"></ul>
-            <div style="font-size: 24px; font-weight: bold; text-align:right;">合計：¥<span id="modal-total">0</span></div>
+            <!-- 点数→合計を縦に並べ、金額は右揃え・等幅数字で読み間違いを防ぐ -->
+            <div class="co-summary">
+                <div class="co-row"><span>点数</span><span class="co-val"><span id="modal-count">0</span> 点</span></div>
+                <div class="co-row co-grand" onclick="setCashExact()" style="cursor:pointer;" title="タップするとお預かり金額に合計額が入ります">
+                    <span>合計 <span style="font-size:11px; font-weight:normal; color:var(--text-light);">(タップでちょうど)</span></span>
+                    <span class="co-val">¥<span id="modal-total">0</span></span>
+                </div>
+            </div>
         </div>
         
         <div class="checkout-right">
-            <div style="margin-bottom: 10px; text-align: left; background: #F7F5F1; padding: 10px; border-radius: 12px; border: 2px solid var(--line);">
+            <div style="margin-bottom: 10px; text-align: left; background: var(--sunken); padding: 10px; border-radius: var(--r-md); border: 2px solid var(--line);">
                 <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">客属性 (任意)</div>
                 <div class="customer-type-group">
                     <label class="type-btn"><input type="radio" name="customerType" value="学生"> 学生</label>
@@ -642,15 +764,15 @@
                     <label class="type-btn"><input type="radio" name="customerType" value="不明"> 不明</label>
                     <label class="type-btn type-later"><input type="radio" name="customerType" value="__later__" checked> ⏭後で</label>
                 </div>
-                <button type="button" id="last-type-quick" style="display:none; width:100%; margin-top:8px; padding:8px; font-size:14px; font-weight:bold; border:2px dashed var(--accent); border-radius:10px; background:#FFF; color:var(--accent); cursor:pointer;" onclick="applyLastCustomerType()"></button>
+                <button type="button" id="last-type-quick" style="display:none; width:100%; margin-top:8px; padding:8px; font-size:14px; font-weight:bold; border:2px dashed var(--accent); border-radius:var(--r-sm); background:var(--white); color:var(--accent-ink); cursor:pointer; font-family:inherit;" onclick="applyLastCustomerType()"></button>
             </div>
             
             <input type="text" id="cash-input" placeholder="預かり金額" readonly>
             
             <div id="cash-suggestions" style="display: flex; gap: 10px; margin-top: 5px;">
-                <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #E2F0CB;" onclick="setCashExact()">ちょうど</button>
+                <button class="action-btn btn-accent-outline" style="flex: 1; padding: 10px; font-size: 16px;" onclick="setCashExact()">ちょうど</button>
             </div>
-            <button class="action-btn" style="width:100%; margin-top:8px; background:var(--accent); color:#fff; font-size:15px; padding:11px;" onclick="completeExactCash()">⚡ ぴったり受取で会計完了</button>
+            <button class="action-btn btn-accent-outline" style="width:100%; margin-top:8px; font-size:15px; padding:11px;" onclick="completeExactCash()">⚡ ぴったり受取で会計完了</button>
 
             <div class="tenkey-grid">
                 <button class="action-btn tenkey-btn" onclick="appendCash('7')">7</button>
@@ -667,8 +789,12 @@
                 <button class="action-btn tenkey-btn clear-btn" onclick="clearCash()">C</button>
             </div>
             
-            <div class="change-display">お釣り: ¥<span id="change-amount">0</span></div>
-            
+            <!-- お釣りは金額だけでなく「何をいくつ返すか」も出す（渡し間違い・もたつきの防止） -->
+            <div class="change-display">
+                <span class="chg-label">お釣り</span><span class="chg-amount">¥<span id="change-amount">0</span></span>
+                <div class="chg-breakdown" id="change-breakdown"></div>
+            </div>
+
             <div style="display:flex; gap:10px;">
                 <button class="action-btn btn-undo" style="flex:1;" onclick="closeModal('checkout-modal')">戻る</button>
                 <button class="action-btn btn-checkout" style="flex:2; margin-top:0;" onclick="completeTransaction()">完了・記録</button>
@@ -692,12 +818,12 @@
             <div id="tab-session">
                 <!-- 閉店中のみ表示：新しい販売会を開く -->
                 <div id="session-open-block">
-                    <div id="event-banner" style="background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:8px 12px; margin-bottom:10px; font-size:13px;"></div>
+                    <div id="event-banner" style="background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:8px 12px; margin-bottom:10px; font-size:13px;"></div>
                     <p class="settings-hint">新しい販売会を始める時に名前をつけて開店します。</p>
                     <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
 
                     <!-- 複数端末同期：Firebase設定がある時だけ表示 -->
-                    <div id="sync-code-row" style="display:none; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px;">
+                    <div id="sync-code-row" style="display:none; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:10px 12px; margin-top:8px;">
                         <div class="settings-sublabel" style="margin-top:0;">🔗 複数端末で同時に会計する（任意）</div>
                         <p class="settings-hint">同じ「共有コード」を入れた端末どうしで、売上をリアルタイムに共有します。<b>一緒に使う全端末で同じコード</b>にしてください。<br>
                         ・最初にこのコードで開店した端末が商品構成の元になります。<br>
@@ -721,9 +847,9 @@
                     <div id="sync-status-active" class="settings-hint" style="margin:-4px 0 10px;"></div>
                     <details id="live-stock-details">
                         <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の在庫調整（追加搬入・数え直し）</summary>
-                        <div id="live-stock-list" style="max-height:220px; overflow-y:auto; background:#F7F5F1; border:2px solid var(--line); padding:10px; border-radius:12px; margin-top:8px;"></div>
+                        <div id="live-stock-list" style="max-height:220px; overflow-y:auto; background:var(--sunken); border:2px solid var(--line); padding:10px; border-radius:var(--r-md); margin-top:8px;"></div>
                     </details>
-                    <button class="action-btn" style="width:100%; margin-top:12px; background: var(--accent); color: white;" onclick="endSession()">閉店する (集計して終了)</button>
+                    <button class="action-btn btn-checkout" style="width:100%; margin-top:12px;" onclick="endSession()">閉店する (集計して終了)</button>
                     <button id="btn-leave-device" class="action-btn btn-undo" style="width:100%; margin-top:8px; display:none;" onclick="leaveDeviceOnly()">🚪 この端末の利用を終える（他の端末は継続）</button>
                 </div>
 
@@ -734,23 +860,23 @@
                 <div class="settings-sublabel">① バックアップ（ファイルで保存・復元）</div>
                 <div style="display:flex; gap:10px;">
                     <button class="action-btn btn-reserve" style="flex:1;" onclick="exportBackup()">💾 バックアップを保存</button>
-                    <button class="action-btn btn-checkout" style="flex:1; margin-top:0;" onclick="document.getElementById('import-file').click()">📂 バックアップから復元</button>
+                    <button class="action-btn btn-danger" style="flex:1;" onclick="document.getElementById('import-file').click()">📂 バックアップから復元</button>
                 </div>
                 <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importBackup(event)">
 
                 <div class="settings-sublabel" style="margin-top:14px;">② 端末間の引き継ぎ（コピー＆貼り付け）</div>
                 <p class="settings-hint">元の端末で「コピー」→ メモ/メッセージ等に貼って新しい端末へ送る →新しい端末の下の欄に貼り付けて「取り込む」。</p>
                 <button class="action-btn btn-reserve" style="width:100%;" onclick="copyHandoffData()">📋 この端末のデータをコピー</button>
-                <textarea id="handoff-paste" placeholder="別の端末でコピーしたデータをここに貼り付け" style="width:100%; box-sizing:border-box; height:70px; margin:8px 0 0; padding:10px; font-size:13px; border:2px solid var(--line); border-radius:12px; background:var(--surface); color:var(--text-main); resize:vertical;"></textarea>
-                <button class="action-btn btn-checkout" style="width:100%; margin-top:8px;" onclick="importHandoffData()">📥 貼り付けたデータを取り込む</button>
+                <textarea id="handoff-paste" placeholder="別の端末でコピーしたデータをここに貼り付け" style="width:100%; box-sizing:border-box; height:70px; margin:8px 0 0; padding:10px; font-size:13px; border:2px solid var(--line); border-radius:var(--r-md); background:var(--surface); color:var(--text-main); resize:vertical;"></textarea>
+                <button class="action-btn btn-danger" style="width:100%; margin-top:8px;" onclick="importHandoffData()">📥 貼り付けたデータを取り込む</button>
 
-                <div style="margin-top:16px; padding:12px; border:1.5px dashed #C0574A; border-radius:12px; background:#FBEDE9;">
-                    <div class="settings-sublabel" style="margin-top:0; color:#A44030;">③ データの初期化（注意）</div>
+                <div style="margin-top:16px; padding:12px; border:1.5px dashed var(--danger); border-radius:var(--r-md); background:var(--danger-bg);">
+                    <div class="settings-sublabel" style="margin-top:0; color:var(--danger-ink);">③ データの初期化（注意）</div>
                     <p class="settings-hint">この端末に保存されている売上履歴・設定などをすべて削除し、まっさらな状態に戻します。<b>ブラウザの「閲覧履歴とCookieの削除」は不要です</b>（このアプリはCookieを使っておらず、削除すべきデータはこのボタンで消せるものだけです）。実行前に「① バックアップを保存」しておくことをおすすめします。</p>
-                    <button class="action-btn" style="width:100%; background:#C0574A; color:#fff;" onclick="factoryResetApp()">🗑 この端末のデータを初期化する</button>
+                    <button class="action-btn btn-danger-solid" style="width:100%;" onclick="factoryResetApp()">🗑 この端末のデータを初期化する</button>
                 </div>
 
-                <div style="margin-top:16px; padding:12px; border:1px solid var(--line); border-radius:12px; background:var(--surface);">
+                <div style="margin-top:16px; padding:12px; border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface);">
                     <div class="settings-sublabel" style="margin-top:0;">④ 画面をすっきり使う（ブラウザの表示を消す）</div>
                     <p class="settings-hint"><b>おすすめ：ホーム画面に追加</b>（iPad/iPhone：共有ボタン →「ホーム画面に追加」／Android：メニュー →「ホーム画面に追加」）。アイコンから起動すると、アドレスバーや戻るボタンが表示されない全画面表示になります。</p>
                     <button id="btn-fullscreen" class="action-btn btn-reserve" style="width:100%; display:none;" onclick="toggleFullscreen()">⤢ 今すぐ全画面表示にする</button>
@@ -758,7 +884,7 @@
             </div>
 
             <div id="tab-reservations" style="display:none;">
-                <div id="reservation-sync-warning" style="display:none; background:#FBEDE9; border:1px solid #C0574A; color:#A44030; border-radius:10px; padding:10px 12px; margin-bottom:10px; font-size:13px; font-weight:bold;">⚠ 予約はこの端末だけに保存され、他の端末とは共有されません。複数端末で運用中は、予約を受けた端末で清算するか、他の端末に口頭で伝えてください。</div>
+                <div id="reservation-sync-warning" style="display:none; background:var(--danger-bg); border:1px solid var(--danger); color:var(--danger-ink); border-radius:var(--r-md); padding:10px 12px; margin-bottom:10px; font-size:13px; font-weight:bold;">⚠ 予約はこの端末だけに保存され、他の端末とは共有されません。複数端末で運用中は、予約を受けた端末で清算するか、他の端末に口頭で伝えてください。</div>
                 <div id="reservation-list" class="card-strip"></div>
             </div>
 
@@ -788,12 +914,12 @@
                     <div id="sec-items" class="analytics-sec" style="display:none;"></div>
 
                     <div id="sec-time" class="analytics-sec" style="display:none;">
-                        <div id="customer-chart" style="background:#FFF; border:2px solid var(--line); border-radius:12px; padding:10px; margin-bottom:12px; overflow-x:auto; text-align:center;"></div>
+                        <div id="customer-chart" style="background:var(--white); border:2px solid var(--line); border-radius:var(--r-md); padding:10px; margin-bottom:12px; overflow-x:auto; text-align:center;"></div>
                         <div id="sec-time-text"></div>
                     </div>
 
                     <div id="sec-stock" class="analytics-sec" style="display:none;">
-                        <div id="stock-chart" style="background:#FFF; border:2px solid var(--line); border-radius:12px; padding:10px; margin-bottom:8px; overflow-x:auto;"></div>
+                        <div id="stock-chart" style="background:var(--white); border:2px solid var(--line); border-radius:var(--r-md); padding:10px; margin-bottom:8px; overflow-x:auto;"></div>
                         <div id="stock-chart-legend" style="display:flex; flex-wrap:wrap; gap:6px 12px;"></div>
                     </div>
 
@@ -805,10 +931,10 @@
                     <div id="sec-export" class="analytics-sec" style="display:none;">
                         <p style="font-size:13px; color:var(--text-light);">集計結果を書き出します。</p>
                         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                            <button class="action-btn" style="flex:1; min-width:110px; margin-top:0; background-color:var(--accent); color:#fff;" onclick="downloadPDF()">📄 PDF保存</button>
-                            <button class="action-btn" style="flex:1; min-width:110px; margin-top:0; background-color:var(--btn-neutral);" onclick="exportFacilityCSV()">🏭 精算CSV</button>
-                            <button class="action-btn" style="flex:1; min-width:110px; margin-top:0; background-color:var(--btn-neutral);" onclick="exportDetailCSV()">🧾 明細CSV</button>
-                            <button class="action-btn" style="flex:1; min-width:110px; margin-top:0; background-color:var(--btn-neutral);" onclick="exportReportJSON()">🗄 集計JSON</button>
+                            <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; font-size:15px; padding:13px;" onclick="downloadPDF()">📄 PDF保存</button>
+                            <button class="action-btn btn-secondary" style="flex:1; min-width:110px; margin-top:0;" onclick="exportFacilityCSV()">🏭 精算CSV</button>
+                            <button class="action-btn btn-secondary" style="flex:1; min-width:110px; margin-top:0;" onclick="exportDetailCSV()">🧾 明細CSV</button>
+                            <button class="action-btn btn-secondary" style="flex:1; min-width:110px; margin-top:0;" onclick="exportReportJSON()">🗄 集計JSON</button>
                         </div>
                         <p style="font-size:12px; color:var(--text-light); margin-top:8px;">精算CSV＝商品別（消化率・原価・粗利・味つき）／明細CSV＝会計ごと／集計JSON＝前回比較や取りこぼしまで含む全データ。</p>
                     </div>
@@ -1005,7 +1131,7 @@
             else if (isOut) cls += ' sold-open';
             btn.className = cls;
 
-            if (isPlaceholder || isOut) btn.style.backgroundColor = '#EFEDEA';
+            if (isPlaceholder || isOut) btn.style.backgroundColor = 'var(--btn-neutral)';
             else if (p.type === 'sweet') btn.style.backgroundColor = 'var(--btn-sweet)';
             else if (p.type === 'savory') btn.style.backgroundColor = 'var(--btn-savory)';
             else btn.style.backgroundColor = 'var(--btn-drink)';
@@ -1017,7 +1143,7 @@
 
             // 残りわずか（1〜5個）はオレンジ、超過（在庫マイナス）は赤で強調
             const lowStock = p.stock > 0 && p.stock <= 5;
-            const stockStyle = oversold ? 'color:#d9534f; font-weight:bold;' : (lowStock ? 'color:#e06c00; font-weight:bold;' : '');
+            const stockStyle = oversold ? 'color:var(--danger); font-weight:bold;' : (lowStock ? 'color:var(--low-ink); font-weight:bold;' : '');
             const stockText = oversold ? `在庫:0（超過${-p.stock}）` : `在庫:${p.stock}${lowStock ? ' ⚠️' : ''}`;
             btn.innerHTML = `
                 ${badge}
@@ -1151,6 +1277,30 @@
         init();
         showToast('カートを空にしました');
     }
+
+    // ▼ 直前の会計と同じ内容をもう一度カートに入れる（同じ注文が続く屋台向けの高速化）▼
+    // 「直前の会計」＝ 取消されていない、いちばん新しい記録。
+    function lastOrderSummary() {
+        if (!salesHistory.length) return null;
+        const rec = salesHistory[salesHistory.length - 1];
+        if (!rec || !rec.items || !rec.items.length) return null;
+        const counts = {};
+        rec.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
+        return { rec, text: Object.entries(counts).map(([n, c]) => `${n}×${c}`).join('、') };
+    }
+
+    function repeatLastOrder() {
+        const last = lastOrderSummary();
+        if (!last) { playError(); return; }
+        // addToCart を通すので、在庫の増減・同期中の扱い・完売音などは通常の登録と完全に同じ。
+        let added = 0;
+        last.rec.items.forEach(it => {
+            const p = products.find(prod => prod.id === it.id) || products.find(prod => prod.name === it.name);
+            if (p) { addToCart(p); added++; }
+        });
+        if (!added) { playError(); showToast('この商品はいまのラインナップにありません'); return; }
+        showToast(`🔁 直前と同じ内容を入れました（${last.text}）`);
+    }
     // ▲▲▲ ここまで ▲▲▲
 
     // カテゴリ（パン/クッキー/ドリンク）に対応する色。商品ボタンと同じ配色。
@@ -1173,7 +1323,7 @@
         });
 
         if (cart.length > 0) {
-            list.innerHTML += `<div style="text-align:right; margin-bottom:6px;"><button onclick="clearCartAll()" style="background:none; border:none; color:var(--text-light); font-size:12px; text-decoration:underline; cursor:pointer; padding:4px;">🗑 カートを全部取消す</button></div>`;
+            list.innerHTML += `<div style="text-align:right; margin-bottom:6px;"><button onclick="clearCartAll()" style="background:none; border:none; color:var(--danger-ink); font-size:12px; font-weight:bold; text-decoration:underline; cursor:pointer; padding:4px; font-family:inherit;">🗑 カートを全部取消す</button></div>`;
         }
 
         for (const [name, data] of Object.entries(counts)) {
@@ -1181,18 +1331,23 @@
             const safeName = name.replace(/'/g, "\\'");
             list.innerHTML += `
                 <div class="cart-item" style="border-left:8px solid ${catColor(data.type)}; padding-left:8px;">
-                    <span style="display:flex; align-items:center; gap:6px;">
-                        <button onclick="removeOneFromCart('${safeName}')" style="background:var(--btn-neutral); border:none; border-radius:6px; width:28px; height:28px; font-weight:bold; cursor:pointer; color:var(--accent); flex-shrink:0;">−</button>
-                        <button onclick="addOneToCart('${safeName}')" style="background:#E2F0CB; border:none; border-radius:6px; width:28px; height:28px; font-weight:bold; cursor:pointer; color:var(--text-main); flex-shrink:0;">＋</button>
+                    <span style="display:flex; align-items:center; gap:6px; min-width:0;">
+                        <button class="step-btn minus" onclick="removeOneFromCart('${safeName}')">−</button>
+                        <button class="step-btn plus" onclick="addOneToCart('${safeName}')">＋</button>
                         <span>${name} × <b>${data.count}</b></span>
                     </span>
-                    <span style="font-weight:bold;">¥${subtotal}</span>
+                    <span class="num" style="font-weight:bold;">¥${subtotal}</span>
                 </div>
             `;
         }
 
         if(cart.length === 0) {
-            list.innerHTML = '<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><div class="ce-emoji" style="font-size:34px;">🧺</div>商品をタップして<br>お会計に追加してください</div>';
+            // 空のときは「直前と同じ内容をもう一度」を出す（同じ注文が続くときの時短）
+            const last = currentSession ? lastOrderSummary() : null;
+            const repeatBtn = last
+                ? `<button class="action-btn btn-accent-outline" style="display:block; margin:16px auto 0; max-width:230px; font-size:14px; padding:10px 14px; line-height:1.45;" onclick="repeatLastOrder()">🔁 直前と同じ内容<br><span style="font-size:12px; font-weight:normal;">${last.text}</span></button>`
+                : '';
+            list.innerHTML = `<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><div class="ce-emoji" style="font-size:34px;">🧺</div>商品をタップして<br>お会計に追加してください${repeatBtn}</div>`;
         }
 
         document.getElementById('cart-total').innerText = total;
@@ -1212,7 +1367,7 @@
             html += `
                 <li class="receipt-item" style="border-left:6px solid ${catColor(data.type)}; padding-left:8px;">
                     <span>${name} <span style="color:var(--text-light);font-size:13px;">(@¥${data.price}×${data.count})</span></span>
-                    <span style="font-weight:bold;">¥${subtotal}</span>
+                    <span class="num" style="font-weight:bold;">¥${subtotal}</span>
                 </li>`;
         }
         return html;
@@ -1234,8 +1389,10 @@
         const total = itemsToProcess.reduce((sum, item) => sum + item.price, 0);
         document.getElementById('checkout-receipt').innerHTML = generateReceiptHTML(itemsToProcess);
         document.getElementById('modal-total').innerText = total;
+        document.getElementById('modal-count').innerText = itemsToProcess.length;
         document.getElementById('cash-input').value = '';
         document.getElementById('change-amount').innerText = '0';
+        renderChangeBreakdown(0);
         renderCashSuggestions(total);
         renderLastTypeQuick();
         showNav(false); // 会計中はナビを隠して集中できるように
@@ -1269,24 +1426,58 @@
         opts.add(Math.ceil(total / 500) * 500);   // 次の500円
         opts.add(Math.ceil(total / 1000) * 1000); // 次の1000円
         [1000, 2000, 5000].forEach(v => opts.add(v)); // よく出される紙幣
-        return [...opts].filter(v => v > total).sort((a, b) => a - b).slice(0, 4);
+        // 画面が狭い端末では候補を減らす（「ちょうど」を含めて4つ。詰め込むと文字が折り返して押しにくい）
+        const max = window.innerWidth < 420 ? 3 : 4;
+        return [...opts].filter(v => v > total).sort((a, b) => a - b).slice(0, max);
     }
 
     function renderCashSuggestions(total) {
         const box = document.getElementById('cash-suggestions');
         if (!box) return;
-        let html = `<button class="action-btn" style="flex:1; padding:10px; font-size:16px; background-color:#E2F0CB;" onclick="setCashExact()">ちょうど</button>`;
+        // 「ちょうど」だけを枠線つきで強調し、紙幣候補は同じ見た目で横並び（選択肢の役割を見た目で揃える）
+        let html = `<button class="action-btn btn-accent-outline" style="flex:1; padding:10px; font-size:16px;" onclick="setCashExact()">ちょうど</button>`;
         suggestCashAmounts(total).forEach(v => {
-            html += `<button class="action-btn" style="flex:1; padding:10px; font-size:16px; background-color:#FFF; border:2px solid var(--line);" onclick="setCash(${v})">¥${v}</button>`;
+            html += `<button class="action-btn num" style="flex:1; padding:10px; font-size:16px; background-color:var(--white); box-shadow:inset 0 0 0 2px var(--line-strong);" onclick="setCash(${v})">¥${v}</button>`;
         });
         box.innerHTML = html;
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ お釣りの金種内訳（何をいくつ返すか）▼▼▼
+    // 例：¥3,480 → 1000円×3・100円×4・50円×1・10円×3
+    // 釣り銭を数える時間と渡し間違いを減らすのが目的。枚数が最小になる組み合わせを出す。
+    const DENOMS = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
+    function changeDenoms(amount) {
+        let rest = Math.max(0, Math.floor(amount));
+        const out = [];
+        DENOMS.forEach(d => {
+            const n = Math.floor(rest / d);
+            if (n > 0) { out.push({ unit: d, count: n }); rest -= d * n; }
+        });
+        return out;
+    }
+
+    function renderChangeBreakdown(change) {
+        const box = document.getElementById('change-breakdown');
+        if (!box) return;
+        if (change <= 0) {
+            // ぴったりの時は「お釣りなし」とはっきり出す（渡し忘れ・待たせの防止）
+            const cash = parseInt(document.getElementById('cash-input').value) || 0;
+            box.innerHTML = cash > 0 ? '<div class="chg-none">ぴったり（お釣りなし）</div>' : '';
+            return;
+        }
+        box.innerHTML = changeDenoms(change)
+            .map(d => `<span>${d.unit >= 1000 ? d.unit + '円札' : d.unit + '円'} × ${d.count}</span>`)
+            .join('');
     }
     // ▲▲▲ ここまで ▲▲▲
 
     function calcChange() {
         const total = parseInt(document.getElementById('modal-total').innerText);
         const cash = parseInt(document.getElementById('cash-input').value) || 0;
-        document.getElementById('change-amount').innerText = Math.max(0, cash - total);
+        const change = Math.max(0, cash - total);
+        document.getElementById('change-amount').innerText = change;
+        renderChangeBreakdown(change);
     }
 
     function setCashExact() {
@@ -1385,7 +1576,11 @@
         saveData();
         init();
         renderReservations();
-        showToast(`✓ 記録しました（客No.${record.no} / お釣り¥${record.change}）`);
+        // モーダルを閉じた後もお釣りの内訳が見えるようにトーストにも出す（渡しながら確認できる）
+        const chgText = record.change > 0
+            ? `お釣り¥${record.change}（${changeDenoms(record.change).map(d => `${d.unit}×${d.count}`).join('・')}）`
+            : 'お釣りなし';
+        showToast(`✓ 記録しました（客No.${record.no} / ${chgText}）`);
     }
 
     function promptReservation() {
@@ -1428,7 +1623,7 @@
                     ${res.items.map(i => i.name).join(', ')}
                 </div>
                 <div class="res-actions">
-                    <button class="action-btn btn-undo" style="flex:1; padding:8px; font-size:14px;" onclick="cancelReservation(${res.id})">キャンセル</button>
+                    <button class="action-btn btn-danger" style="flex:1; padding:8px; font-size:14px;" onclick="cancelReservation(${res.id})">キャンセル</button>
                     <button class="action-btn btn-checkout" style="flex:1; padding:8px; font-size:14px; margin-top:0;" onclick="closeModal('settings-modal'); openCheckout(${res.id})">受取・清算</button>
                 </div>
             `;
@@ -1484,21 +1679,21 @@
                         <input type="checkbox" ${p.active === false ? '' : 'checked'} onchange="updateTempProduct(${p.id}, 'active', this.checked)"> この回で販売する
                     </label>
                     <div style="display:flex; gap:5px; align-items:center;">
-                        <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px;" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
-                        <button onclick="removeTempProduct(${p.id})" style="background:#C0574A; color:white; border:none; border-radius:4px; width:30px; height:30px; font-weight:bold; cursor:pointer; flex-shrink:0;">×</button>
+                        <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
+                        <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger); color:#fff;">×</button>
                     </div>
                     <div style="display:flex; gap:5px; margin-top:5px;">
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">価格</div>
-                            <input type="number" value="${p.price}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px; margin:0;" placeholder="価格" onchange="updateTempProduct(${p.id}, 'price', this.value)">
+                            <input type="number" value="${p.price}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" placeholder="価格" onchange="updateTempProduct(${p.id}, 'price', this.value)">
                         </div>
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">仕入れ数</div>
-                            <input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px; margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">
+                            <input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">
                         </div>
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">原価（任意）</div>
-                            <input type="number" value="${p.cost != null ? p.cost : ''}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid #CCC; border-radius:4px; margin:0;" placeholder="—" onchange="updateTempProduct(${p.id}, 'cost', this.value)">
+                            <input type="number" value="${p.cost != null ? p.cost : ''}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" placeholder="—" onchange="updateTempProduct(${p.id}, 'cost', this.value)">
                         </div>
                     </div>
                     ${hint}
@@ -1506,7 +1701,7 @@
             `;
         });
 
-        list.innerHTML += `<button class="setup-add-btn" onclick="addTempProduct()" style="padding:10px; background:#E2F0CB; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-main);">＋ 追加</button>`;
+        list.innerHTML += `<button class="setup-add-btn btn-positive" onclick="addTempProduct()" style="padding:10px; border:none; border-radius:var(--r-sm); font-weight:bold; cursor:pointer; color:var(--text-main); font-family:inherit;">＋ 追加</button>`;
     }
 
     function updateTempProduct(id, field, value) {
@@ -3106,7 +3301,7 @@
             .sort((a, b) => (Number(!!b.h.pendingType) - Number(!!a.h.pendingType)) || (new Date(b.h.time) - new Date(a.h.time)));
         const pendingCount = salesHistory.filter(h => h.pendingType).length;
         const summary = pendingCount > 0
-            ? `<div style="background:#FFF6E5; border:2px solid #F0C674; border-radius:10px; padding:8px 12px; margin-bottom:10px; font-size:13px; color:#a06a00; font-weight:bold;">⏱ 属性「後で入力」の会計：${pendingCount}件（各カードの属性ボタンをタップして割り当て）</div>`
+            ? `<div style="background:var(--warn-bg); border:2px solid var(--warn-line); border-radius:var(--r-md); padding:8px 12px; margin-bottom:10px; font-size:13px; color:var(--warn-ink); font-weight:bold; align-self:flex-start; max-width:260px; flex-shrink:0;">⏱ 属性「後で入力」の会計：${pendingCount}件（各カードの属性ボタンをタップして割り当て）</div>`
             : '';
         const TYPES = ['学生', '教員', '職員', 'その他', '不明'];
 
@@ -3118,8 +3313,8 @@
                 const sn = l.name.replace(/'/g, "\\'");
                 return editing
                     ? `<div style="display:flex; align-items:center; gap:6px; padding:3px 0; font-size:13px;">
-                        <button onclick="adjustRecordItem(${idx}, '${sn}', -1)" style="width:26px; height:26px; border:none; border-radius:6px; background:var(--btn-neutral); color:var(--accent); font-weight:bold; cursor:pointer; flex-shrink:0;">−</button>
-                        <button onclick="adjustRecordItem(${idx}, '${sn}', 1)" style="width:26px; height:26px; border:none; border-radius:6px; background:#E2F0CB; font-weight:bold; cursor:pointer; flex-shrink:0;">＋</button>
+                        <button class="step-btn minus" onclick="adjustRecordItem(${idx}, '${sn}', -1)" style="width:26px; height:26px; font-size:14px;">−</button>
+                        <button class="step-btn plus" onclick="adjustRecordItem(${idx}, '${sn}', 1)" style="width:26px; height:26px; font-size:14px;">＋</button>
                         <span style="flex:1;">${l.name} ×<b>${l.qty}</b></span>
                         <span style="font-weight:bold;">¥${l.subtotal}</span>
                     </div>`
@@ -3133,21 +3328,21 @@
             const actions = editing
                 ? `<button class="action-btn btn-checkout" style="width:100%; padding:8px; font-size:14px; margin-top:0;" onclick="toggleEditRecord(null)">✅ 修正を終了</button>`
                 : `<div style="display:flex; gap:8px;">
-                        <button class="action-btn btn-undo" style="flex:1; padding:8px; font-size:14px;" onclick="voidSale(${idx})">↩️ 取り消し</button>
+                        <button class="action-btn btn-danger" style="flex:1; padding:8px; font-size:14px;" onclick="voidSale(${idx})">↩️ 取り消し</button>
                         <button class="action-btn btn-reserve" style="flex:1; padding:8px; font-size:14px;" onclick="printReceipt(${idx})">🧾 レシート</button>
                     </div>
                     <button class="action-btn btn-undo" style="width:100%; padding:7px; font-size:13px;" onclick="toggleEditRecord(${idx})">✏️ 品目・点数を修正</button>`;
             return `
                 <div class="res-card"${editing ? ' style="outline:2px solid var(--accent);"' : ''}>
                     <div class="res-header">
-                        <span>客No. ${h.no || '-'}${h.deviceLabel ? ` <span style="font-size:11px; color:var(--text-light); font-weight:normal;">［${h.deviceLabel}］</span>` : ''}${h.edited ? ' <span style="font-size:11px; color:#c0392b; font-weight:normal;">(修正済)</span>' : ''}</span>
+                        <span>客No. ${h.no || '-'}${h.deviceLabel ? ` <span style="font-size:11px; color:var(--text-light); font-weight:normal;">［${h.deviceLabel}］</span>` : ''}${h.edited ? ' <span style="font-size:11px; color:var(--danger-ink); font-weight:normal;">(修正済)</span>' : ''}</span>
                         <span style="color:var(--text-light); font-size:13px; font-weight:normal;">${dtStr}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin:3px 0;">
-                        ${h.pendingType ? '<span style="font-size:11px; color:#a06a00; font-weight:bold;">⏱後で入力</span>' : '<span style="font-size:12px; color:var(--text-light);">客属性:</span>'}
-                        ${TYPES.map(ty => { const on = h.customerType === ty && !h.pendingType; return `<button onclick="setRecordType(${idx}, '${ty}')" style="padding:3px 9px; font-size:12px; border-radius:6px; cursor:pointer; border:1px solid ${on ? 'var(--accent)' : '#DDD'}; background:${on ? 'var(--accent)' : '#FFF'}; color:${on ? '#FFF' : 'var(--text-main)'};">${ty}</button>`; }).join('')}
+                        ${h.pendingType ? '<span style="font-size:11px; color:var(--warn-ink); font-weight:bold;">⏱後で入力</span>' : '<span style="font-size:12px; color:var(--text-light);">客属性:</span>'}
+                        ${TYPES.map(ty => { const on = h.customerType === ty && !h.pendingType; return `<button onclick="setRecordType(${idx}, '${ty}')" style="padding:3px 9px; font-size:12px; border-radius:var(--r-sm); cursor:pointer; border:1px solid ${on ? 'var(--accent)' : 'var(--line-strong)'}; background:${on ? 'var(--accent)' : '#FFF'}; color:${on ? '#FFF' : 'var(--text-main)'};">${ty}</button>`; }).join('')}
                     </div>
-                    <div style="border-top:1px dashed #EAEAEA; border-bottom:1px dashed #EAEAEA; padding:6px 0;">${lines}</div>
+                    <div style="border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); padding:6px 0;">${lines}</div>
                     <div style="display:flex; justify-content:space-between; font-weight:bold;">
                         <span>合計</span><span style="color:var(--accent);">¥${h.total}</span>
                     </div>
@@ -3392,7 +3587,7 @@
                     ? `<svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="${color}" stroke-width="3" stroke-dasharray="5 3"/></svg>`
                     : `<svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="${color}" stroke-width="3"/></svg>`;
                 const active = chartHighlight === s.name;
-                return `<span onclick="toggleChartHighlight('${s.name.replace(/'/g, "\\'")}')" style="display:inline-flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; padding:2px 6px; border-radius:6px; background:${active ? 'var(--accent-soft)' : 'transparent'}; color:var(--text-main); font-weight:${active ? 'bold' : 'normal'};">${dashLine}${s.name}（残${s.final}）</span>`;
+                return `<span onclick="toggleChartHighlight('${s.name.replace(/'/g, "\\'")}')" style="display:inline-flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; padding:2px 6px; border-radius:var(--r-sm); background:${active ? 'var(--accent-soft)' : 'transparent'}; color:var(--text-main); font-weight:${active ? 'bold' : 'normal'};">${dashLine}${s.name}（残${s.final}）</span>`;
             }).join('');
         }
     }
@@ -3479,20 +3674,20 @@
             return;
         }
         list.innerHTML = syncMode
-            ? '<p style="font-size:12px; color:#A44030; background:#FBEDE9; border:1px solid #C0574A; border-radius:8px; padding:8px 10px; margin:0 0 10px;">⚠ 複数端末同期が有効な間、ここでの手動調整は次に誰かが会計すると上書きされ元に戻ります（在庫は共有の販売実績から自動計算されるため）。追加搬入等は仕入れ数そのものの見直しが必要です。</p>'
+            ? '<p style="font-size:12px; color:var(--danger-ink); background:var(--danger-bg); border:1px solid var(--danger); border-radius:var(--r-sm); padding:8px 10px; margin:0 0 10px;">⚠ 複数端末同期が有効な間、ここでの手動調整は次に誰かが会計すると上書きされ元に戻ります（在庫は共有の販売実績から自動計算されるため）。追加搬入等は仕入れ数そのものの見直しが必要です。</p>'
             : '';
         products.forEach(p => {
             const oversold = p.stock < 0; // 販売数>仕入数（過少入力の可能性）
             const noteVal = (p.note || '').replace(/"/g, '&quot;');
             list.innerHTML += `
-                <div style="margin-bottom:8px; ${oversold ? 'background:#FBEDE9; border-radius:8px; padding:6px;' : ''}">
+                <div style="margin-bottom:8px; ${oversold ? 'background:var(--danger-bg); border-radius:var(--r-sm); padding:6px;' : ''}">
                     <div style="display:flex; gap:8px; align-items:center;">
-                        <span style="flex:1; font-size:14px;">${p.name}${oversold ? ' <b style="color:#d9534f; font-size:12px;">⚠ 販売&gt;仕入</b>' : ''}</span>
-                        <button onclick="adjustLiveStock(${p.id}, -1)" style="width:30px; height:30px; border:none; border-radius:6px; background:var(--btn-neutral); font-weight:bold; cursor:pointer;">−</button>
-                        <input type="number" value="${p.stock}" style="width:60px; padding:6px; text-align:center; font-size:14px; border:1px solid #CCC; border-radius:6px; margin:0;" onchange="setLiveStock(${p.id}, this.value)">
-                        <button onclick="adjustLiveStock(${p.id}, 1)" style="width:30px; height:30px; border:none; border-radius:6px; background:#E2F0CB; font-weight:bold; cursor:pointer;">＋</button>
+                        <span style="flex:1; font-size:14px;">${p.name}${oversold ? ' <b style="color:var(--danger); font-size:12px;">⚠ 販売&gt;仕入</b>' : ''}</span>
+                        <button class="step-btn minus" onclick="adjustLiveStock(${p.id}, -1)">−</button>
+                        <input type="number" value="${p.stock}" class="num" style="width:62px; padding:6px; text-align:center; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" onchange="setLiveStock(${p.id}, this.value)">
+                        <button class="step-btn plus" onclick="adjustLiveStock(${p.id}, 1)">＋</button>
                     </div>
-                    ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:5px; padding:6px; font-size:12px; border:1px solid #DDD; border-radius:6px;" onchange="setProductNote(${p.id}, this.value)">` : ''}
+                    ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:5px; padding:6px; font-size:12px; border:1px solid var(--line-strong); border-radius:var(--r-sm);" onchange="setProductNote(${p.id}, this.value)">` : ''}
                 </div>
             `;
         });
