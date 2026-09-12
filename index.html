@@ -188,6 +188,25 @@
             transition: transform 0.1s, box-shadow 0.1s;
         }
         .settings-btn:active { transform: translateY(1px); }
+        .settings-btn { font-size: 13px; box-shadow: inset 0 0 0 1px var(--line-strong); }
+        /* 狭い画面では歯車だけにして、ヘッダーが2行に折り返さないようにする */
+        @media (max-width: 560px) {
+            .settings-btn { padding: 7px 11px; font-size: 0; }
+            .settings-btn::before { content: '⚙'; font-size: 17px; }
+        }
+
+        /* 過去の販売会（閉店時に自動保存されたもの）の一覧 */
+        .arc-card {
+            border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 12px;
+            margin-bottom: 8px; background: var(--surface);
+        }
+        .arc-card .arc-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+        .arc-card .arc-name { font-weight: bold; font-size: 14px; overflow-wrap: anywhere; }
+        .arc-card .arc-date { font-size: 11px; color: var(--text-light); white-space: nowrap; }
+        .arc-card .arc-stats { font-size: 13px; color: var(--text-main); margin: 5px 0 8px; font-variant-numeric: tabular-nums; }
+        .arc-card .arc-stats b { color: var(--accent-ink); font-size: 15px; }
+        .arc-card .arc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .arc-card .arc-actions .action-btn { flex: 1; min-width: 120px; padding: 8px; font-size: 13px; }
 
         #app-container {
             display: flex;
@@ -689,10 +708,14 @@
         🥖 泰山木POS
         <span class="session-info" id="session-display">閉店中</span>
     </div>
-    <div class="cat-legend">
-        <span><i style="background:var(--btn-sweet)"></i>パン</span>
-        <span><i style="background:var(--btn-savory)"></i>クッキー</span>
-        <span><i style="background:var(--btn-drink)"></i>ドリンク</span>
+    <div style="display:flex; align-items:center; gap:14px;">
+        <div class="cat-legend">
+            <span><i style="background:var(--btn-sweet)"></i>パン</span>
+            <span><i style="background:var(--btn-savory)"></i>クッキー</span>
+            <span><i style="background:var(--btn-drink)"></i>ドリンク</span>
+        </div>
+        <!-- 端末とデータの管理。営業中はほとんど使わないので、ボトムナビではなくヘッダーに置く -->
+        <button class="settings-btn" id="header-settings-btn" onclick="navTo('settings')" title="設定（データの書き出し・過去の販売会）">⚙ 設定</button>
     </div>
 </header>
 
@@ -735,7 +758,7 @@
     <button class="nav-item" id="nav-reservations" onclick="navTo('reservations')"><span class="nav-ico">🗓️</span>予約<span class="nav-badge"></span></button>
     <button class="nav-item" id="nav-records" onclick="navTo('records')"><span class="nav-ico">🧮</span>会計履歴<span class="nav-badge"></span></button>
     <button class="nav-item" id="nav-analytics" onclick="navTo('analytics')"><span class="nav-ico">📊</span>売上</button>
-    <button class="nav-item" id="nav-session" onclick="navTo('session')"><span class="nav-ico">🏪</span>開店・設定</button>
+    <button class="nav-item" id="nav-session" onclick="navTo('session')"><span class="nav-ico">🏪</span><span id="nav-session-label">開店</span></button>
 </nav>
 
 <div id="checkout-modal" class="modal">
@@ -806,80 +829,114 @@
 <div id="settings-modal" class="modal">
     <div class="modal-content">
         <div class="tab-menu">
-            <div class="tab-item active" onclick="showTab('session')" id="tab-btn-session">営業管理</div>
+            <div class="tab-item active" onclick="showTab('session')" id="tab-btn-session">開店・営業</div>
             <div class="tab-item" onclick="showTab('reservations')" id="tab-btn-reservations">予約管理</div>
             <div class="tab-item" onclick="showTab('analytics')" id="tab-btn-analytics">売上確認</div>
             <div class="tab-item" onclick="showTab('records')" id="tab-btn-records">会計済</div>
+            <div class="tab-item" onclick="showTab('settings')" id="tab-btn-settings">設定</div>
         </div>
 
         <div id="settings-title"></div>
 
         <div class="tab-content">
+            <!-- ▼▼▼ 開店・営業タブ：その日の営業を始める／続ける／終えるための操作だけを置く ▼▼▼ -->
             <div id="tab-session">
                 <!-- 閉店中のみ表示：新しい販売会を開く -->
                 <div id="session-open-block">
                     <div id="event-banner" style="background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:8px 12px; margin-bottom:10px; font-size:13px;"></div>
-                    <p class="settings-hint">新しい販売会を始める時に名前をつけて開店します。</p>
+
+                    <!-- 直前に閉店した販売会をやり直せる（閉店の押し間違いからの復帰） -->
+                    <div id="reopen-row" style="display:none; background:var(--warn-bg); border:2px solid var(--warn-line); border-radius:var(--r-md); padding:10px 12px; margin-bottom:12px;">
+                        <div class="settings-sublabel" style="margin-top:0; color:var(--warn-ink);">↩️ 間違えて閉店しましたか？</div>
+                        <p class="settings-hint" id="reopen-desc" style="margin-bottom:8px;"></p>
+                        <button class="action-btn btn-secondary" style="width:100%;" onclick="reopenLastSession()">直前の販売会を再開する</button>
+                    </div>
+
+                    <div class="settings-label" style="margin-top:0;">① 販売会の名前</div>
                     <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
 
                     <!-- 複数端末同期：Firebase設定がある時だけ表示 -->
                     <div id="sync-code-row" style="display:none; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:10px 12px; margin-top:8px;">
                         <div class="settings-sublabel" style="margin-top:0;">🔗 複数端末で同時に会計する（任意）</div>
-                        <p class="settings-hint">同じ「共有コード」を入れた端末どうしで、売上をリアルタイムに共有します。<b>一緒に使う全端末で同じコード</b>にしてください。<br>
-                        ・最初にこのコードで開店した端末が商品構成の元になります。<br>
-                        ・あとから同じコードで開店すると、その販売会に「参加」します（商品リストは共有中の内容を使用）。<br>
-                        ・新しい販売会は必ず新しいコードで（同じコードを使い回すと前回の集計と混ざるおそれがあるため、閉店済みのコードは警告が出ます）。</p>
+                        <p class="settings-hint">一緒に使う<b>全端末で同じ「共有コード」</b>を入れると、売上をリアルタイムで共有します。1台だけで使うなら空欄のままでOKです（<b>あとから途中で共有を始めることもできます</b>）。</p>
                         <input type="text" id="sync-event-code-input" placeholder="共有コード（例: pansale-1101）">
                         <div id="sync-status" class="settings-hint" style="margin:6px 0 0;"></div>
                     </div>
 
-                    <div class="settings-label">当日の仕入れ数設定</div>
+                    <div class="settings-label">② 当日の仕入れ数</div>
                     <div id="inventory-apply"></div>
                     <div id="inventory-setup-list" class="setup-list"></div>
 
                     <button class="action-btn btn-checkout" style="width:100%; margin-top:4px;" onclick="startSession()">🏪 この内容で開店する</button>
-                    <p class="settings-hint" style="margin-top:6px; text-align:center;">開店すると前回の売上データはリセットされます（確認画面が出ます）。</p>
+
+                    <!-- 別の端末・前回のデータから始めたい時だけ開く（ふだんは畳んでおく） -->
+                    <details id="restore-details" style="margin-top:16px; border:1px solid var(--line); border-radius:var(--r-md); padding:10px 12px; background:var(--surface);">
+                        <summary style="font-size:13px; font-weight:bold; cursor:pointer; color:var(--text-main);">📥 別の端末や前回のデータから始める</summary>
+                        <p class="settings-hint" style="margin-top:8px;">バックアップファイル、または別の端末の「設定」でコピーしたデータを取り込みます。<b>いまこの端末にあるデータは上書きされます。</b></p>
+                        <button class="action-btn btn-danger" style="width:100%;" onclick="document.getElementById('import-file').click()">📂 バックアップファイルから復元</button>
+                        <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importBackup(event)">
+                        <textarea id="handoff-paste" placeholder="別の端末でコピーしたデータをここに貼り付け" style="width:100%; box-sizing:border-box; height:64px; margin:10px 0 0; padding:10px; font-size:13px; border:2px solid var(--line); border-radius:var(--r-md); background:var(--sunken); color:var(--text-main); resize:vertical;"></textarea>
+                        <button class="action-btn btn-danger" style="width:100%; margin-top:8px;" onclick="importHandoffData()">📥 貼り付けたデータを取り込む</button>
+                    </details>
                 </div>
 
-                <!-- 営業中のみ表示：在庫調整・閉店 -->
+                <!-- 営業中のみ表示：在庫調整・同期・閉店 -->
                 <div id="session-active-block" style="display:none;">
                     <div class="active-banner">🟢 営業中：<span id="active-session-name"></span></div>
-                    <div id="sync-status-active" class="settings-hint" style="margin:-4px 0 10px;"></div>
+
+                    <!-- 複数端末での共有：営業中でも開始・停止できる -->
+                    <div id="sync-live-row" style="display:none; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:10px 12px; margin-bottom:12px;">
+                        <div class="settings-sublabel" style="margin-top:0;">🔗 複数端末で同時に会計する</div>
+                        <div id="sync-status-active" class="settings-hint" style="margin:4px 0 8px;"></div>
+                        <!-- 同期していない時：途中から共有を始める -->
+                        <div id="sync-start-block">
+                            <p class="settings-hint">いま営業中のこの販売会を、途中から他の端末と共有できます。<b>この端末の会計・在庫はそのまま引き継がれます。</b></p>
+                            <input type="text" id="sync-live-code-input" placeholder="共有コード（例: pansale-1101）">
+                            <button class="action-btn btn-accent-outline" style="width:100%; margin-top:4px;" onclick="startSyncMidSession()">🔗 このコードで共有を始める</button>
+                        </div>
+                        <!-- 同期している時：停止・この端末だけ終了 -->
+                        <div id="sync-stop-block" style="display:none;">
+                            <button class="action-btn btn-secondary" style="width:100%;" onclick="stopSyncMidSession()">📴 共有をやめてこの端末だけで続ける</button>
+                            <button id="btn-leave-device" class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="leaveDeviceOnly()">🚪 この端末の利用を終える（他の端末は継続）</button>
+                        </div>
+                    </div>
+
                     <details id="live-stock-details">
-                        <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の在庫調整（追加搬入・数え直し）</summary>
-                        <div id="live-stock-list" style="max-height:220px; overflow-y:auto; background:var(--sunken); border:2px solid var(--line); padding:10px; border-radius:var(--r-md); margin-top:8px;"></div>
+                        <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の商品・在庫を調整する（追加搬入・数え直し・値段の変更）</summary>
+                        <div id="live-stock-list" style="max-height:260px; overflow-y:auto; background:var(--sunken); border:2px solid var(--line); padding:10px; border-radius:var(--r-md); margin-top:8px;"></div>
+                        <button class="action-btn btn-positive" style="width:100%; margin-top:8px; font-size:14px;" onclick="addLiveProduct()">＋ 販売する商品を追加する</button>
                     </details>
-                    <button class="action-btn btn-checkout" style="width:100%; margin-top:12px;" onclick="endSession()">閉店する (集計して終了)</button>
-                    <button id="btn-leave-device" class="action-btn btn-undo" style="width:100%; margin-top:8px; display:none;" onclick="leaveDeviceOnly()">🚪 この端末の利用を終える（他の端末は継続）</button>
+
+                    <button class="action-btn btn-checkout" style="width:100%; margin-top:14px;" onclick="endSession()">閉店する（集計して終了）</button>
+                    <p class="settings-hint" style="margin-top:6px; text-align:center;">閉店すると集計が作られ、この販売会の記録は「過去の販売会」に自動保存されます。</p>
+                </div>
+            </div>
+
+            <!-- ▼▼▼ 設定タブ：端末とデータの管理（営業中は基本さわらない）▼▼▼ -->
+            <div id="tab-settings" style="display:none;">
+                <div class="settings-label" style="margin-top:0;">📦 過去の販売会</div>
+                <p class="settings-hint">閉店するたびに、その回の記録がこの端末へ自動保存されます。集計を見たり、バックアップファイルとして書き出せます。</p>
+                <div id="archive-list"></div>
+
+                <hr style="border: none; border-top: 1px dashed var(--line); margin: 18px 0;">
+
+                <div class="settings-label" style="margin-top:0;">💾 この端末のデータを書き出す</div>
+                <p class="settings-hint">データはこの端末の中だけに保存されています。別の端末へ移す時や、念のための控えを取る時に使います。<br>（取り込み・復元は「開店」画面にあります）</p>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="action-btn btn-secondary" style="flex:1; min-width:150px;" onclick="exportBackup()">💾 バックアップファイルを保存</button>
+                    <button class="action-btn btn-secondary" style="flex:1; min-width:150px;" onclick="copyHandoffData()">📋 この端末のデータをコピー</button>
                 </div>
 
-                <hr style="border: none; border-top: 1px dashed var(--line); margin: 14px 0;">
-                <div class="settings-label" style="margin-top:0;">データの保存・引き継ぎ</div>
-                <p class="settings-hint">データはこの端末の中だけに保存されます。別の端末へ移すには、下の「バックアップ」または「端末間の引き継ぎ」を使います。</p>
+                <hr style="border: none; border-top: 1px dashed var(--line); margin: 18px 0;">
 
-                <div class="settings-sublabel">① バックアップ（ファイルで保存・復元）</div>
-                <div style="display:flex; gap:10px;">
-                    <button class="action-btn btn-reserve" style="flex:1;" onclick="exportBackup()">💾 バックアップを保存</button>
-                    <button class="action-btn btn-danger" style="flex:1;" onclick="document.getElementById('import-file').click()">📂 バックアップから復元</button>
-                </div>
-                <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importBackup(event)">
+                <div class="settings-label" style="margin-top:0;">🖥 画面表示</div>
+                <button id="btn-fullscreen" class="action-btn btn-secondary" style="width:100%; display:none;" onclick="toggleFullscreen()">⤢ 今すぐ全画面表示にする</button>
+                <p class="settings-hint" id="fullscreen-hint" style="margin-top:8px;">ホーム画面に追加したアイコンから起動すると、アドレスバーや戻るボタンのない全画面で使えます。</p>
 
-                <div class="settings-sublabel" style="margin-top:14px;">② 端末間の引き継ぎ（コピー＆貼り付け）</div>
-                <p class="settings-hint">元の端末で「コピー」→ メモ/メッセージ等に貼って新しい端末へ送る →新しい端末の下の欄に貼り付けて「取り込む」。</p>
-                <button class="action-btn btn-reserve" style="width:100%;" onclick="copyHandoffData()">📋 この端末のデータをコピー</button>
-                <textarea id="handoff-paste" placeholder="別の端末でコピーしたデータをここに貼り付け" style="width:100%; box-sizing:border-box; height:70px; margin:8px 0 0; padding:10px; font-size:13px; border:2px solid var(--line); border-radius:var(--r-md); background:var(--surface); color:var(--text-main); resize:vertical;"></textarea>
-                <button class="action-btn btn-danger" style="width:100%; margin-top:8px;" onclick="importHandoffData()">📥 貼り付けたデータを取り込む</button>
-
-                <div style="margin-top:16px; padding:12px; border:1.5px dashed var(--danger); border-radius:var(--r-md); background:var(--danger-bg);">
-                    <div class="settings-sublabel" style="margin-top:0; color:var(--danger-ink);">③ データの初期化（注意）</div>
-                    <p class="settings-hint">この端末に保存されている売上履歴・設定などをすべて削除し、まっさらな状態に戻します。<b>ブラウザの「閲覧履歴とCookieの削除」は不要です</b>（このアプリはCookieを使っておらず、削除すべきデータはこのボタンで消せるものだけです）。実行前に「① バックアップを保存」しておくことをおすすめします。</p>
+                <div style="margin-top:20px; padding:12px; border:1.5px dashed var(--danger); border-radius:var(--r-md); background:var(--danger-bg);">
+                    <div class="settings-sublabel" style="margin-top:0; color:var(--danger-ink);">⚠ データの初期化（不具合が起きた時の最終手段）</div>
+                    <p class="settings-hint">画面がおかしい・データが壊れたなど、どうしても直らない時だけ使います。この端末の売上履歴・過去の販売会・設定をすべて削除して、まっさらな状態に戻します。<b>先に上の「バックアップファイルを保存」で控えを取ってください。</b></p>
                     <button class="action-btn btn-danger-solid" style="width:100%;" onclick="factoryResetApp()">🗑 この端末のデータを初期化する</button>
-                </div>
-
-                <div style="margin-top:16px; padding:12px; border:1px solid var(--line); border-radius:var(--r-md); background:var(--surface);">
-                    <div class="settings-sublabel" style="margin-top:0;">④ 画面をすっきり使う（ブラウザの表示を消す）</div>
-                    <p class="settings-hint"><b>おすすめ：ホーム画面に追加</b>（iPad/iPhone：共有ボタン →「ホーム画面に追加」／Android：メニュー →「ホーム画面に追加」）。アイコンから起動すると、アドレスバーや戻るボタンが表示されない全画面表示になります。</p>
-                    <button id="btn-fullscreen" class="action-btn btn-reserve" style="width:100%; display:none;" onclick="toggleFullscreen()">⤢ 今すぐ全画面表示にする</button>
                 </div>
             </div>
 
@@ -891,7 +948,8 @@
             <div id="tab-analytics" style="display:none;">
                 <!-- 項目選択メニュー -->
                 <div id="analytics-menu">
-                    <div id="analytics-empty" style="display:none; color:var(--text-light); text-align:center; margin:20px 0;">まだ売上データがありません。</div>
+                    <div id="analytics-archive-note" style="display:none; background:var(--accent-soft); border:1.5px solid var(--accent); color:var(--accent-ink); border-radius:var(--r-md); padding:8px 12px; margin-bottom:10px; font-size:13px; font-weight:bold;"></div>
+                    <div id="analytics-empty" style="display:none; color:var(--text-light); text-align:center; margin:20px 0;">まだ売上データがありません。<br><span style="font-size:13px;">開店して会計を始めると、ここに集計が出ます。<br>過去の販売会の集計は「⚙ 設定」から見られます。</span></div>
                     <div id="analytics-menu-grid" class="analytics-menu-grid">
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('summary')">📊<br>概要</button>
                         <button class="analytics-menu-btn" onclick="showAnalyticsSection('items')">🥐<br>商品別</button>
@@ -907,6 +965,8 @@
 
                 <!-- 選択した項目の表示 -->
                 <div id="analytics-detail" style="display:none;">
+                    <!-- 過去の販売会を見ている時は、いまのデータではないことをはっきり示す -->
+                    <div id="archive-view-banner" style="display:none; background:var(--accent-soft); border:1.5px solid var(--accent); color:var(--accent-ink); border-radius:var(--r-md); padding:8px 12px; margin-bottom:10px; font-size:13px; font-weight:bold;"></div>
                     <button class="action-btn btn-undo" style="margin-bottom:12px; padding:8px 16px;" onclick="showAnalyticsMenu()">← 集計メニューに戻る</button>
                     <div id="analytics-detail-title" style="font-size:16px; font-weight:bold; margin-bottom:10px;"></div>
 
@@ -1112,6 +1172,11 @@
         return deviceId;
     }
     function deviceLabel() { const id = getDeviceId(); return id.slice(1, 3).toUpperCase(); } // 端末の短いラベル（客No.に併記）
+
+    // 画面に文字列を差し込む時の共通エスケープ（販売会名など、利用者が入力した文字を扱う箇所で使う）
+    function escHtml(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
     // 操作ログを1件追加する
     function logEdit(msg) {
@@ -1761,7 +1826,8 @@
         renderLiveStock();
         renderReservations();
         renderRecords();
-        updateAnalytics();
+        renderArchiveList();
+        if (!reportViewSnapshot) updateAnalytics();
         updateFullscreenButton();
     }
 
@@ -1809,6 +1875,60 @@
         if (isOpen) document.getElementById('active-session-name').innerText = currentSession;
         const banner = document.getElementById('event-banner');
         if (banner) banner.innerHTML = `📋 イベント: <b>${ACTIVE_EVENT_SET.label}</b><br><span style="color:var(--text-light); font-size:12px;">切替は data/active-event.js（またはURLに ?event=festival）</span>`;
+        // ボトムナビの5番目は、状態にあわせて「開店」⇄「営業中」に変える
+        const navLabel = document.getElementById('nav-session-label');
+        if (navLabel) navLabel.textContent = isOpen ? '営業中' : '開店';
+        updateReopenRow();
+        updateSyncUi();
+    }
+
+    // 「直前の販売会を再開する」導線の出し分け。
+    // 閉店直後（6時間以内）にだけ出すことで、閉店の押し間違いから戻れるようにする。
+    const REOPEN_WINDOW_MS = 6 * 60 * 60 * 1000;
+    function reopenableArchive() {
+        if (currentSession) return null;
+        const a = sessionArchive[sessionArchive.length - 1];
+        if (!a || !a.snapshot) return null;
+        const closedAt = new Date(a.date).getTime();
+        if (!closedAt || (Date.now() - closedAt) > REOPEN_WINDOW_MS) return null;
+        return a;
+    }
+
+    function updateReopenRow() {
+        const row = document.getElementById('reopen-row');
+        if (!row) return;
+        const a = reopenableArchive();
+        row.style.display = a ? 'block' : 'none';
+        if (a) {
+            const d = new Date(a.date);
+            const hhmm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            document.getElementById('reopen-desc').innerHTML =
+                `${hhmm} に閉店した「<b>${escHtml(a.name)}</b>」（${a.customerCount}件・¥${a.totalRev.toLocaleString()}）を、閉店前の状態に戻して続きから営業できます。`;
+        }
+    }
+
+    // 閉店を取り消して、直前の販売会をそのまま再開する
+    function reopenLastSession() {
+        const a = reopenableArchive();
+        if (!a) { playError(); return; }
+        if (!confirm(`「${a.name}」を閉店前の状態に戻して再開します。\n会計${a.customerCount}件・売上¥${a.totalRev.toLocaleString()} がレジに戻ります。\n\nよろしいですか？`)) return;
+        applyData(JSON.parse(JSON.stringify(a.snapshot)));
+        currentSession = a.name;
+        sessionArchive.pop(); // 閉店そのものを取り消すので、保存された記録も戻す
+        // 共有コードは引き継がない（共有側は既に「閉店済み」になっているため）。
+        // もう一度共有したい場合は、営業中の画面から新しいコードで開始してもらう。
+        syncEventCode = null;
+        syncMode = false;
+        const disp = document.getElementById('session-display');
+        disp.innerText = `営業中: ${currentSession}`;
+        disp.style.background = 'var(--white)';
+        saveData();
+        init();
+        updateSessionTabView();
+        renderLiveStock();
+        renderRecords();
+        updateAnalytics();
+        showToast('✓ 販売会を再開しました');
     }
 
     function closeModal(id) {
@@ -1823,11 +1943,17 @@
 
         // 同期：共有コードが既に「開店中」の販売会なら参加、「閉店済み」なら警告、
         // 存在しなければこの端末が新規作成（＝商品構成の共有元になる）。
-        const useSync = syncReady && window.FIREBASE_CONFIG;
+        // 【重要】共有コードが空欄なら同期しない（この端末だけで動く）。
+        // 以前は空欄のとき販売会名をコード代わりにしていたが、画面の案内
+        //「1台だけで使うなら空欄のままでOK」と食い違ううえ、たまたま同じ名前を
+        // つけた別の販売会どうしが勝手に合流してしまう危険があった。
+        // 途中から共有したくなった場合は、営業中の画面から開始できる。
+        const codeInput = document.getElementById('sync-event-code-input');
+        const typedCode = sanitizeEventCode((codeInput && codeInput.value || '').trim());
+        const useSync = !!(syncReady && window.FIREBASE_CONFIG && typedCode);
         let code = null, joinedProducts = null, sharedName = name, isJoining = false;
         if (useSync) {
-            const codeInput = document.getElementById('sync-event-code-input');
-            code = sanitizeEventCode((codeInput && codeInput.value || '').trim() || name) || ('event-' + Date.now());
+            code = typedCode;
             try {
                 const snap = await fbDb.collection('events').doc(code).get();
                 if (snap.exists) {
@@ -1942,6 +2068,9 @@
         closeModal('settings-modal');
         saveData();
         init();
+        // 開店・営業タブを「営業中の管理」に切り替えておく（次に開いた時にすぐ使える状態にする）
+        updateSessionTabView();
+        renderLiveStock();
     }
 
     // FirestoreのドキュメントID/コードに使える形へ整える
@@ -1954,39 +2083,25 @@
             alert('【！】未精算の予約が残っています。予約管理を確認してください');
             return;
         }
-        const confirmMsg = syncMode
-            ? '営業を終了して売上を集計します。\n\n※これは共有販売会そのものを終了する操作です。同じコードを使っている他の端末があれば、先にそちらへ伝えてから閉店してください。\n（この端末だけ操作を終える場合は、下の「この端末の利用を終える」をお使いください）'
+        let confirmMsg = syncMode
+            ? '営業を終了して売上を集計します。\n\n※これは共有販売会そのものを終了する操作です。同じコードを使っている他の端末があれば、先にそちらへ伝えてから閉店してください。\n（この端末だけ操作を終える場合は、「この端末の利用を終える」をお使いください）'
             : '営業を終了して売上を集計します。';
+        confirmMsg += '\n\n集計した記録は「設定 → 過去の販売会」に自動保存され、レジの会計データは空になります。';
+        if (cart.length > 0) confirmMsg = `【！】カートに${cart.length}点の打ちかけが残っています。このまま閉店すると破棄されます。\n\n` + confirmMsg;
         if (!confirm(confirmMsg)) return;
         updateAnalytics();
 
-        // ▼▼▼ この回の実績を次回の仕入れ推奨として保存（開店リセットでは消えない） ▼▼▼
-        if (salesHistory.length > 0) {
-            // 商品別・客層別の実績を集計（次回比較のもと）
-            const itemMap = {};
-            const custMap = {};
-            salesHistory.forEach(h => {
-                (h.items || []).forEach(it => {
-                    if (!itemMap[it.name]) itemMap[it.name] = { name: it.name, qty: 0, rev: 0 };
-                    itemMap[it.name].qty += 1;
-                    itemMap[it.name].rev += it.price;
-                });
-                const ct = h.customerType || '不明';
-                custMap[ct] = (custMap[ct] || 0) + 1;
-            });
-            const totalRev = salesHistory.reduce((s, h) => s + h.total, 0);
-            const summary = {
-                name: currentSession || '無題',
-                date: new Date().toISOString(),
-                totalRev: totalRev,
-                customerCount: salesHistory.length,
-                avgSpend: Math.round(totalRev / salesHistory.length),
-                itemStats: Object.values(itemMap).sort((a, b) => b.qty - a.qty),
-                customerStats: custMap,
-                recommendations: buildRestockRecommendations()
-            };
-            sessionArchive.push(summary);
+        // ▼▼▼ この回の記録を丸ごと「過去の販売会」として自動保存する ▼▼▼
+        // 集計に使う要約（次回の仕入れ推奨・前回比較のもと）に加えて、
+        // 閉店直前の状態そのもの（snapshot）も保存する。これにより
+        //   ・閉店後でも集計/PDF/CSVをいつでも作り直せる
+        //   ・レジ側の会計データは空にできる（次の販売会をまっさらな状態で始められる）
+        //   ・閉店の押し間違いも「再開」で元に戻せる
+        const hadSales = salesHistory.length > 0;
+        if (hadSales) {
+            sessionArchive.push(buildSessionArchiveEntry());
             if (sessionArchive.length > 20) sessionArchive = sessionArchive.slice(-20);
+            pruneArchiveSnapshots();
         }
         // ▲▲▲ ここまで ▲▲▲
 
@@ -1999,15 +2114,256 @@
         stopSessionDocSubscription();
         syncEventCode = null;
 
+        const closedName = currentSession;
         currentSession = null;
+
+        // レジ側の会計データは空にする（次の販売会はまっさらな状態から始まる）。
+        // 在庫は products に残るが、開店画面では仕入れ数（initialStock）を編集するため支障はない。
+        const closedSnapshot = hadSales ? sessionArchive[sessionArchive.length - 1].snapshot : null;
+        salesHistory = [];
+        cart = [];
+        reservations = [];
+        receiptCounter = 0;
+        voidCount = 0;
+        operationLog = [];
+        products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; p.note = ''; });
+
         const disp = document.getElementById('session-display');
         disp.innerText = "閉店中";
         disp.style.background = '';
         updateSessionTabView();
-        showTab('analytics');
-        if (salesHistory.length > 0) showAnalyticsSection('insight'); // 閉店時は次回インサイトを表示
         saveData();
+        init();
+        renderRecords();
+
+        // 閉店直後は、いま閉じたばかりの販売会の集計をそのまま表示する
+        if (closedSnapshot) {
+            reportViewSnapshot = closedSnapshot;
+            withSnapshot(closedSnapshot, () => updateAnalytics());
+            showTab('analytics');
+            showAnalyticsSection('insight'); // 閉店時は次回インサイトを表示
+            showToast(`✓ 「${closedName}」を集計して保存しました`);
+        } else {
+            updateAnalytics();
+            showTab('analytics');
+        }
     }
+
+    // 「過去の販売会」1件ぶんのデータを組み立てる（要約＋閉店直前の状態まるごと）
+    function buildSessionArchiveEntry() {
+        const itemMap = {};
+        const custMap = {};
+        salesHistory.forEach(h => {
+            (h.items || []).forEach(it => {
+                if (!itemMap[it.name]) itemMap[it.name] = { name: it.name, qty: 0, rev: 0 };
+                itemMap[it.name].qty += 1;
+                itemMap[it.name].rev += it.price;
+            });
+            const ct = h.customerType || '不明';
+            custMap[ct] = (custMap[ct] || 0) + 1;
+        });
+        const totalRev = salesHistory.reduce((s, h) => s + h.total, 0);
+        // スナップショットは「閉店済みの記録」なので currentSession は null にしておく。
+        // （閲覧のために読み込んでも、レジが営業中に見えて会計できてしまうことがない）
+        const snapshot = JSON.parse(JSON.stringify(collectData()));
+        snapshot.currentSession = null;
+        snapshot.cart = [];
+        snapshot.sessionArchive = [];   // 入れ子で膨らむのを防ぐ
+        snapshot.sessionName = currentSession || '無題';
+        return {
+            name: currentSession || '無題',
+            date: new Date().toISOString(),
+            totalRev: totalRev,
+            customerCount: salesHistory.length,
+            avgSpend: salesHistory.length ? Math.round(totalRev / salesHistory.length) : 0,
+            itemStats: Object.values(itemMap).sort((a, b) => b.qty - a.qty),
+            customerStats: custMap,
+            recommendations: buildRestockRecommendations(),
+            snapshot: snapshot
+        };
+    }
+
+    // スナップショットは容量を食うので、新しい方から ARCHIVE_SNAPSHOT_KEEP 件だけ残す。
+    // 要約（売上・客数・次回推奨）は 20 件ぶん残るので、前回比較や仕入れ推奨には影響しない。
+    const ARCHIVE_SNAPSHOT_KEEP = 5;
+    function pruneArchiveSnapshots() {
+        let kept = 0;
+        for (let i = sessionArchive.length - 1; i >= 0; i--) {
+            if (!sessionArchive[i] || !sessionArchive[i].snapshot) continue;
+            kept++;
+            if (kept > ARCHIVE_SNAPSHOT_KEEP) delete sessionArchive[i].snapshot;
+        }
+    }
+
+    // ▼▼▼ 過去の販売会の閲覧 ▼▼▼
+    // 集計・PDF・CSV は現在のデータ（グローバル変数）を読む作りなので、
+    // 「一時的にスナップショットを載せて実行し、必ず元に戻す」ことで過去分にも使い回す。
+    let reportViewSnapshot = null; // 非nullの間は、売上画面の表示や書き出しがこのデータを対象にする
+    let viewingSnapshot = false;   // スナップショットを一時的に載せている最中か（saveData の誤書き込み防止）
+
+    function withSnapshot(snap, fn) {
+        const saved = collectData();
+        const savedViewing = viewingSnapshot;
+        try {
+            viewingSnapshot = true;           // この間の saveData() は書き込ませない（現在のデータを守る）
+            applyData(JSON.parse(JSON.stringify(snap)));
+            return fn();
+        } finally {
+            applyData(saved);
+            viewingSnapshot = savedViewing;
+        }
+    }
+
+    // 売上画面の描画・書き出しを、閲覧中のスナップショット（あれば）に対して実行する
+    function inReportContext(fn) {
+        return reportViewSnapshot ? withSnapshot(reportViewSnapshot, fn) : fn();
+    }
+
+    function renderArchiveList() {
+        const box = document.getElementById('archive-list');
+        if (!box) return;
+        if (!sessionArchive.length) {
+            box.innerHTML = '<p class="settings-hint">まだありません。閉店すると、その回の記録がここに自動で保存されます。</p>';
+            return;
+        }
+        box.innerHTML = [...sessionArchive].reverse().map((a, revIdx) => {
+            const idx = sessionArchive.length - 1 - revIdx;
+            const d = new Date(a.date);
+            const dstr = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            const actions = a.snapshot
+                ? `<div class="arc-actions">
+                       <button class="action-btn btn-accent-outline" onclick="openArchiveReport(${idx})">📊 集計を見る</button>
+                       <button class="action-btn btn-secondary" onclick="exportArchiveBackup(${idx})">💾 バックアップ保存</button>
+                   </div>`
+                : `<p class="settings-hint" style="margin:0;">※ 古い記録のため、集計の要約のみ残しています（明細は保存期間を過ぎました）。</p>`;
+            return `<div class="arc-card">
+                <div class="arc-head"><span class="arc-name">${escHtml(a.name)}</span><span class="arc-date">${dstr}</span></div>
+                <div class="arc-stats">売上 <b>¥${(a.totalRev || 0).toLocaleString()}</b> ／ ${a.customerCount || 0}件 ／ 平均 ¥${(a.avgSpend || 0).toLocaleString()}</div>
+                ${actions}
+            </div>`;
+        }).join('');
+    }
+
+    // 過去の販売会の集計を、売上画面にそのまま表示する
+    function openArchiveReport(idx) {
+        const a = sessionArchive[idx];
+        if (!a || !a.snapshot) { playError(); return; }
+        if (currentSession) {
+            alert('営業中は過去の販売会を開けません。閉店してからご覧ください。');
+            return;
+        }
+        showTab('analytics');            // 先にタブを開く（showTab は閲覧状態をいったん解除する）
+        reportViewSnapshot = a.snapshot; // そのうえで閲覧対象を指定して描画し直す
+        withSnapshot(a.snapshot, () => updateAnalytics());
+        showAnalyticsSection('summary');
+        showToast(`「${a.name}」の集計を表示しています`);
+    }
+
+    // 過去の販売会の集計データを組み立てて返す（画面表示は伴わない）。
+    // idx を省略すると、いちばん新しい（＝直前に閉店した）販売会が対象。
+    function buildArchivedReportData(idx) {
+        const a = sessionArchive[(idx == null ? sessionArchive.length - 1 : idx)];
+        if (!a || !a.snapshot) return null;
+        return withSnapshot(a.snapshot, () => buildReportData());
+    }
+
+    function exportArchiveBackup(idx) {
+        const a = sessionArchive[idx];
+        if (!a || !a.snapshot) { playError(); return; }
+        const d = new Date(a.date);
+        const p = n => String(n).padStart(2, '0');
+        const stamp = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
+        triggerDownload(`taizanboku_backup_${stamp}.json`, JSON.stringify(a.snapshot, null, 2), 'application/json');
+        showToast('バックアップファイルを保存しました');
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 営業の途中から複数端末の共有を始める／やめる ▼▼▼
+    // 「1台で開店したが、混んできたので応援の端末を足したい」という運用のための機能。
+    // 開店をやり直す必要はなく、この端末のここまでの会計も在庫もそのまま引き継がれる。
+    async function startSyncMidSession() {
+        if (!currentSession) { alert('営業中のみ使えます。'); return; }
+        if (syncMode) { alert('すでに共有中です。'); return; }
+        if (!window.FIREBASE_CONFIG) { alert('この端末では共有機能が設定されていません。'); return; }
+        if (!syncReady) { alert('同期サーバーに接続できていません。通信状況をご確認のうえ、少し待ってからもう一度お試しください。'); return; }
+
+        const input = document.getElementById('sync-live-code-input');
+        const code = sanitizeEventCode((input && input.value || '').trim());
+        if (!code) { alert('共有コードを入力してください（一緒に使う全端末で同じ文字にします）。'); return; }
+
+        let snap;
+        try {
+            snap = await fbDb.collection('events').doc(code).get();
+        } catch (e) {
+            console.warn('共有販売会の確認に失敗しました', e);
+            alert('同期サーバーに接続できませんでした。通信状況をご確認ください。');
+            return;
+        }
+        const remote = snap && snap.exists ? (snap.data() || {}) : null;
+
+        if (remote && remote.status === 'closed') {
+            alert(`共有コード「${code}」は閉店済みの販売会で使われています。\n前回の集計と混ざってしまうため、別のコードを入力してください。`);
+            return;
+        }
+
+        if (!remote) {
+            // ── この端末が「共有の元」になる ──
+            // いまの商品構成と、ここまでの会計をすべてアップロードする。
+            if (!confirm(`共有コード「${code}」で、いまの販売会「${currentSession}」の共有を始めます。\n\n・この端末の会計${salesHistory.length}件と商品構成が、共有の元になります。\n・他の端末では、開店画面で同じコードを入れて開店してもらってください。\n\nよろしいですか？`)) return;
+            try {
+                await fbDb.collection('events').doc(code).set({
+                    name: currentSession, status: 'open', products: products,
+                    openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
+                });
+            } catch (e) {
+                console.warn('共有販売会の作成に失敗しました', e);
+                alert('共有を開始できませんでした。通信状況をご確認ください。');
+                return;
+            }
+        } else {
+            // ── すでに動いている共有販売会に、この端末が合流する ──
+            // 商品構成は共有側にそろえる（同じ在庫を2台で数えているため、共有側が正）。
+            const sharedProducts = Array.isArray(remote.products) ? remote.products : [];
+            const sharedNames = new Set(sharedProducts.map(p => p.name));
+            const missing = [...new Set(salesHistory.flatMap(h => (h.items || []).map(i => i.name)))].filter(n => !sharedNames.has(n));
+            let msg = `共有コード「${code}」は、すでに「${remote.name || '無題'}」として動いています。\n\n・この端末の会計${salesHistory.length}件を、その販売会に合流させます。\n・商品と仕入れ数は共有側の内容にそろいます。`;
+            if (missing.length) msg += `\n\n⚠ 次の商品は共有側のリストにありません：${missing.join('、')}\n  売上には反映されますが、在庫の残数は管理されません。`;
+            msg += '\n\nよろしいですか？';
+            if (!confirm(msg)) return;
+            if (sharedProducts.length) {
+                products = JSON.parse(JSON.stringify(sharedProducts));
+                products.forEach(p => { if (p.stock == null) p.stock = p.initialStock; if (p.soldOutTime === undefined) p.soldOutTime = null; });
+            }
+            currentSession = remote.name || currentSession;
+        }
+
+        // 購読を開始する。startSalesSubscription の中で、まだ共有されていない
+        // この端末の会計（remoteId を持たないもの）がまとめて送信される。
+        startSalesSubscription(code);
+        startSessionDocSubscription(code);
+        if (input) input.value = '';
+        const disp = document.getElementById('session-display');
+        disp.innerText = `営業中: ${currentSession}`;
+        saveData();
+        init();
+        updateSessionTabView();
+        showToast(`🔗 共有を開始しました（コード: ${code}）`);
+    }
+
+    // 共有をやめて、この端末だけで営業を続ける（電波が不安定な時などの避難先）。
+    // ここまでの会計はこの端末に残り、あとで共有を再開すれば未送信分がまとめて送られる。
+    function stopSyncMidSession() {
+        if (!syncMode) return;
+        if (!confirm('共有をやめて、この端末だけで営業を続けます。\n\n・ここまでの会計はこの端末に残ります。\n・この先の会計は他の端末には表示されません。\n・他の端末での会計も、この端末には表示されなくなります。\n\nよろしいですか？')) return;
+        stopSalesSubscription();
+        stopSessionDocSubscription();
+        syncEventCode = null;
+        saveData();
+        init();
+        updateSessionTabView();
+        showToast('📴 共有をやめました（この端末だけで営業中）');
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     // 【複数端末同期中のみ】この端末だけレジ操作を終える（共有販売会そのものは終了しない）。
     // シフト交代（午前:端末A→午後:端末B）や、ピーク時だけ増やした応援端末を外す時に使う。
@@ -2251,10 +2607,29 @@
         const hasData = !!analyticsSections;
         document.getElementById('analytics-empty').style.display = hasData ? 'none' : 'block';
         document.getElementById('analytics-menu-grid').style.display = hasData ? '' : 'none';
+        // 過去の販売会を見ている時は、どの回の集計かを一覧の上にも出す
+        const note = document.getElementById('analytics-archive-note');
+        if (note) {
+            note.style.display = (hasData && reportViewSnapshot) ? 'block' : 'none';
+            if (hasData && reportViewSnapshot) {
+                note.innerHTML = `📦 直前に閉店した「${escHtml(reportViewSnapshot.sessionName || '無題')}」の集計です`;
+            }
+        }
     }
 
+    // 過去の販売会を閲覧中は、その回のデータで描画する（グラフや操作ログもずれないように）
     function showAnalyticsSection(key) {
+        return inReportContext(() => showAnalyticsSectionInner(key));
+    }
+
+    function showAnalyticsSectionInner(key) {
         if (!analyticsSections) return;
+        const banner = document.getElementById('archive-view-banner');
+        if (banner) {
+            const name = reportViewSnapshot && reportViewSnapshot.sessionName;
+            banner.style.display = reportViewSnapshot ? 'block' : 'none';
+            if (reportViewSnapshot) banner.innerHTML = `📦 過去の販売会「${escHtml(name || '無題')}」の集計を表示しています`;
+        }
         document.getElementById('analytics-menu').style.display = 'none';
         document.getElementById('analytics-detail').style.display = 'block';
         document.getElementById('analytics-detail-title').innerText = ANALYTICS_TITLES[key] || '';
@@ -2619,28 +2994,44 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
+    const TAB_IDS = ['session', 'reservations', 'analytics', 'records', 'settings'];
     const SECTION_TITLES = {
-        session: '🏪 開店・設定',
+        session: '🏪 開店・営業',
         reservations: '🗓️ 予約',
         analytics: '📊 売上・分析',
-        records: '🧮 会計履歴（記録・レシート・取消）'
+        records: '🧮 会計履歴（記録・レシート・取消）',
+        settings: '⚙ 設定（端末とデータの管理）'
     };
 
     function showTab(tabId) {
         document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
         const btn = document.getElementById(`tab-btn-${tabId}`);
         if (btn) btn.classList.add('active');
-        document.getElementById('tab-session').style.display = 'none';
-        document.getElementById('tab-reservations').style.display = 'none';
-        document.getElementById('tab-analytics').style.display = 'none';
-        document.getElementById('tab-records').style.display = 'none';
+        TAB_IDS.forEach(id => {
+            const el = document.getElementById(`tab-${id}`);
+            if (el) el.style.display = 'none';
+        });
         document.getElementById(`tab-${tabId}`).style.display = 'block';
         const titleEl = document.getElementById('settings-title');
-        if (titleEl) titleEl.textContent = SECTION_TITLES[tabId] || '';
+        if (titleEl) titleEl.textContent = tabId === 'session'
+            ? (currentSession ? '🏪 営業中の管理' : '🏪 開店の準備')
+            : (SECTION_TITLES[tabId] || '');
         setActiveNav(tabId);
         if(tabId === 'reservations') renderReservations();
         if(tabId === 'records') renderRecords();
-        if(tabId === 'analytics') showAnalyticsMenu();
+        if(tabId === 'settings') renderArchiveList();
+        if(tabId === 'analytics') {
+            // 「売上」タブは基本“いまのデータ”を見せる。
+            // ただし閉店後でレジが空のときは、直前に閉店した販売会の集計を自動で出す
+            //（閉店した直後に売上を見に来た人が、空の画面に戸惑わないようにするため）。
+            reportViewSnapshot = null;
+            if (!currentSession && salesHistory.length === 0) {
+                const latest = sessionArchive[sessionArchive.length - 1];
+                if (latest && latest.snapshot) reportViewSnapshot = latest.snapshot;
+            }
+            inReportContext(() => updateAnalytics());
+            showAnalyticsMenu();
+        }
     }
 
     // ▼▼▼ ボトムナビ：主要画面への導線 ▼▼▼
@@ -2653,6 +3044,7 @@
 
     function setActiveNav(section) {
         document.querySelectorAll('#bottom-nav .nav-item').forEach(el => el.classList.remove('active'));
+        // 設定はボトムナビに項目を持たない（ヘッダーの⚙から開く）ので、レジを選択状態にしない
         const el = document.getElementById('nav-' + section);
         if (el) el.classList.add('active');
     }
@@ -2678,6 +3070,9 @@
     function updateClosedState() {
         const el = document.getElementById('closed-cta');
         if (el) el.classList.toggle('show', !currentSession);
+        // ボトムナビの5番目は状態にあわせて「開店」⇄「営業中」
+        const navLabel = document.getElementById('nav-session-label');
+        if (navLabel) navLabel.textContent = currentSession ? '営業中' : '開店';
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -2791,7 +3186,13 @@
     }
 
     // 集計結果を1枚のHTMLレポートに組み立て、ブラウザの印刷でPDF化する。
-    function downloadPDF() {
+    // 書き出し系も、過去の販売会を閲覧中はその回のデータを対象にする
+    function downloadPDF() { return inReportContext(downloadPDFInner); }
+    function exportFacilityCSV() { return inReportContext(exportFacilityCSVInner); }
+    function exportDetailCSV() { return inReportContext(exportDetailCSVInner); }
+    function exportReportJSON() { return inReportContext(exportReportJSONInner); }
+
+    function downloadPDFInner() {
         const R = buildReportData();
         if (!R) { alert('印刷する売上データがありません。'); return; }
 
@@ -3018,6 +3419,9 @@
     let lastSavedSnapshot = null; // 直近で保存に成功したJSON（保存失敗時の巻き戻し用）
 
    function saveData() {
+        // 過去の販売会を一時的に読み込んでいる最中は保存しない。
+        // ここで書いてしまうと、現在のデータが過去のデータで上書きされてしまう。
+        if (viewingSnapshot) return;
         const data = collectData();
         let json;
         try {
@@ -3031,14 +3435,35 @@
             lastSavedSnapshot = json;
         } catch (e) {
             // 容量超過やプライベートモード等で保存できない場合：
-            // 直前の保存内容を保持したまま、操作者に一度だけ警告する（データ消失を防ぐ）。
+            // まず「過去の販売会」の明細（容量を食う部分）を減らして、もう一度だけ試す。
+            // いま営業中のデータを守ることを最優先にする。
             console.error('localStorage への保存に失敗しました', e);
+            const hadSnapshots = sessionArchive.some(a => a && a.snapshot);
+            if (hadSnapshots) {
+                try {
+                    // 明細つきで残す件数を1件まで絞ってから保存し直す
+                    let kept = 0;
+                    for (let i = sessionArchive.length - 1; i >= 0; i--) {
+                        if (!sessionArchive[i] || !sessionArchive[i].snapshot) continue;
+                        kept++;
+                        if (kept > 1) delete sessionArchive[i].snapshot;
+                    }
+                    const retry = JSON.stringify(collectData());
+                    localStorage.setItem('taizanboku_pos_data', retry);
+                    lastSavedSnapshot = retry;
+                    if (!saveData._pruneWarned) {
+                        saveData._pruneWarned = true;
+                        showToast('端末の空き容量が少ないため、古い販売会の明細を整理しました');
+                    }
+                    return;
+                } catch (_) { /* それでもだめなら下の従来処理へ */ }
+            }
             try {
                 if (lastSavedSnapshot) localStorage.setItem('taizanboku_pos_data', lastSavedSnapshot);
             } catch (_) { /* 復旧も失敗：これ以上はできることがない */ }
             if (!saveData._warned) {
                 saveData._warned = true;
-                alert('【！】データの保存に失敗しました。端末の空き容量やブラウザ設定をご確認ください。\n念のため「設定 →バックアップ書き出し」でファイル保存することをおすすめします。');
+                alert('【！】データの保存に失敗しました。端末の空き容量やブラウザ設定をご確認ください。\n念のため「⚙ 設定 → バックアップファイルを保存」で控えを取ることをおすすめします。');
             }
         }
     }
@@ -3059,7 +3484,7 @@
             // 保存データが壊れている場合：上書きで失わないよう別キーへ退避してから初期状態で続行。
             console.error('保存データが壊れているため読み込めませんでした', e);
             try { localStorage.setItem('taizanboku_pos_data_corrupt_' + Date.now(), saved); } catch (_) {}
-            alert('【！】保存データを読み込めませんでした（破損の可能性）。\n壊れたデータは退避し、初期状態で起動します。バックアップがあれば「設定 →バックアップ復元」から戻せます。');
+            alert('【！】保存データを読み込めませんでした（破損の可能性）。\n壊れたデータは退避し、初期状態で起動します。バックアップがあれば「開店」画面の「別の端末や前回のデータから始める」で戻せます。');
             return;
         }
         if (!applyData(data)) return;
@@ -3135,6 +3560,7 @@
         renderLiveStock();
         renderReservations();
         renderRecords();
+        renderArchiveList();
         updateAnalytics();
         if (msg) showToast(msg);
     }
@@ -3226,7 +3652,7 @@
         return Object.values(rows).sort((a, b) => b.count - a.count);
     }
 
-    function exportFacilityCSV() {
+    function exportFacilityCSVInner() {
         const rows = buildItemSalesRows();
         if (rows.length === 0) { alert('書き出す売上データがありません。'); return; }
 
@@ -3260,7 +3686,7 @@
 
     // 集計結果（buildReportData の構造化データ）を JSON で書き出す。
     // 後からの分析・別ツール取り込み・記録保存用（前回比較・粗利・取りこぼしなども含む）。
-    function exportReportJSON() {
+    function exportReportJSONInner() {
         const R = buildReportData();
         if (!R) { alert('書き出す売上データがありません。'); return; }
         const payload = {
@@ -3272,7 +3698,7 @@
     }
 
     // 一会計ごとの明細をすべて書き出す（記録の保存用）
-    function exportDetailCSV() {
+    function exportDetailCSVInner() {
         if (salesHistory.length === 0) { alert('書き出す売上データがありません。'); return; }
         const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
         let csv = '﻿';
@@ -3682,31 +4108,113 @@
     // ▲▲▲ ここまで ▲▲▲
 
     // ▼▼▼ 販売中の在庫調整（追加搬入・数え直し）▼▼▼
+    // 営業中の商品・在庫の調整パネル。
+    // 【設計】ここで直接いじるのは「仕入れ数（その日に用意した総数）」。
+    // 残数は「仕入れ数 − 売れた数」で決まるので、追加で搬入したら仕入れ数を増やせば
+    // 残数もレポートの消化率も自動的に正しくなる。複数端末で共有している時も、
+    // 残数は共有の販売実績から計算されるため、この方法なら上書きされて消えることがない。
     function renderLiveStock() {
         const list = document.getElementById('live-stock-list');
         if (!list) return;
         if (!currentSession) {
-            list.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:0;">開店後、当日の在庫をここで増減できます。</p>';
+            list.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:0;">開店後、当日の商品と在庫をここで調整できます。</p>';
             return;
         }
-        list.innerHTML = syncMode
-            ? '<p style="font-size:12px; color:var(--danger-ink); background:var(--danger-bg); border:1px solid var(--danger); border-radius:var(--r-sm); padding:8px 10px; margin:0 0 10px;">⚠ 複数端末同期が有効な間、ここでの手動調整は次に誰かが会計すると上書きされ元に戻ります（在庫は共有の販売実績から自動計算されるため）。追加搬入等は仕入れ数そのものの見直しが必要です。</p>'
-            : '';
+        list.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:0 0 8px;">追加で搬入したら「仕入れ数」を増やしてください。残数と消化率は自動で計算し直されます。'
+            + (syncMode ? '変更は共有中の全端末に反映されます。' : '') + '</p>';
         products.forEach(p => {
             const oversold = p.stock < 0; // 販売数>仕入数（過少入力の可能性）
-            const noteVal = (p.note || '').replace(/"/g, '&quot;');
+            const noteVal = escHtml(p.note || '');
+            const inactive = p.active === false;
             list.innerHTML += `
-                <div style="margin-bottom:8px; ${oversold ? 'background:var(--danger-bg); border-radius:var(--r-sm); padding:6px;' : ''}">
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <span style="flex:1; font-size:14px;">${p.name}${oversold ? ' <b style="color:var(--danger); font-size:12px;">⚠ 販売&gt;仕入</b>' : ''}</span>
-                        <button class="step-btn minus" onclick="adjustLiveStock(${p.id}, -1)">−</button>
-                        <input type="number" value="${p.stock}" class="num" style="width:62px; padding:6px; text-align:center; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" onchange="setLiveStock(${p.id}, this.value)">
-                        <button class="step-btn plus" onclick="adjustLiveStock(${p.id}, 1)">＋</button>
+                <div style="margin-bottom:10px; padding:8px; border-radius:var(--r-sm); border:1px solid var(--line); background:${oversold ? 'var(--danger-bg)' : 'var(--white)'}; ${inactive ? 'opacity:0.55;' : ''}">
+                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+                        <span style="flex:1; font-size:14px; font-weight:bold; overflow-wrap:anywhere;">${escHtml(p.name)}${oversold ? ' <b style="color:var(--danger); font-size:12px;">⚠ 販売&gt;仕入</b>' : ''}${inactive ? ' <span style="font-size:11px; color:var(--text-light); font-weight:normal;">(この回は販売しない)</span>' : ''}</span>
+                        <span style="font-size:13px; color:var(--text-light);">残り</span>
+                        <span class="num" style="font-size:17px; font-weight:bold; min-width:38px; text-align:right; color:${oversold ? 'var(--danger)' : (p.stock <= 5 ? 'var(--low-ink)' : 'var(--text-main)')};">${p.stock}</span>
                     </div>
-                    ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:5px; padding:6px; font-size:12px; border:1px solid var(--line-strong); border-radius:var(--r-sm);" onchange="setProductNote(${p.id}, this.value)">` : ''}
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <label style="font-size:12px; color:var(--text-light);">価格</label>
+                        <input type="number" value="${p.price}" class="num" style="width:78px; padding:6px; text-align:right; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" onchange="setLivePrice(${p.id}, this.value)">
+                        <label style="font-size:12px; color:var(--text-light); margin-left:4px;">仕入れ数</label>
+                        <button class="step-btn minus" onclick="adjustLiveInitialStock(${p.id}, -1)">−</button>
+                        <input type="number" value="${p.initialStock}" class="num" style="width:62px; padding:6px; text-align:center; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" onchange="setLiveInitialStock(${p.id}, this.value)">
+                        <button class="step-btn plus" onclick="adjustLiveInitialStock(${p.id}, 1)">＋</button>
+                    </div>
+                    ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:6px; padding:6px; font-size:12px; border:1px solid var(--line-strong); border-radius:var(--r-sm);" onchange="setProductNote(${p.id}, this.value)">` : ''}
                 </div>
             `;
         });
+    }
+
+    // 仕入れ数を変えた分だけ残数も動かす（同期中は共有の販売実績から再計算されるので触らない）
+    function applyInitialStockChange(p, newInitial) {
+        const delta = newInitial - (p.initialStock || 0);
+        p.initialStock = newInitial;
+        if (syncMode) {
+            recomputeStockFromSales();
+        } else {
+            p.stock = p.stock + delta;
+        }
+        reconcileSoldOut(p);
+        syncPushProducts();
+        saveData();
+        init();
+        renderLiveStock();
+    }
+
+    function adjustLiveInitialStock(id, delta) {
+        const p = products.find(prod => prod.id === id);
+        if (!p) return;
+        applyInitialStockChange(p, Math.max(0, (p.initialStock || 0) + delta));
+    }
+
+    function setLiveInitialStock(id, value) {
+        const p = products.find(prod => prod.id === id);
+        if (!p) return;
+        const n = parseInt(value);
+        applyInitialStockChange(p, isNaN(n) || n < 0 ? (p.initialStock || 0) : n);
+    }
+
+    // 営業中の値段変更。すでに済んだ会計の金額は、その時の価格のまま変わらない。
+    function setLivePrice(id, value) {
+        const p = products.find(prod => prod.id === id);
+        if (!p) return;
+        const n = parseInt(value);
+        if (isNaN(n) || n < 0) { renderLiveStock(); return; }
+        if (n === p.price) return;
+        logEdit(`価格変更：${p.name} ¥${p.price} → ¥${n}`);
+        p.price = n;
+        syncPushProducts();
+        saveData();
+        init();
+        renderLiveStock();
+    }
+
+    // 営業の途中で商品を追加する（急きょ別の品を出すことになった時など）
+    function addLiveProduct() {
+        if (!currentSession) { alert('開店してから追加してください。'); return; }
+        const name = (prompt('追加する商品の名前を入力してください') || '').trim();
+        if (!name) return;
+        if (products.some(p => p.name === name)) { alert('同じ名前の商品がすでにあります。'); return; }
+        const priceRaw = prompt(`「${name}」の価格（円）を入力してください`, '100');
+        const price = parseInt(priceRaw);
+        if (isNaN(price) || price < 0) { alert('価格が正しくありません。'); return; }
+        const stockRaw = prompt(`「${name}」の仕入れ数（用意した個数）を入力してください`, '10');
+        const initialStock = parseInt(stockRaw);
+        if (isNaN(initialStock) || initialStock < 0) { alert('仕入れ数が正しくありません。'); return; }
+        const typeRaw = (prompt('色分けの種類を選んでください（1:パン / 2:クッキー / 3:ドリンク）', '1') || '').trim();
+        const type = typeRaw === '3' ? 'drink' : (typeRaw === '2' ? 'savory' : 'sweet');
+
+        const newId = products.reduce((m, p) => Math.max(m, p.id || 0), 0) + 1;
+        products.push({ id: newId, name, price, type, initialStock, stock: initialStock, cost: null, soldOutTime: null, active: true, note: '' });
+        logEdit(`商品追加：${name}（¥${price} / 仕入れ${initialStock}個）`);
+        if (syncMode) recomputeStockFromSales();
+        syncPushProducts();
+        saveData();
+        init();
+        renderLiveStock();
+        showToast(`✓ 「${name}」を追加しました`);
     }
 
     // 商品の備考（途中補充・数え直し等）を記録する
@@ -3831,7 +4339,18 @@
         updateSyncUi();
     }
 
-    // 共有販売会(events/{code})自体の状態を購読し、他端末による「閉店」を検知する（強制終了はしない）
+    // 共有中の商品構成（名前・価格・仕入れ数）を全端末へ配る。
+    // 残数そのものは送らない（残数は各端末が共有の販売実績から計算するため）。
+    function syncPushProducts() {
+        if (!syncMode || !syncEventCode || !fbDb) return;
+        fbDb.collection('events').doc(syncEventCode)
+            .set({ products: products, productsUpdatedAt: Date.now(), productsUpdatedBy: getDeviceId() }, { merge: true })
+            .catch(e => console.warn('商品構成の共有に失敗しました', e));
+    }
+
+    // 共有販売会(events/{code})自体の状態を購読し、
+    //  ・他端末による「閉店」を検知する（強制終了はしない）
+    //  ・他端末での商品の追加・価格変更・追加搬入を取り込む
     function startSessionDocSubscription(code) {
         if (!syncReady || !code || !fbDb) return;
         if (fbSessionUnsub) { try { fbSessionUnsub(); } catch (e) {} fbSessionUnsub = null; }
@@ -3842,8 +4361,27 @@
             if (!firstSnapshot && d && d.status === 'closed' && syncMode) {
                 showToast('⚠ 他の端末でこの販売会は閉店（集計）されました');
             }
+            // 他の端末が商品を変更したら取り込む（自分が書いた分は取り込み直さない）
+            if (!firstSnapshot && syncMode && d && Array.isArray(d.products) && d.productsUpdatedBy && d.productsUpdatedBy !== getDeviceId()) {
+                applyRemoteProducts(d.products);
+            }
             firstSnapshot = false;
         }, err => { console.warn('共有販売会の状態購読でエラー', err); });
+    }
+
+    // 他端末から届いた商品構成を反映する。残数はこの端末でも販売実績から計算し直す。
+    function applyRemoteProducts(remoteProducts) {
+        const before = JSON.stringify(products.map(p => ({ n: p.name, p: p.price, i: p.initialStock })));
+        const next = JSON.parse(JSON.stringify(remoteProducts));
+        next.forEach(p => { if (p.stock == null) p.stock = p.initialStock; if (p.soldOutTime === undefined) p.soldOutTime = null; });
+        const after = JSON.stringify(next.map(p => ({ n: p.name, p: p.price, i: p.initialStock })));
+        if (before === after) return; // 中身が同じなら画面を描き直さない
+        products = next;
+        recomputeStockFromSales();
+        saveData();
+        init();
+        renderLiveStock();
+        showToast('他の端末で商品・仕入れ数が変更されました');
     }
 
     function stopSessionDocSubscription() {
@@ -3943,17 +4481,24 @@
     function updateSyncUi() {
         let msg;
         if (!window.FIREBASE_CONFIG) msg = '';
-        else if (syncMode) msg = `🔗 同期中：コード「<b>${(syncEventCode||'').replace(/</g,'')}</b>」／この端末 ${deviceLabel()}`;
-        else if (syncReady) msg = '🟢 同期の準備OK（開店時に共有コードを入れてください）';
+        else if (syncMode) msg = `🔗 共有中：コード「<b>${escHtml(syncEventCode || '')}</b>」／この端末 ${deviceLabel()}`;
+        else if (syncReady) msg = '🟢 共有の準備OK（コードを入れると開始できます）';
         else msg = '⏳ 同期サーバーに接続中…（つながらない場合はこの端末のみで動作します）';
         ['sync-status', 'sync-status-active'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.innerHTML = msg;
         });
+        // 開店画面の共有コード欄／営業中の共有パネルは、共有機能が設定されている時だけ出す
+        const show = window.FIREBASE_CONFIG ? 'block' : 'none';
         const row = document.getElementById('sync-code-row');
-        if (row) row.style.display = window.FIREBASE_CONFIG ? 'block' : 'none';
-        const leaveBtn = document.getElementById('btn-leave-device');
-        if (leaveBtn) leaveBtn.style.display = syncMode ? 'block' : 'none';
+        if (row) row.style.display = show;
+        const liveRow = document.getElementById('sync-live-row');
+        if (liveRow) liveRow.style.display = show;
+        // 営業中パネルは「まだ共有していない＝開始UI」「共有中＝停止UI」で出し分ける
+        const startBlock = document.getElementById('sync-start-block');
+        if (startBlock) startBlock.style.display = syncMode ? 'none' : 'block';
+        const stopBlock = document.getElementById('sync-stop-block');
+        if (stopBlock) stopBlock.style.display = syncMode ? 'block' : 'none';
     }
     // ▲▲▲ ここまで ▲▲▲
 
