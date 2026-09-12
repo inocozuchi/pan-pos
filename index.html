@@ -1288,6 +1288,12 @@
 
 
     function completeTransaction() {
+        // 二重タップ・連打防止：直前の呼び出しで既に会計対象が空になっていれば、
+        // これは「同じ操作の2回目の呼び出し」なので何もしない（二重記録の防止）。
+        // openCheckout()は必ず「カートに何かある」か「有効な予約を処理中」の時しか
+        // 開かないため、初回の正当な呼び出しがこのガードで止まることはない。
+        if (cart.length === 0 && processingReservationId === null) return;
+
         const total = parseInt(document.getElementById('modal-total').innerText);
         const cash = parseInt(document.getElementById('cash-input').value) || 0;
         if (cash < total) { playError(); alert('お預かり金額が足りません'); return; }
