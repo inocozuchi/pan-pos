@@ -86,7 +86,7 @@
         }
         
         /* ダブルタップでの画面拡大を防止する設定 */
-        button, input, .product-btn, .tab-item {
+        button, input, .product-btn, .menu-row, .menu-card {
             touch-action: manipulation;
         }
 
@@ -175,24 +175,12 @@
         .cat-legend i { width: 14px; height: 14px; border-radius: 5px; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
         @media (max-width: 820px) { .cat-legend { display: none; } }
 
-        .settings-btn {
-            background: var(--white);
-            border: none;
-            color: var(--text-main);
-            padding: 9px 20px;
-            border-radius: var(--r-pill);
-            font-weight: bold;
-            cursor: pointer;
-            white-space: nowrap;
-            box-shadow: 0 2px 6px rgba(90,78,77,0.12);
-            transition: transform 0.1s, box-shadow 0.1s;
-        }
-        .settings-btn:active { transform: translateY(1px); }
-        .settings-btn { font-size: 13px; box-shadow: inset 0 0 0 1px var(--line-strong); }
-        /* 狭い画面では歯車だけにして、ヘッダーが2行に折り返さないようにする */
+        /* 狭い画面ではヘッダーを1行に収める（アプリ名は畳んでアイコンだけ残す） */
         @media (max-width: 560px) {
-            .settings-btn { padding: 7px 11px; font-size: 0; }
-            .settings-btn::before { content: '⚙'; font-size: 17px; }
+            .hdr-btn { padding: 8px 12px; font-size: 12.5px; gap: 4px; }
+            .brand-name { display: none; }
+            .app-title { gap: 8px; }
+            .session-info { max-width: 40vw; }
         }
 
         /* 過去の販売会（閉店時に自動保存されたもの）の一覧 */
@@ -281,6 +269,19 @@
             overflow-y: auto;
             padding: 15px;
         }
+
+        /* 属性の入力もれリマインダー */
+        #pending-reminder {
+            display: none; align-items: center; justify-content: center; gap: 6px;
+            background: var(--warn-bg); color: var(--warn-ink); font-weight: bold;
+            font-size: 13px; text-align: center; padding: 8px; cursor: pointer;
+            border-bottom: 2px solid var(--warn-line); flex-shrink: 0; font-family: inherit;
+            border-left: none; border-right: none; border-top: none; width: 100%;
+        }
+        #pending-reminder.show { display: flex; }
+
+        /* カートの開閉ボタン：スマホ縦画面でだけ使う（タブレットでは常に一覧を出す） */
+        #cart-toggle { display: none; }
 
         .cart-item {
             display: flex;
@@ -417,10 +418,6 @@
         }
         .change-display .chg-none { font-size: 13px; font-weight: bold; color: var(--accent-ink); margin-top: 4px; }
 
-        .tab-menu { display: flex; border-bottom: 2px solid var(--line); margin-bottom: 15px; flex-shrink: 0; }
-        .tab-item { flex: 1; padding: 12px 4px; color: var(--text-light); cursor: pointer; text-align: center; font-weight: bold; font-size: 15px; }
-        .tab-item.active { color: var(--accent); border-bottom: 3px solid var(--accent); }
-        .tab-content { flex: 1; overflow-y: auto; padding-bottom: 10px; }
 
         .res-card {
             background: var(--bg-color); border-radius: var(--r-md); padding: 15px;
@@ -431,8 +428,22 @@
 
         @media (max-width: 768px) {
             #app-container { flex-direction: column; }
-            main { flex: 1.4; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(80px, 108px); padding: 10px; gap: 8px; }
-            #sidebar { flex: 1; border-left: none; border-right: none; border-top: 1px solid var(--line); }
+            /* ▼ 商品ボタンの表示を最優先にする ▼
+               カートの明細は既定で畳み、下のバーは「合計＋操作」だけにする。
+               明細は「◯点」の行をタップすると開く。 */
+            main { flex: 1; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(84px, 116px); padding: 10px; gap: 8px; }
+            #sidebar { flex: 0 0 auto; border-left: none; border-right: none; border-top: 1px solid var(--line-strong); box-shadow: 0 -3px 14px rgba(90,78,77,0.07); }
+            #cart-list { flex: 0 0 auto; max-height: 0; overflow: hidden; padding: 0 12px; transition: max-height .18s ease, padding .18s ease; }
+            #sidebar.cart-open #cart-list { max-height: 40vh; overflow-y: auto; padding: 10px 12px; }
+            #cart-toggle {
+                display: flex; align-items: center; justify-content: space-between; gap: 8px;
+                width: 100%; background: var(--sunken); border: none; border-top: 1px solid var(--line);
+                border-bottom: 1px solid var(--line); padding: 7px 12px; cursor: pointer;
+                font-family: inherit; font-size: 13px; font-weight: bold; color: var(--text-main);
+                text-align: left; flex-shrink: 0;
+            }
+            #cart-toggle #cart-toggle-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            #cart-toggle .ic { width: 16px; height: 16px; color: var(--text-light); }
             .action-row { display: flex; }
             .btn-checkout { padding: 12px; }
             .total-display .total-label { font-size: 18px; }
@@ -446,9 +457,9 @@
             .cart-item { font-size: 16px; }
 
             /* カート／フッターを詰めて、会計ボタンまで常に見えるように */
-            #cart-list { padding: 10px 12px; }
-            footer { padding: 10px 12px; gap: 8px; }
-            footer .btn-checkout { font-size: 18px; padding: 14px; }
+            footer { padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)); gap: 6px; }
+            footer .btn-checkout { font-size: 18px; padding: 13px; margin-top: 2px; }
+            .total-display { margin-bottom: 0; }
 
             /* ▼ 会計モーダルを全画面化して1画面に収める（見切れ・スクロール解消）▼ */
             #checkout-modal .modal-content {
@@ -532,7 +543,6 @@
 
         /* ▼ 設定/予約パネル：横長デバイス向けにワイド化＆横スクロール ▼ */
         @media (min-width: 769px) {
-            #settings-modal .modal-content { max-width: 1000px; width: 94vw; }
             /* 会計済・予約のカードを横一列に並べ、横スクロールで見る */
             .card-strip { display: flex; flex-wrap: nowrap; gap: 12px; overflow-x: auto; padding-bottom: 10px; }
             .card-strip .res-card { min-width: 300px; max-width: 340px; margin-bottom: 0; flex-shrink: 0; }
@@ -549,14 +559,6 @@
         }
 
         /* 集計メニュー（項目選択）のボタン群 */
-        .analytics-menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        @media (min-width: 769px) { .analytics-menu-grid { grid-template-columns: repeat(3, 1fr); } }
-        .analytics-menu-btn {
-            background: var(--sunken); border: 2px solid var(--line); border-radius: var(--r-md); padding: 16px 10px;
-            font-size: 15px; font-weight: bold; color: var(--text-main); cursor: pointer;
-            font-family: inherit; text-align: center; line-height: 1.5;
-        }
-        .analytics-menu-btn:active { background: var(--accent-soft); }
         .analytics-sec { font-size: 14px; white-space: pre-wrap; line-height: 1.6; }
 
         /* 設定タブの見出し・注釈・営業中バナー（余白を詰めて圧迫感を解消） */
@@ -614,16 +616,130 @@
             max-width: 380px; width: 100%; box-shadow: 0 10px 28px rgba(90,78,77,0.14);
             display: flex; flex-direction: column; gap: 12px; align-items: center;
         }
-        .closed-card .cc-emoji { font-size: 46px; line-height: 1; }
         .closed-card .cc-title { font-size: 21px; font-weight: bold; color: var(--text-main); }
         .closed-card .cc-sub { font-size: 14px; color: var(--text-light); line-height: 1.7; }
         .closed-card .cc-steps { text-align: left; font-size: 13px; color: var(--text-light); line-height: 1.9; margin: 2px 0 6px; }
 
-        /* 設定モーダル：ボトムナビと重ならないよう下に余白、ナビはモーダルより前面 */
-        #settings-modal { align-items: center; padding-bottom: 74px; box-sizing: border-box; }
-        #settings-modal .modal-content { max-height: calc(100dvh - 100px); }
-        #settings-modal .tab-menu { display: none; } /* 画面切替はボトムナビが担う（互換のためDOMは残す） */
-        #settings-title { font-size: 18px; font-weight: bold; color: var(--text-main); margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+        .closed-card .cc-icon { width: 44px; height: 44px; color: var(--accent); }
+
+        /* ▼▼▼ アイコン（ピクトグラム）の共通指定 ▼▼▼
+           絵文字をやめ、線で描いた記号に統一。太さと角の丸めをそろえると
+           小さい表示でも形が読み取れる。 */
+        .ic {
+            width: 1.15em; height: 1.15em; flex-shrink: 0;
+            fill: none; stroke: currentColor; stroke-width: 1.7;
+            stroke-linecap: round; stroke-linejoin: round;
+            vertical-align: -0.18em;
+        }
+        .ic-brand { width: 22px; height: 22px; color: var(--accent); stroke-width: 1.6; }
+        /* ボタンの中では文字とアイコンを中央でそろえる */
+        .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+        .action-btn .ic { width: 17px; height: 17px; vertical-align: 0; }
+
+        /* ▼▼▼ 画面（ページ）の切り替え：重ねずに入れ替える ▼▼▼ */
+        #app-main { flex: 1; min-height: 0; display: flex; position: relative; }
+        .page { flex: 1; min-height: 0; display: none; flex-direction: column; }
+        .page.active { display: flex; }
+
+        .panel-head {
+            display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+            padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--surface);
+        }
+        .panel-head h2 { font-size: 17px; margin: 0; font-weight: 700; color: var(--text-main); min-width: 0; overflow-wrap: anywhere; }
+        .panel-back {
+            display: none; align-items: center; gap: 3px; flex-shrink: 0;
+            background: var(--btn-neutral); border: none; border-radius: var(--r-sm);
+            padding: 7px 12px 7px 8px; font-size: 13px; font-weight: bold;
+            color: var(--text-main); cursor: pointer; font-family: inherit;
+        }
+        .panel-back.show { display: inline-flex; }
+        .panel-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 20px; }
+        .panel-view { display: none; }
+        .panel-view.active { display: block; }
+        .sub-view { display: block; }
+
+        /* 一覧 →個別、の2段階メニュー（項目を選んでから中身を出す） */
+        .menu-list { display: flex; flex-direction: column; gap: 8px; }
+        .menu-row {
+            display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+            background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--r-md);
+            padding: 14px 14px; cursor: pointer; font-family: inherit; color: var(--text-main);
+            transition: background .12s ease;
+        }
+        .menu-row:active { background: var(--accent-soft); }
+        @media (hover: hover) { .menu-row:hover { border-color: var(--line-strong); } }
+        .menu-row > .ic:first-child { width: 22px; height: 22px; color: var(--accent); }
+        .menu-row .mr-body { flex: 1; min-width: 0; }
+        .menu-row .mr-title { display: block; font-size: 15px; font-weight: 700; }
+        .menu-row .mr-sub { display: block; font-size: 12.5px; color: var(--text-light); margin-top: 3px; line-height: 1.45; overflow-wrap: anywhere; }
+        .menu-row .mr-go { width: 18px; height: 18px; color: var(--text-light); }
+        .menu-row.is-danger > .ic:first-child { color: var(--danger); }
+        .menu-row.is-disabled { opacity: .5; pointer-events: none; }
+        @media (min-width: 769px) { .menu-list { display: grid; grid-template-columns: repeat(2, 1fr); } }
+        /* スマホでは項目を詰めて、メニュー全体がスクロールなしで収まるようにする */
+        @media (max-width: 768px) {
+            .menu-list { gap: 7px; }
+            .menu-row { padding: 10px 12px; gap: 10px; }
+            .menu-row > .ic:first-child { width: 20px; height: 20px; }
+            .menu-row .mr-title { font-size: 14.5px; }
+            .menu-row .mr-sub { font-size: 11.5px; margin-top: 2px; }
+            .panel-body { padding: 12px 14px 16px; }
+            .panel-head { padding: 8px 14px; }
+            .panel-head h2 { font-size: 16px; }
+        }
+
+        /* 集計のメニュー（項目カード） */
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        @media (min-width: 769px) { .menu-grid { grid-template-columns: repeat(3, 1fr); } }
+        .menu-card {
+            background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--r-md);
+            padding: 14px 10px; cursor: pointer; font-family: inherit; color: var(--text-main);
+            display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center;
+        }
+        .menu-card:active { background: var(--accent-soft); }
+        .menu-card .ic { width: 24px; height: 24px; color: var(--accent); }
+        .menu-card span { font-size: 13.5px; font-weight: 700; line-height: 1.35; }
+
+        /* 情報ボックス（注意・状態表示） */
+        .notice {
+            display: flex; align-items: flex-start; gap: 8px;
+            border: 1.5px solid var(--line); background: var(--surface);
+            border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 12px; font-size: 13px;
+        }
+        .notice .ic { width: 17px; height: 17px; margin-top: 1px; }
+        .notice-danger { background: var(--danger-bg); border-color: var(--danger); color: var(--danger-ink); font-weight: bold; }
+        .notice-warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-ink); }
+        .notice-accent { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-ink); font-weight: bold; }
+        .notice-ok { background: var(--positive); border-color: var(--positive-line); color: var(--text-main); font-weight: bold; }
+        .empty-note { color: var(--text-light); text-align: center; margin: 26px 0; font-size: 15px; line-height: 1.8; }
+        .empty-note span { font-size: 13px; }
+
+        .btn-stack { display: flex; flex-direction: column; gap: 8px; }
+        @media (min-width: 769px) {
+            .btn-stack { display: grid; grid-template-columns: repeat(2, 1fr); }
+            /* ボタンが1つだけの時は幅いっぱいに（片側だけ空くのを防ぐ） */
+            .btn-stack:has(> :only-child) { grid-template-columns: 1fr; }
+        }
+        .btn-stack .action-btn { width: 100%; margin-top: 0; }
+        .field-label { display: block; font-size: 13px; font-weight: bold; color: var(--text-main); margin-bottom: 2px; }
+        .chart-box { background: var(--white); border: 1.5px solid var(--line); border-radius: var(--r-md); padding: 10px; margin-bottom: 10px; overflow-x: auto; text-align: center; }
+        #handoff-paste {
+            width: 100%; box-sizing: border-box; height: 64px; margin: 4px 0 0; padding: 10px; font-size: 13px;
+            border: 2px solid var(--line); border-radius: var(--r-md); background: var(--sunken);
+            color: var(--text-main); resize: vertical; font-family: inherit;
+        }
+
+        /* ヘッダー右の 開店／閉店 ボタン */
+        .header-right { display: flex; align-items: center; gap: 14px; }
+        .hdr-btn {
+            display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+            background: var(--accent); color: #fff; border: none; border-radius: var(--r-pill);
+            padding: 9px 18px; font-weight: bold; font-size: 13.5px; cursor: pointer;
+            font-family: inherit; white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(194,94,62,0.25);
+        }
+        .hdr-btn:active { transform: translateY(1px); }
+        .hdr-btn.is-close { background: var(--white); color: var(--accent-ink); box-shadow: inset 0 0 0 2px var(--accent); }
         /* ▲▲▲ ここまで ▲▲▲ */
 
         /* ▼ PDF（印刷）用レポート ▼
@@ -703,62 +819,298 @@
 </head>
 <body>
 
+<!-- ▼▼▼ アイコン（ピクトグラム）の定義 ▼▼▼
+     絵文字は端末ごとに形も色もばらつき、小さいと何の絵か分かりにくいので、
+     線で描いた単純な記号にそろえる。色は文字色を継ぐ（currentColor）。 -->
+<svg id="icon-sprite" aria-hidden="true" style="position:absolute; width:0; height:0; overflow:hidden;">
+  <symbol id="ic-register" viewBox="0 0 24 24"><path d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z"/><path d="M9 8h6M9 12h6"/></symbol>
+  <symbol id="ic-calendar" viewBox="0 0 24 24"><path d="M4 6h16v14H4z"/><path d="M8 3v4M16 3v4M4 10h16"/></symbol>
+  <symbol id="ic-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
+  <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7.5 17v-5M12 17V6M16.5 17v-8"/></symbol>
+  <symbol id="ic-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M19.2 14a1.6 1.6 0 00.3 1.8l.1.1a1.9 1.9 0 11-2.7 2.7l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5v.2a1.9 1.9 0 11-3.8 0v-.1a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1a1.9 1.9 0 11-2.7-2.7l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1h-.2a1.9 1.9 0 110-3.8h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1a1.9 1.9 0 112.7-2.7l.1.1a1.6 1.6 0 001.8.3H10a1.6 1.6 0 001-1.5v-.2a1.9 1.9 0 113.8 0v.1a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1a1.9 1.9 0 112.7 2.7l-.1.1a1.6 1.6 0 00-.3 1.8v.1a1.6 1.6 0 001.5 1h.2a1.9 1.9 0 110 3.8h-.1a1.6 1.6 0 00-1.5 1z"/></symbol>
+  <symbol id="ic-store" viewBox="0 0 24 24"><path d="M3.5 9l1.5-5h14l1.5 5"/><path d="M4.5 9v11h15V9M3.5 9h17"/><path d="M9.5 20v-6h5v6"/></symbol>
+  <symbol id="ic-power" viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M6.7 6.7a8 8 0 1010.6 0"/></symbol>
+  <symbol id="ic-box" viewBox="0 0 24 24"><path d="M4 7.5h16V20H4z"/><path d="M4 7.5L6 3.5h12l2 4"/><path d="M9.5 12h5"/></symbol>
+  <symbol id="ic-link" viewBox="0 0 24 24"><path d="M10.5 13.5a4.5 4.5 0 006.6.4l2.6-2.6a4.5 4.5 0 00-6.4-6.4l-1.5 1.5"/><path d="M13.5 10.5a4.5 4.5 0 00-6.6-.4l-2.6 2.6a4.5 4.5 0 006.4 6.4l1.5-1.5"/></symbol>
+  <symbol id="ic-download" viewBox="0 0 24 24"><path d="M12 3.5v11"/><path d="M7.5 10.5L12 15l4.5-4.5"/><path d="M4 20h16"/></symbol>
+  <symbol id="ic-upload" viewBox="0 0 24 24"><path d="M12 20.5v-11"/><path d="M7.5 13.5L12 9l4.5 4.5"/><path d="M4 4h16"/></symbol>
+  <symbol id="ic-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9.5 11v6M14.5 11v6"/><path d="M5.5 7l1 13h11l1-13"/><path d="M9 7V4h6v3"/></symbol>
+  <symbol id="ic-expand" viewBox="0 0 24 24"><path d="M4 9.5V4h5.5M20 9.5V4h-5.5M4 14.5V20h5.5M20 14.5V20h-5.5"/></symbol>
+  <symbol id="ic-right" viewBox="0 0 24 24"><path d="M9.5 5.5l6.5 6.5-6.5 6.5"/></symbol>
+  <symbol id="ic-left" viewBox="0 0 24 24"><path d="M14.5 5.5L8 12l6.5 6.5"/></symbol>
+  <symbol id="ic-down" viewBox="0 0 24 24"><path d="M5.5 9.5l6.5 6.5 6.5-6.5"/></symbol>
+  <symbol id="ic-up" viewBox="0 0 24 24"><path d="M5.5 14.5L12 8l6.5 6.5"/></symbol>
+  <symbol id="ic-alert" viewBox="0 0 24 24"><path d="M12 3.5l9 16H3z"/><path d="M12 9.5v4.5M12 17h.01"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-10.5"/></symbol>
+  <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="ic-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="ic-undo" viewBox="0 0 24 24"><path d="M4 10.5h10.5a5 5 0 010 10H11"/><path d="M4 10.5l4.5-4.5M4 10.5L8.5 15"/></symbol>
+  <symbol id="ic-printer" viewBox="0 0 24 24"><path d="M7.5 8.5V3.5h9v5"/><path d="M6.5 18H4v-6.5h16V18h-2.5"/><path d="M7.5 14h9v6.5h-9z"/></symbol>
+  <symbol id="ic-pencil" viewBox="0 0 24 24"><path d="M4 20l4.5-1L19 8.5 15.5 5 5 15.5z"/><path d="M14.5 6l3.5 3.5"/></symbol>
+  <symbol id="ic-refresh" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0113.7-5.6L20 8.5"/><path d="M20 4v4.5h-4.5"/><path d="M20 12a8 8 0 01-13.7 5.6L4 15.5"/><path d="M4 20v-4.5h4.5"/></symbol>
+  <symbol id="ic-bolt" viewBox="0 0 24 24"><path d="M13.5 3L6 13.5h5l-.5 7.5L18 10.5h-5z"/></symbol>
+  <symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5.2l3.2 2"/></symbol>
+  <symbol id="ic-basket" viewBox="0 0 24 24"><path d="M4.5 9h15l-1.6 11h-11.8z"/><path d="M9 9V6.5a3 3 0 016 0V9"/></symbol>
+  <symbol id="ic-archive" viewBox="0 0 24 24"><path d="M3.5 4.5h17v4h-17z"/><path d="M5 8.5V20h14V8.5"/><path d="M10 12.5h4"/></symbol>
+  <symbol id="ic-file" viewBox="0 0 24 24"><path d="M14 3.5H7v17h10V6.5z"/><path d="M13.5 3.5v3.5h3.5"/><path d="M9.5 12.5h5M9.5 16h5"/></symbol>
+  <symbol id="ic-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20.5v-1a6 6 0 0112 0v1"/><circle cx="17.5" cy="8.5" r="2.6"/><path d="M17 14.2a5 5 0 014 4.8v1.5"/></symbol>
+  <symbol id="ic-yen" viewBox="0 0 24 24"><path d="M7.5 5l4.5 6.5L16.5 5"/><path d="M12 11.5V20M8 13.5h8M8 16.5h8"/></symbol>
+  <symbol id="ic-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="ic-bulb" viewBox="0 0 24 24"><path d="M9.5 18.5h5M10.5 21.5h3"/><path d="M12 3a6 6 0 00-3.8 10.6V16h7.6v-2.4A6 6 0 0012 3z"/></symbol>
+  <symbol id="ic-copy" viewBox="0 0 24 24"><path d="M9 4.5h6v2.5H9z"/><path d="M8 6H6v15h12V6h-2"/><path d="M9.5 12h5M9.5 16h3.5"/></symbol>
+  <symbol id="ic-sliders" viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h4M12 16h8"/><path d="M15 5.5v5M10 13.5v5"/></symbol>
+  <symbol id="ic-tag" viewBox="0 0 24 24"><path d="M11 3.5H20v9l-8.5 8.5L3 12.5z"/><circle cx="16.5" cy="7.5" r="1.3"/></symbol>
+  <symbol id="ic-clipboard" viewBox="0 0 24 24"><path d="M9 4.5h6v2.5H9z"/><path d="M8 6H5.5v15h13V6H16"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4"/></symbol>
+</svg>
+
 <header>
     <div class="app-title">
-        🥖 泰山木POS
+        <svg class="ic ic-brand"><use href="#ic-store"/></svg>
+        <span class="brand-name">泰山木POS</span>
         <span class="session-info" id="session-display">閉店中</span>
     </div>
-    <div style="display:flex; align-items:center; gap:14px;">
+    <div class="header-right">
         <div class="cat-legend">
             <span><i style="background:var(--btn-sweet)"></i>パン</span>
             <span><i style="background:var(--btn-savory)"></i>クッキー</span>
             <span><i style="background:var(--btn-drink)"></i>ドリンク</span>
         </div>
-        <!-- 端末とデータの管理。営業中はほとんど使わないので、ボトムナビではなくヘッダーに置く -->
-        <button class="settings-btn" id="header-settings-btn" onclick="navTo('settings')" title="設定（データの書き出し・過去の販売会）">⚙ 設定</button>
+        <!-- 営業の開始／終了はいつでも押せるよう、ヘッダー右に固定する -->
+        <button class="hdr-btn" id="header-session-btn" onclick="headerSessionAction()">
+            <svg class="ic"><use id="header-session-icon" href="#ic-store"/></svg><span id="header-session-label">開店する</span>
+        </button>
     </div>
 </header>
 
-<div id="app-container">
-    <main id="product-grid">
-    </main>
+<main id="app-main">
 
-    <!-- 閉店中に表示：まず開店へ誘導する大CTA -->
-    <div id="closed-cta">
-        <div class="closed-card">
-            <div class="cc-emoji">🥖</div>
-            <div class="cc-title">まだ開店していません</div>
-            <div class="cc-sub">「開店」すると商品ボタンが押せるようになり、会計を始められます。</div>
-            <div class="cc-steps">① 開店する（販売会の名前と仕入れ数を設定）<br>② 商品をタップしてお会計<br>③ 閉店すると売上が自動で集計されます</div>
-            <button class="action-btn btn-checkout" style="max-width:300px; width:100%; margin-top:2px;" onclick="navTo('session')">🏪 開店する</button>
+<!-- ========== レジ画面 ========== -->
+<section id="page-register" class="page">
+    <div id="app-container">
+        <main id="product-grid"></main>
+
+        <!-- 閉店中に表示：まず開店へ誘導する大CTA -->
+        <div id="closed-cta">
+            <div class="closed-card">
+                <svg class="ic cc-icon"><use href="#ic-store"/></svg>
+                <div class="cc-title">まだ開店していません</div>
+                <div class="cc-sub">開店すると商品ボタンが押せるようになり、会計を始められます。</div>
+                <div class="cc-steps">① 右上の「開店する」から、販売会の名前と仕入れ数を決める<br>② 商品をタップしてお会計<br>③ 閉店すると売上が自動で集計されます</div>
+                <button class="action-btn btn-checkout" style="max-width:300px; width:100%; margin-top:2px;" onclick="headerSessionAction()">
+                    <svg class="ic"><use href="#ic-store"/></svg>開店する
+                </button>
+            </div>
         </div>
+
+        <aside id="sidebar">
+            <div id="pending-reminder" onclick="navTo('records')" style="display:none;"></div>
+
+            <!-- スマホ縦画面では、カートの明細は畳んで商品ボタンの面積を優先する -->
+            <button id="cart-toggle" onclick="toggleCartSheet()">
+                <span id="cart-toggle-text">カートは空です</span>
+                <svg class="ic"><use id="cart-toggle-icon" href="#ic-up"/></svg>
+            </button>
+
+            <div id="cart-list"></div>
+
+            <footer>
+                <div class="total-display">
+                    <span class="total-label">合計 <span id="cart-count"></span></span>
+                    <span class="total-amount">¥<span id="cart-total">0</span></span>
+                </div>
+                <div class="action-row">
+                    <button class="action-btn btn-undo" onclick="undoLast()"><svg class="ic"><use href="#ic-undo"/></svg>1つ戻す</button>
+                    <button class="action-btn btn-reserve" id="btn-reserve" onclick="promptReservation()"><svg class="ic"><use href="#ic-calendar"/></svg>予約保留</button>
+                </div>
+                <button class="action-btn btn-checkout" onclick="openCheckout()">会計へ進む</button>
+            </footer>
+        </aside>
     </div>
+</section>
 
-    <aside id="sidebar">
-        <div id="pending-reminder" onclick="openSettings(); showTab('records');" style="display:none; background:var(--warn-bg); color:var(--warn-ink); font-weight:bold; font-size:13px; text-align:center; padding:8px; cursor:pointer; border-bottom:2px solid var(--warn-line);"></div>
-        <div id="cart-list">
+<!-- ========== レジ以外の画面（重ねずに切り替える） ========== -->
+<section id="page-panel" class="page">
+    <div class="panel-head">
+        <button class="panel-back" id="panel-back" onclick="panelBack()"><svg class="ic"><use href="#ic-left"/></svg>戻る</button>
+        <h2 id="panel-title"></h2>
+    </div>
+    <div class="panel-body" id="panel-body">
+
+        <!-- ---------- 予約 ---------- -->
+        <div class="panel-view" id="view-reservations">
+            <div id="reservation-sync-warning" class="notice notice-danger" style="display:none;">
+                <svg class="ic"><use href="#ic-alert"/></svg>予約はこの端末だけに保存され、他の端末とは共有されません。複数端末で運用中は、予約を受けた端末で清算してください。
+            </div>
+            <div id="reservation-list" class="card-strip"></div>
         </div>
-        <footer>
-            <div class="total-display">
-                <span class="total-label">合計 <span id="cart-count" style="font-size:14px; color:var(--text-light); font-weight:normal;"></span></span>
-                <span class="total-amount">¥<span id="cart-total">0</span></span>
+
+        <!-- ---------- 会計記録 ---------- -->
+        <div class="panel-view" id="view-records">
+            <div id="records-list" class="card-strip"></div>
+        </div>
+
+        <!-- ---------- 売上集計 ---------- -->
+        <div class="panel-view" id="view-analytics">
+            <div id="analytics-menu">
+                <div id="analytics-archive-note" class="notice notice-accent" style="display:none;"></div>
+                <div id="analytics-empty" class="empty-note" style="display:none;">
+                    まだ売上データがありません。<br>
+                    <span>開店して会計を始めると、ここに集計が出ます。<br>過去の販売会の集計は「設定」から見られます。</span>
+                </div>
+                <div id="analytics-menu-grid" class="menu-grid"></div>
             </div>
-            <div class="action-row">
-                <button class="action-btn btn-undo" onclick="undoLast()">1つ戻す</button>
-                <button class="action-btn btn-reserve" onclick="promptReservation()">予約保留</button>
+
+            <div id="analytics-detail" style="display:none;">
+                <div id="archive-view-banner" class="notice notice-accent" style="display:none;"></div>
+                <div id="sec-summary" class="analytics-sec" style="display:none;"></div>
+                <div id="sec-items" class="analytics-sec" style="display:none;"></div>
+                <div id="sec-time" class="analytics-sec" style="display:none;">
+                    <div id="customer-chart" class="chart-box"></div>
+                    <div id="sec-time-text"></div>
+                </div>
+                <div id="sec-stock" class="analytics-sec" style="display:none;">
+                    <div id="stock-chart" class="chart-box"></div>
+                    <div id="stock-chart-legend" style="display:flex; flex-wrap:wrap; gap:6px 12px;"></div>
+                </div>
+                <div id="sec-segment" class="analytics-sec" style="display:none;"></div>
+                <div id="sec-insight" class="analytics-sec" style="display:none;"></div>
+                <div id="sec-next" class="analytics-sec" style="display:none;"></div>
+                <div id="sec-log" class="analytics-sec" style="display:none;"></div>
+                <div id="sec-export" class="analytics-sec" style="display:none;">
+                    <p class="settings-hint">集計結果をファイルに書き出します。</p>
+                    <div class="btn-stack">
+                        <button class="action-btn btn-checkout" style="margin-top:0;" onclick="downloadPDF()"><svg class="ic"><use href="#ic-file"/></svg>PDFで保存・印刷</button>
+                        <button class="action-btn btn-secondary" onclick="exportFacilityCSV()"><svg class="ic"><use href="#ic-download"/></svg>商品別CSV（精算用）</button>
+                        <button class="action-btn btn-secondary" onclick="exportDetailCSV()"><svg class="ic"><use href="#ic-download"/></svg>会計明細CSV</button>
+                        <button class="action-btn btn-secondary" onclick="exportReportJSON()"><svg class="ic"><use href="#ic-download"/></svg>全データJSON</button>
+                    </div>
+                    <p class="settings-hint" style="margin-top:10px;">商品別CSV＝消化率・原価・粗利つき／会計明細CSV＝1件ずつの記録／全データJSON＝前回比較や売り逃しまで含む全項目。</p>
+                </div>
             </div>
-            <button class="action-btn btn-checkout" onclick="openCheckout()">会計へ進む</button>
-        </footer>
-    </aside>
-</div>
+            <div id="analytics-result" style="display:none;">売上データがありません。</div>
+        </div>
+
+        <!-- ---------- 設定（2段階メニュー） ---------- -->
+        <div class="panel-view" id="view-settings">
+            <div class="sub-view" id="sub-settings-menu">
+                <div class="menu-list" id="settings-menu-list"></div>
+            </div>
+
+            <!-- 商品・在庫の調整 -->
+            <div class="sub-view" id="sub-stock" style="display:none;">
+                <p class="settings-hint" id="stock-hint"></p>
+                <div id="live-stock-list"></div>
+                <button class="action-btn btn-positive" style="width:100%; margin-top:10px;" onclick="addLiveProduct()"><svg class="ic"><use href="#ic-plus"/></svg>販売する商品を追加する</button>
+            </div>
+
+            <!-- 複数端末の共有 -->
+            <div class="sub-view" id="sub-sync" style="display:none;">
+                <div id="sync-state-box" class="notice"></div>
+                <div id="sync-actions" class="btn-stack"></div>
+            </div>
+
+            <!-- 共有コードの追加（入力画面） -->
+            <div class="sub-view" id="sub-sync-add" style="display:none;">
+                <p class="settings-hint">一緒に使う<b>全部の端末で同じ「共有コード」</b>を入れてください。いま営業中の会計・在庫・商品はそのまま引き継がれます。</p>
+                <label class="field-label">共有コード</label>
+                <input type="text" id="sync-live-code-input" placeholder="例: pansale-1101">
+                <button class="action-btn btn-checkout" style="width:100%;" onclick="startSyncMidSession()"><svg class="ic"><use href="#ic-link"/></svg>このコードで共有を始める</button>
+                <div id="sync-status-active" class="settings-hint" style="margin-top:10px;"></div>
+            </div>
+
+            <!-- 過去の販売会 -->
+            <div class="sub-view" id="sub-archive" style="display:none;">
+                <p class="settings-hint">閉店するたびに、その回の記録がこの端末へ自動保存されます。</p>
+                <div id="archive-list"></div>
+            </div>
+
+            <!-- データの書き出し -->
+            <div class="sub-view" id="sub-data" style="display:none;">
+                <p class="settings-hint">データはこの端末の中だけに保存されています。別の端末へ移す時や、念のための控えを取る時に使います。<br>（取り込み・復元は「開店する」の画面にあります）</p>
+                <div class="btn-stack">
+                    <button class="action-btn btn-secondary" onclick="exportBackup()"><svg class="ic"><use href="#ic-download"/></svg>バックアップファイルを保存</button>
+                    <button class="action-btn btn-secondary" onclick="copyHandoffData()"><svg class="ic"><use href="#ic-copy"/></svg>この端末のデータをコピー</button>
+                </div>
+            </div>
+
+            <!-- 画面表示 -->
+            <div class="sub-view" id="sub-display" style="display:none;">
+                <button id="btn-fullscreen" class="action-btn btn-secondary" style="width:100%; display:none;" onclick="toggleFullscreen()"><svg class="ic"><use href="#ic-expand"/></svg>今すぐ全画面表示にする</button>
+                <p class="settings-hint" style="margin-top:10px;">ホーム画面に追加したアイコンから起動すると、アドレスバーや戻るボタンのない全画面で使えます。</p>
+            </div>
+
+            <!-- データの初期化 -->
+            <div class="sub-view" id="sub-reset" style="display:none;">
+                <div class="notice notice-danger">
+                    <svg class="ic"><use href="#ic-alert"/></svg>画面がおかしい・データが壊れたなど、どうしても直らない時だけ使う機能です。
+                </div>
+                <p class="settings-hint">この端末の売上履歴・過去の販売会・設定をすべて削除して、まっさらな状態に戻します。<b>先に「データの書き出し」で控えを取ってください。</b></p>
+                <button class="action-btn btn-danger-solid" style="width:100%;" onclick="factoryResetApp()"><svg class="ic"><use href="#ic-trash"/></svg>この端末のデータを初期化する</button>
+            </div>
+        </div>
+
+        <!-- ---------- 開店の準備（2段階メニュー） ---------- -->
+        <div class="panel-view" id="view-session">
+            <div class="sub-view" id="sub-open-menu">
+                <div id="reopen-row" class="notice notice-warn" style="display:none;">
+                    <div style="flex:1;">
+                        <b>間違えて閉店しましたか？</b>
+                        <div id="reopen-desc" style="font-weight:normal; margin-top:2px;"></div>
+                        <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="reopenLastSession()"><svg class="ic"><use href="#ic-undo"/></svg>直前の販売会を再開する</button>
+                    </div>
+                </div>
+                <div class="menu-list" id="open-menu-list"></div>
+                <button class="action-btn btn-checkout" style="width:100%; margin-top:14px;" onclick="startSession()"><svg class="ic"><use href="#ic-store"/></svg>この内容で開店する</button>
+            </div>
+
+            <!-- 販売会の名前 -->
+            <div class="sub-view" id="sub-open-name" style="display:none;">
+                <div id="event-banner" class="notice"></div>
+                <label class="field-label">販売会の名前</label>
+                <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
+                <p class="settings-hint">あとから集計を見分けるための名前です。日付を入れておくと分かりやすくなります。</p>
+                <button class="action-btn btn-secondary" style="width:100%;" onclick="panelBack()"><svg class="ic"><use href="#ic-check"/></svg>決定</button>
+            </div>
+
+            <!-- 商品と仕入れ数 -->
+            <div class="sub-view" id="sub-open-stock" style="display:none;">
+                <div id="inventory-apply"></div>
+                <div id="inventory-setup-list" class="setup-list"></div>
+                <button class="action-btn btn-secondary" style="width:100%; margin-top:10px;" onclick="panelBack()"><svg class="ic"><use href="#ic-check"/></svg>決定</button>
+            </div>
+
+            <!-- 開店時の共有コード -->
+            <div class="sub-view" id="sub-open-sync" style="display:none;">
+                <p class="settings-hint">一緒に使う<b>全部の端末で同じ「共有コード」</b>を入れると、売上をリアルタイムで共有します。<br>1台だけで使うなら<b>空欄のままでOK</b>です（あとから設定画面で共有を始めることもできます）。</p>
+                <label class="field-label">共有コード（任意）</label>
+                <input type="text" id="sync-event-code-input" placeholder="例: pansale-1101">
+                <div id="sync-status" class="settings-hint"></div>
+                <button class="action-btn btn-secondary" style="width:100%; margin-top:10px;" onclick="panelBack()"><svg class="ic"><use href="#ic-check"/></svg>決定</button>
+            </div>
+
+            <!-- データを取り込んで始める -->
+            <div class="sub-view" id="sub-open-import" style="display:none;">
+                <div class="notice notice-danger"><svg class="ic"><use href="#ic-alert"/></svg>いまこの端末にあるデータは上書きされます。</div>
+                <button class="action-btn btn-danger" style="width:100%;" onclick="document.getElementById('import-file').click()"><svg class="ic"><use href="#ic-upload"/></svg>バックアップファイルから復元</button>
+                <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importBackup(event)">
+                <label class="field-label" style="margin-top:14px;">別の端末でコピーしたデータ</label>
+                <textarea id="handoff-paste" placeholder="コピーしたデータをここに貼り付け"></textarea>
+                <button class="action-btn btn-danger" style="width:100%; margin-top:8px;" onclick="importHandoffData()"><svg class="ic"><use href="#ic-upload"/></svg>貼り付けたデータを取り込む</button>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+</main>
 
 <!-- 常設ボトムナビ：主要画面への導線を常に表示 -->
 <nav id="bottom-nav">
-    <button class="nav-item active" id="nav-register" onclick="navTo('register')"><span class="nav-ico">🧾</span>レジ</button>
-    <button class="nav-item" id="nav-reservations" onclick="navTo('reservations')"><span class="nav-ico">🗓️</span>予約<span class="nav-badge"></span></button>
-    <button class="nav-item" id="nav-records" onclick="navTo('records')"><span class="nav-ico">🧮</span>会計履歴<span class="nav-badge"></span></button>
-    <button class="nav-item" id="nav-analytics" onclick="navTo('analytics')"><span class="nav-ico">📊</span>売上</button>
-    <button class="nav-item" id="nav-session" onclick="navTo('session')"><span class="nav-ico">🏪</span><span id="nav-session-label">開店</span></button>
+    <button class="nav-item active" id="nav-register" onclick="navTo('register')"><svg class="ic nav-ico"><use href="#ic-register"/></svg>レジ</button>
+    <button class="nav-item" id="nav-reservations" onclick="navTo('reservations')"><svg class="ic nav-ico"><use href="#ic-calendar"/></svg>予約<span class="nav-badge"></span></button>
+    <button class="nav-item" id="nav-records" onclick="navTo('records')"><svg class="ic nav-ico"><use href="#ic-list"/></svg>会計記録<span class="nav-badge"></span></button>
+    <button class="nav-item" id="nav-analytics" onclick="navTo('analytics')"><svg class="ic nav-ico"><use href="#ic-chart"/></svg>売上集計</button>
+    <button class="nav-item" id="nav-settings" onclick="navTo('settings')"><svg class="ic nav-ico"><use href="#ic-gear"/></svg>設定</button>
 </nav>
 
 <div id="checkout-modal" class="modal">
@@ -785,7 +1137,7 @@
                     <label class="type-btn"><input type="radio" name="customerType" value="職員"> 職員</label>
                     <label class="type-btn"><input type="radio" name="customerType" value="その他"> その他</label>
                     <label class="type-btn"><input type="radio" name="customerType" value="不明"> 不明</label>
-                    <label class="type-btn type-later"><input type="radio" name="customerType" value="__later__" checked> ⏭後で</label>
+                    <label class="type-btn type-later"><input type="radio" name="customerType" value="__later__" checked> 後で</label>
                 </div>
                 <button type="button" id="last-type-quick" style="display:none; width:100%; margin-top:8px; padding:8px; font-size:14px; font-weight:bold; border:2px dashed var(--accent); border-radius:var(--r-sm); background:var(--white); color:var(--accent-ink); cursor:pointer; font-family:inherit;" onclick="applyLastCustomerType()"></button>
             </div>
@@ -795,7 +1147,7 @@
             <div id="cash-suggestions" style="display: flex; gap: 10px; margin-top: 5px;">
                 <button class="action-btn btn-accent-outline" style="flex: 1; padding: 10px; font-size: 16px;" onclick="setCashExact()">ちょうど</button>
             </div>
-            <button class="action-btn btn-accent-outline" style="width:100%; margin-top:8px; font-size:15px; padding:11px;" onclick="completeExactCash()">⚡ ぴったり受取で会計完了</button>
+            <button class="action-btn btn-accent-outline" style="width:100%; margin-top:8px; font-size:15px; padding:11px;" onclick="completeExactCash()"><svg class="ic"><use href="#ic-bolt"/></svg>ぴったり受取で会計完了</button>
 
             <div class="tenkey-grid">
                 <button class="action-btn tenkey-btn" onclick="appendCash('7')">7</button>
@@ -826,192 +1178,6 @@
     </div>
 </div>
 
-<div id="settings-modal" class="modal">
-    <div class="modal-content">
-        <div class="tab-menu">
-            <div class="tab-item active" onclick="showTab('session')" id="tab-btn-session">開店・営業</div>
-            <div class="tab-item" onclick="showTab('reservations')" id="tab-btn-reservations">予約管理</div>
-            <div class="tab-item" onclick="showTab('analytics')" id="tab-btn-analytics">売上確認</div>
-            <div class="tab-item" onclick="showTab('records')" id="tab-btn-records">会計済</div>
-            <div class="tab-item" onclick="showTab('settings')" id="tab-btn-settings">設定</div>
-        </div>
-
-        <div id="settings-title"></div>
-
-        <div class="tab-content">
-            <!-- ▼▼▼ 開店・営業タブ：その日の営業を始める／続ける／終えるための操作だけを置く ▼▼▼ -->
-            <div id="tab-session">
-                <!-- 閉店中のみ表示：新しい販売会を開く -->
-                <div id="session-open-block">
-                    <div id="event-banner" style="background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:8px 12px; margin-bottom:10px; font-size:13px;"></div>
-
-                    <!-- 直前に閉店した販売会をやり直せる（閉店の押し間違いからの復帰） -->
-                    <div id="reopen-row" style="display:none; background:var(--warn-bg); border:2px solid var(--warn-line); border-radius:var(--r-md); padding:10px 12px; margin-bottom:12px;">
-                        <div class="settings-sublabel" style="margin-top:0; color:var(--warn-ink);">↩️ 間違えて閉店しましたか？</div>
-                        <p class="settings-hint" id="reopen-desc" style="margin-bottom:8px;"></p>
-                        <button class="action-btn btn-secondary" style="width:100%;" onclick="reopenLastSession()">直前の販売会を再開する</button>
-                    </div>
-
-                    <div class="settings-label" style="margin-top:0;">① 販売会の名前</div>
-                    <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
-
-                    <!-- 複数端末同期：Firebase設定がある時だけ表示 -->
-                    <div id="sync-code-row" style="display:none; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:10px 12px; margin-top:8px;">
-                        <div class="settings-sublabel" style="margin-top:0;">🔗 複数端末で同時に会計する（任意）</div>
-                        <p class="settings-hint">一緒に使う<b>全端末で同じ「共有コード」</b>を入れると、売上をリアルタイムで共有します。1台だけで使うなら空欄のままでOKです（<b>あとから途中で共有を始めることもできます</b>）。</p>
-                        <input type="text" id="sync-event-code-input" placeholder="共有コード（例: pansale-1101）">
-                        <div id="sync-status" class="settings-hint" style="margin:6px 0 0;"></div>
-                    </div>
-
-                    <div class="settings-label">② 当日の仕入れ数</div>
-                    <div id="inventory-apply"></div>
-                    <div id="inventory-setup-list" class="setup-list"></div>
-
-                    <button class="action-btn btn-checkout" style="width:100%; margin-top:4px;" onclick="startSession()">🏪 この内容で開店する</button>
-
-                    <!-- 別の端末・前回のデータから始めたい時だけ開く（ふだんは畳んでおく） -->
-                    <details id="restore-details" style="margin-top:16px; border:1px solid var(--line); border-radius:var(--r-md); padding:10px 12px; background:var(--surface);">
-                        <summary style="font-size:13px; font-weight:bold; cursor:pointer; color:var(--text-main);">📥 別の端末や前回のデータから始める</summary>
-                        <p class="settings-hint" style="margin-top:8px;">バックアップファイル、または別の端末の「設定」でコピーしたデータを取り込みます。<b>いまこの端末にあるデータは上書きされます。</b></p>
-                        <button class="action-btn btn-danger" style="width:100%;" onclick="document.getElementById('import-file').click()">📂 バックアップファイルから復元</button>
-                        <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importBackup(event)">
-                        <textarea id="handoff-paste" placeholder="別の端末でコピーしたデータをここに貼り付け" style="width:100%; box-sizing:border-box; height:64px; margin:10px 0 0; padding:10px; font-size:13px; border:2px solid var(--line); border-radius:var(--r-md); background:var(--sunken); color:var(--text-main); resize:vertical;"></textarea>
-                        <button class="action-btn btn-danger" style="width:100%; margin-top:8px;" onclick="importHandoffData()">📥 貼り付けたデータを取り込む</button>
-                    </details>
-                </div>
-
-                <!-- 営業中のみ表示：在庫調整・同期・閉店 -->
-                <div id="session-active-block" style="display:none;">
-                    <div class="active-banner">🟢 営業中：<span id="active-session-name"></span></div>
-
-                    <!-- 複数端末での共有：営業中でも開始・停止できる -->
-                    <div id="sync-live-row" style="display:none; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); padding:10px 12px; margin-bottom:12px;">
-                        <div class="settings-sublabel" style="margin-top:0;">🔗 複数端末で同時に会計する</div>
-                        <div id="sync-status-active" class="settings-hint" style="margin:4px 0 8px;"></div>
-                        <!-- 同期していない時：途中から共有を始める -->
-                        <div id="sync-start-block">
-                            <p class="settings-hint">いま営業中のこの販売会を、途中から他の端末と共有できます。<b>この端末の会計・在庫はそのまま引き継がれます。</b></p>
-                            <input type="text" id="sync-live-code-input" placeholder="共有コード（例: pansale-1101）">
-                            <button class="action-btn btn-accent-outline" style="width:100%; margin-top:4px;" onclick="startSyncMidSession()">🔗 このコードで共有を始める</button>
-                        </div>
-                        <!-- 同期している時：停止・この端末だけ終了 -->
-                        <div id="sync-stop-block" style="display:none;">
-                            <button class="action-btn btn-secondary" style="width:100%;" onclick="stopSyncMidSession()">📴 共有をやめてこの端末だけで続ける</button>
-                            <button id="btn-leave-device" class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="leaveDeviceOnly()">🚪 この端末の利用を終える（他の端末は継続）</button>
-                        </div>
-                    </div>
-
-                    <details id="live-stock-details">
-                        <summary style="font-size:14px; font-weight:bold; cursor:pointer; color:var(--text-main);">🔧 販売中の商品・在庫を調整する（追加搬入・数え直し・値段の変更）</summary>
-                        <div id="live-stock-list" style="max-height:260px; overflow-y:auto; background:var(--sunken); border:2px solid var(--line); padding:10px; border-radius:var(--r-md); margin-top:8px;"></div>
-                        <button class="action-btn btn-positive" style="width:100%; margin-top:8px; font-size:14px;" onclick="addLiveProduct()">＋ 販売する商品を追加する</button>
-                    </details>
-
-                    <button class="action-btn btn-checkout" style="width:100%; margin-top:14px;" onclick="endSession()">閉店する（集計して終了）</button>
-                    <p class="settings-hint" style="margin-top:6px; text-align:center;">閉店すると集計が作られ、この販売会の記録は「過去の販売会」に自動保存されます。</p>
-                </div>
-            </div>
-
-            <!-- ▼▼▼ 設定タブ：端末とデータの管理（営業中は基本さわらない）▼▼▼ -->
-            <div id="tab-settings" style="display:none;">
-                <div class="settings-label" style="margin-top:0;">📦 過去の販売会</div>
-                <p class="settings-hint">閉店するたびに、その回の記録がこの端末へ自動保存されます。集計を見たり、バックアップファイルとして書き出せます。</p>
-                <div id="archive-list"></div>
-
-                <hr style="border: none; border-top: 1px dashed var(--line); margin: 18px 0;">
-
-                <div class="settings-label" style="margin-top:0;">💾 この端末のデータを書き出す</div>
-                <p class="settings-hint">データはこの端末の中だけに保存されています。別の端末へ移す時や、念のための控えを取る時に使います。<br>（取り込み・復元は「開店」画面にあります）</p>
-                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button class="action-btn btn-secondary" style="flex:1; min-width:150px;" onclick="exportBackup()">💾 バックアップファイルを保存</button>
-                    <button class="action-btn btn-secondary" style="flex:1; min-width:150px;" onclick="copyHandoffData()">📋 この端末のデータをコピー</button>
-                </div>
-
-                <hr style="border: none; border-top: 1px dashed var(--line); margin: 18px 0;">
-
-                <div class="settings-label" style="margin-top:0;">🖥 画面表示</div>
-                <button id="btn-fullscreen" class="action-btn btn-secondary" style="width:100%; display:none;" onclick="toggleFullscreen()">⤢ 今すぐ全画面表示にする</button>
-                <p class="settings-hint" id="fullscreen-hint" style="margin-top:8px;">ホーム画面に追加したアイコンから起動すると、アドレスバーや戻るボタンのない全画面で使えます。</p>
-
-                <div style="margin-top:20px; padding:12px; border:1.5px dashed var(--danger); border-radius:var(--r-md); background:var(--danger-bg);">
-                    <div class="settings-sublabel" style="margin-top:0; color:var(--danger-ink);">⚠ データの初期化（不具合が起きた時の最終手段）</div>
-                    <p class="settings-hint">画面がおかしい・データが壊れたなど、どうしても直らない時だけ使います。この端末の売上履歴・過去の販売会・設定をすべて削除して、まっさらな状態に戻します。<b>先に上の「バックアップファイルを保存」で控えを取ってください。</b></p>
-                    <button class="action-btn btn-danger-solid" style="width:100%;" onclick="factoryResetApp()">🗑 この端末のデータを初期化する</button>
-                </div>
-            </div>
-
-            <div id="tab-reservations" style="display:none;">
-                <div id="reservation-sync-warning" style="display:none; background:var(--danger-bg); border:1px solid var(--danger); color:var(--danger-ink); border-radius:var(--r-md); padding:10px 12px; margin-bottom:10px; font-size:13px; font-weight:bold;">⚠ 予約はこの端末だけに保存され、他の端末とは共有されません。複数端末で運用中は、予約を受けた端末で清算するか、他の端末に口頭で伝えてください。</div>
-                <div id="reservation-list" class="card-strip"></div>
-            </div>
-
-            <div id="tab-analytics" style="display:none;">
-                <!-- 項目選択メニュー -->
-                <div id="analytics-menu">
-                    <div id="analytics-archive-note" style="display:none; background:var(--accent-soft); border:1.5px solid var(--accent); color:var(--accent-ink); border-radius:var(--r-md); padding:8px 12px; margin-bottom:10px; font-size:13px; font-weight:bold;"></div>
-                    <div id="analytics-empty" style="display:none; color:var(--text-light); text-align:center; margin:20px 0;">まだ売上データがありません。<br><span style="font-size:13px;">開店して会計を始めると、ここに集計が出ます。<br>過去の販売会の集計は「⚙ 設定」から見られます。</span></div>
-                    <div id="analytics-menu-grid" class="analytics-menu-grid">
-                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('summary')">📊<br>概要</button>
-                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('items')">🥐<br>商品別</button>
-                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('time')">🕐<br>時間帯別<br>（客数グラフ）</button>
-                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('stock')">📉<br>残在庫の推移</button>
-                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('segment')">👥<br>客層・カテゴリ</button>
-                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('insight')">🔮<br>次回インサイト</button>
-                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('next')">📝<br>次回準備の<br>参考メモ</button>
-                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('log')">🧾<br>操作ログ</button>
-                        <button class="analytics-menu-btn" onclick="showAnalyticsSection('export')">💾<br>書き出し<br>（PDF/CSV）</button>
-                    </div>
-                </div>
-
-                <!-- 選択した項目の表示 -->
-                <div id="analytics-detail" style="display:none;">
-                    <!-- 過去の販売会を見ている時は、いまのデータではないことをはっきり示す -->
-                    <div id="archive-view-banner" style="display:none; background:var(--accent-soft); border:1.5px solid var(--accent); color:var(--accent-ink); border-radius:var(--r-md); padding:8px 12px; margin-bottom:10px; font-size:13px; font-weight:bold;"></div>
-                    <button class="action-btn btn-undo" style="margin-bottom:12px; padding:8px 16px;" onclick="showAnalyticsMenu()">← 集計メニューに戻る</button>
-                    <div id="analytics-detail-title" style="font-size:16px; font-weight:bold; margin-bottom:10px;"></div>
-
-                    <div id="sec-summary" class="analytics-sec" style="display:none;"></div>
-                    <div id="sec-items" class="analytics-sec" style="display:none;"></div>
-
-                    <div id="sec-time" class="analytics-sec" style="display:none;">
-                        <div id="customer-chart" style="background:var(--white); border:2px solid var(--line); border-radius:var(--r-md); padding:10px; margin-bottom:12px; overflow-x:auto; text-align:center;"></div>
-                        <div id="sec-time-text"></div>
-                    </div>
-
-                    <div id="sec-stock" class="analytics-sec" style="display:none;">
-                        <div id="stock-chart" style="background:var(--white); border:2px solid var(--line); border-radius:var(--r-md); padding:10px; margin-bottom:8px; overflow-x:auto;"></div>
-                        <div id="stock-chart-legend" style="display:flex; flex-wrap:wrap; gap:6px 12px;"></div>
-                    </div>
-
-                    <div id="sec-segment" class="analytics-sec" style="display:none;"></div>
-                    <div id="sec-insight" class="analytics-sec" style="display:none;"></div>
-                    <div id="sec-next" class="analytics-sec" style="display:none;"></div>
-                    <div id="sec-log" class="analytics-sec" style="display:none;"></div>
-
-                    <div id="sec-export" class="analytics-sec" style="display:none;">
-                        <p style="font-size:13px; color:var(--text-light);">集計結果を書き出します。</p>
-                        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                            <button class="action-btn btn-checkout" style="flex:1; min-width:110px; margin-top:0; font-size:15px; padding:13px;" onclick="downloadPDF()">📄 PDF保存</button>
-                            <button class="action-btn btn-secondary" style="flex:1; min-width:110px; margin-top:0;" onclick="exportFacilityCSV()">🏭 精算CSV</button>
-                            <button class="action-btn btn-secondary" style="flex:1; min-width:110px; margin-top:0;" onclick="exportDetailCSV()">🧾 明細CSV</button>
-                            <button class="action-btn btn-secondary" style="flex:1; min-width:110px; margin-top:0;" onclick="exportReportJSON()">🗄 集計JSON</button>
-                        </div>
-                        <p style="font-size:12px; color:var(--text-light); margin-top:8px;">精算CSV＝商品別（消化率・原価・粗利・味つき）／明細CSV＝会計ごと／集計JSON＝前回比較や取りこぼしまで含む全データ。</p>
-                    </div>
-                </div>
-
-                <!-- PDF出力用（全項目まとめ・非表示） -->
-                <div id="analytics-result" style="display:none;">売上データがありません。</div>
-            </div>
-
-            <div id="tab-records" style="display:none;">
-                <div id="records-list" class="card-strip"></div>
-            </div>
-            </div>
-
-        <button class="action-btn btn-undo" style="width:100%; margin-top:15px;" onclick="navTo('register')">🧾 レジに戻る</button>
-    </div>
-</div>
 
 <!-- 操作フィードバック用トースト -->
 <div id="toast"></div>
@@ -1213,7 +1379,7 @@
             // 残りわずか（1〜5個）はオレンジ、超過（在庫マイナス）は赤で強調
             const lowStock = p.stock > 0 && p.stock <= 5;
             const stockStyle = oversold ? 'color:var(--danger); font-weight:bold;' : (lowStock ? 'color:var(--low-ink); font-weight:bold;' : '');
-            const stockText = oversold ? `在庫:0（超過${-p.stock}）` : `在庫:${p.stock}${lowStock ? ' ⚠️' : ''}`;
+            const stockText = oversold ? `在庫:0（超過${-p.stock}）` : `在庫:${p.stock}${lowStock ? ' 残少' : ''}`;
             btn.innerHTML = `
                 ${badge}
                 <span class="pname">${p.name}</span>
@@ -1246,10 +1412,10 @@
             // 残りわずか／完売のしきい値アラート（在庫がその値に「到達した瞬間」に1回だけ通知）
             if (p.stock === 0) {
                 playSound(494, 0.12); setTimeout(() => playSound(370, 0.16), 120); // 完売の下降音
-                showToast(`🔔 ${p.name} が完売しました`);
+                showToast(`${p.name} が完売しました`);
             } else if (p.stock === LOW_STOCK_ALERT) {
                 playSound(1046, 0.09); // 残りわずかの高音
-                showToast(`⚠️ ${p.name} 残り${LOW_STOCK_ALERT}個`);
+                showToast(`${p.name} 残り${LOW_STOCK_ALERT}個`);
             }
         }
         cart.push({...p});
@@ -1370,7 +1536,7 @@
             addToCart(p); added++;
         });
         if (!added) { playError(); showToast('この商品はいまのラインナップにありません'); return; }
-        showToast(`🔁 直前と同じ内容を入れました（${last.text}）`);
+        showToast(`直前と同じ内容を入れました（${last.text}）`);
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -1394,7 +1560,7 @@
         });
 
         if (cart.length > 0) {
-            list.innerHTML += `<div style="text-align:right; margin-bottom:6px;"><button onclick="clearCartAll()" style="background:none; border:none; color:var(--danger-ink); font-size:12px; font-weight:bold; text-decoration:underline; cursor:pointer; padding:4px; font-family:inherit;">🗑 カートを全部取消す</button></div>`;
+            list.innerHTML += `<div style="text-align:right; margin-bottom:6px;"><button onclick="clearCartAll()" style="background:none; border:none; color:var(--danger-ink); font-size:12px; font-weight:bold; cursor:pointer; padding:4px; font-family:inherit; display:inline-flex; align-items:center; gap:4px;"><svg class="ic"><use href="#ic-trash"/></svg>カートを全部取消す</button></div>`;
         }
 
         for (const [name, data] of Object.entries(counts)) {
@@ -1416,13 +1582,38 @@
             // 空のときは「直前と同じ内容をもう一度」を出す（同じ注文が続くときの時短）
             const last = currentSession ? lastOrderSummary() : null;
             const repeatBtn = last
-                ? `<button class="action-btn btn-accent-outline" style="display:block; margin:16px auto 0; max-width:230px; font-size:14px; padding:10px 14px; line-height:1.45;" onclick="repeatLastOrder()">🔁 直前と同じ内容<br><span style="font-size:12px; font-weight:normal;">${last.text}</span></button>`
+                ? `<button class="action-btn btn-accent-outline" style="display:block; margin:16px auto 0; max-width:230px; font-size:14px; padding:10px 14px; line-height:1.45;" onclick="repeatLastOrder()"><svg class="ic"><use href="#ic-refresh"/></svg>直前と同じ内容<br><span style="font-size:12px; font-weight:normal;">${last.text}</span></button>`
                 : '';
-            list.innerHTML = `<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><div class="ce-emoji" style="font-size:34px;">🧺</div>商品をタップして<br>お会計に追加してください${repeatBtn}</div>`;
+            list.innerHTML = `<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><svg class="ic ce-icon" style="width:34px; height:34px; color:var(--line-strong);"><use href="#ic-basket"/></svg><br>商品をタップして<br>お会計に追加してください${repeatBtn}</div>`;
         }
 
         document.getElementById('cart-total').innerText = total;
         document.getElementById('cart-count').innerText = cart.length > 0 ? `(${cart.length}点)` : '';
+
+        // スマホ用の「カートを開くボタン」の見出し（何が入っているかを1行で示す）
+        const tt = document.getElementById('cart-toggle-text');
+        if (tt) {
+            const names = Object.entries(counts).map(([n, d]) => `${n}×${d.count}`).join('、');
+            tt.textContent = cart.length > 0 ? `${cart.length}点：${names}` : 'カートは空です';
+        }
+        // 空になったら明細は畳んでおく（商品ボタンの面積を確保する）
+        if (cart.length === 0) setCartSheet(false);
+    }
+
+    // スマホ縦画面でカートの明細を開閉する（タブレットでは常時表示なので何もしない）
+    function setCartSheet(open) {
+        const sb = document.getElementById('sidebar');
+        if (!sb) return;
+        sb.classList.toggle('cart-open', !!open);
+        const ic = document.getElementById('cart-toggle-icon');
+        if (ic) ic.setAttribute('href', open ? '#ic-down' : '#ic-up');
+    }
+
+    function toggleCartSheet() {
+        const sb = document.getElementById('sidebar');
+        if (!sb) return;
+        if (cart.length === 0) { playError(); return; }
+        setCartSheet(!sb.classList.contains('cart-open'));
     }
 
     function generateReceiptHTML(items) {
@@ -1479,7 +1670,7 @@
         const btn = document.getElementById('last-type-quick');
         if (!btn) return;
         if (lastCustomerType && lastCustomerType !== '__later__') {
-            btn.textContent = `👥 直前と同じ：${lastCustomerType}`;
+            btn.innerHTML = `<svg class="ic"><use href="#ic-users"/></svg>直前と同じ：${escHtml(lastCustomerType)}`;
             btn.style.display = 'block';
         } else {
             btn.style.display = 'none';
@@ -1623,7 +1814,7 @@
         for (let i = 0; i < typeRadios.length; i++) {
             if (typeRadios[i].checked) { selectedVal = typeRadios[i].value; break; }
         }
-        // 「⏭後で」または未選択のときは属性を後で入力するフラグを立てる
+        // 「後で」または未選択のときは属性を後で入力するフラグを立てる
         const pending = (selectedVal === "__later__");
         const selectedType = pending ? "不明" : selectedVal;
         // 実際に属性を選んだ場合は「直前値」として記憶（次回の会計でワンタップ設定できる）
@@ -1661,7 +1852,7 @@
         const chgText = record.change > 0
             ? `お釣り¥${record.change}（${changeDenoms(record.change).map(d => `${d.unit}×${d.count}`).join('・')}）`
             : 'お釣りなし';
-        showToast(`✓ 記録しました（客No.${record.no} / ${chgText}）`);
+        showToast(`記録しました（客No.${record.no} / ${chgText}）`);
     }
 
     function promptReservation() {
@@ -1697,7 +1888,7 @@
             div.className = 'res-card';
             div.innerHTML = `
                 <div class="res-header">
-                    <span>👤 ${res.name} 様</span>
+                    <span><svg class="ic"><use href="#ic-users"/></svg>${escHtml(res.name)} 様</span>
                     <span style="color:var(--accent);">合計: ¥${res.total}</span>
                 </div>
                 <div style="font-size:13px; color:var(--text-light);">
@@ -1705,7 +1896,7 @@
                 </div>
                 <div class="res-actions">
                     <button class="action-btn btn-danger" style="flex:1; padding:8px; font-size:14px;" onclick="cancelReservation(${res.id})">キャンセル</button>
-                    <button class="action-btn btn-checkout" style="flex:1; padding:8px; font-size:14px; margin-top:0;" onclick="closeModal('settings-modal'); openCheckout(${res.id})">受取・清算</button>
+                    <button class="action-btn btn-checkout" style="flex:1; padding:8px; font-size:14px; margin-top:0;" onclick="showRegister(); openCheckout(${res.id})">受取・清算</button>
                 </div>
             `;
             list.appendChild(div);
@@ -1742,8 +1933,8 @@
         const applyBox = document.getElementById('inventory-apply');
         if (applyBox) {
             applyBox.innerHTML =
-                (latest ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:8px; padding:10px; background:var(--accent-soft); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--accent-ink);">✨ 前回「${latest.sessionName}」の実績を参考に反映</button>` : '')
-                + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:var(--btn-neutral); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px;">↩️ 商品リストを「${ACTIVE_EVENT_SET.label}」の既定に戻す</button>`;
+                (latest ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:8px; padding:10px; background:var(--accent-soft); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--accent-ink); display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="ic"><use href="#ic-bulb"/></svg>前回「${escHtml(latest.sessionName)}」の実績を参考に反映</button>` : '')
+                + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:var(--btn-neutral); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="ic"><use href="#ic-undo"/></svg>商品リストを「${escHtml(ACTIVE_EVENT_SET.label)}」の既定に戻す</button>`;
         }
 
         list.innerHTML = '';
@@ -1751,7 +1942,7 @@
             let hint = '';
             if (latest && latest.map[p.name]) {
                 const r = latest.map[p.name];
-                const arrow = r.recommended > r.initial ? '⬆️' : (r.recommended < r.initial ? '⬇️' : '→');
+                const arrow = r.recommended > r.initial ? '▲' : (r.recommended < r.initial ? '▼' : '＝');
                 hint = `<div style="font-size:11px; color:var(--text-light); margin-top:6px;">前回 仕入${r.initial}/販売${r.sold}${r.soldOut ? '(完売)' : ''} → 参考 <b style="color:var(--accent);">${r.recommended}</b> ${arrow}</div>`;
             }
             list.innerHTML += `
@@ -1814,23 +2005,6 @@
         return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())}デモ販売会`;
     }
 
-    function openSettings() {
-        document.getElementById('settings-modal').style.display = 'flex';
-        // 未入力なら当日の日付入りの名前を自動でセット（そのまま開店できる）
-        const nameInput = document.getElementById('session-name-input');
-        if (!nameInput.value) nameInput.value = defaultSessionName();
-        // 設定画面を開くたびに、現在の商品の状態をコピーして編集画面にセットする
-        tempSetupProducts = JSON.parse(JSON.stringify(products));
-        updateSessionTabView();
-        renderInventorySetup();
-        renderLiveStock();
-        renderReservations();
-        renderRecords();
-        renderArchiveList();
-        if (!reportViewSnapshot) updateAnalytics();
-        updateFullscreenButton();
-    }
-
     // ▼ 全画面表示（対応端末のみ。iPad Safariは非対応のため「ホーム画面に追加」を案内）▼
     function isFullscreenSupported() {
         const el = document.documentElement;
@@ -1857,29 +2031,21 @@
         const btn = document.getElementById('btn-fullscreen');
         if (!btn) return;
         btn.style.display = isFullscreenSupported() ? 'block' : 'none';
-        btn.textContent = currentFullscreenElement() ? '⤢ 全画面表示を終了する' : '⤢ 今すぐ全画面表示にする';
+        btn.innerHTML = '<svg class="ic"><use href="#ic-expand"/></svg>' + (currentFullscreenElement() ? '全画面表示を終了する' : '今すぐ全画面表示にする');
     }
     document.addEventListener('fullscreenchange', updateFullscreenButton);
     document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
     // ▲▲▲ ここまで ▲▲▲
 
-    // 営業状態に応じて営業管理タブの表示を切り替える
-    // （開店中は「開店」UIを隠し、閉店中は「在庫調整・閉店」UIを隠す）
+    // 営業状態が変わった時に、ヘッダーのボタンと各メニューの表示をそろえる
     function updateSessionTabView() {
-        const openBlock = document.getElementById('session-open-block');
-        const activeBlock = document.getElementById('session-active-block');
-        if (!openBlock || !activeBlock) return;
-        const isOpen = !!currentSession;
-        openBlock.style.display = isOpen ? 'none' : 'block';
-        activeBlock.style.display = isOpen ? 'block' : 'none';
-        if (isOpen) document.getElementById('active-session-name').innerText = currentSession;
         const banner = document.getElementById('event-banner');
-        if (banner) banner.innerHTML = `📋 イベント: <b>${ACTIVE_EVENT_SET.label}</b><br><span style="color:var(--text-light); font-size:12px;">切替は data/active-event.js（またはURLに ?event=festival）</span>`;
-        // ボトムナビの5番目は、状態にあわせて「開店」⇄「営業中」に変える
-        const navLabel = document.getElementById('nav-session-label');
-        if (navLabel) navLabel.textContent = isOpen ? '営業中' : '開店';
+        if (banner) banner.innerHTML = `<svg class="ic"><use href="#ic-box"/></svg><span>商品セット：<b>${escHtml(ACTIVE_EVENT_SET.label)}</b><br><span style="color:var(--text-light); font-size:12px;">切替は data/active-event.js（またはURLに ?event=festival）</span></span>`;
+        updateHeaderSessionBtn();
         updateReopenRow();
         updateSyncUi();
+        if (currentView === 'settings' && !currentSub) renderSettingsMenu();
+        if (currentView === 'session' && !currentSub) renderOpenMenu();
     }
 
     // 「直前の販売会を再開する」導線の出し分け。
@@ -1928,13 +2094,13 @@
         renderLiveStock();
         renderRecords();
         updateAnalytics();
-        showToast('✓ 販売会を再開しました');
+        showToast('販売会を再開しました');
     }
 
     function closeModal(id) {
-        document.getElementById(id).style.display = 'none';
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
         if (id === 'checkout-modal') showNav(true);       // 会計の集中モード解除でナビ復帰
-        if (id === 'settings-modal') setActiveNav('register');
     }
 
     async function startSession() {
@@ -2065,12 +2231,10 @@
 
         document.getElementById('session-display').innerText = `営業中: ${sharedName}`;
         document.getElementById('session-display').style.background = 'var(--white)';
-        closeModal('settings-modal');
+        showRegister();
         saveData();
         init();
-        // 開店・営業タブを「営業中の管理」に切り替えておく（次に開いた時にすぐ使える状態にする）
         updateSessionTabView();
-        renderLiveStock();
     }
 
     // FirestoreのドキュメントID/コードに使える形へ整える
@@ -2142,7 +2306,7 @@
             withSnapshot(closedSnapshot, () => updateAnalytics());
             showTab('analytics');
             showAnalyticsSection('insight'); // 閉店時は次回インサイトを表示
-            showToast(`✓ 「${closedName}」を集計して保存しました`);
+            showToast(`「${closedName}」を集計して保存しました`);
         } else {
             updateAnalytics();
             showTab('analytics');
@@ -2232,8 +2396,8 @@
             const dstr = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
             const actions = a.snapshot
                 ? `<div class="arc-actions">
-                       <button class="action-btn btn-accent-outline" onclick="openArchiveReport(${idx})">📊 集計を見る</button>
-                       <button class="action-btn btn-secondary" onclick="exportArchiveBackup(${idx})">💾 バックアップ保存</button>
+                       <button class="action-btn btn-accent-outline" onclick="openArchiveReport(${idx})"><svg class="ic"><use href="#ic-chart"/></svg>集計を見る</button>
+                       <button class="action-btn btn-secondary" onclick="exportArchiveBackup(${idx})"><svg class="ic"><use href="#ic-download"/></svg>バックアップ保存</button>
                    </div>`
                 : `<p class="settings-hint" style="margin:0;">※ 古い記録のため、集計の要約のみ残しています（明細は保存期間を過ぎました）。</p>`;
             return `<div class="arc-card">
@@ -2327,7 +2491,7 @@
             const sharedNames = new Set(sharedProducts.map(p => p.name));
             const missing = [...new Set(salesHistory.flatMap(h => (h.items || []).map(i => i.name)))].filter(n => !sharedNames.has(n));
             let msg = `共有コード「${code}」は、すでに「${remote.name || '無題'}」として動いています。\n\n・この端末の会計${salesHistory.length}件を、その販売会に合流させます。\n・商品と仕入れ数は共有側の内容にそろいます。`;
-            if (missing.length) msg += `\n\n⚠ 次の商品は共有側のリストにありません：${missing.join('、')}\n  売上には反映されますが、在庫の残数は管理されません。`;
+            if (missing.length) msg += `\n\n【！】次の商品は共有側のリストにありません：${missing.join('、')}\n  売上には反映されますが、在庫の残数は管理されません。`;
             msg += '\n\nよろしいですか？';
             if (!confirm(msg)) return;
             if (sharedProducts.length) {
@@ -2347,7 +2511,7 @@
         saveData();
         init();
         updateSessionTabView();
-        showToast(`🔗 共有を開始しました（コード: ${code}）`);
+        showToast(`共有を開始しました（コード: ${code}）`);
     }
 
     // 共有をやめて、この端末だけで営業を続ける（電波が不安定な時などの避難先）。
@@ -2361,7 +2525,7 @@
         saveData();
         init();
         updateSessionTabView();
-        showToast('📴 共有をやめました（この端末だけで営業中）');
+        showToast('共有をやめました（この端末だけで営業中）');
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -2571,7 +2735,7 @@
         if (recs.length > 0) {
             nextText += `※今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変動するため参考程度にご利用ください\n`;
             recs.forEach(r => {
-                let arrow = r.recommended > r.initial ? '⬆️' : (r.recommended < r.initial ? '⬇️' : '→');
+                let arrow = r.recommended > r.initial ? '▲' : (r.recommended < r.initial ? '▼' : '＝');
                 nextText += `・${r.name}: 今回 仕入${r.initial}/販売${r.sold} → 参考 ${r.recommended}個 ${arrow} (${r.reason})\n`;
             });
         } else {
@@ -2586,17 +2750,37 @@
         const sep = '--------------------------\n';
         document.getElementById('analytics-result').innerText =
             summary + sep + itemsText + sep + timeText + sep + segmentText + sep +
-            '[次回準備の参考メモ]\n' + nextText + sep + '[次回インサイト]\n' + (insight || '');
+            '[次回の仕入れ数の目安]\n' + nextText + sep + '[完売と売り逃し]\n' + (insight || '');
 
         showAnalyticsMenu();
     }
 
-    // ▼▼▼ 売上確認：項目選択メニュー ▼▼▼
-    const ANALYTICS_TITLES = {
-        summary: '📊 概要', items: '🥐 商品別', time: '🕐 時間帯別の客数',
-        stock: '📉 残在庫の推移', segment: '👥 客層・カテゴリ', next: '📝 次回準備の参考メモ',
-        insight: '🔮 次回インサイト', log: '🧾 操作ログ', export: '💾 書き出し（PDF/CSV）'
-    };
+    // ▼▼▼ 売上集計：項目を選んでから中身を出す ▼▼▼
+    // 【名前について】以前は「次回インサイト」と「次回準備の参考メモ」で中身が想像しにくかったため、
+    // 何が書いてあるかがそのまま分かる名前に変更した。
+    //   次回インサイト        → 完売と売り逃し（早く売り切れてどれだけ売り逃したか）
+    //   次回準備の参考メモ    → 次回の仕入れ数の目安
+    const ANALYTICS_ITEMS = [
+        { key: 'summary', icon: 'chart',   title: '売上の概要' },
+        { key: 'items',   icon: 'box',     title: '商品別の売れ行き' },
+        { key: 'time',    icon: 'clock',   title: '時間帯別の客数' },
+        { key: 'stock',   icon: 'sliders', title: '在庫の減り方' },
+        { key: 'segment', icon: 'users',   title: '客層・カテゴリ別' },
+        { key: 'insight', icon: 'bulb',    title: '完売と売り逃し' },
+        { key: 'next',    icon: 'clipboard', title: '次回の仕入れ数の目安' },
+        { key: 'log',     icon: 'list',    title: '操作の履歴' },
+        { key: 'export',  icon: 'download', title: '書き出し（PDF・CSV）' }
+    ];
+    const ANALYTICS_TITLES = ANALYTICS_ITEMS.reduce((m, it) => { m[it.key] = it.title; return m; }, {});
+
+    function renderAnalyticsMenu() {
+        const grid = document.getElementById('analytics-menu-grid');
+        if (!grid) return;
+        grid.innerHTML = ANALYTICS_ITEMS.map(it =>
+            `<button class="menu-card" onclick="showAnalyticsSection('${it.key}')">
+                <svg class="ic"><use href="#ic-${it.icon}"/></svg><span>${it.title}</span>
+            </button>`).join('');
+    }
 
     function showAnalyticsMenu() {
         const detail = document.getElementById('analytics-detail');
@@ -2612,8 +2796,14 @@
         if (note) {
             note.style.display = (hasData && reportViewSnapshot) ? 'block' : 'none';
             if (hasData && reportViewSnapshot) {
-                note.innerHTML = `📦 直前に閉店した「${escHtml(reportViewSnapshot.sessionName || '無題')}」の集計です`;
+                note.innerHTML = `<svg class="ic"><use href="#ic-archive"/></svg><span>「${escHtml(reportViewSnapshot.sessionName || '無題')}」の集計を表示しています（閉店済み）</span>`;
             }
+        }
+        // 集計の中を見ている状態から一覧へ戻った、という見出し・戻るボタンの整理
+        if (currentView === 'analytics') {
+            currentSub = null;
+            document.getElementById('panel-title').textContent = VIEW_TITLES.analytics;
+            document.getElementById('panel-back').classList.remove('show');
         }
     }
 
@@ -2628,11 +2818,17 @@
         if (banner) {
             const name = reportViewSnapshot && reportViewSnapshot.sessionName;
             banner.style.display = reportViewSnapshot ? 'block' : 'none';
-            if (reportViewSnapshot) banner.innerHTML = `📦 過去の販売会「${escHtml(name || '無題')}」の集計を表示しています`;
+            if (reportViewSnapshot) banner.innerHTML = `<svg class="ic"><use href="#ic-archive"/></svg><span>過去の販売会「${escHtml(name || '無題')}」の集計です</span>`;
         }
         document.getElementById('analytics-menu').style.display = 'none';
         document.getElementById('analytics-detail').style.display = 'block';
-        document.getElementById('analytics-detail-title').innerText = ANALYTICS_TITLES[key] || '';
+        // 見出しは画面上部に出し、戻るボタンで一覧へ帰れるようにする
+        if (currentView === 'analytics') {
+            currentSub = 'report';
+            document.getElementById('panel-title').textContent = ANALYTICS_TITLES[key] || '';
+            document.getElementById('panel-back').classList.add('show');
+            document.getElementById('panel-body').scrollTop = 0;
+        }
         document.querySelectorAll('.analytics-sec').forEach(el => el.style.display = 'none');
         const sec = document.getElementById('sec-' + key);
         if (sec) sec.style.display = 'block';
@@ -2994,52 +3190,223 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
-    const TAB_IDS = ['session', 'reservations', 'analytics', 'records', 'settings'];
-    const SECTION_TITLES = {
-        session: '🏪 開店・営業',
-        reservations: '🗓️ 予約',
-        analytics: '📊 売上・分析',
-        records: '🧮 会計履歴（記録・レシート・取消）',
-        settings: '⚙ 設定（端末とデータの管理）'
+    // ▼▼▼ 画面の切り替え ▼▼▼
+    // レジ以外の画面も「重ねる」のではなく「切り替える」。ヘッダーとボトムナビは常に残す。
+    // 各画面は必要に応じて「一覧 → 個別」の2段階にして、1画面あたりの情報量を絞る
+    // （スクロールしないと目的の操作にたどり着けない状態をなくすため）。
+    const PANEL_VIEWS = ['reservations', 'records', 'analytics', 'settings', 'session'];
+    const VIEW_TITLES = {
+        reservations: '予約',
+        records: '会計記録',
+        analytics: '売上集計',
+        settings: '設定',
+        session: '開店の準備'
+    };
+    // サブ画面の見出し（戻るボタンつきで表示される）
+    const SUB_TITLES = {
+        'stock': '商品・在庫の調整',
+        'sync': '複数端末で共有',
+        'sync-add': '共有コードを追加',
+        'archive': '過去の販売会',
+        'data': 'データの書き出し',
+        'display': '画面表示',
+        'reset': 'データの初期化',
+        'open-name': '販売会の名前',
+        'open-stock': '商品と仕入れ数',
+        'open-sync': '複数端末で共有',
+        'open-import': 'データを取り込んで始める'
     };
 
-    function showTab(tabId) {
-        document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
-        const btn = document.getElementById(`tab-btn-${tabId}`);
-        if (btn) btn.classList.add('active');
-        TAB_IDS.forEach(id => {
-            const el = document.getElementById(`tab-${id}`);
-            if (el) el.style.display = 'none';
+    // いま開いている画面とサブ画面（戻る操作のために覚えておく）
+    let currentView = 'register';
+    let currentSub = null;
+
+    function navTo(section) {
+        if (section === 'register') return showRegister();
+        openPanel(section);
+    }
+
+    function showRegister() {
+        currentView = 'register';
+        currentSub = null;
+        document.getElementById('page-panel').classList.remove('active');
+        document.getElementById('page-register').classList.add('active');
+        setActiveNav('register');
+    }
+
+    function openPanel(view, sub) {
+        currentView = view;
+        currentSub = sub || null;
+        document.getElementById('page-register').classList.remove('active');
+        document.getElementById('page-panel').classList.add('active');
+        PANEL_VIEWS.forEach(v => {
+            const el = document.getElementById('view-' + v);
+            if (el) el.classList.toggle('active', v === view);
         });
-        document.getElementById(`tab-${tabId}`).style.display = 'block';
-        const titleEl = document.getElementById('settings-title');
-        if (titleEl) titleEl.textContent = tabId === 'session'
-            ? (currentSession ? '🏪 営業中の管理' : '🏪 開店の準備')
-            : (SECTION_TITLES[tabId] || '');
-        setActiveNav(tabId);
-        if(tabId === 'reservations') renderReservations();
-        if(tabId === 'records') renderRecords();
-        if(tabId === 'settings') renderArchiveList();
-        if(tabId === 'analytics') {
-            // 「売上」タブは基本“いまのデータ”を見せる。
-            // ただし閉店後でレジが空のときは、直前に閉店した販売会の集計を自動で出す
-            //（閉店した直後に売上を見に来た人が、空の画面に戸惑わないようにするため）。
-            reportViewSnapshot = null;
-            if (!currentSession && salesHistory.length === 0) {
-                const latest = sessionArchive[sessionArchive.length - 1];
-                if (latest && latest.snapshot) reportViewSnapshot = latest.snapshot;
+        // サブ画面の出し分け（メニューか、選んだ項目か）
+        const root = document.getElementById('view-' + view);
+        if (root) {
+            const subs = root.querySelectorAll(':scope > .sub-view');
+            if (subs.length) {
+                const wantId = currentSub ? ('sub-' + currentSub) : subs[0].id;
+                subs.forEach(el => { el.style.display = (el.id === wantId) ? 'block' : 'none'; });
             }
-            inReportContext(() => updateAnalytics());
-            showAnalyticsMenu();
+        }
+        // 見出しと戻るボタン
+        document.getElementById('panel-title').textContent =
+            currentSub ? (SUB_TITLES[currentSub] || '') : (VIEW_TITLES[view] || '');
+        document.getElementById('panel-back').classList.toggle('show', !!currentSub || view === 'session');
+        setActiveNav(view === 'session' ? null : view);
+        document.getElementById('panel-body').scrollTop = 0;
+        refreshView(view, currentSub);
+    }
+
+    // 1段階だけ戻る（サブ画面 → メニュー → レジ）
+    function panelBack() {
+        if (currentView === 'analytics' && currentSub === 'report') { showAnalyticsMenu(); return; }
+        if (currentSub) {
+            // 共有コードの追加画面からは、共有の画面へ戻る
+            const parent = (currentSub === 'sync-add') ? 'sync' : null;
+            openPanel(currentView, parent);
+            return;
+        }
+        showRegister();
+    }
+
+    // 画面を開いた時に中身を作り直す
+    function refreshView(view, sub) {
+        if (view === 'reservations') renderReservations();
+        else if (view === 'records') renderRecords();
+        else if (view === 'settings') {
+            if (!sub) renderSettingsMenu();
+            else if (sub === 'stock') renderLiveStock();
+            else if (sub === 'sync') renderSyncView();
+            else if (sub === 'archive') renderArchiveList();
+            else if (sub === 'display') updateFullscreenButton();
+            if (sub === 'sync-add' || sub === 'sync') updateSyncUi();
+        }
+        else if (view === 'session') {
+            if (!sub) renderOpenMenu();
+            else if (sub === 'open-stock') renderInventorySetup();
+            else if (sub === 'open-sync') updateSyncUi();
+            else if (sub === 'open-name') updateSessionTabView();
+        }
+        else if (view === 'analytics') {
+            // 「売上集計」は基本“いまのデータ”を見せる。
+            // ただし閉店後でレジが空のときは、直前に閉店した販売会の集計を自動で出す。
+            if (!sub) {
+                reportViewSnapshot = null;
+                if (!currentSession && salesHistory.length === 0) {
+                    const latest = sessionArchive[sessionArchive.length - 1];
+                    if (latest && latest.snapshot) reportViewSnapshot = latest.snapshot;
+                }
+                inReportContext(() => updateAnalytics());
+                renderAnalyticsMenu();
+                showAnalyticsMenu();
+            }
         }
     }
 
-    // ▼▼▼ ボトムナビ：主要画面への導線 ▼▼▼
-    // section は register / session / reservations / analytics / records
-    function navTo(section) {
-        if (section === 'register') { closeModal('settings-modal'); setActiveNav('register'); return; }
-        openSettings();
-        showTab(section);
+    // 互換用（既存の呼び出し・テストから使われる）
+    function showTab(tabId) { openPanel(tabId); }
+    function openSettings() { openPanel('settings'); }
+
+    // ヘッダー右のボタン：閉店中は開店の準備へ、営業中は閉店する
+    function headerSessionAction() {
+        if (currentSession) { endSession(); return; }
+        prepareOpenSetup();   // いまの商品内容を編集用にコピーしてから開店の準備へ
+        openPanel('session');
+    }
+
+    function updateHeaderSessionBtn() {
+        const btn = document.getElementById('header-session-btn');
+        const label = document.getElementById('header-session-label');
+        const icon = document.getElementById('header-session-icon');
+        if (!btn || !label || !icon) return;
+        const open = !!currentSession;
+        label.textContent = open ? '閉店する' : '開店する';
+        icon.setAttribute('href', open ? '#ic-power' : '#ic-store');
+        btn.classList.toggle('is-close', open);
+    }
+
+    // ---- 設定のメニュー（項目を選んでから中身を出す） ----
+    function menuRow(icon, title, sub, onclick, opts) {
+        const o = opts || {};
+        return `<button class="menu-row${o.danger ? ' is-danger' : ''}${o.disabled ? ' is-disabled' : ''}" onclick="${onclick}">
+            <svg class="ic"><use href="#ic-${icon}"/></svg>
+            <span class="mr-body"><span class="mr-title">${escHtml(title)}</span>${sub ? `<span class="mr-sub">${sub}</span>` : ''}</span>
+            <svg class="ic mr-go"><use href="#ic-right"/></svg>
+        </button>`;
+    }
+
+    function renderSettingsMenu() {
+        const box = document.getElementById('settings-menu-list');
+        if (!box) return;
+        const stockSub = currentSession
+            ? `${products.filter(p => p.active !== false).length}品を販売中・追加搬入や値段の変更はここ`
+            : '開店してから調整できます';
+        const syncSub = !window.FIREBASE_CONFIG ? 'この端末では使えません'
+            : (syncMode ? `共有中（コード: ${escHtml(syncEventCode || '')}）` : (currentSession ? 'いまは1台だけで営業中' : '開店後に開始できます'));
+        const archSub = sessionArchive.length ? `${sessionArchive.length}件の記録` : 'まだありません';
+        box.innerHTML =
+            menuRow('sliders', '商品・在庫の調整', stockSub, "openPanel('settings','stock')", { disabled: !currentSession }) +
+            menuRow('link', '複数端末で共有', syncSub, "openPanel('settings','sync')", { disabled: !window.FIREBASE_CONFIG }) +
+            menuRow('archive', '過去の販売会', archSub, "openPanel('settings','archive')") +
+            menuRow('download', 'データの書き出し', 'バックアップの保存・端末間のコピー', "openPanel('settings','data')") +
+            menuRow('expand', '画面表示', '全画面表示にする', "openPanel('settings','display')") +
+            menuRow('trash', 'データの初期化', '不具合が直らない時の最終手段', "openPanel('settings','reset')", { danger: true });
+    }
+
+    // ---- 開店の準備メニュー ----
+    // 開店の準備に入る時に、いまの商品内容を編集用へコピーする。
+    // サブ画面から戻るたびにコピーし直すと入力した仕入れ数が消えてしまうので、
+    // 入口（ヘッダーの「開店する」・起動時）でだけ呼ぶ。
+    function prepareOpenSetup() {
+        tempSetupProducts = JSON.parse(JSON.stringify(products));
+    }
+
+    function renderOpenMenu() {
+        const box = document.getElementById('open-menu-list');
+        if (!box) return;
+        const nameInput = document.getElementById('session-name-input');
+        if (nameInput && !nameInput.value) nameInput.value = defaultSessionName();
+        if (!tempSetupProducts.length) prepareOpenSetup();
+        const active = tempSetupProducts.filter(p => p.active !== false);
+        const totalStock = active.reduce((sum, p) => sum + (p.initialStock || 0), 0);
+        const codeInput = document.getElementById('sync-event-code-input');
+        const code = (codeInput && codeInput.value || '').trim();
+        box.innerHTML =
+            menuRow('tag', '販売会の名前', escHtml(nameInput ? nameInput.value : ''), "openPanel('session','open-name')") +
+            menuRow('box', '商品と仕入れ数', `${active.length}品・合計${totalStock}個`, "openPanel('session','open-stock')") +
+            (window.FIREBASE_CONFIG
+                ? menuRow('link', '複数端末で共有', code ? `コード: ${escHtml(code)}` : '使わない（1台で営業）', "openPanel('session','open-sync')")
+                : '') +
+            menuRow('upload', 'データを取り込んで始める', '前回の続き・別の端末から引き継ぐ', "openPanel('session','open-import')");
+        updateReopenRow();
+    }
+
+    // ---- 共有の状態画面 ----
+    function renderSyncView() {
+        const box = document.getElementById('sync-state-box');
+        const acts = document.getElementById('sync-actions');
+        if (!box || !acts) return;
+        if (!currentSession) {
+            box.className = 'notice';
+            box.innerHTML = '<svg class="ic"><use href="#ic-alert"/></svg>共有は営業中だけ開始できます。まず開店してください。';
+            acts.innerHTML = '';
+            return;
+        }
+        if (syncMode) {
+            box.className = 'notice notice-ok';
+            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>共有中です。<br>共有コード：<b>${escHtml(syncEventCode || '')}</b><br>この端末の表示名：${deviceLabel()}</span>`;
+            acts.innerHTML =
+                `<button class="action-btn btn-secondary" onclick="stopSyncMidSession()"><svg class="ic"><use href="#ic-x"/></svg>共有をやめてこの端末だけで続ける</button>` +
+                `<button class="action-btn btn-secondary" onclick="leaveDeviceOnly()"><svg class="ic"><use href="#ic-power"/></svg>この端末の利用を終える（他の端末は継続）</button>`;
+        } else {
+            box.className = 'notice';
+            box.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span>いまは<b>この端末だけ</b>で営業しています。共有コードを追加すると、他の端末と売上をリアルタイムで共有できます。<br>いまの会計・在庫はそのまま引き継がれます。</span>';
+            acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-plus"/></svg>共有コードを追加する</button>`;
+        }
     }
 
     function setActiveNav(section) {
@@ -3070,9 +3437,10 @@
     function updateClosedState() {
         const el = document.getElementById('closed-cta');
         if (el) el.classList.toggle('show', !currentSession);
-        // ボトムナビの5番目は状態にあわせて「開店」⇄「営業中」
-        const navLabel = document.getElementById('nav-session-label');
-        if (navLabel) navLabel.textContent = currentSession ? '営業中' : '開店';
+        updateHeaderSessionBtn();
+        // 営業していない間は予約も受けられないので、押せないことを見た目でも示す
+        const res = document.getElementById('btn-reserve');
+        if (res) res.disabled = !currentSession;
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -3308,7 +3676,7 @@
                     </div>
                     <div class="meta">
                         <div class="grand">総売上 ${yen(s.totalRev)}</div>
-                        <div>出力: ${now}　🥖 泰山木POS</div>
+                        <div>出力: ${now}　泰山木POS</div>
                     </div>
                 </header>
 
@@ -3364,7 +3732,7 @@
                 <section class="report-section report-section--long">
                     <div class="report-heading">6. 次回インサイト</div>
                     <div class="key-box">
-                        <div class="key-head">🔮 次回インサイト（客層・味の傾向・在庫切れ）</div>
+                        <div class="key-head">完売と売り逃し（客層・味の傾向・在庫切れ）</div>
                         <div class="key-body">${esc(R.insight)}</div>
                     </div>
                 </section>
@@ -3407,7 +3775,7 @@
             '.report-note{background:#eef; color:#334; font-size:13px; padding:10px 14px; border-radius:8px; margin-bottom:14px;} ' +
             '@media print{.report-note{display:none;}}</style>' +
             '</head><body>' +
-            '<div class="report-note">🖨 印刷ダイアログが自動で開きます。閉じてしまった場合はこのページで印刷（またはブラウザの共有）から「PDFとして保存 / ファイルに保存」を選べます。</div>' +
+            '<div class="report-note">印刷ダイアログが自動で開きます。閉じてしまった場合はこのページで印刷（またはブラウザの共有）から「PDFとして保存 / ファイルに保存」を選べます。</div>' +
             inner +
             '<' + 'script>window.onload=function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},400);};<' + '/script>' +
             '</body></html>'
@@ -3463,7 +3831,7 @@
             } catch (_) { /* 復旧も失敗：これ以上はできることがない */ }
             if (!saveData._warned) {
                 saveData._warned = true;
-                alert('【！】データの保存に失敗しました。端末の空き容量やブラウザ設定をご確認ください。\n念のため「⚙ 設定 → バックアップファイルを保存」で控えを取ることをおすすめします。');
+                alert('【！】データの保存に失敗しました。端末の空き容量やブラウザ設定をご確認ください。\n念のため「設定 → データの書き出し」で控えを取ることをおすすめします。');
             }
         }
     }
@@ -3558,6 +3926,7 @@
         updateSessionTabView();
         renderInventorySetup();
         renderLiveStock();
+        prepareOpenSetup();
         renderReservations();
         renderRecords();
         renderArchiveList();
@@ -3578,7 +3947,7 @@
                 }
                 if (!confirm('現在のデータを、選んだバックアップの内容で上書きします。よろしいですか？')) return;
                 applyData(data);
-                afterDataReplaced('✓ バックアップから復元しました');
+                afterDataReplaced('バックアップから復元しました');
             } catch (err) {
                 alert('ファイルの読み込みに失敗しました。');
             } finally {
@@ -3603,7 +3972,7 @@
             if (ta) { ta.value = text; ta.focus(); ta.select(); }
             try { ok = document.execCommand && document.execCommand('copy'); } catch (e) { ok = false; }
         }
-        showToast(ok ? '✓ データをコピーしました（別端末で貼り付け）' : 'コピー欄に出しました。手動でコピーしてください');
+        showToast(ok ? 'データをコピーしました（別端末で貼り付け）' : 'コピー欄に出しました。手動でコピーしてください');
     }
 
     function importHandoffData() {
@@ -3617,13 +3986,13 @@
         if (!confirm('現在のデータを、貼り付けた内容で上書きします。よろしいですか？')) return;
         applyData(data);
         if (ta) ta.value = '';
-        afterDataReplaced('✓ 引き継ぎデータを取り込みました');
+        afterDataReplaced('引き継ぎデータを取り込みました');
     }
 
     // この端末に保存されているアプリのデータをすべて削除し、初期状態に戻す。
     // ブラウザの「閲覧履歴とCookieの削除」の代わりに使える（このアプリはCookieを使わない）。
     function factoryResetApp() {
-        if (!confirm('【注意】この端末に保存されている売上履歴・設定などをすべて削除し、初期状態に戻します。\n\n先に「① バックアップを保存」で控えを取ることをおすすめします。\n\nこのまま初期化を始めますか？')) return;
+        if (!confirm('【注意】この端末に保存されている売上履歴・設定などをすべて削除し、初期状態に戻します。\n\n先に「設定 → データの書き出し」で控えを取ることをおすすめします。\n\nこのまま初期化を始めますか？')) return;
         if (!confirm('最終確認：本当に削除してよろしいですか？この操作は取り消せません。')) return;
         try {
             Object.keys(localStorage).forEach(k => {
@@ -3743,7 +4112,7 @@
             .sort((a, b) => (Number(!!b.h.pendingType) - Number(!!a.h.pendingType)) || (new Date(b.h.time) - new Date(a.h.time)));
         const pendingCount = salesHistory.filter(h => h.pendingType).length;
         const summary = pendingCount > 0
-            ? `<div style="background:var(--warn-bg); border:2px solid var(--warn-line); border-radius:var(--r-md); padding:8px 12px; margin-bottom:10px; font-size:13px; color:var(--warn-ink); font-weight:bold; align-self:flex-start; max-width:260px; flex-shrink:0;">⏱ 属性「後で入力」の会計：${pendingCount}件（各カードの属性ボタンをタップして割り当て）</div>`
+            ? `<div style="background:var(--warn-bg); border:2px solid var(--warn-line); border-radius:var(--r-md); padding:8px 12px; margin-bottom:10px; font-size:13px; color:var(--warn-ink); font-weight:bold; align-self:flex-start; max-width:260px; flex-shrink:0;">客属性が未入力の会計：${pendingCount}件（各カードの属性ボタンをタップして割り当て）</div>`
             : '';
         const TYPES = ['学生', '教員', '職員', 'その他', '不明'];
 
@@ -3768,12 +4137,12 @@
             const cashStr = (h.cash != null) ? `¥${h.cash}` : '—';
             const changeStr = (h.change != null) ? `¥${h.change}` : '—';
             const actions = editing
-                ? `<button class="action-btn btn-checkout" style="width:100%; padding:8px; font-size:14px; margin-top:0;" onclick="toggleEditRecord(null)">✅ 修正を終了</button>`
+                ? `<button class="action-btn btn-checkout" style="width:100%; padding:8px; font-size:14px; margin-top:0;" onclick="toggleEditRecord(null)"><svg class="ic"><use href="#ic-check"/></svg>修正を終了</button>`
                 : `<div style="display:flex; gap:8px;">
-                        <button class="action-btn btn-danger" style="flex:1; padding:8px; font-size:14px;" onclick="voidSale(${idx})">↩️ 取り消し</button>
-                        <button class="action-btn btn-reserve" style="flex:1; padding:8px; font-size:14px;" onclick="printReceipt(${idx})">🧾 レシート</button>
+                        <button class="action-btn btn-danger" style="flex:1; padding:8px; font-size:14px;" onclick="voidSale(${idx})"><svg class="ic"><use href="#ic-undo"/></svg>取り消し</button>
+                        <button class="action-btn btn-reserve" style="flex:1; padding:8px; font-size:14px;" onclick="printReceipt(${idx})"><svg class="ic"><use href="#ic-printer"/></svg>レシート</button>
                     </div>
-                    <button class="action-btn btn-undo" style="width:100%; padding:7px; font-size:13px;" onclick="toggleEditRecord(${idx})">✏️ 品目・点数を修正</button>`;
+                    <button class="action-btn btn-undo" style="width:100%; padding:7px; font-size:13px;" onclick="toggleEditRecord(${idx})"><svg class="ic"><use href="#ic-pencil"/></svg>品目・点数を修正</button>`;
             return `
                 <div class="res-card"${editing ? ' style="outline:2px solid var(--accent);"' : ''}>
                     <div class="res-header">
@@ -3781,7 +4150,7 @@
                         <span style="color:var(--text-light); font-size:13px; font-weight:normal;">${dtStr}</span>
                     </div>
                     <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin:3px 0;">
-                        ${h.pendingType ? '<span style="font-size:11px; color:var(--warn-ink); font-weight:bold;">⏱後で入力</span>' : '<span style="font-size:12px; color:var(--text-light);">客属性:</span>'}
+                        ${h.pendingType ? '<span style="font-size:11px; color:var(--warn-ink); font-weight:bold;">未入力</span>' : '<span style="font-size:12px; color:var(--text-light);">客属性:</span>'}
                         ${TYPES.map(ty => { const on = h.customerType === ty && !h.pendingType; return `<button onclick="setRecordType(${idx}, '${ty}')" style="padding:3px 9px; font-size:12px; border-radius:var(--r-sm); cursor:pointer; border:1px solid ${on ? 'var(--accent)' : 'var(--line-strong)'}; background:${on ? 'var(--accent)' : '#FFF'}; color:${on ? '#FFF' : 'var(--text-main)'};">${ty}</button>`; }).join('')}
                     </div>
                     <div style="border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); padding:6px 0;">${lines}</div>
@@ -3889,12 +4258,8 @@
         const el = document.getElementById('pending-reminder');
         if (!el) return;
         const n = salesHistory.filter(h => h.pendingType).length;
-        if (n > 0) {
-            el.style.display = 'block';
-            el.innerHTML = `⏱ 属性 後で入力：<b>${n}件</b>（タップで一覧）`;
-        } else {
-            el.style.display = 'none';
-        }
+        el.classList.toggle('show', n > 0);
+        if (n > 0) el.innerHTML = `<svg class="ic"><use href="#ic-clock"/></svg>客属性が未入力：<b>${n}件</b>（タップで一覧）`;
     }
 
     // 指定した会計のレシートを印刷用ウィンドウで開く（ブラウザのPDF保存が使える）
@@ -3925,7 +4290,7 @@
                 @media print { body { padding:0; } }
             </style></head>
             <body>
-                <h1>🥖 泰山木POS</h1>
+                <h1>泰山木POS</h1>
                 <div class="sub">${(currentSession || '').replace(/</g, '')}</div>
                 <div class="meta"><span>客No. ${h.no || '-'}</span><span>${dtStr}</span></div>
                 <table>
@@ -4117,11 +4482,15 @@
         const list = document.getElementById('live-stock-list');
         if (!list) return;
         if (!currentSession) {
-            list.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:0;">開店後、当日の商品と在庫をここで調整できます。</p>';
+            const h = document.getElementById('stock-hint');
+            if (h) h.textContent = '開店後、当日の商品と在庫をここで調整できます。';
+            list.innerHTML = '';
             return;
         }
-        list.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:0 0 8px;">追加で搬入したら「仕入れ数」を増やしてください。残数と消化率は自動で計算し直されます。'
-            + (syncMode ? '変更は共有中の全端末に反映されます。' : '') + '</p>';
+        const hint = document.getElementById('stock-hint');
+        if (hint) hint.textContent = '追加で搬入したら「仕入れ数」を増やしてください。残数と消化率は自動で計算し直されます。'
+            + (syncMode ? '変更は共有中の全端末に反映されます。' : '');
+        list.innerHTML = '';
         products.forEach(p => {
             const oversold = p.stock < 0; // 販売数>仕入数（過少入力の可能性）
             const noteVal = escHtml(p.note || '');
@@ -4129,7 +4498,7 @@
             list.innerHTML += `
                 <div style="margin-bottom:10px; padding:8px; border-radius:var(--r-sm); border:1px solid var(--line); background:${oversold ? 'var(--danger-bg)' : 'var(--white)'}; ${inactive ? 'opacity:0.55;' : ''}">
                     <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
-                        <span style="flex:1; font-size:14px; font-weight:bold; overflow-wrap:anywhere;">${escHtml(p.name)}${oversold ? ' <b style="color:var(--danger); font-size:12px;">⚠ 販売&gt;仕入</b>' : ''}${inactive ? ' <span style="font-size:11px; color:var(--text-light); font-weight:normal;">(この回は販売しない)</span>' : ''}</span>
+                        <span style="flex:1; font-size:14px; font-weight:bold; overflow-wrap:anywhere;">${escHtml(p.name)}${oversold ? ' <b style="color:var(--danger); font-size:12px;">販売&gt;仕入</b>' : ''}${inactive ? ' <span style="font-size:11px; color:var(--text-light); font-weight:normal;">(この回は販売しない)</span>' : ''}</span>
                         <span style="font-size:13px; color:var(--text-light);">残り</span>
                         <span class="num" style="font-size:17px; font-weight:bold; min-width:38px; text-align:right; color:${oversold ? 'var(--danger)' : (p.stock <= 5 ? 'var(--low-ink)' : 'var(--text-main)')};">${p.stock}</span>
                     </div>
@@ -4214,7 +4583,7 @@
         saveData();
         init();
         renderLiveStock();
-        showToast(`✓ 「${name}」を追加しました`);
+        showToast(`「${name}」を追加しました`);
     }
 
     // 商品の備考（途中補充・数え直し等）を記録する
@@ -4359,7 +4728,7 @@
             const d = doc.data();
             // 初回の受信（この端末が今まさに開店/参加した瞬間）は通知しない。以降の変化だけ知らせる。
             if (!firstSnapshot && d && d.status === 'closed' && syncMode) {
-                showToast('⚠ 他の端末でこの販売会は閉店（集計）されました');
+                showToast('他の端末でこの販売会は閉店（集計）されました');
             }
             // 他の端末が商品を変更したら取り込む（自分が書いた分は取り込み直さない）
             if (!firstSnapshot && syncMode && d && Array.isArray(d.products) && d.productsUpdatedBy && d.productsUpdatedBy !== getDeviceId()) {
@@ -4463,9 +4832,9 @@
                 // 気づかず閉店してしまうのが最悪なので、必ず画面で知らせて手入力を促す。
                 console.warn('売上の同期送信に失敗', e);
                 playError();
-                showToast('⚠ この会計を記録できませんでした');
+                showToast('この会計を記録できませんでした');
                 const summary = record.items.map(i => i.name).join('、');
-                alert('⚠ この会計を記録できませんでした。\n\n［' + summary + '］ 合計¥' + record.total +
+                alert('【！】この会計を記録できませんでした。\n\n［' + summary + '］ 合計¥' + record.total +
                       '\n\nお手数ですが、この1件をもう一度レジに入力してください。\n' +
                       '（繰り返し失敗する場合は、開店・設定から共有コードを使わない運用に切り替えてください）');
             });
@@ -4481,29 +4850,24 @@
     function updateSyncUi() {
         let msg;
         if (!window.FIREBASE_CONFIG) msg = '';
-        else if (syncMode) msg = `🔗 共有中：コード「<b>${escHtml(syncEventCode || '')}</b>」／この端末 ${deviceLabel()}`;
-        else if (syncReady) msg = '🟢 共有の準備OK（コードを入れると開始できます）';
-        else msg = '⏳ 同期サーバーに接続中…（つながらない場合はこの端末のみで動作します）';
+        else if (syncMode) msg = `共有中：コード「<b>${escHtml(syncEventCode || '')}</b>」／この端末 ${deviceLabel()}`;
+        else if (syncReady) msg = '共有サーバーに接続できています（コードを入れると開始できます）';
+        else msg = '共有サーバーに接続中…（つながらない場合はこの端末のみで動作します）';
         ['sync-status', 'sync-status-active'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.innerHTML = msg;
         });
-        // 開店画面の共有コード欄／営業中の共有パネルは、共有機能が設定されている時だけ出す
-        const show = window.FIREBASE_CONFIG ? 'block' : 'none';
-        const row = document.getElementById('sync-code-row');
-        if (row) row.style.display = show;
-        const liveRow = document.getElementById('sync-live-row');
-        if (liveRow) liveRow.style.display = show;
-        // 営業中パネルは「まだ共有していない＝開始UI」「共有中＝停止UI」で出し分ける
-        const startBlock = document.getElementById('sync-start-block');
-        if (startBlock) startBlock.style.display = syncMode ? 'none' : 'block';
-        const stopBlock = document.getElementById('sync-stop-block');
-        if (stopBlock) stopBlock.style.display = syncMode ? 'block' : 'none';
+        // 共有の状態画面を開いていれば作り直す
+        if (currentView === 'settings' && currentSub === 'sync') renderSyncView();
+        if (currentView === 'settings' && !currentSub) renderSettingsMenu();
     }
     // ▲▲▲ ここまで ▲▲▲
 
     loadData();
-    updateSyncUi();
+    prepareOpenSetup();
+    showRegister();
+    updateSessionTabView();
+    renderAnalyticsMenu();
     initFirebase();
 
     init();
