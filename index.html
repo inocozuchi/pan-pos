@@ -1089,6 +1089,10 @@
     let operationLog = [];   // 事後編集・部分修正などの操作履歴（運用振り返り用）
     let comparisonBaseline = null; // 今回の販売会と比較する「前回の実績」（開店時に確定）
     let lastCustomerType = null;   // 直前に選ばれた客属性（属性入力の高速化用）
+    // 会計の二重記録を防ぐための通し番号。お会計画面を開くたびに +1 され、
+    // 記録が成立した番号は checkoutRecordedToken に控えて、同じ番号では二度と記録しない。
+    let checkoutOpenToken = 0;
+    let checkoutRecordedToken = -1;
 
     // ▼ 複数端末リアルタイム同期（Cloud Firestore）用の状態 ▼
     // syncMode が true の間だけ、salesHistory は Firestore（events/{code}/sales）を正とする。
@@ -1296,7 +1300,9 @@
         let added = 0;
         last.rec.items.forEach(it => {
             const p = products.find(prod => prod.id === it.id) || products.find(prod => prod.name === it.name);
-            if (p) { addToCart(p); added++; }
+            // この回で販売しない商品・準備中の枠は入れない（レジに出ていないものを積まない）
+            if (!p || p.active === false || (!(p.initialStock > 0) && p.price <= 0)) return;
+            addToCart(p); added++;
         });
         if (!added) { playError(); showToast('この商品はいまのラインナップにありません'); return; }
         showToast(`🔁 直前と同じ内容を入れました（${last.text}）`);
@@ -1385,6 +1391,10 @@
             playError(); // 空のカートで「会計へ進む」を押した時のフィードバック
             return;
         }
+
+        // このお会計画面を開いた回数に番号をふる。completeTransaction() は
+        // 「同じ番号での記録は1回だけ」に制限するので、どんな経路でも二重記録が起きない。
+        checkoutOpenToken++;
 
         const total = itemsToProcess.reduce((sum, item) => sum + item.price, 0);
         document.getElementById('checkout-receipt').innerHTML = generateReceiptHTML(itemsToProcess);
@@ -1515,15 +1525,21 @@
 
 
     function completeTransaction() {
-        // 二重タップ・連打防止：直前の呼び出しで既に会計対象が空になっていれば、
-        // これは「同じ操作の2回目の呼び出し」なので何もしない（二重記録の防止）。
-        // openCheckout()は必ず「カートに何かある」か「有効な予約を処理中」の時しか
-        // 開かないため、初回の正当な呼び出しがこのガードで止まることはない。
+        // 【二重タップ・連打の防止】
+        // 「お会計画面を1回開いたら、記録できるのは1回だけ」に統一する。
+        // 以前は「カートが空なら2回目とみなす」方式だったが、予約の清算中は
+        // カートに次のお客さんの商品が残っていることがあり、その場合だけ
+        // 2回目が素通りして「カートの商品に予約の金額をつけた誤記録」が
+        // 作られてしまっていた。番号方式にすることでどの経路でも起きない。
+        if (checkoutRecordedToken === checkoutOpenToken) return;
+        // 会計対象が無い状態（画面を開かずに呼ばれた等）も念のため弾く
         if (cart.length === 0 && processingReservationId === null) return;
 
         const total = parseInt(document.getElementById('modal-total').innerText);
         const cash = parseInt(document.getElementById('cash-input').value) || 0;
+        // お預かり不足はまだ記録が成立していないので、番号は消費しない（入れ直して再実行できる）
         if (cash < total) { playError(); alert('お預かり金額が足りません'); return; }
+        checkoutRecordedToken = checkoutOpenToken;
         playSuccess();
 
         let itemsRecorded = cart;
@@ -3775,10 +3791,28 @@
     }
 
     // イベント（販売会）コードの売上コレクションを購読し、salesHistory を組み立て直す
+    // 同期が始まる前にこの端末だけで記録された会計を、Firestoreへ送って救済する。
+    // 【なぜ必要か】端末をリロードすると「営業中」の画面はすぐ戻るが、Firebaseの
+    // 初期化と購読の開始までは通信状況しだいで数秒かかる。その数秒の間に会計すると
+    // 記録はローカルにしか無く、購読が始まった瞬間に salesHistory が共有結果で
+    // 丸ごと置き換わるため、その会計が売上から消えてしまう（お金は受け取っているのに
+    // 記録が無い状態になる）。共有済みの記録は必ず remoteId を持つので、
+    // remoteId の無いものだけを送れば重複しない。
+    function flushLocalSalesToRemote() {
+        if (!syncReady || !syncEventCode || !fbDb) return;
+        const pending = salesHistory.filter(h => !h.remoteId && !h.syncPushed);
+        pending.forEach(h => { h.syncPushed = true; syncPushSale(h); });
+        if (pending.length) {
+            showToast(`同期を再開しました（この端末の会計${pending.length}件を共有）`);
+        }
+    }
+
     function startSalesSubscription(code) {
         if (!syncReady || !code) return;
         syncEventCode = code;
         syncMode = true;
+        // 購読を始める前に、未送信のローカル会計を送っておく（消失の防止）
+        flushLocalSalesToRemote();
         if (fbSalesUnsub) { try { fbSalesUnsub(); } catch (e) {} fbSalesUnsub = null; }
         const col = fbDb.collection('events').doc(code).collection('sales');
         fbSalesUnsub = col.onSnapshot(snap => {
@@ -3869,7 +3903,9 @@
             deviceId: getDeviceId(),
             deviceLabel: deviceLabel(),
             localId: getDeviceId() + ':' + record.no,
-            createdAt: Date.now(),
+            // 後から送る（同期再開時の救済）場合でも、実際に会計した時刻を保つ。
+            // 時間帯別の集計と客No.の並び順が実態とずれないようにするため。
+            createdAt: (record.time instanceof Date && !isNaN(record.time)) ? record.time.getTime() : Date.now(),
             time: firebase.firestore.FieldValue.serverTimestamp(),
             items: record.items.map(i => ({ id: i.id, name: i.name, price: i.price, type: i.type || '' })),
             total: record.total,
@@ -3882,7 +3918,19 @@
             voided: false
         };
         fbDb.collection('events').doc(code).collection('sales').add(doc)
-            .catch(e => { console.warn('売上の同期送信に失敗（オフライン時は復帰後に自動送信）', e); });
+            .catch(e => {
+                // 電波が悪いだけなら、この Promise は「保留」のままで後から自動送信されるため
+                // ここには来ない。ここに来るのは権限エラー等の“本当に失敗した”ケースで、
+                // 同期中はローカルにも控えていないため、黙っていると1件まるごと消えてしまう。
+                // 気づかず閉店してしまうのが最悪なので、必ず画面で知らせて手入力を促す。
+                console.warn('売上の同期送信に失敗', e);
+                playError();
+                showToast('⚠ この会計を記録できませんでした');
+                const summary = record.items.map(i => i.name).join('、');
+                alert('⚠ この会計を記録できませんでした。\n\n［' + summary + '］ 合計¥' + record.total +
+                      '\n\nお手数ですが、この1件をもう一度レジに入力してください。\n' +
+                      '（繰り返し失敗する場合は、開店・設定から共有コードを使わない運用に切り替えてください）');
+            });
     }
 
     function syncUpdateSale(remoteId, changes) {
