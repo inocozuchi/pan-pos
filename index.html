@@ -650,6 +650,7 @@
             <div id="cash-suggestions" style="display: flex; gap: 10px; margin-top: 5px;">
                 <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #E2F0CB;" onclick="setCashExact()">ちょうど</button>
             </div>
+            <button class="action-btn" style="width:100%; margin-top:8px; background:var(--accent); color:#fff; font-size:15px; padding:11px;" onclick="completeExactCash()">⚡ ぴったり受取で会計完了</button>
 
             <div class="tenkey-grid">
                 <button class="action-btn tenkey-btn" onclick="appendCash('7')">7</button>
@@ -1134,6 +1135,24 @@
         init();
     }
 
+    // ▼ カートを一括で空にする（打ち間違いのやり直し・会計の高速化）▼
+    function clearCartAll() {
+        if (cart.length === 0) return;
+        if (!confirm(`カートの${cart.length}点をすべて取り消します。よろしいですか？`)) return;
+        if (!syncMode) {
+            cart.forEach(item => {
+                const p = products.find(prod => prod.id === item.id);
+                restockOne(p);
+            });
+        }
+        cart = [];
+        playSound(660, 0.08);
+        saveData();
+        init();
+        showToast('カートを空にしました');
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     // カテゴリ（パン/クッキー/ドリンク）に対応する色。商品ボタンと同じ配色。
     function catColor(type) {
         if (type === 'savory') return 'var(--btn-savory)';
@@ -1153,6 +1172,10 @@
             total += item.price;
         });
 
+        if (cart.length > 0) {
+            list.innerHTML += `<div style="text-align:right; margin-bottom:6px;"><button onclick="clearCartAll()" style="background:none; border:none; color:var(--text-light); font-size:12px; text-decoration:underline; cursor:pointer; padding:4px;">🗑 カートを全部取消す</button></div>`;
+        }
+
         for (const [name, data] of Object.entries(counts)) {
             const subtotal = data.price * data.count;
             const safeName = name.replace(/'/g, "\\'");
@@ -1167,7 +1190,7 @@
                 </div>
             `;
         }
-        
+
         if(cart.length === 0) {
             list.innerHTML = '<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><div class="ce-emoji" style="font-size:34px;">🧺</div>商品をタップして<br>お会計に追加してください</div>';
         }
@@ -1271,6 +1294,12 @@
         const total = parseInt(document.getElementById('modal-total').innerText);
         document.getElementById('cash-input').value = total;
         calcChange();
+    }
+
+    // 「ちょうど」＋「完了・記録」を1タップにまとめた高速会計（既存の2ボタンはそのまま残す）
+    function completeExactCash() {
+        setCashExact();
+        completeTransaction();
     }
 
     function setCash(amount) {
