@@ -1108,8 +1108,12 @@
     function undoLast() {
         if (cart.length > 0) {
             const lastItem = cart.pop();
-            const product = products.find(p => p.id === lastItem.id);
-            restockOne(product);
+            // 同期中はカート追加時に在庫を減らしていない（在庫は共有の販売実績から算出）ため、
+            // ここで戻すと逆に在庫が実際より多く見えてしまう。同期中は在庫操作をしない。
+            if (!syncMode) {
+                const product = products.find(p => p.id === lastItem.id);
+                restockOne(product);
+            }
             saveData();
             init();
         }
@@ -1121,8 +1125,11 @@
         if (idx === -1) return;
         playSound(660, 0.08); // 取り消しの合図（追加音より低め）
         const removed = cart.splice(idx, 1)[0];
-        const product = products.find(p => p.id === removed.id);
-        restockOne(product);
+        // 同期中はカート追加時に在庫を減らしていないため、ここでも戻さない（undoLastと同様）。
+        if (!syncMode) {
+            const product = products.find(p => p.id === removed.id);
+            restockOne(product);
+        }
         saveData();
         init();
     }
@@ -1404,10 +1411,13 @@
         if (!confirm('この予約を取り消して在庫に戻します。よろしいですか？')) return;
         const resIndex = reservations.findIndex(r => r.id === id);
         const res = reservations[resIndex];
-        res.items.forEach(item => {
-            const p = products.find(prod => prod.id === item.id);
-            restockOne(p);
-        });
+        // 同期中は予約作成時（カート追加時）に在庫を減らしていないため、ここでも戻さない。
+        if (!syncMode) {
+            res.items.forEach(item => {
+                const p = products.find(prod => prod.id === item.id);
+                restockOne(p);
+            });
+        }
         reservations.splice(resIndex, 1);
         renderReservations();
         saveData();
@@ -3439,7 +3449,9 @@
             list.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:0;">開店後、当日の在庫をここで増減できます。</p>';
             return;
         }
-        list.innerHTML = '';
+        list.innerHTML = syncMode
+            ? '<p style="font-size:12px; color:#A44030; background:#FBEDE9; border:1px solid #C0574A; border-radius:8px; padding:8px 10px; margin:0 0 10px;">⚠ 複数端末同期が有効な間、ここでの手動調整は次に誰かが会計すると上書きされ元に戻ります（在庫は共有の販売実績から自動計算されるため）。追加搬入等は仕入れ数そのものの見直しが必要です。</p>'
+            : '';
         products.forEach(p => {
             const oversold = p.stock < 0; // 販売数>仕入数（過少入力の可能性）
             const noteVal = (p.note || '').replace(/"/g, '&quot;');
