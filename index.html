@@ -757,6 +757,7 @@
             </div>
 
             <div id="tab-reservations" style="display:none;">
+                <div id="reservation-sync-warning" style="display:none; background:#FBEDE9; border:1px solid #C0574A; color:#A44030; border-radius:10px; padding:10px 12px; margin-bottom:10px; font-size:13px; font-weight:bold;">⚠ 予約はこの端末だけに保存され、他の端末とは共有されません。複数端末で運用中は、予約を受けた端末で清算するか、他の端末に口頭で伝えてください。</div>
                 <div id="reservation-list" class="card-strip"></div>
             </div>
 
@@ -1364,6 +1365,8 @@
     }
 
     function renderReservations() {
+        const warn = document.getElementById('reservation-sync-warning');
+        if (warn) warn.style.display = syncMode ? 'block' : 'none';
         const list = document.getElementById('reservation-list');
         list.innerHTML = '';
         if (reservations.length === 0) {
@@ -1597,7 +1600,16 @@
                     }
                 }
             } catch (e) {
-                console.warn('共有販売会の確認に失敗しました。通常どおり開店します。', e);
+                console.warn('共有販売会の確認に失敗しました。', e);
+                // ここで確認せずに進むと、実は他端末が既に使っている共有コードを
+                // 「新規作成」として扱い、共有中の商品構成を無警告で上書きしてしまう恐れがある。
+                // 通信不良時は必ず本人に確認を取る（黙って進めない）。
+                const proceed = confirm(
+                    `共有コード「${code}」が既に使われているか確認できませんでした（通信が不安定な可能性があります）。\n` +
+                    `このまま開店すると、もし他の端末が既にこのコードを使っていた場合、その商品構成を上書きしてしまう恐れがあります。\n\n` +
+                    `[OK] 確認せずこのまま開店する\n[キャンセル] 中止する（電波の良い場所で再度お試しください）`
+                );
+                if (!proceed) return;
             }
         }
 
