@@ -650,6 +650,7 @@
             <div id="cash-suggestions" style="display: flex; gap: 10px; margin-top: 5px;">
                 <button class="action-btn" style="flex: 1; padding: 10px; font-size: 16px; background-color: #E2F0CB;" onclick="setCashExact()">ちょうど</button>
             </div>
+            <button class="action-btn" style="width:100%; margin-top:8px; background:var(--accent); color:#fff; font-size:15px; padding:11px;" onclick="completeExactCash()">⚡ ぴったり受取で会計完了</button>
 
             <div class="tenkey-grid">
                 <button class="action-btn tenkey-btn" onclick="appendCash('7')">7</button>
@@ -1108,8 +1109,12 @@
     function undoLast() {
         if (cart.length > 0) {
             const lastItem = cart.pop();
-            const product = products.find(p => p.id === lastItem.id);
-            restockOne(product);
+            // 同期中はカート追加時に在庫を減らしていない（在庫は共有の販売実績から算出）ため、
+            // ここで戻すと逆に在庫が実際より多く見えてしまう。同期中は在庫操作をしない。
+            if (!syncMode) {
+                const product = products.find(p => p.id === lastItem.id);
+                restockOne(product);
+            }
             saveData();
             init();
         }
@@ -1121,11 +1126,32 @@
         if (idx === -1) return;
         playSound(660, 0.08); // 取り消しの合図（追加音より低め）
         const removed = cart.splice(idx, 1)[0];
-        const product = products.find(p => p.id === removed.id);
-        restockOne(product);
+        // 同期中はカート追加時に在庫を減らしていないため、ここでも戻さない（undoLastと同様）。
+        if (!syncMode) {
+            const product = products.find(p => p.id === removed.id);
+            restockOne(product);
+        }
         saveData();
         init();
     }
+
+    // ▼ カートを一括で空にする（打ち間違いのやり直し・会計の高速化）▼
+    function clearCartAll() {
+        if (cart.length === 0) return;
+        if (!confirm(`カートの${cart.length}点をすべて取り消します。よろしいですか？`)) return;
+        if (!syncMode) {
+            cart.forEach(item => {
+                const p = products.find(prod => prod.id === item.id);
+                restockOne(p);
+            });
+        }
+        cart = [];
+        playSound(660, 0.08);
+        saveData();
+        init();
+        showToast('カートを空にしました');
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     // カテゴリ（パン/クッキー/ドリンク）に対応する色。商品ボタンと同じ配色。
     function catColor(type) {
@@ -1146,6 +1172,10 @@
             total += item.price;
         });
 
+        if (cart.length > 0) {
+            list.innerHTML += `<div style="text-align:right; margin-bottom:6px;"><button onclick="clearCartAll()" style="background:none; border:none; color:var(--text-light); font-size:12px; text-decoration:underline; cursor:pointer; padding:4px;">🗑 カートを全部取消す</button></div>`;
+        }
+
         for (const [name, data] of Object.entries(counts)) {
             const subtotal = data.price * data.count;
             const safeName = name.replace(/'/g, "\\'");
@@ -1160,7 +1190,7 @@
                 </div>
             `;
         }
-        
+
         if(cart.length === 0) {
             list.innerHTML = '<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><div class="ce-emoji" style="font-size:34px;">🧺</div>商品をタップして<br>お会計に追加してください</div>';
         }
@@ -1266,6 +1296,12 @@
         calcChange();
     }
 
+    // 「ちょうど」＋「完了・記録」を1タップにまとめた高速会計（既存の2ボタンはそのまま残す）
+    function completeExactCash() {
+        setCashExact();
+        completeTransaction();
+    }
+
     function setCash(amount) {
         playSound();
         document.getElementById('cash-input').value = amount;
@@ -1288,6 +1324,12 @@
 
 
     function completeTransaction() {
+        // 二重タップ・連打防止：直前の呼び出しで既に会計対象が空になっていれば、
+        // これは「同じ操作の2回目の呼び出し」なので何もしない（二重記録の防止）。
+        // openCheckout()は必ず「カートに何かある」か「有効な予約を処理中」の時しか
+        // 開かないため、初回の正当な呼び出しがこのガードで止まることはない。
+        if (cart.length === 0 && processingReservationId === null) return;
+
         const total = parseInt(document.getElementById('modal-total').innerText);
         const cash = parseInt(document.getElementById('cash-input').value) || 0;
         if (cash < total) { playError(); alert('お預かり金額が足りません'); return; }
@@ -1398,10 +1440,13 @@
         if (!confirm('この予約を取り消して在庫に戻します。よろしいですか？')) return;
         const resIndex = reservations.findIndex(r => r.id === id);
         const res = reservations[resIndex];
-        res.items.forEach(item => {
-            const p = products.find(prod => prod.id === item.id);
-            restockOne(p);
-        });
+        // 同期中は予約作成時（カート追加時）に在庫を減らしていないため、ここでも戻さない。
+        if (!syncMode) {
+            res.items.forEach(item => {
+                const p = products.find(prod => prod.id === item.id);
+                restockOne(p);
+            });
+        }
         reservations.splice(resIndex, 1);
         renderReservations();
         saveData();
@@ -3433,7 +3478,9 @@
             list.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:0;">開店後、当日の在庫をここで増減できます。</p>';
             return;
         }
-        list.innerHTML = '';
+        list.innerHTML = syncMode
+            ? '<p style="font-size:12px; color:#A44030; background:#FBEDE9; border:1px solid #C0574A; border-radius:8px; padding:8px 10px; margin:0 0 10px;">⚠ 複数端末同期が有効な間、ここでの手動調整は次に誰かが会計すると上書きされ元に戻ります（在庫は共有の販売実績から自動計算されるため）。追加搬入等は仕入れ数そのものの見直しが必要です。</p>'
+            : '';
         products.forEach(p => {
             const oversold = p.stock < 0; // 販売数>仕入数（過少入力の可能性）
             const noteVal = (p.note || '').replace(/"/g, '&quot;');
