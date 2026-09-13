@@ -14,52 +14,69 @@
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" href="icons/icon-192.png">
     <style>
+        /* ▼▼▼ 配色 ▼▼▼
+           【方針】屋外（直射日光の下）での見やすさを最優先に、iOSらしい
+           「白い面＋はっきりした色」の組み合わせにしている。
+           ・文字と背景の明暗差は、小さい文字で 4.5:1 以上、
+             商品ボタンの品名のように必ず読む文字は 7:1 以上を確保する。
+             （日なたでは画面が白っぽく飛ぶため、淡い色どうしの組み合わせは読めなくなる）
+           ・カテゴリの色分けは続けるが、淡いパステルは日光で白飛びして
+             3色の区別がつかないため、彩度を上げたうえで
+             ボタンの上辺に濃い色の帯を足し、色が飛んでも見分けられるようにした。
+           ・色を足すときは必ずこの変数を使う（各所に直接書かない）。 */
         :root {
-            --bg-color: #F4F3F0;      /* 温かみのあるライトニュートラル */
+            --bg-color: #F2F0EC;      /* 画面の地。白い面を浮かせるための、ごく薄い暖色グレー */
             --surface: #FFFFFF;
             --white: #FFFFFF;
             --header-bg: #FFFFFF;
-            --line: #E7E3DD;          /* 区切り線・枠 */
-            --line-strong: #D9D4CC;
-            /* カテゴリ3色（落ち着いたトーンで色分けは継続） */
-            --btn-sweet: #EBD0A6;     /* パン（ウィート） */
-            --btn-savory: #CBD8AC;    /* クッキー（セージ） */
-            --btn-drink: #AAD0CC;     /* ドリンク（ダスティティール） */
-            /* 主要アクション・強調（テラコッタ） */
-            --accent: #C25E3E;
-            --accent-ink: #A44C30;    /* 文字・価格用に少し濃く */
-            --accent-soft: #F3E5DE;   /* 選択中の淡い背景 */
-            --btn-neutral: #EFEDE8;   /* 補助ボタン */
-            --text-main: #2E2A26;     /* 濃い暖色チャコール（可読性重視） */
-            --text-light: #857D74;
+            --line: #DCD8D1;          /* 区切り線・枠（屋外で見えるよう従来より濃く） */
+            --line-strong: #BEB9B1;
+            /* カテゴリ3色：面（文字を載せる薄い色） */
+            --btn-sweet: #FBD68C;     /* パン（ゴールド） */
+            --btn-savory: #C3E3A0;    /* クッキー（グリーン） */
+            --btn-drink: #A5DCE8;     /* ドリンク（スカイ） */
+            /* カテゴリ3色：帯・凡例に使う濃い色（白飛びしても見分けられる） */
+            --cat-sweet-ink: #B97400;
+            --cat-savory-ink: #3E7D2E;
+            --cat-drink-ink: #0E7490;
+            /* 主要アクション・強調（朱色）。白文字を載せても 6.1:1 を確保できる濃さ */
+            --accent: #B4341A;
+            --accent-ink: #A02F17;    /* 文字・価格用 */
+            --accent-soft: #FBE9E4;   /* 選択中の淡い背景 */
+            --btn-neutral: #ECEAE5;   /* 補助ボタン */
+            --text-main: #1A1815;     /* ほぼ黒（白地に 16:1） */
+            --text-light: #5F5A53;    /* 補助文字（白地に 6.8:1） */
 
-            /* ▼ ここから下は「機能を少しずつ足した結果ばらけていた色」を
-                 1か所に集約したもの。新しく色を足すときも必ずこの変数を使う。 */
-            --sunken: #F7F5F1;        /* 一段へこんだ面（入力欄・情報ボックスの背景） */
-            --sunken-deep: #FBFAF7;   /* ごく薄いへこみ（フッター等） */
-            --positive: #E6EBD8;      /* 「増やす・進める」補助ボタン／営業中バナー */
-            --positive-line: #CBD8AC;
-            --warn-bg: #FFF6E5;       /* 注意（未入力の残りなど） */
-            --warn-line: #F0C674;
-            --warn-ink: #9A6A14;
-            --warn-solid: #E8A33D;
-            --danger: #C0574A;        /* 危険・警告（取消・初期化・超過販売） */
-            --danger-bg: #FBEDE9;
-            --danger-ink: #A44030;
-            --low-ink: #E06C00;       /* 残りわずかの強調 */
+            --sunken: #F5F3EF;        /* 一段へこんだ面（入力欄・情報ボックスの背景） */
+            --sunken-deep: #FAF9F6;   /* ごく薄いへこみ（フッター等） */
+            --positive: #E4F2DC;      /* 「増やす・進める」補助ボタン／営業中バナー */
+            --positive-line: #A9CE92;
+            --positive-ink: #2E6B24;
+            --warn-bg: #FFF4DE;       /* 注意（未入力の残りなど） */
+            --warn-line: #E0AE55;
+            --warn-ink: #8A5300;
+            --warn-solid: #9A5A00;    /* 白文字を載せる注意色（5.5:1） */
+            --danger: #B23A2C;        /* 危険・警告（取消・初期化・超過販売） */
+            --danger-bg: #FBE9E6;
+            --danger-ink: #9A2F22;
+            --low-ink: #B85000;       /* 残りわずかの強調（白地に 5.0:1） */
+            --muted-ink: #67625B;     /* 販売しない・準備中など、控えめだが読める文字 */
             /* すりガラス調のバー（ヘッダー・ボトムナビ）。奥の内容がうっすら透ける */
-            --glass-bg: rgba(255,255,255,0.78);
-            --glass-line: rgba(46,42,38,0.10);
+            --glass-bg: rgba(255,255,255,0.84);
+            --glass-line: rgba(26,24,21,0.12);
 
             /* 角丸は 3段階＋ピルに統一（細かいパーツ=sm／箱・ボタン=md／モーダル=lg） */
-            --r-sm: 8px;
-            --r-md: 12px;
-            --r-lg: 18px;
+            --r-sm: 9px;
+            --r-md: 13px;
+            --r-lg: 20px;
             --r-pill: 999px;
+            /* 影は「近くの薄い影＋遠くの広い影」の2枚重ねにすると、浮き方が自然になる */
+            --shadow-card: 0 1px 2px rgba(46,42,38,.05), 0 8px 24px rgba(46,42,38,.06);
+            --shadow-raised: 0 2px 6px rgba(46,42,38,.07), 0 14px 34px rgba(46,42,38,.09);
         }
 
         /* 金額は桁が揃う等幅数字で表示する（アプリ全体で統一） */
-        .num, .total-amount, .co-summary .co-val, .change-display { font-variant-numeric: tabular-nums; }
+        .num, .total-amount, .co-summary .co-val { font-variant-numeric: tabular-nums; }
 
         /* 画面全体が左右・上下に不必要に動く（ラバーバンド/バウンス）のを防止。
            body だけでなく html 側にも同じ制約をかけないと、iPad/iPhoneのSafariでは
@@ -73,7 +90,9 @@
         }
 
        body {
-            font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
@@ -93,6 +112,19 @@
             touch-action: manipulation;
         }
 
+        /* ▼ iOS らしい手ざわりの土台 ▼
+           ・タップした時にiOS標準の灰色の四角が出ないようにする（自前の反応だけを見せる）
+           ・指を離した後もスッと流れる慣性スクロール
+           ・文字やアイコンを指で長押しした時に選択・メニューが出ないようにする */
+        * { -webkit-tap-highlight-color: transparent; }
+        button, .product-btn, .menu-row, .menu-card, .nav-item, .type-btn, .tenkey-btn,
+        .panel-head, header, #bottom-nav, .cash-display, .stat-tile {
+            -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+        }
+        .panel-body, #cart-list, .receipt-list, .modal-content, .a-wrap, .chart-box, main {
+            -webkit-overflow-scrolling: touch;
+        }
+
         /* テンキー */
         .tenkey-grid {
             display: grid;
@@ -100,9 +132,14 @@
             gap: 12px;
             margin-top: 15px;
         }
+        /* iOSのキーパッドにならい、枠線ではなく「うっすら浮いた面」でキーを表す。
+           （.action-btn が後方で box-shadow:none を指定するため、クラス2つ分の指定にしている） */
+        .action-btn.tenkey-btn {
+            box-shadow: 0 1px 2px rgba(46,42,38,.09), 0 0 0 .5px rgba(46,42,38,.06);
+        }
         .tenkey-btn {
-            background-color: var(--sunken);
-            border: 2px solid var(--line);
+            background-color: var(--white);
+            border: none;
             font-size: 30px;
             font-weight: bold;
             padding: 18px;
@@ -117,16 +154,40 @@
         /* 追加ここまで */
 
         /* ▼▼▼ お会計画面の横長化＆客属性ボタン化 ▼▼▼ */
-        .customer-type-group { display: flex; gap: 5px; width: 100%; }
+        /* 客属性：iOSのセグメンテッドコントロール（ひとつの枠の中で選んだところが白く浮く） */
+        .customer-type-group {
+            display: flex; gap: 2px; width: 100%;
+            background: var(--btn-neutral); border-radius: 11px; padding: 2px;
+        }
         .type-btn {
-            flex: 1; text-align: center; background: var(--white); border: 2px solid var(--line-strong);
-            border-radius: var(--r-sm); padding: 10px 2px; font-weight: bold; cursor: pointer;
-            font-size: 14px; transition: all 0.2s;
+            flex: 1; text-align: center; background: none; border: none;
+            border-radius: 9px; padding: 8px 2px; font-weight: 600; cursor: pointer;
+            font-size: 13.5px; color: var(--text-light);
+            transition: background .2s ease, color .2s ease, box-shadow .2s ease, transform .12s ease;
         }
         .type-btn input[type="radio"] { display: none; } /* ラジオボタンの丸を隠す */
-        .type-btn:has(input:checked) { background: var(--accent); color: white; border-color: var(--accent); }
-        .type-btn.type-later { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-ink); } /* 後で入力（未入力フラグ） */
-        .type-btn.type-later:has(input:checked) { background: var(--warn-solid); border-color: var(--warn-solid); color: white; }
+        .type-btn:active { transform: scale(0.96); }
+        /* iOSのセグメンテッドコントロールと同じように、選択中の白いつまみが横に滑って動く。
+           6つの選択肢が等幅なので、何番目が選ばれているかで移動量を決められる。 */
+        .customer-type-group { position: relative; }
+        .customer-type-group::before {
+            content: ''; position: absolute; top: 2px; bottom: 2px; left: 2px;
+            width: calc((100% - 4px) / 6); border-radius: 9px; background: var(--white);
+            box-shadow: 0 1px 3px rgba(46,42,38,.16), 0 0 0 .5px rgba(46,42,38,.04);
+            transition: transform .3s cubic-bezier(.32,.72,0,1), background-color .22s ease;
+            pointer-events: none;
+        }
+        .customer-type-group:has(.type-btn:nth-child(2) input:checked)::before { transform: translateX(100%); }
+        .customer-type-group:has(.type-btn:nth-child(3) input:checked)::before { transform: translateX(200%); }
+        .customer-type-group:has(.type-btn:nth-child(4) input:checked)::before { transform: translateX(300%); }
+        .customer-type-group:has(.type-btn:nth-child(5) input:checked)::before { transform: translateX(400%); }
+        .customer-type-group:has(.type-btn:nth-child(6) input:checked)::before { transform: translateX(500%); background: var(--warn-solid); }
+        /* 文字だけを切り替える（背景は上のつまみが担当する） */
+        .type-btn { position: relative; z-index: 1; }
+        .type-btn:has(input:checked) { color: var(--accent-ink); font-weight: 700; }
+        /* 「後で」＝まだ入れていない印なので、選ばれている間は色で気づけるようにする */
+        .type-btn.type-later { color: var(--warn-ink); }
+        .type-btn.type-later:has(input:checked) { color: #fff; }
         
         @media (min-width: 769px) {
             .checkout-wide { max-width: 940px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
@@ -140,17 +201,17 @@
         @media (min-width: 769px) and (max-height: 860px) {
             #checkout-modal .modal-content { padding: 18px; }
             #checkout-modal h2 { font-size: 22px; margin-bottom: 6px; }
-            #cash-input { font-size: 26px; padding: 12px 16px; margin: 8px 0; }
+            .cash-display { padding: 10px 14px; margin-top: 8px; }
+            .cash-display #cash-input, .cash-display .chg-amount { font-size: 26px; }
             .tenkey-grid { gap: 9px; margin-top: 10px; }
             .tenkey-btn { min-height: 54px; padding: 10px; font-size: 26px; }
-            .change-display { margin: 10px 0; padding: 8px 10px; }
-            .change-display .chg-amount { font-size: 28px; }
+
         }
         /* ▲▲▲ ここまで ▲▲▲ */
 
         @media (min-width: 769px) {
             main {
-                grid-auto-rows: minmax(96px, 150px) !important;
+                grid-auto-rows: minmax(102px, 150px) !important;  /* 商品名3行が切れない高さ */
             }
         }
 
@@ -158,7 +219,7 @@
             background: var(--glass-bg);
             backdrop-filter: saturate(180%) blur(20px);
             -webkit-backdrop-filter: saturate(180%) blur(20px);
-            padding: 12px 20px;
+            padding: 12px max(20px, env(safe-area-inset-right)) 12px max(20px, env(safe-area-inset-left));
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -177,7 +238,8 @@
         /* カテゴリ凡例（色の意味を明示） */
         .cat-legend { display: flex; gap: 14px; align-items: center; }
         .cat-legend span { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; color: var(--text-main); font-weight: bold; }
-        .cat-legend i { width: 14px; height: 14px; border-radius: 5px; display: inline-block; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
+        /* 凡例の印は小さいので、商品ボタンの面の色＋濃い縁取りにして白地でも埋もれないようにする */
+        .cat-legend i { width: 14px; height: 14px; border-radius: 5px; display: inline-block; box-shadow: inset 0 0 0 2px var(--cat-ink, rgba(0,0,0,0.12)); }
         @media (max-width: 820px) { .cat-legend { display: none; } }
 
         /* 狭い画面ではヘッダーを1行に収める（アプリ名は畳んでアイコンだけ残す） */
@@ -203,6 +265,7 @@
 
         #app-container {
             display: flex;
+            min-width: 0;
             flex-direction: row-reverse; /* 商品ボタンを右、カート（小計）を左に配置（右利き向け） */
             flex: 1;
             overflow: hidden;
@@ -213,7 +276,7 @@
             flex: 2;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            grid-auto-rows: minmax(88px, 150px);
+            grid-auto-rows: minmax(102px, 150px);  /* 商品名3行＋価格＋在庫が切れない高さ */
             align-content: start; /* 商品が少なくても上詰め（縦に伸びすぎない） */
             gap: 10px;
             padding: 15px;
@@ -238,30 +301,42 @@
             transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
         }
 
+        /* カテゴリの帯（上辺）。面の色が日光で飛んでも、この濃い帯で分類が分かる */
+        .product-btn::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+            background: var(--cat-bar, transparent);
+        }
         .product-btn:active { transform: scale(0.955); box-shadow: 0 1px 2px rgba(46,42,38,0.05); }
         .product-btn { transition: transform .14s cubic-bezier(.32,.72,0,1), box-shadow .12s ease, filter .12s ease; }
         @media (hover: hover) {
             .product-btn:hover { filter: brightness(0.98); box-shadow: 0 3px 8px rgba(46,42,38,0.10); }
         }
-        .product-btn.out-of-stock { pointer-events: none; color: #B8B4AE; box-shadow: none; }
+        /* 準備中・完売は「控えめ」にするが、屋外でも読める濃さは残す */
+        .product-btn.out-of-stock { pointer-events: none; color: var(--muted-ink); box-shadow: none; }
         /* 完売した実商品：過少入力対策で押せる（超過販売可）。見た目は控えめ */
-        .product-btn.sold-open { color: #857f78; box-shadow: 0 1px 3px rgba(90,78,77,0.06); }
-        .product-btn.sold-open .price { color: #C4BFB8; }
-        .product-btn .pname { line-height: 1.25; overflow-wrap: anywhere; word-break: break-word; letter-spacing: 0.01em; }
+        .product-btn.sold-open { color: var(--muted-ink); box-shadow: 0 1px 3px rgba(26,24,21,0.06); }
+        .product-btn.sold-open .price { color: var(--muted-ink); }
+        /* 長い商品名でも欠けないように、3行までで省略する（途中で切れるより読める） */
+        .product-btn .pname {
+            line-height: 1.25; overflow-wrap: anywhere; word-break: break-word; letter-spacing: 0.01em;
+            display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
+        }
         .product-btn .price { color: var(--accent-ink); font-size: 19px; font-weight: 800; margin-top: 5px; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
-        .product-btn.out-of-stock .price { color: #C9C4BD; }
-        .product-btn .stock { font-size: 11px; color: var(--text-main); font-weight: 600; margin-top: 6px; background: rgba(255,255,255,0.55); border-radius: var(--r-pill); padding: 2px 9px; }
+        .product-btn.out-of-stock .price { color: var(--muted-ink); opacity: .7; }
+        /* 在庫の数は白い丸に載せて、面の色に関係なく同じ読みやすさにする */
+        .product-btn .stock { font-size: 11px; color: var(--text-main); font-weight: 700; margin-top: 6px; background: rgba(255,255,255,0.88); border-radius: var(--r-pill); padding: 2px 9px; }
 
         .soldout-badge {
             position: absolute; top: 8px; right: 8px;
             background: var(--accent); color: #fff; font-size: 11px; font-weight: bold;
             padding: 3px 9px; border-radius: var(--r-pill); box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
-        .soldout-badge.prep { background: #B0ABA4; }
+        .soldout-badge.prep { background: var(--muted-ink); }
         .soldout-badge.warn { background: var(--danger); } /* 販売数>仕入数（超過）の警告 */
 
         #sidebar {
             flex: 1;
+            min-width: 0;
             background-color: var(--white);
             border-right: 1px solid var(--line);
             display: flex;
@@ -272,7 +347,9 @@
 
         #cart-list {
             flex: 1;
+            min-width: 0;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 15px;
         }
 
@@ -292,12 +369,17 @@
         .cart-item {
             display: flex;
             justify-content: space-between;
+            gap: 8px;
+            min-width: 0;
             padding: 10px 0;
             border-bottom: 1px dashed var(--line);
             font-size: 16px;
         }
+        .cart-item > span:first-child { min-width: 0; }
+        .cart-item > span:first-child > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 
         footer {
+            min-width: 0;
             background-color: var(--sunken-deep);
             padding: 15px;
             display: flex;
@@ -310,7 +392,8 @@
         .total-display .total-label { font-size: 18px; font-weight: 700; color: var(--text-light); letter-spacing: 0.02em; }
         .total-display .total-amount { font-size: 36px; font-weight: 800; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
 
-        .action-row { display: flex; gap: 10px; }
+        .action-row { display: flex; gap: 10px; min-width: 0; }
+        .action-row .action-btn { min-width: 0; }
         .action-btn {
             padding: 13px;
             border-radius: var(--r-md);
@@ -356,8 +439,9 @@
 
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(60, 52, 48, 0.45);
-            backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+            /* iOSのシートと同じく、背景は強くぼかして手前の画面に集中させる */
+            background: rgba(38, 34, 30, 0.32);
+            backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
             display: none;
             justify-content: center; align-items: center; z-index: 100;
         }
@@ -368,8 +452,8 @@
             background: var(--white);
             width: 90%; max-width: 450px;
             padding: 24px;
-            border-radius: var(--r-lg);
-            box-shadow: 0 18px 50px rgba(38,34,30,0.22);
+            border-radius: 22px;
+            box-shadow: 0 24px 60px rgba(38,34,30,0.24);
             max-height: 92vh;
             overflow-y: auto;
             display: flex;
@@ -412,21 +496,70 @@
             padding: 16px 18px; width: calc(100% - 36px);
         }
 
-        /* お釣り表示：金額＋「何をいくつ返すか」の内訳（渡し間違い・もたつきの防止） */
-        .change-display {
-            margin: 15px 0; text-align: center; background: var(--accent-soft);
-            border-radius: var(--r-md); padding: 10px 12px;
+        /* ▼ レジの表示窓（お預かり・お釣り）▼
+           テンキーやボタンと見間違えないよう、濃い面に白文字の「表示」として作る。
+           押す場所ではないことが、色と形だけで分かるようにするのが目的。 */
+        .cash-display {
+            background: var(--text-main); border-radius: var(--r-md);
+            padding: 12px 16px; margin: 10px 0 0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,.35);
         }
-        .change-display .chg-amount { font-size: 32px; color: var(--accent-ink); font-weight: bold; }
-        .change-display .chg-label { font-size: 14px; color: var(--accent-ink); font-weight: bold; margin-right: 6px; }
-        .change-display .chg-breakdown {
-            display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: center; margin-top: 7px;
+        .cash-display .cd-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+        .cash-display .cd-label { font-size: 13px; color: rgba(255,255,255,.62); font-weight: 600; flex-shrink: 0; }
+        .cash-display .cd-sep { height: 1px; background: rgba(255,255,255,.16); margin: 8px 0; }
+        /* 入力欄は「窓の中の数字」として見せる（枠も背景も持たせない） */
+        .cash-display #cash-input {
+            flex: 1; min-width: 0; width: auto; margin: 0; padding: 0;
+            background: none; border: none; border-radius: 0; outline: none;
+            color: #fff; font-size: 30px; font-weight: 700; text-align: right;
+            font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
         }
-        .change-display .chg-breakdown span {
-            background: var(--white); color: var(--text-main); border-radius: var(--r-pill);
-            padding: 3px 10px; font-size: 13px; font-weight: 700; white-space: nowrap;
+        .cash-display #cash-input::placeholder { color: rgba(255,255,255,.30); }
+        .cash-display .chg-amount {
+            font-size: 30px; font-weight: 800; color: var(--btn-sweet);
+            font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
         }
-        .change-display .chg-none { font-size: 13px; font-weight: bold; color: var(--accent-ink); margin-top: 4px; }
+        .cash-display .chg-breakdown { display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: flex-end; margin-top: 8px; }
+        .cash-display .chg-breakdown span {
+            background: rgba(255,255,255,.13); color: #fff; border-radius: var(--r-pill);
+            padding: 3px 10px; font-size: 12.5px; font-weight: 700; white-space: nowrap;
+        }
+        .cash-display .chg-none { font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,.62); margin-top: 6px; text-align: right; width: 100%; }
+
+        /* お預かり金額の候補（表示窓のすぐ下・テンキーと役割を分ける） */
+        .cash-suggest { display: flex; align-items: center; gap: 7px; margin-top: 9px; min-width: 0; }
+        .cash-suggest .cs-label { font-size: 11.5px; color: var(--text-light); font-weight: 600; flex-shrink: 0; }
+        .cash-suggest .cs-btn {
+            flex: 1; min-width: 0; padding: 9px 4px; font-size: 15.5px; font-weight: 700; margin: 0;
+            background: var(--white); color: var(--text-main);
+            box-shadow: inset 0 0 0 1px var(--line-strong), 0 1px 2px rgba(46,42,38,.04);
+        }
+
+        /* 客属性（任意）：お金の流れを邪魔しないよう、枠を持たせず控えめに置く */
+        .co-type { margin-top: 12px; }
+        .co-type .co-type-label { display: block; font-size: 11.5px; color: var(--text-light); font-weight: 600; margin: 0 2px 5px; }
+        .co-type #last-type-quick {
+            display: none; width: 100%; margin-top: 7px; padding: 8px; font-size: 13.5px; font-weight: 700;
+            border: none; border-radius: var(--r-sm); background: var(--accent-soft); color: var(--accent-ink);
+            cursor: pointer; font-family: inherit; align-items: center; justify-content: center; gap: 5px;
+            transition: transform .12s ease;
+        }
+        .co-type #last-type-quick:active { transform: scale(0.97); }
+        .co-type #last-type-quick .ic { width: 16px; height: 16px; }
+
+        /* 会計を終えるボタン（1つだけ・押す前に結果が分かる2段表示） */
+        .co-action { margin-top: 12px; }
+        #checkout-primary {
+            width: 100%; margin-top: 0; display: flex; flex-direction: column; align-items: center; gap: 1px;
+            padding: 12px; line-height: 1.25;
+        }
+        #checkout-primary .cp-main { font-size: 19px; font-weight: 800; }
+        #checkout-primary .cp-sub { font-size: 12px; font-weight: 600; opacity: 0.78; font-variant-numeric: tabular-nums; }
+        #checkout-primary.is-short {
+            background: var(--btn-neutral); color: var(--text-light); box-shadow: none; cursor: not-allowed;
+        }
+        #checkout-primary.is-short .cp-sub { color: var(--danger-ink); opacity: 1; }
+        #checkout-primary:disabled:active { transform: none; }
 
         /* お会計画面の上部バー：戻るは他の画面と同じ「左上」に置く */
         .co-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; margin-bottom: 2px; }
@@ -454,7 +587,20 @@
             /* ▼ 商品ボタンの表示を最優先にする ▼
                カートの明細は既定で畳み、下のバーは「合計＋操作」だけにする。
                明細は「◯点」の行をタップすると開く。 */
-            main { flex: 1; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(84px, 116px); padding: 10px; gap: 8px; }
+            /* ▼ 商品ボタンの中身が切れないようにする ▼
+               3列に並べると「ふじもっちゃんの全粒粉クッキー」のような長い名前は3行になる。
+               高さが足りないと名前の上下が欠けて読めなくなるため、
+               ・3行ぶんが入る高さを確保する
+               ・それでも収まらない名前は「…」で省略する（途中で欠けるより読める）
+               ・在庫の数字は補助情報なので、スマホでは小さめにして名前と価格の場所を優先する */
+            main { flex: 1; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(100px, 124px); padding: 10px; gap: 8px; }
+            .product-btn { padding: 6px 6px 5px; }
+            .product-btn .pname {
+                display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+                overflow: hidden; font-size: 13.5px;
+            }
+            .product-btn .price { font-size: 18px; margin-top: 3px; }
+            .product-btn .stock { font-size: 10.5px; margin-top: 3px; padding: 1px 7px; }
             #sidebar { flex: 0 0 auto; border-left: none; border-right: none; border-top: 1px solid var(--line-strong); box-shadow: 0 -3px 14px rgba(90,78,77,0.07); }
             #cart-list { flex: 0 0 auto; max-height: 0; overflow: hidden; padding: 0 12px; transition: max-height .18s ease, padding .18s ease; }
             #sidebar.cart-open #cart-list { max-height: 40vh; overflow-y: auto; padding: 10px 12px; }
@@ -465,7 +611,8 @@
                 font-family: inherit; font-size: 13px; font-weight: bold; color: var(--text-main);
                 text-align: left; flex-shrink: 0;
             }
-            #cart-toggle #cart-toggle-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            #cart-toggle { overflow: hidden; min-width: 0; }
+            #cart-toggle #cart-toggle-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             #cart-toggle .ic { width: 16px; height: 16px; color: var(--text-light); }
             .action-row { display: flex; }
             .btn-checkout { padding: 12px; }
@@ -486,6 +633,12 @@
 
             /* ▼ 会計モーダルを全画面化して1画面に収める（見切れ・スクロール解消）▼ */
             #checkout-modal { align-items: flex-end; }
+            #checkout-modal .modal-content { position: relative; }
+            #checkout-modal .sheet-grabber {
+                display: block; position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
+                width: 36px; height: 4px; border-radius: 999px; background: var(--line-strong);
+            }
+            #checkout-modal .co-head { margin-top: 6px; }
             #checkout-modal .modal-content {
                 width: 100%; max-width: none; height: 100dvh; max-height: 100dvh;
                 border-radius: 0; padding: 10px 14px calc(8px + env(safe-area-inset-bottom, 0px));
@@ -506,24 +659,25 @@
             /* 客属性ボックスを薄く */
             #checkout-modal .checkout-right > div:first-child { padding: 8px !important; margin-bottom: 6px !important; }
             .type-btn { font-size: 13px; padding: 9px 2px; }
-            #cash-input { font-size: 26px; padding: 12px 14px; margin: 6px 0; }
-            #cash-suggestions { margin-top: 4px !important; }
-            #cash-suggestions .action-btn { padding: 9px !important; font-size: 15px !important; }
+            .cash-display { padding: 9px 13px; margin-top: 6px; }
+            .cash-display #cash-input, .cash-display .chg-amount { font-size: 25px; }
+            .cash-display .cd-sep { margin: 6px 0; }
+            .cash-suggest { margin-top: 7px; gap: 6px; }
+            .cash-suggest .cs-btn { padding: 8px 3px; font-size: 14.5px; }
 
             /* テンキーを縮めて全キーを画面内に収める */
             .tenkey-grid { gap: 7px; margin-top: 7px; }
             .tenkey-btn { font-size: 22px; padding: 0; min-height: 46px; }
-            .change-display { margin: 8px 0 6px; padding: 7px 10px; }
-            .change-display .chg-amount { font-size: 24px; }
-            .change-display .chg-breakdown { margin-top: 5px; gap: 3px 5px; }
-            .change-display .chg-breakdown span { font-size: 12px; padding: 2px 8px; }
+            .cash-display .chg-breakdown { margin-top: 6px; gap: 3px 5px; }
+            .cash-display .chg-breakdown span { font-size: 12px; padding: 2px 8px; }
+            .co-type { margin-top: 9px; }
 
-            /* 戻る・完了は常に画面下に固定（押せない問題を解消）*/
-            #checkout-modal .checkout-right > div:last-child {
+            /* 会計ボタンは常に画面下に固定（押せない問題を解消）*/
+            #checkout-modal .co-action {
                 position: sticky; bottom: 0; margin-top: auto;
                 background: var(--white); padding-top: 8px; z-index: 1;
             }
-            #checkout-modal .checkout-right > div:last-child .btn-checkout { font-size: 18px; }
+            #checkout-primary .cp-main { font-size: 18px; }
 
             /* スマホでは無駄な余白を削り、情報を詰めて見やすく */
             header { padding: 9px 14px; }
@@ -556,17 +710,22 @@
             #checkout-modal .co-summary .co-row.co-grand .co-val { font-size: 21px; }
             #checkout-modal .checkout-right > div:first-child { padding: 6px !important; margin-bottom: 4px !important; }
             .type-btn { font-size: 12px; padding: 7px 1px; }
-            #cash-input { font-size: 22px; padding: 9px 12px; margin: 4px 0; }
-            #cash-suggestions .action-btn { padding: 7px !important; font-size: 14px !important; }
+            .cash-display { padding: 7px 12px; margin-top: 4px; }
+            .cash-display #cash-input, .cash-display .chg-amount { font-size: 22px; }
+            .cash-display .cd-sep { margin: 5px 0; }
+            .cash-display .cd-label { font-size: 12px; }
+            .cash-suggest { margin-top: 5px; }
+            .cash-suggest .cs-btn { padding: 7px 3px; font-size: 14px; }
             .tenkey-grid { gap: 5px; margin-top: 5px; }
             .tenkey-btn { font-size: 20px; min-height: 40px; }
-            .change-display { margin: 5px 0 4px; padding: 5px 8px; }
-            .change-display .chg-amount { font-size: 20px; }
-            .change-display .chg-label { font-size: 13px; }
-            .change-display .chg-breakdown { margin-top: 3px; }
-            .change-display .chg-breakdown span { font-size: 11px; padding: 1px 7px; }
-            .change-display .chg-none { font-size: 12px; margin-top: 2px; }
-            #checkout-modal .checkout-right > div:last-child .btn-checkout { font-size: 17px; padding: 13px; }
+            .cash-display .chg-breakdown { margin-top: 4px; }
+            .cash-display .chg-breakdown span { font-size: 11px; padding: 1px 7px; }
+            .cash-display .chg-none { font-size: 11.5px; margin-top: 3px; }
+            .co-type { margin-top: 7px; }
+            .co-type .co-type-label { margin-bottom: 3px; }
+            #checkout-primary { padding: 9px; }
+            #checkout-primary .cp-main { font-size: 17px; }
+            #checkout-primary .cp-sub { font-size: 11px; }
         }
 
         /* ▼ 設定/予約パネル：横長デバイス向けにワイド化＆横スクロール ▼ */
@@ -577,17 +736,103 @@
             .card-strip > p { flex: 1; }
         }
         /* 仕入れ数設定：横長デバイスでは商品をカード横並び＋横スクロール */
-        .setup-list { background:var(--sunken); border:2px solid var(--line); padding:10px; border-radius:var(--r-md); margin-bottom:15px; max-height:230px; overflow-y:auto; }
-        .setup-card { padding:0 0 8px 8px; margin-bottom:8px; border-bottom:1px solid var(--line); }
+        .setup-list { background:none; border:none; padding:0; margin-bottom:15px; max-height:none; }
+        .setup-card {
+            background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-card);
+            padding: 12px 14px; margin-bottom: 10px;
+        }
         .setup-add-btn { width:100%; margin-top:10px; }
         @media (min-width: 769px) {
-            .setup-list { display:flex; flex-wrap:nowrap; gap:10px; overflow-x:auto; overflow-y:hidden; max-height:none; align-items:flex-start; }
-            .setup-card { min-width:190px; max-width:210px; flex-shrink:0; border:2px solid var(--line); border-radius:var(--r-md); padding:10px 10px 10px 8px; margin-bottom:0; background:var(--white); }
+            .setup-list { display:flex; flex-wrap:nowrap; gap:12px; overflow-x:auto; overflow-y:hidden; align-items:flex-start; padding:4px 2px 12px; }
+            .setup-card { min-width:200px; max-width:220px; flex-shrink:0; padding:12px 14px; margin-bottom:0; }
             .setup-add-btn { width:auto; min-width:100px; flex-shrink:0; align-self:stretch; margin-top:0; }
         }
 
-        /* 集計メニュー（項目選択）のボタン群 */
-        .analytics-sec { font-size: 14px; white-space: pre-wrap; line-height: 1.6; }
+        /* ▼ 売上集計の見た目 ▼
+           【方針】以前は全項目が「・」の箇条書きテキストで、数字の桁がそろわず読みにくかった。
+           数字は必ず右揃え・等幅にして縦のラインをそろえ、割合は横棒、ランクは色で示す。 */
+        .analytics-sec { font-size: 14px; line-height: 1.6; }
+        .a-pre { white-space: pre-wrap; font-size: 13.5px; line-height: 1.75; font-family: inherit; margin: 0; }
+
+        /* 大きな数字のタイル（概要の主要指標） */
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 9px; }
+        .stat-tile {
+            background: var(--white); border-radius: var(--r-md); padding: 11px 13px;
+            box-shadow: var(--shadow-card); min-width: 0;
+        }
+        .stat-tile .k { font-size: 11.5px; color: var(--text-light); font-weight: 600; display: block; }
+        .stat-tile .v { font-size: 23px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.015em; display: block; margin-top: 1px; }
+        .stat-tile .s { font-size: 11.5px; color: var(--text-light); display: block; }
+        .stat-tile.hero { grid-column: 1 / -1; background: var(--text-main); }
+        .stat-tile.hero .k { color: rgba(255,255,255,0.62); }
+        .stat-tile.hero .v { font-size: 34px; color: var(--btn-sweet); }
+        .stat-tile.hero .s { color: rgba(255,255,255,0.62); }
+
+        /* 表（行列をそろえる） */
+        .a-table {
+            width: 100%; border-collapse: collapse; font-size: 13px; background: var(--white);
+            border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow-card);
+        }
+        .a-table th {
+            font-size: 11.5px; font-weight: 700; color: var(--text-light); text-align: left;
+            padding: 8px 10px; background: var(--sunken); border-bottom: 1px solid var(--line); white-space: nowrap;
+        }
+        .a-table td { padding: 8px 10px; border-bottom: 1px solid var(--sunken); vertical-align: middle; }
+        .a-table tr:last-child td { border-bottom: none; }
+        .a-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .a-table .nm { font-weight: 600; line-height: 1.35; }
+        .a-table .sub { font-size: 11px; color: var(--text-light); font-weight: normal; display: block; }
+        .a-table tr.peak td { background: var(--accent-soft); }
+        .a-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: var(--r-md); }
+        /* 横長の画面では表を伸ばしきらない（項目名と数字が左右に離れすぎて読みにくくなるため） */
+        @media (min-width: 769px) { .analytics-sec .a-table { max-width: 780px; } }
+
+        /* 割合を示す横棒（消化率・占有率） */
+        .a-bar { display: block; width: 100%; min-width: 34px; height: 6px; border-radius: var(--r-pill); background: var(--btn-neutral); overflow: hidden; margin-bottom: 2px; }
+        .a-bar > i { display: block; height: 100%; border-radius: var(--r-pill); background: var(--accent); }
+        .a-bar.full > i { background: var(--btn-savory); }
+
+        /* ABCランクの色分け */
+        .a-rank { display: inline-block; min-width: 18px; text-align: center; font-size: 11px; font-weight: 800; border-radius: var(--r-sm); padding: 2px 7px; }
+        .a-rank.a { background: var(--positive); color: var(--positive-ink); }
+        .a-rank.b { background: var(--warn-bg); color: var(--warn-ink); }
+        .a-rank.c { background: var(--btn-neutral); color: var(--text-light); }
+
+        /* 増減（前回比など） */
+        .a-up { color: var(--positive-ink); font-weight: 700; }
+        .a-down { color: var(--danger-ink); font-weight: 700; }
+        .a-flat { color: var(--text-light); font-weight: 700; }
+
+        /* 節の見出しと注釈 */
+        .a-head { font-size: 13px; font-weight: 700; color: var(--text-main); margin: 18px 0 7px; }
+        .a-head:first-child { margin-top: 0; }
+        .a-note { font-size: 11.5px; color: var(--text-light); line-height: 1.55; margin: 8px 2px 0; }
+        .a-empty { font-size: 13px; color: var(--text-light); padding: 12px 2px; }
+
+        /* 領収書の見本（設定画面） */
+        .receipt-preview {
+            background: var(--white); border-radius: var(--r-md); padding: 16px 18px;
+            box-shadow: var(--shadow-card); font-size: 13px; color: var(--text-main);
+        }
+        .receipt-preview .rp-title { text-align: center; font-size: 17px; font-weight: 700; letter-spacing: 0.16em; }
+        .receipt-preview .rp-no { text-align: center; font-size: 11px; color: var(--text-light); margin: 2px 0 12px; }
+        .receipt-preview .rp-to { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 12px; font-size: 12px; color: var(--text-light); }
+        .receipt-preview .rp-line { flex: 1; border-bottom: 1px solid var(--line-strong); height: 15px; }
+        .receipt-preview .rp-amount {
+            display: flex; justify-content: space-between; align-items: center;
+            border: 2px solid var(--text-main); border-radius: var(--r-sm); padding: 7px 11px; margin-bottom: 9px;
+        }
+        .receipt-preview .rp-amount span { font-size: 12px; color: var(--text-light); }
+        .receipt-preview .rp-amount b { font-size: 21px; font-variant-numeric: tabular-nums; }
+        .receipt-preview .rp-note { margin-bottom: 8px; }
+        .receipt-preview .rp-stmt { font-size: 12px; color: var(--text-light); margin-bottom: 14px; }
+        .receipt-preview .rp-issuer { border-top: 1px solid var(--line); padding-top: 9px; display: flex; flex-direction: column; gap: 1px; }
+        .receipt-preview .rp-issuer span { font-size: 11px; color: var(--text-light); }
+        .receipt-preview .rp-issuer b { font-size: 14.5px; }
+
+        /* グラフ：縦軸・横軸が何かを上に出す */
+        .chart-cap { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; color: var(--text-light); margin: 0 2px 6px; }
+        .chart-empty { font-size: 13px; color: var(--text-light); margin: 16px 6px; }
 
         /* 設定タブの見出し・注釈・営業中バナー（余白を詰めて圧迫感を解消） */
         .settings-hint { font-size: 13px; color: var(--text-light); margin: 0 0 8px; line-height: 1.5; }
@@ -678,7 +923,7 @@
         /* ▼▼▼ 画面（ページ）の切り替え：重ねずに入れ替える ▼▼▼
            動きの向きで前後関係が伝わるようにする（進む＝右から、戻る＝左から）。 */
         #app-main { flex: 1; min-height: 0; display: flex; position: relative; overflow: hidden; }
-        .page { flex: 1; min-height: 0; display: none; flex-direction: column; }
+        .page { flex: 1; min-height: 0; min-width: 0; display: none; flex-direction: column; }
         .page.active { display: flex; }
 
         @keyframes slideFromRight { from { opacity: 0; transform: translate3d(26px, 0, 0); } to { opacity: 1; transform: none; } }
@@ -723,16 +968,23 @@
         .menu-list {
             display: flex; flex-direction: column;
             background: var(--surface); border-radius: var(--r-lg);
-            box-shadow: 0 1px 3px rgba(46,42,38,.06), 0 6px 18px rgba(46,42,38,.05);
+            box-shadow: var(--shadow-card);
             overflow: hidden;
         }
+        /* iOSの設定アプリと同じく、区切り線はアイコンの先から引く（左端までは引かない）。
+           線は端末の解像度に合わせた極細のヘアラインにして、すっきり見せる。 */
         .menu-row {
+            position: relative;
             display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
-            background: none; border: none; border-bottom: 1px solid var(--line);
+            background: none; border: none;
             padding: 14px 16px; min-height: 60px; cursor: pointer; font-family: inherit; color: var(--text-main);
             transition: background .15s ease, transform .12s ease;
         }
-        .menu-row:last-child { border-bottom: none; }
+        .menu-row + .menu-row::before {
+            content: ''; position: absolute; top: 0; left: 50px; right: 0;
+            height: 1px; transform: scaleY(0.5); transform-origin: top;
+            background: var(--line);
+        }
         .menu-row:active { background: var(--accent-soft); transform: scale(0.985); }
         @media (hover: hover) { .menu-row:hover { background: var(--sunken); } }
         .menu-row > .ic:first-child { width: 22px; height: 22px; color: var(--accent); }
@@ -746,13 +998,14 @@
             .menu-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; }
             /* 2列のときは右列の区切り線が浮くので、縦線で区切る */
             .menu-list .menu-row:nth-child(odd) { border-right: 1px solid var(--line); }
-            .menu-list .menu-row:nth-last-child(-n+2):nth-child(odd) { border-bottom: none; }
-            .menu-list .menu-row:last-child { border-bottom: none; }
+            /* 2列のときは、上の段（1つ目・2つ目）には横線を引かない */
+            .menu-list .menu-row:nth-child(-n+2)::before { display: none; }
         }
         /* スマホでは項目を詰めて、メニュー全体がスクロールなしで収まるようにする */
         @media (max-width: 768px) {
-            .menu-list { gap: 7px; }
+            .menu-list { gap: 0; }
             .menu-row { padding: 10px 12px; gap: 10px; }
+            .menu-row + .menu-row::before { left: 42px; }
             .menu-row > .ic:first-child { width: 20px; height: 20px; }
             .menu-row .mr-title { font-size: 14.5px; }
             .menu-row .mr-sub { font-size: 11.5px; margin-top: 2px; }
@@ -774,7 +1027,7 @@
             background: var(--surface); border: none; border-radius: var(--r-lg);
             padding: 16px 10px; cursor: pointer; font-family: inherit; color: var(--text-main);
             display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
-            box-shadow: 0 1px 3px rgba(46,42,38,.06), 0 6px 18px rgba(46,42,38,.05);
+            box-shadow: var(--shadow-card);
             transition: transform .12s ease, background .15s ease;
         }
         .menu-card:active { background: var(--accent-soft); transform: scale(0.96); }
@@ -823,6 +1076,30 @@
         .hdr-btn:active { transform: translateY(1px); }
         .hdr-btn.is-close { background: var(--white); color: var(--accent-ink); box-shadow: inset 0 0 0 2px var(--accent); }
         /* ▲▲▲ ここまで ▲▲▲ */
+
+        /* オン・オフはiOSのスイッチの形に（何が起きるか一目で分かる） */
+        .ios-switch {
+            appearance: none; -webkit-appearance: none; margin: 0; flex-shrink: 0;
+            width: 44px; height: 26px; border-radius: var(--r-pill);
+            background: var(--line-strong); position: relative; cursor: pointer;
+            transition: background .22s cubic-bezier(.32,.72,0,1);
+        }
+        .ios-switch::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 22px; height: 22px; border-radius: 50%; background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,.2);
+            transition: transform .22s cubic-bezier(.32,.72,0,1);
+        }
+        .ios-switch:checked { background: var(--btn-savory); }
+        .ios-switch:checked::after { transform: translateX(18px); }
+        .ios-switch:active::after { width: 25px; }
+        .setup-card label:has(.ios-switch) { justify-content: space-between; }
+
+        /* スマホのお会計シートの上端につまみを出す（下から出てきたことが分かる） */
+        .sheet-grabber { display: none; }
+
+        /* キーボードで操作している時だけ、選択中の枠を出す（タッチ時は出さない） */
+        :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
         /* 端末側で「視差効果を減らす」を選んでいる時は動きを止める */
         @media (prefers-reduced-motion: reduce) {
@@ -891,12 +1168,13 @@
         table.rep-table th { text-align: left; font-size: 9.5px; color: var(--muted); border-bottom: 1.5px solid var(--ink); padding: 3px 4px; }
         table.rep-table td { padding: 2.5px 4px; border-bottom: 1px solid #eee; }
         table.rep-table tr { break-inside: avoid; page-break-inside: avoid; }
-        table.rep-table td.num, table.rep-table th.num { text-align: right; }
+        table.rep-table td.num, table.rep-table th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        table.rep-table tbody tr:nth-child(even) td { background: #FAF9F6; }  /* 行を追いやすくする薄い縞 */
+        table.rep-table tr.peak-row td { background: #FBE9E4; font-weight: bold; }
         .rank { font-weight: bold; white-space: nowrap; padding: 0 5px; border-radius: 3px; }
         .rank.rank-a { background: repeating-linear-gradient(45deg, #d0d0d0, #d0d0d0 1.5px, transparent 1.5px, transparent 4px); }
         .rank.rank-b { background: var(--hatch); }
         .rank.rank-c { background: transparent; }
-        pre.rep-pre { white-space: pre-wrap; font-family: inherit; margin: 0; }
         .chart-container { break-inside: avoid; page-break-inside: avoid; height: 190px; margin: 4px 0; text-align: center; }
         .chart-container svg { height: 100% !important; width: auto !important; max-width: 100% !important; min-width: 0 !important; }
         .stock-legend { columns: 3; column-gap: 16px; font-size: 9px; margin-top: 5px; list-style: none; padding: 0; }
@@ -961,9 +1239,9 @@
     </div>
     <div class="header-right">
         <div class="cat-legend">
-            <span><i style="background:var(--btn-sweet)"></i>パン</span>
-            <span><i style="background:var(--btn-savory)"></i>クッキー</span>
-            <span><i style="background:var(--btn-drink)"></i>ドリンク</span>
+            <span><i style="background:var(--btn-sweet); --cat-ink:var(--cat-sweet-ink)"></i>パン</span>
+            <span><i style="background:var(--btn-savory); --cat-ink:var(--cat-savory-ink)"></i>クッキー</span>
+            <span><i style="background:var(--btn-drink); --cat-ink:var(--cat-drink-ink)"></i>ドリンク</span>
         </div>
         <!-- 営業の開始／終了はいつでも押せるよう、ヘッダー右に固定する -->
         <button class="hdr-btn" id="header-session-btn" onclick="headerSessionAction()">
@@ -1077,7 +1355,6 @@
                     <p class="settings-hint" style="margin-top:10px;">商品別CSV＝消化率・原価・粗利つき／会計明細CSV＝1件ずつの記録／全データJSON＝前回比較や売り逃しまで含む全項目。</p>
                 </div>
             </div>
-            <div id="analytics-result" style="display:none;">売上データがありません。</div>
         </div>
 
         <!-- ---------- 設定（2段階メニュー） ---------- -->
@@ -1106,6 +1383,21 @@
                 <input type="text" id="sync-live-code-input" placeholder="例: pansale-1101">
                 <button class="action-btn btn-checkout" style="width:100%;" onclick="startSyncMidSession()"><svg class="ic"><use href="#ic-link"/></svg>このコードで共有を始める</button>
                 <div id="sync-status-active" class="settings-hint" style="margin-top:10px;"></div>
+            </div>
+
+            <!-- 領収書の設定（お客様にお渡しする紙に出る名前） -->
+            <div class="sub-view" id="sub-receipt" style="display:none;">
+                <p class="settings-hint">お客様にお渡しする<b>領収書</b>に印字される内容です。この端末にだけ保存されます。</p>
+                <label class="field-label">発行者（団体名・店名）</label>
+                <input type="text" id="shop-name-input" placeholder="例: 泰山木">
+                <label class="field-label" style="margin-top:12px;">但し書き</label>
+                <input type="text" id="shop-note-input" placeholder="例: パン・焼菓子代">
+                <p class="settings-hint" style="margin-top:2px;">領収書には「但し　◯◯　として」と印字されます。</p>
+                <label class="field-label" style="margin-top:12px;">連絡先・所在地（任意）</label>
+                <input type="text" id="shop-contact-input" placeholder="空欄なら印字しません">
+                <button class="action-btn btn-checkout" style="width:100%; margin-top:14px;" onclick="saveShopInfo()"><svg class="ic"><use href="#ic-check"/></svg>この内容で保存する</button>
+                <div class="a-head" style="margin-top:18px;">印字される見本</div>
+                <div id="receipt-preview"></div>
             </div>
 
             <!-- 過去の販売会 -->
@@ -1202,6 +1494,7 @@
 
 <div id="checkout-modal" class="modal">
     <div class="modal-content checkout-wide">
+        <div class="sheet-grabber"></div>
         <div class="checkout-left">
             <div class="co-head">
                 <button class="sheet-back" onclick="closeModal('checkout-modal')"><svg class="ic"><use href="#ic-left"/></svg>戻る</button>
@@ -1213,32 +1506,29 @@
             <div class="co-summary">
                 <div class="co-row"><span>点数</span><span class="co-val"><span id="modal-count">0</span> 点</span></div>
                 <div class="co-row co-grand" onclick="setCashExact()" style="cursor:pointer;" title="タップするとお預かり金額に合計額が入ります">
-                    <span>合計 <span style="font-size:11px; font-weight:normal; color:var(--text-light);">(タップでちょうど)</span></span>
+                    <span>合計</span>
                     <span class="co-val">¥<span id="modal-total">0</span></span>
                 </div>
             </div>
         </div>
         
         <div class="checkout-right">
-            <div style="margin-bottom: 10px; text-align: left; background: var(--sunken); padding: 10px; border-radius: var(--r-md); border: 2px solid var(--line);">
-                <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px;">客属性 (任意)</div>
-                <div class="customer-type-group">
-                    <label class="type-btn"><input type="radio" name="customerType" value="学生"> 学生</label>
-                    <label class="type-btn"><input type="radio" name="customerType" value="教員"> 教員</label>
-                    <label class="type-btn"><input type="radio" name="customerType" value="職員"> 職員</label>
-                    <label class="type-btn"><input type="radio" name="customerType" value="その他"> その他</label>
-                    <label class="type-btn"><input type="radio" name="customerType" value="不明"> 不明</label>
-                    <label class="type-btn type-later"><input type="radio" name="customerType" value="__later__" checked> 後で</label>
+            <!-- レジの表示窓：お預かりとお釣りをひとまとめにして「読むところ」だと分かるようにする -->
+            <div class="cash-display">
+                <div class="cd-row">
+                    <span class="cd-label">お預かり</span>
+                    <input type="text" id="cash-input" placeholder="0" readonly>
                 </div>
-                <button type="button" id="last-type-quick" style="display:none; width:100%; margin-top:8px; padding:8px; font-size:14px; font-weight:bold; border:2px dashed var(--accent); border-radius:var(--r-sm); background:var(--white); color:var(--accent-ink); cursor:pointer; font-family:inherit;" onclick="applyLastCustomerType()"></button>
+                <div class="cd-sep"></div>
+                <div class="cd-row cd-change">
+                    <span class="cd-label">お釣り</span>
+                    <span class="chg-amount">¥<span id="change-amount">0</span></span>
+                </div>
+                <div class="chg-breakdown" id="change-breakdown"></div>
             </div>
-            
-            <input type="text" id="cash-input" placeholder="預かり金額" readonly>
-            
-            <div id="cash-suggestions" style="display: flex; gap: 10px; margin-top: 5px;">
-                <button class="action-btn btn-accent-outline" style="flex: 1; padding: 10px; font-size: 16px;" onclick="setCashExact()">ちょうど</button>
-            </div>
-            <button class="action-btn btn-accent-outline" style="width:100%; margin-top:8px; font-size:15px; padding:11px;" onclick="completeExactCash()"><svg class="ic"><use href="#ic-bolt"/></svg>ぴったり受取で会計完了</button>
+
+            <!-- お預かり金額の候補（よく出される紙幣・硬貨） -->
+            <div id="cash-suggestions" class="cash-suggest"></div>
 
             <div class="tenkey-grid">
                 <button class="action-btn tenkey-btn" onclick="appendCash('7')">7</button>
@@ -1254,15 +1544,27 @@
                 <button class="action-btn tenkey-btn" onclick="appendCash('00')">00</button>
                 <button class="action-btn tenkey-btn clear-btn" onclick="clearCash()">C</button>
             </div>
-            
-            <!-- お釣りは金額だけでなく「何をいくつ返すか」も出す（渡し間違い・もたつきの防止） -->
-            <div class="change-display">
-                <span class="chg-label">お釣り</span><span class="chg-amount">¥<span id="change-amount">0</span></span>
-                <div class="chg-breakdown" id="change-breakdown"></div>
+
+            <!-- 客属性は任意（あとからでも入力できる）ので、お金の流れを邪魔しない位置に控えめに置く -->
+            <div class="co-type">
+                <span class="co-type-label">客属性（任意）</span>
+                <div class="customer-type-group">
+                    <label class="type-btn"><input type="radio" name="customerType" value="学生"> 学生</label>
+                    <label class="type-btn"><input type="radio" name="customerType" value="教員"> 教員</label>
+                    <label class="type-btn"><input type="radio" name="customerType" value="職員"> 職員</label>
+                    <label class="type-btn"><input type="radio" name="customerType" value="その他"> その他</label>
+                    <label class="type-btn"><input type="radio" name="customerType" value="不明"> 不明</label>
+                    <label class="type-btn type-later"><input type="radio" name="customerType" value="__later__" checked> 後で</label>
+                </div>
+                <button type="button" id="last-type-quick" onclick="applyLastCustomerType()"></button>
             </div>
 
-            <div>
-                <button class="action-btn btn-checkout" style="width:100%; margin-top:0;" onclick="completeTransaction()">完了・記録</button>
+            <!-- 会計を終える操作は1つだけ。押す前に何が起きるかがボタンに書いてある -->
+            <div class="co-action">
+                <button class="action-btn btn-checkout" id="checkout-primary" onclick="checkoutPrimary()">
+                    <span class="cp-main">ちょうど受け取って完了</span>
+                    <span class="cp-sub">お釣りなし</span>
+                </button>
             </div>
         </div>
     </div>
@@ -1279,6 +1581,7 @@
 <script src="data/products.normal.js"></script>
 <script src="data/products.festival.js"></script>
 <script src="data/active-event.js"></script>
+<script src="data/shop.js"></script>
 <script src="data/taste-master.js"></script>
 <script src="data/firebase-config.js"></script>
 
@@ -1456,10 +1759,22 @@
             else if (isOut) cls += ' sold-open';
             btn.className = cls;
 
-            if (isPlaceholder || isOut) btn.style.backgroundColor = 'var(--btn-neutral)';
-            else if (p.type === 'sweet') btn.style.backgroundColor = 'var(--btn-sweet)';
-            else if (p.type === 'savory') btn.style.backgroundColor = 'var(--btn-savory)';
-            else btn.style.backgroundColor = 'var(--btn-drink)';
+            // 面の色に加えて、ボタン上辺の帯にも濃い同系色を置く。
+            // 日なたでは淡い面の色が白飛びして3色の区別がつかなくなるため、
+            // 色が飛んでも残る濃い帯を「カテゴリの目印」として併用する。
+            if (isPlaceholder || isOut) {
+                btn.style.backgroundColor = 'var(--btn-neutral)';
+                btn.style.setProperty('--cat-bar', 'var(--line-strong)');
+            } else if (p.type === 'sweet') {
+                btn.style.backgroundColor = 'var(--btn-sweet)';
+                btn.style.setProperty('--cat-bar', 'var(--cat-sweet-ink)');
+            } else if (p.type === 'savory') {
+                btn.style.backgroundColor = 'var(--btn-savory)';
+                btn.style.setProperty('--cat-bar', 'var(--cat-savory-ink)');
+            } else {
+                btn.style.backgroundColor = 'var(--btn-drink)';
+                btn.style.setProperty('--cat-bar', 'var(--cat-drink-ink)');
+            }
 
             let badge = '';
             if (isPlaceholder) badge = `<span class="soldout-badge prep">準備中</span>`;
@@ -1631,10 +1946,12 @@
     // ▲▲▲ ここまで ▲▲▲
 
     // カテゴリ（パン/クッキー/ドリンク）に対応する色。商品ボタンと同じ配色。
-    function catColor(type) {
-        if (type === 'savory') return 'var(--btn-savory)';
-        if (type === 'drink') return 'var(--btn-drink)';
-        return 'var(--btn-sweet)';
+    // 細い帯（カートの明細・レシート・仕入れ設定の左側）に使う濃い方の色。
+    // 幅が数pxしかないので、商品ボタンの面の色では白地に埋もれて見えない。
+    function catInk(type) {
+        if (type === 'savory') return 'var(--cat-savory-ink)';
+        if (type === 'drink') return 'var(--cat-drink-ink)';
+        return 'var(--cat-sweet-ink)';
     }
 
     function updateCartDisplay() {
@@ -1657,7 +1974,7 @@
             const subtotal = data.price * data.count;
             const safeName = name.replace(/'/g, "\\'");
             list.innerHTML += `
-                <div class="cart-item" style="border-left:8px solid ${catColor(data.type)}; padding-left:8px;">
+                <div class="cart-item" style="border-left:6px solid ${catInk(data.type)}; padding-left:8px;">
                     <span style="display:flex; align-items:center; gap:6px; min-width:0;">
                         <button class="step-btn minus" onclick="removeOneFromCart('${safeName}')">−</button>
                         <button class="step-btn plus" onclick="addOneToCart('${safeName}')">＋</button>
@@ -1717,7 +2034,7 @@
         for (const [name, data] of Object.entries(counts)) {
             const subtotal = data.price * data.count;
             html += `
-                <li class="receipt-item" style="border-left:6px solid ${catColor(data.type)}; padding-left:8px;">
+                <li class="receipt-item" style="border-left:5px solid ${catInk(data.type)}; padding-left:8px;">
                     <span>${name} <span style="color:var(--text-light);font-size:13px;">(@¥${data.price}×${data.count})</span></span>
                     <span class="num" style="font-weight:bold;">¥${subtotal}</span>
                 </li>`;
@@ -1750,6 +2067,7 @@
         document.getElementById('change-amount').innerText = '0';
         renderChangeBreakdown(0);
         renderCashSuggestions(total);
+        updateCheckoutPrimary();
         renderLastTypeQuick();
         showNav(false); // 会計中はナビを隠して集中できるように
         document.getElementById('checkout-modal').style.display = 'flex';
@@ -1761,7 +2079,7 @@
         if (!btn) return;
         if (lastCustomerType && lastCustomerType !== '__later__') {
             btn.innerHTML = `<svg class="ic"><use href="#ic-users"/></svg>直前と同じ：${escHtml(lastCustomerType)}`;
-            btn.style.display = 'block';
+            btn.style.display = 'flex';
         } else {
             btn.style.display = 'none';
         }
@@ -1787,15 +2105,14 @@
         return [...opts].filter(v => v > total).sort((a, b) => a - b).slice(0, max);
     }
 
+    // お預かり金額の候補。「ちょうど」は会計ボタン側（＝押せば完了する）に集約したので、
+    // ここはお客様が実際に出しそうな金額だけを同じ見た目で並べる。
     function renderCashSuggestions(total) {
         const box = document.getElementById('cash-suggestions');
         if (!box) return;
-        // 「ちょうど」だけを枠線つきで強調し、紙幣候補は同じ見た目で横並び（選択肢の役割を見た目で揃える）
-        let html = `<button class="action-btn btn-accent-outline" style="flex:1; padding:10px; font-size:16px;" onclick="setCashExact()">ちょうど</button>`;
-        suggestCashAmounts(total).forEach(v => {
-            html += `<button class="action-btn num" style="flex:1; padding:10px; font-size:16px; background-color:var(--white); box-shadow:inset 0 0 0 2px var(--line-strong);" onclick="setCash(${v})">¥${v}</button>`;
-        });
-        box.innerHTML = html;
+        box.innerHTML = `<span class="cs-label">お預かり</span>`
+            + suggestCashAmounts(total).map(v =>
+                `<button class="action-btn num cs-btn" onclick="setCash(${v})">¥${v.toLocaleString('ja-JP')}</button>`).join('');
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -1834,6 +2151,47 @@
         const change = Math.max(0, cash - total);
         document.getElementById('change-amount').innerText = change;
         renderChangeBreakdown(change);
+        updateCheckoutPrimary();
+    }
+
+    // ▼▼▼ 会計を終えるボタン（1つだけ）▼▼▼
+    // 【設計】以前は「ちょうど」「ぴったり受取で会計完了」「完了・記録」と
+    // 会計を終える／金額を入れる操作が3つ並んでいて、どれを押せばよいか分かりにくかった。
+    // ボタンは1つにして、いまの入力状態に応じて「次に何が起きるか」を文字で示す。
+    //   お預かり未入力 … 「ちょうど受け取って完了」（1タップで会計完了）
+    //   お預かり≧合計  … 「完了・記録」＋お釣りの額
+    //   お預かり＜合計  … 「あと¥○○ 足りません」（押せない）
+    function updateCheckoutPrimary() {
+        const btn = document.getElementById('checkout-primary');
+        if (!btn) return;
+        const main = btn.querySelector('.cp-main');
+        const sub = btn.querySelector('.cp-sub');
+        const total = parseInt(document.getElementById('modal-total').innerText) || 0;
+        const raw = document.getElementById('cash-input').value;
+        const cash = parseInt(raw) || 0;
+
+        btn.classList.remove('is-short');
+        btn.disabled = false;
+        if (!raw) {
+            main.textContent = 'ちょうど受け取って完了';
+            sub.textContent = `¥${total.toLocaleString('ja-JP')} お預かり・お釣りなし`;
+        } else if (cash < total) {
+            btn.classList.add('is-short');
+            btn.disabled = true;
+            main.textContent = 'お預かりが足りません';
+            sub.textContent = `あと ¥${(total - cash).toLocaleString('ja-JP')}`;
+        } else {
+            const chg = cash - total;
+            main.textContent = '完了・記録';
+            sub.textContent = chg > 0 ? `お釣り ¥${chg.toLocaleString('ja-JP')}` : 'お釣りなし';
+        }
+    }
+
+    // 会計を終えるボタンの動作（お預かり未入力なら「ちょうど」を補ってから記録）
+    function checkoutPrimary() {
+        const raw = document.getElementById('cash-input').value;
+        if (!raw) { completeExactCash(); return; }
+        completeTransaction();
     }
 
     function setCashExact() {
@@ -1843,7 +2201,7 @@
         calcChange();
     }
 
-    // 「ちょうど」＋「完了・記録」を1タップにまとめた高速会計（既存の2ボタンはそのまま残す）
+    // 「ちょうど」＋「記録」を1タップにまとめた高速会計（会計ボタンの既定の動作）
     function completeExactCash() {
         setCashExact();
         completeTransaction();
@@ -2036,13 +2394,14 @@
                 hint = `<div style="font-size:11px; color:var(--text-light); margin-top:6px;">前回 仕入${r.initial}/販売${r.sold}${r.soldOut ? '(完売)' : ''} → 参考 <b style="color:var(--accent);">${r.recommended}</b> ${arrow}</div>`;
             }
             list.innerHTML += `
-                <div class="setup-card" style="border-left:6px solid ${catColor(p.type)}; ${p.active === false ? 'opacity:0.5;' : ''}">
+                <div class="setup-card" style="border-left:5px solid ${catInk(p.type)}; ${p.active === false ? 'opacity:0.5;' : ''}">
                     <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-light); margin-bottom:4px; cursor:pointer;">
-                        <input type="checkbox" ${p.active === false ? '' : 'checked'} onchange="updateTempProduct(${p.id}, 'active', this.checked)"> この回で販売する
+                        <span>この回で販売する</span>
+                        <input class="ios-switch" type="checkbox" ${p.active === false ? '' : 'checked'} onchange="updateTempProduct(${p.id}, 'active', this.checked)">
                     </label>
                     <div style="display:flex; gap:5px; align-items:center;">
                         <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
-                        <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger); color:#fff;">×</button>
+                        <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
                     </div>
                     <div style="display:flex; gap:5px; margin-top:5px;">
                         <div style="flex:1; min-width:0;">
@@ -2636,211 +2995,20 @@
         showToast('この端末の利用を終えました（共有販売会は継続中）');
     }
 
-    // 売上データを集計し、項目ごとのテキストを analyticsSections に格納する。
-    // 実際の表示は集計メニュー（showAnalyticsSection）から項目を選んで行う。
+    // 売上集計の「データがあるか」を判定し、完売と売り逃しの本文を用意する。
+    //
+    // 【以前との違い】かつてはここで概要・商品別・時間帯別…をすべて文字列で組み立てていたが、
+    // 画面表示も書き出しも buildReportData() の集計を使う作りに変えたため、
+    // 同じ数字を2か所で別々に計算している状態になっていた（食い違いの原因になる）。
+    // いまは集計の計算を buildReportData() 側に一本化し、ここでは
+    // 文章での説明が必要な「完売と売り逃し」だけを作る。
     function updateAnalytics() {
         if (salesHistory.length === 0) {
             analyticsSections = null;
-            document.getElementById('analytics-result').innerText = "まだ売上データがありません";
             showAnalyticsMenu();
             return;
         }
-
-        let sortedHistory = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
-        let sessionStartTime = new Date(sortedHistory[0].time);
-
-        let totalRev = sortedHistory.reduce((s, h) => s + h.total, 0);
-        let itemCounts = {};
-        let itemRev = {};
-        let categoryRev = { sweet: 0, savory: 0, drink: 0 };
-        const catNames = { sweet: "パン類", savory: "クッキー類", drink: "ドリンク" };
-
-        let timeSlotRev = {};
-        let timeSlotItemCounts = {};
-        let customerTypeStats = {
-            "学生": { count: 0, rev: 0 },
-            "教員": { count: 0, rev: 0 },
-            "職員": { count: 0, rev: 0 },
-            "その他": { count: 0, rev: 0 },
-            "不明": { count: 0, rev: 0 }
-        };
-
-        let totalItemsSold = 0;
-        let itemStats = {};
-        let coPurchase = {};
-
-        sortedHistory.forEach(h => {
-            let date = new Date(h.time);
-            let hStr = date.getHours();
-            let mStr = Math.floor(date.getMinutes() / 15) * 15;
-            let timeLabel = `${hStr}:${mStr === 0 ? "00" : String(mStr).padStart(2, '0')}`;
-
-            timeSlotRev[timeLabel] = (timeSlotRev[timeLabel] || 0) + h.total;
-            if (!timeSlotItemCounts[timeLabel]) timeSlotItemCounts[timeLabel] = {};
-
-            if (h.customerType && customerTypeStats[h.customerType]) {
-                customerTypeStats[h.customerType].count += 1;
-                customerTypeStats[h.customerType].rev += h.total;
-            }
-
-            let uniqueItems = [...new Set(h.items.map(i => i.name))];
-            for (let i = 0; i < uniqueItems.length; i++) {
-                for (let j = i + 1; j < uniqueItems.length; j++) {
-                    let pair = [uniqueItems[i], uniqueItems[j]].sort().join(' ＋ ');
-                    coPurchase[pair] = (coPurchase[pair] || 0) + 1;
-                }
-            }
-
-            h.items.forEach(i => {
-                itemCounts[i.name] = (itemCounts[i.name] || 0) + 1;
-                itemRev[i.name] = (itemRev[i.name] || 0) + i.price;
-                timeSlotItemCounts[timeLabel][i.name] = (timeSlotItemCounts[timeLabel][i.name] || 0) + 1;
-                totalItemsSold += 1;
-
-                if (i.type) categoryRev[i.type] += i.price;
-
-                if (!itemStats[i.name]) itemStats[i.name] = { count: 0, lastTime: date };
-                itemStats[i.name].count += 1;
-                itemStats[i.name].lastTime = date;
-            });
-        });
-
-        let customerCount = sortedHistory.length;
-        let averagePurchase = Math.floor(totalRev / customerCount);
-        let averageItems = (totalItemsSold / customerCount).toFixed(1);
-
-        let cashTotal = 0, changeTotal = 0, cashKnown = 0;
-        sortedHistory.forEach(h => { if (h.cash != null) { cashTotal += h.cash; changeTotal += (h.change || 0); cashKnown++; } });
-        let maxSale = Math.max(...sortedHistory.map(h => h.total));
-        let minSale = Math.min(...sortedHistory.map(h => h.total));
-        let peakSlot = Object.entries(timeSlotRev).sort((a, b) => b[1] - a[1])[0];
-
-        // --- 概要 ---
-        let summary = `【売上集計: ${currentSession || '前回'}】\n`;
-        summary += `総売上: ¥${totalRev}\n`;
-        summary += `来店人数: ${customerCount}人\n`;
-        summary += `平均客単価: ¥${averagePurchase}（最高¥${maxSale} / 最低¥${minSale}）\n`;
-        summary += `平均買上点数: ${averageItems}個/人\n`;
-        if (peakSlot) summary += `最も売れた時間帯: ${peakSlot[0]}〜（¥${peakSlot[1]}）\n`;
-        if (cashKnown > 0) summary += `現金: お預かり計¥${cashTotal} / お釣り計¥${changeTotal}\n`;
-        if (voidCount > 0) summary += `会計取り消し: ${voidCount}件\n`;
-
-        // --- 粗利（原価が入力された商品のみ）---
-        const prof = buildProfit();
-        if (prof) {
-            summary += `粗利: ¥${prof.profit}（粗利率 ${prof.margin}% / 原価合計 ¥${prof.cogs}）\n`;
-            if (prof.partial) summary += `　※原価入力品のみの集計（未入力: ${prof.uncovered.join('、')}）\n`;
-        }
-
-        // --- 前回の販売会との比較（開店時に確定した前回データがある時のみ）---
-        const cmp = buildComparison();
-        if (cmp) {
-            const mk = d => d > 0 ? '▲' : (d < 0 ? '▼' : '→');
-            const pc = m => m.pct == null ? '' : `（前回比 ${m.pct > 0 ? '+' : ''}${m.pct}%）`;
-            const sgnY = m => `${m.diff > 0 ? '+¥' : (m.diff < 0 ? '−¥' : '±¥')}${Math.abs(m.diff)}`;
-            const sgnN = (m, u) => `${m.diff > 0 ? '+' : (m.diff < 0 ? '−' : '±')}${Math.abs(m.diff)}${u}`;
-            const dstr = cmp.prevDate ? new Date(cmp.prevDate).toLocaleDateString('ja-JP') : '';
-            summary += `\n【前回（${cmp.prevName}${dstr ? '・' + dstr : ''}）との比較】\n`;
-            summary += `総売上: ${mk(cmp.totalRev.diff)} ${sgnY(cmp.totalRev)} ${pc(cmp.totalRev)}\n`;
-            summary += `来店人数: ${mk(cmp.customerCount.diff)} ${sgnN(cmp.customerCount, '人')} ${pc(cmp.customerCount)}\n`;
-            summary += `平均客単価: ${mk(cmp.avgSpend.diff)} ${sgnY(cmp.avgSpend)} ${pc(cmp.avgSpend)}\n`;
-            if (cmp.hasItems) {
-                const movers = cmp.items.filter(it => it.diff !== 0).slice(0, 5);
-                if (movers.length) {
-                    summary += `商品別の変化（大きい順）:\n`;
-                    movers.forEach(it => { summary += `・${it.name}: ${mk(it.diff)} ${it.diff > 0 ? '+' : ''}${it.diff}個（今回${it.now}/前回${it.prev}）\n`; });
-                }
-            }
-        }
-
-        // --- 商品別（消化率・ABC ＋ 完売時刻・販売スピード）---
-        let itemsText = `[在庫消化率とABC分析]\n`;
-        itemsText += `※ABC＝売上への貢献度。A＝上位（累計〜70%）/ B＝中位（〜90%）/ C＝下位。消化率＝販売数÷仕入れ数。\n`;
-        let sortedRevItems = Object.entries(itemRev).sort((a, b) => b[1] - a[1]);
-        let cumulativeRev = 0;
-        sortedRevItems.forEach(item => {
-            let name = item[0];
-            cumulativeRev += item[1];
-            let cumPercent = (cumulativeRev / totalRev) * 100;
-            let rank = cumPercent <= 70 ? 'A' : (cumPercent <= 90 ? 'B' : 'C');
-            let product = products.find(p => p.name === name);
-            let initial = product ? product.initialStock : 0;
-            let sold = itemCounts[name];
-            let sellThrough = initial > 0 ? Math.round((sold / initial) * 100) : 0;
-            itemsText += `・${name}: 消化率${sellThrough}% (ランク${rank})\n`;
-        });
-        itemsText += `\n[完売時刻と販売スピード]\n`;
-        itemsText += `※()内は品切れにならなければ1時間で何個売れたかの予測ペース\n`;
-        let soldOutItems = [];
-        let notSoldOutItems = [];
-        Object.keys(itemStats).forEach(name => {
-            let stat = itemStats[name];
-            let product = products.find(p => p.name === name);
-            let isSoldOut = product ? (product.stock <= 0) : false;
-            if (isSoldOut) {
-                // 記録された在庫切れ日時を優先（無ければ最後の販売時刻で近似）
-                let lastTime = (product && product.soldOutTime) ? new Date(product.soldOutTime) : new Date(stat.lastTime);
-                let tLabel = `${lastTime.getHours()}:${String(lastTime.getMinutes()).padStart(2, '0')}`;
-                let durationMin = Math.max(1, (lastTime - sessionStartTime) / 60000);
-                let paceHour = Math.round((stat.count / durationMin) * 60);
-                soldOutItems.push({ name: name, timeStr: tLabel, timeValue: lastTime, pace: paceHour });
-            } else {
-                notSoldOutItems.push(name);
-            }
-        });
-        soldOutItems.sort((a, b) => a.timeValue - b.timeValue);
-        soldOutItems.forEach(item => { itemsText += `・${item.name}: ${item.timeStr} 完売 (ペース: ${item.pace}個/時)\n`; });
-        if (notSoldOutItems.length > 0) itemsText += `・販売中: ${notSoldOutItems.join(', ')}\n`;
-
-        // --- 時間帯別 ---
-        let timeText = `[時間帯別(15分刻み) 売上とトップ3商品]\n`;
-        let sortedSlots = Object.keys(timeSlotRev).sort((a, b) => parseInt(a.replace(':', '')) - parseInt(b.replace(':', '')));
-        sortedSlots.forEach(slot => {
-            timeText += `・${slot}〜: ¥${timeSlotRev[slot]}\n`;
-            let itemsInSlot = Object.entries(timeSlotItemCounts[slot]).sort((a, b) => b[1] - a[1]).slice(0, 3);
-            itemsInSlot.forEach((item, index) => { timeText += `  ${index + 1}位: ${item[0]} (${item[1]}個)\n`; });
-        });
-
-        // --- 客層・カテゴリ ---
-        let segmentText = `[客属性別 来店人数と客単価]\n`;
-        for (let type in customerTypeStats) {
-            let stats = customerTypeStats[type];
-            if (stats.count > 0) segmentText += `・${type}: ${stats.count}人 (平均 ¥${Math.floor(stats.rev / stats.count)})\n`;
-        }
-        segmentText += `\n[カテゴリ別 売上と占有率]\n`;
-        for (let cat in categoryRev) {
-            if (categoryRev[cat] <= 0) continue; // 取り扱わなかったカテゴリ(¥0)は出さない
-            let percent = totalRev > 0 ? Math.round((categoryRev[cat] / totalRev) * 100) : 0;
-            segmentText += `・${catNames[cat]}: ¥${categoryRev[cat]} (${percent}%)\n`;
-        }
-        segmentText += `\n[よく一緒に買われた商品]\n`;
-        let sortedPairs = Object.entries(coPurchase).sort((a, b) => b[1] - a[1]).slice(0, 5);
-        if (sortedPairs.length > 0) sortedPairs.forEach(pair => { segmentText += `・${pair[0]}: ${pair[1]}回\n`; });
-        else segmentText += `・データなし\n`;
-
-        // --- 次回準備の参考メモ ---
-        let nextText = '';
-        const recs = buildRestockRecommendations();
-        if (recs.length > 0) {
-            nextText += `※今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変動するため参考程度にご利用ください\n`;
-            recs.forEach(r => {
-                let arrow = r.recommended > r.initial ? '▲' : (r.recommended < r.initial ? '▼' : '＝');
-                nextText += `・${r.name}: 今回 仕入${r.initial}/販売${r.sold} → 参考 ${r.recommended}個 ${arrow} (${r.reason})\n`;
-            });
-        } else {
-            nextText = 'データがありません';
-        }
-
-        const insight = computeInsights();
-
-        analyticsSections = { summary, items: itemsText, time: timeText, segment: segmentText, next: nextText, insight };
-
-        // PDF出力用（全項目まとめ）
-        const sep = '--------------------------\n';
-        document.getElementById('analytics-result').innerText =
-            summary + sep + itemsText + sep + timeText + sep + segmentText + sep +
-            '[次回の仕入れ数の目安]\n' + nextText + sep + '[完売と売り逃し]\n' + (insight || '');
-
+        analyticsSections = { insight: computeInsights() };
         showAnalyticsMenu();
     }
 
@@ -2914,15 +3082,196 @@
         const sec = document.getElementById('sec-' + key);
         if (sec) sec.style.display = 'block';
 
-        if (key === 'summary') document.getElementById('sec-summary').innerText = analyticsSections.summary;
-        else if (key === 'items') document.getElementById('sec-items').innerText = analyticsSections.items;
-        else if (key === 'segment') document.getElementById('sec-segment').innerText = analyticsSections.segment;
-        else if (key === 'next') document.getElementById('sec-next').innerText = analyticsSections.next;
-        else if (key === 'time') { document.getElementById('sec-time-text').innerText = analyticsSections.time; renderCustomerChart(); }
+        if (key === 'summary') document.getElementById('sec-summary').innerHTML = secSummaryHTML();
+        else if (key === 'items') document.getElementById('sec-items').innerHTML = secItemsHTML();
+        else if (key === 'segment') document.getElementById('sec-segment').innerHTML = secSegmentHTML();
+        else if (key === 'next') document.getElementById('sec-next').innerHTML = secNextHTML();
+        else if (key === 'time') { document.getElementById('sec-time-text').innerHTML = secTimeHTML(); renderCustomerChart(); }
         else if (key === 'stock') renderStockChart();
-        else if (key === 'insight') document.getElementById('sec-insight').innerText = analyticsSections.insight || 'データがありません';
+        else if (key === 'insight') document.getElementById('sec-insight').innerHTML = `<div class="a-pre">${escHtml(analyticsSections.insight || 'データがありません')}</div>`;
         else if (key === 'log') renderOperationLog();
         // export はボタンのみ（静的）
+    }
+
+    // ▼▼▼ 集計の各項目を「表」で描く ▼▼▼
+    // 【方針】箇条書きのテキストでは桁がそろわず読みにくかったため、
+    // 数字は右揃え・等幅にして縦のラインをそろえ、割合は横棒、ランクは色で示す。
+    const yenStr = n => '¥' + Number(n || 0).toLocaleString('ja-JP');
+
+    // 集計の見出しに出す販売会の名前。
+    // 閉店後・過去の回を見ている時は currentSession が空になるため、
+    // スナップショットに記録してある名前を使う（「前回の販売会」と出てしまうのを防ぐ）。
+    function reportSessionName() {
+        if (reportViewSnapshot && reportViewSnapshot.sessionName) return reportViewSnapshot.sessionName;
+        return currentSession || '前回の販売会';
+    }
+    function pctBar(pct, cls) {
+        const w = Math.max(0, Math.min(100, pct));
+        return `<span class="a-bar ${cls || ''}"><i style="width:${w}%"></i></span>`;
+    }
+
+    function secSummaryHTML() {
+        const R = buildReportData();
+        if (!R) return '<div class="a-empty">まだ売上データがありません。</div>';
+        const s = R.summary;
+        let h = `<div class="stat-grid">
+            <div class="stat-tile hero"><span class="k">総売上</span><span class="v">${yenStr(s.totalRev)}</span><span class="s">${escHtml(reportSessionName())}</span></div>
+            <div class="stat-tile"><span class="k">来店人数</span><span class="v">${s.customers}<span style="font-size:14px; font-weight:600;">人</span></span></div>
+            <div class="stat-tile"><span class="k">平均客単価</span><span class="v">${yenStr(s.avg)}</span><span class="s">最高 ${yenStr(s.maxSale)} / 最低 ${yenStr(s.minSale)}</span></div>
+            <div class="stat-tile"><span class="k">平均買上点数</span><span class="v">${s.avgItems}<span style="font-size:14px; font-weight:600;">点</span></span></div>
+            <div class="stat-tile"><span class="k">ピークの時間帯</span><span class="v" style="font-size:19px;">${s.peak ? escHtml(s.peak.label) + '〜' : '—'}</span><span class="s">${s.peak ? yenStr(s.peak.rev) : ''}</span></div>
+        </div>`;
+
+        const rows = [];
+        if (s.cashKnown > 0) rows.push(['お預かり合計', yenStr(s.cashTotal)], ['お釣り合計', yenStr(s.changeTotal)]);
+        if (s.voidCount > 0) rows.push(['会計の取り消し', `${s.voidCount}件`]);
+        if (s.itemEdited > 0) rows.push(['品目の事後修正', `${s.itemEdited}件`]);
+        if (s.pendingLeft > 0) rows.push(['客属性が未入力のまま', `<span class="a-down">${s.pendingLeft}件</span>`]);
+        if (rows.length) {
+            h += `<div class="a-head">現金と修正の記録</div><table class="a-table"><tbody>`
+               + rows.map(r => `<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join('') + `</tbody></table>`;
+        }
+
+        if (R.profit) {
+            h += `<div class="a-head">粗利</div><table class="a-table"><tbody>
+                <tr><td>売上（原価入力品）</td><td class="num">${yenStr(R.profit.revCovered)}</td></tr>
+                <tr><td>原価の合計</td><td class="num">${yenStr(R.profit.cogs)}</td></tr>
+                <tr><td class="nm">粗利</td><td class="num nm">${yenStr(R.profit.profit)}<span class="sub">粗利率 ${R.profit.margin}%</span></td></tr>
+            </tbody></table>`;
+            if (R.profit.partial) h += `<p class="a-note">※原価を入力した商品だけの集計です（未入力：${escHtml(R.profit.uncovered.join('、'))}）。</p>`;
+        }
+
+        const c = R.comparison;
+        if (c) {
+            const dstr = c.prevDate ? new Date(c.prevDate).toLocaleDateString('ja-JP') : '';
+            const cell = (m, fmt) => {
+                const cls = m.diff > 0 ? 'a-up' : (m.diff < 0 ? 'a-down' : 'a-flat');
+                const mark = m.diff > 0 ? '▲' : (m.diff < 0 ? '▼' : '→');
+                const sign = m.diff > 0 ? '+' : (m.diff < 0 ? '−' : '±');
+                return `<span class="${cls}">${mark} ${sign}${fmt(Math.abs(m.diff))}</span>`
+                     + (m.pct == null ? '' : `<span class="sub">${m.pct > 0 ? '+' : ''}${m.pct}%</span>`);
+            };
+            h += `<div class="a-head">前回（${escHtml(c.prevName)}${dstr ? '・' + dstr : ''}）との比較</div>
+            <table class="a-table">
+                <thead><tr><th>項目</th><th class="num">今回</th><th class="num">前回</th><th class="num">増減</th></tr></thead>
+                <tbody>
+                    <tr><td class="nm">総売上</td><td class="num">${yenStr(c.totalRev.now)}</td><td class="num">${yenStr(c.totalRev.prev)}</td><td class="num">${cell(c.totalRev, yenStr)}</td></tr>
+                    <tr><td class="nm">来店人数</td><td class="num">${c.customerCount.now}人</td><td class="num">${c.customerCount.prev}人</td><td class="num">${cell(c.customerCount, v => v + '人')}</td></tr>
+                    <tr><td class="nm">平均客単価</td><td class="num">${yenStr(c.avgSpend.now)}</td><td class="num">${yenStr(c.avgSpend.prev)}</td><td class="num">${cell(c.avgSpend, yenStr)}</td></tr>
+                </tbody>
+            </table>`;
+            const movers = c.hasItems ? c.items.filter(it => it.diff !== 0).slice(0, 6) : [];
+            if (movers.length) {
+                h += `<div class="a-head">商品別の増減（大きい順）</div>
+                <table class="a-table"><thead><tr><th>商品</th><th class="num">今回</th><th class="num">前回</th><th class="num">増減</th></tr></thead><tbody>`
+                + movers.map(it => {
+                    const cls = it.diff > 0 ? 'a-up' : 'a-down';
+                    return `<tr><td class="nm">${escHtml(it.name)}</td><td class="num">${it.now}</td><td class="num">${it.prev}</td><td class="num"><span class="${cls}">${it.diff > 0 ? '▲ +' : '▼ −'}${Math.abs(it.diff)}</span></td></tr>`;
+                }).join('') + `</tbody></table>`;
+            } else if (!c.hasItems) {
+                h += `<p class="a-note">※前回は商品別の記録がないため、合計の比較のみです。</p>`;
+            }
+        }
+        if (R.integrity.length) {
+            h += `<div class="notice notice-danger" style="margin-top:14px;"><svg class="ic"><use href="#ic-alert"/></svg><span>${R.integrity.map(escHtml).join(' / ')}</span></div>`;
+        }
+        return h;
+    }
+
+    function secItemsHTML() {
+        const R = buildReportData();
+        if (!R) return '<div class="a-empty">まだ売上データがありません。</div>';
+        let h = `<div class="a-head">売れ行きと在庫の消化率</div>
+        <table class="a-table">
+            <thead><tr><th>商品</th><th class="num">販売／仕入</th><th class="num" style="width:76px;">消化率</th><th class="num">売上</th></tr></thead>
+            <tbody>` + R.abc.map(r => `
+                <tr>
+                    <td class="nm">${escHtml(r.name)}<span class="sub"><span class="a-rank ${r.rank.toLowerCase()}">${r.rank}</span></span></td>
+                    <td class="num">${r.sold} / ${r.initial}</td>
+                    <td class="num">${pctBar(r.sellThrough, r.sellThrough >= 100 ? 'full' : '')}<span class="sub">${r.sellThrough}%</span></td>
+                    <td class="num">${yenStr(r.rev)}</td>
+                </tr>`).join('') + `</tbody></table>
+        <p class="a-note">A・B・C は売上への貢献度です。A＝上位（累計70%まで）／B＝中位（90%まで）／C＝下位。消化率＝販売数÷仕入れ数。</p>`;
+
+        if (R.soldOut.length) {
+            h += `<div class="a-head">完売した商品</div>
+            <table class="a-table"><thead><tr><th>商品</th><th class="num">完売した時刻</th><th class="num">売れる速さ</th></tr></thead><tbody>`
+            + R.soldOut.map(o => `<tr><td class="nm">${escHtml(o.name)}</td><td class="num">${o.timeStr}</td><td class="num">${o.pace}個/時</td></tr>`).join('')
+            + `</tbody></table>
+            <p class="a-note">「売れる速さ」は、品切れにならなければ1時間に何個売れたかの予測ペースです。</p>`;
+        } else {
+            h += `<div class="a-head">完売した商品</div><div class="a-empty">完売した商品はありませんでした。</div>`;
+        }
+        if (R.inStock.length) h += `<p class="a-note">最後まで在庫があった商品：${R.inStock.map(escHtml).join('、')}</p>`;
+        if (R.oversoldItems.length) {
+            h += `<div class="a-head" style="color:var(--danger-ink);">販売数が仕入れ数を超えています（在庫の入力を確認してください）</div>
+            <table class="a-table"><thead><tr><th>商品</th><th class="num">仕入</th><th class="num">販売</th><th>備考</th></tr></thead><tbody>`
+            + R.oversoldItems.map(o => `<tr><td class="nm">${escHtml(o.name)}</td><td class="num">${o.initial}</td><td class="num a-down">${o.sold}</td><td>${o.note ? escHtml(o.note) : '<span style="color:var(--text-light);">なし</span>'}</td></tr>`).join('')
+            + `</tbody></table>`;
+        }
+        return h;
+    }
+
+    function secTimeHTML() {
+        const R = buildReportData();
+        if (!R) return '<div class="a-empty">まだ売上データがありません。</div>';
+        const peakRev = Math.max(...R.slots.map(s => s.rev));
+        // よく出た商品は列を増やさず、時間帯の下に小さく添える（横幅が狭い端末でも表がつぶれない）
+        return `<div class="a-head">15分ごとの売上・客数・客単価</div>
+        <table class="a-table">
+            <thead><tr><th>時間帯</th><th class="num">売上</th><th class="num">客数</th><th class="num">客単価</th></tr></thead>
+            <tbody>` + R.slots.map(s => `
+                <tr${s.rev === peakRev ? ' class="peak"' : ''}>
+                    <td class="nm" style="white-space:nowrap;">${escHtml(s.range)}<span class="sub" style="white-space:normal;">${s.top.map(t => escHtml(t.name) + '×' + t.count).join('、') || '—'}</span></td>
+                    <td class="num">${yenStr(s.rev)}</td>
+                    <td class="num">${s.count}人</td>
+                    <td class="num">${s.count ? yenStr(s.avg) : '—'}</td>
+                </tr>`).join('') + `</tbody></table>
+        <p class="a-note">色の付いた行が、最も売れた時間帯です。商品名は、その時間帯によく出たものです。</p>`;
+    }
+
+    function secSegmentHTML() {
+        const R = buildReportData();
+        if (!R) return '<div class="a-empty">まだ売上データがありません。</div>';
+        const totalCust = R.types.reduce((a, t) => a + t.count, 0);
+        let h = `<div class="a-head">客属性別の人数と客単価</div>`;
+        h += R.types.length ? `<table class="a-table">
+            <thead><tr><th>客属性</th><th class="num">人数</th><th class="num" style="min-width:82px;">割合</th><th class="num">客単価</th></tr></thead>
+            <tbody>` + R.types.map(t => {
+                const pct = totalCust ? Math.round(t.count / totalCust * 100) : 0;
+                return `<tr><td class="nm">${escHtml(t.type)}</td><td class="num">${t.count}人</td><td class="num">${pctBar(pct)}<span class="sub">${pct}%</span></td><td class="num">${yenStr(t.avg)}</td></tr>`;
+            }).join('') + `</tbody></table>` : '<div class="a-empty">客属性の入力がありませんでした。</div>';
+
+        h += `<div class="a-head">カテゴリ別の売上と占有率</div>
+        <table class="a-table"><thead><tr><th>カテゴリ</th><th class="num">売上</th><th class="num" style="min-width:82px;">占有率</th></tr></thead><tbody>`
+        + R.categories.map(c => `<tr><td class="nm">${escHtml(c.name)}</td><td class="num">${yenStr(c.rev)}</td><td class="num">${pctBar(c.pct)}<span class="sub">${c.pct}%</span></td></tr>`).join('')
+        + `</tbody></table>`;
+
+        h += `<div class="a-head">よく一緒に買われた組み合わせ</div>`;
+        h += R.copairs.length ? `<table class="a-table"><thead><tr><th>組み合わせ</th><th class="num">回数</th></tr></thead><tbody>`
+            + R.copairs.map(p => `<tr><td class="nm">${escHtml(p.pair)}</td><td class="num">${p.count}回</td></tr>`).join('')
+            + `</tbody></table>` : '<div class="a-empty">同時に2種類以上買われた会計がありませんでした。</div>';
+        return h;
+    }
+
+    function secNextHTML() {
+        const R = buildReportData();
+        if (!R || !R.recs.length) return '<div class="a-empty">データがありません。</div>';
+        return `<div class="a-head">次回の仕入れ数の目安</div>
+        <div class="a-wrap"><table class="a-table">
+            <thead><tr><th>商品</th><th class="num">今回の仕入</th><th class="num">販売</th><th class="num">次回の目安</th><th>理由</th></tr></thead>
+            <tbody>` + R.recs.map(r => {
+                const up = r.recommended > r.initial, down = r.recommended < r.initial;
+                const mark = up ? '<span class="a-up">▲</span>' : (down ? '<span class="a-down">▼</span>' : '<span class="a-flat">→</span>');
+                return `<tr>
+                    <td class="nm">${escHtml(r.name)}</td>
+                    <td class="num">${r.initial}</td>
+                    <td class="num">${r.sold}</td>
+                    <td class="num nm">${mark} ${r.recommended}</td>
+                    <td style="font-size:12px; color:var(--text-light);">${escHtml(r.reason)}</td>
+                </tr>`;
+            }).join('') + `</tbody></table></div>
+        <p class="a-note">今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変わるため、参考程度にご利用ください。</p>`;
     }
 
     // 操作ログ（属性の事後入力・品目の部分修正など）を新しい順に表示
@@ -3090,7 +3439,7 @@
             res += `・${ct}（${d.count}人）: 来店ピーク ${peakSlot ? peakSlot[0] + '〜' : '-'} / 売れ筋 ${topItems || '-'} / 味の傾向 ${topTaste ? topTaste[0] : '-'}\n`;
         });
 
-        res += `\n[味の傾向（商品名から簡易推定）別の売上]\n`;
+        res += `\n[味の傾向別の売上]\n`;
         ['甘い系', 'しょっぱい系', 'ドリンク', '不明'].forEach(t => {
             if (tasteAgg[t]) {
                 const pct = totalTaste > 0 ? Math.round(tasteAgg[t].count / totalTaste * 100) : 0;
@@ -3106,7 +3455,6 @@
                 res += `\n→ ヒント: 職員は${st[0]}、学生は${gk[0]}が多めでした。来店ピークの時間差と客層に合わせて配分すると良いかもしれません。\n`;
             }
         }
-        res += `\n※味の傾向は商品名のキーワードから推定した簡易判定です（クラウドAIではありません）。\n`;
         return res;
     }
     // ▲▲▲ ここまで ▲▲▲
@@ -3288,6 +3636,7 @@
         'stock': '商品・在庫の調整',
         'sync': '複数端末で共有',
         'sync-add': '共有コードを追加',
+        'receipt': '領収書の設定',
         'archive': '過去の販売会',
         'data': 'データの書き出し',
         'display': '画面表示',
@@ -3405,6 +3754,7 @@
             if (!sub) renderSettingsMenu();
             else if (sub === 'stock') renderLiveStock();
             else if (sub === 'sync') renderSyncView();
+            else if (sub === 'receipt') renderReceiptSettings();
             else if (sub === 'archive') renderArchiveList();
             else if (sub === 'display') updateFullscreenButton();
             if (sub === 'sync-add' || sub === 'sync') updateSyncUi();
@@ -3477,6 +3827,7 @@
         box.innerHTML =
             menuRow('sliders', '商品・在庫の調整', stockSub, "openPanel('settings','stock')", { disabled: !currentSession }) +
             menuRow('link', '複数端末で共有', syncSub, "openPanel('settings','sync')", { disabled: !window.FIREBASE_CONFIG }) +
+            menuRow('printer', '領収書の設定', `発行者「${escHtml(shopInfo().name)}」・但し書きの変更`, "openPanel('settings','receipt')") +
             menuRow('archive', '過去の販売会', archSub, "openPanel('settings','archive')") +
             menuRow('download', 'データの書き出し', 'バックアップの保存・端末間のコピー', "openPanel('settings','data')") +
             menuRow('expand', '画面表示', '全画面表示にする', "openPanel('settings','display')") +
@@ -3592,7 +3943,7 @@
 
         const itemCounts = {}, itemRev = {}, categoryRev = { sweet: 0, savory: 0, drink: 0 };
         const catNames = { sweet: 'パン類', savory: 'クッキー類', drink: 'ドリンク' };
-        const timeSlotRev = {}, timeSlotItems = {};
+        const timeSlotRev = {}, timeSlotItems = {}, timeSlotCust = {};
         const custTypes = { '学生': { count: 0, rev: 0 }, '教員': { count: 0, rev: 0 }, '職員': { count: 0, rev: 0 }, 'その他': { count: 0, rev: 0 }, '不明': { count: 0, rev: 0 } };
         let totalItems = 0, cashTotal = 0, changeTotal = 0, cashKnown = 0;
         const itemStats = {}, coPurchase = {};
@@ -3601,6 +3952,7 @@
             const d = new Date(h.time);
             const label = `${d.getHours()}:${String(Math.floor(d.getMinutes() / 15) * 15).padStart(2, '0')}`;
             timeSlotRev[label] = (timeSlotRev[label] || 0) + h.total;
+            timeSlotCust[label] = (timeSlotCust[label] || 0) + 1;
             if (!timeSlotItems[label]) timeSlotItems[label] = {};
             if (h.customerType && custTypes[h.customerType]) { custTypes[h.customerType].count++; custTypes[h.customerType].rev += h.total; }
             if (h.cash != null) { cashTotal += h.cash; changeTotal += (h.change || 0); cashKnown++; }
@@ -3651,9 +4003,20 @@
             .filter(p => p.price > 0 && p.initialStock >= 0 && (itemCounts[p.name] || 0) > p.initialStock)
             .map(p => ({ name: p.name, sold: itemCounts[p.name] || 0, initial: p.initialStock, note: p.note || '' }));
 
+        // 時間帯別は「売上・客数・客単価」を並べた表にするため、客数も持たせる
+        const hhmm = s => { const [h2, m2] = s.split(':').map(Number); return h2 * 60 + m2; };
         const slots = Object.keys(timeSlotRev)
-            .sort((a, b) => parseInt(a.replace(':', '')) - parseInt(b.replace(':', '')))
-            .map(s => ({ label: s, rev: timeSlotRev[s], top: Object.entries(timeSlotItems[s]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => ({ name: n, count: c })) }));
+            .sort((a, b) => hhmm(a) - hhmm(b))
+            .map(s => {
+                const cust = timeSlotCust[s] || 0;
+                const endMin = hhmm(s) + 15;
+                const range = `${s}〜${String(Math.floor(endMin / 60) % 24)}:${String(endMin % 60).padStart(2, '0')}`;
+                return {
+                    label: s, range, rev: timeSlotRev[s], count: cust,
+                    avg: cust > 0 ? Math.floor(timeSlotRev[s] / cust) : 0,
+                    top: Object.entries(timeSlotItems[s]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => ({ name: n, count: c }))
+                };
+            });
 
         const types = Object.entries(custTypes).filter(([, d]) => d.count > 0).map(([type, d]) => ({ type, count: d.count, avg: Math.floor(d.rev / d.count) }));
         const categories = Object.keys(categoryRev).filter(c => categoryRev[c] > 0).map(c => ({ name: catNames[c], rev: categoryRev[c], pct: totalRev > 0 ? Math.round(categoryRev[c] / totalRev * 100) : 0 }));
@@ -3762,20 +4125,26 @@
                 <td class="num">${r.sellThrough}%</td>
                 <td class="num">${yen(r.rev)}</td>
             </tr>`).join('');
-        const soldOutTxt = (R.soldOut.length
-            ? R.soldOut.map(o => `・${o.name}：${o.timeStr} 完売（ペース ${o.pace}個/時）`).join('\n')
-            : '・完売した商品はありませんでした')
-            + (R.inStock.length ? `\n・販売中：${R.inStock.join('、')}` : '');
+        // 完売時刻：箇条書きではなく表にして時刻・ペースの桁をそろえる
+        const soldOutBlock = R.soldOut.length
+            ? `<table class="rep-table"><thead><tr><th>商品</th><th class="num">完売した時刻</th><th class="num">売れる速さ</th></tr></thead><tbody>`
+              + R.soldOut.map(o => `<tr><td>${esc(o.name)}</td><td class="num">${esc(o.timeStr)}</td><td class="num">${o.pace} 個/時</td></tr>`).join('')
+              + `</tbody></table>`
+            : `<div class="note-box"><div class="note-foot">完売した商品はありませんでした。</div></div>`;
+        const inStockNote = R.inStock.length
+            ? `<div class="note-box"><div class="note-foot">最後まで在庫があった商品：${R.inStock.map(esc).join('、')}</div></div>` : '';
 
         // 販売数 > 仕入数（在庫入力の確認を促すソフト警告）
-        const oversoldTxt = R.oversoldItems.map(o =>
-            `・${o.name}：仕入 ${o.initial} / 販売 ${o.sold}（差 +${o.sold - o.initial}）${o.note ? '　備考: ' + o.note : '　備考: なし（入力ミスの可能性）'}`
-        ).join('\n');
+        const oversoldBlock = R.oversoldItems.length
+            ? `<table class="rep-table"><thead><tr><th>商品</th><th class="num">仕入</th><th class="num">販売</th><th class="num">差</th><th>備考</th></tr></thead><tbody>`
+              + R.oversoldItems.map(o => `<tr><td>${esc(o.name)}</td><td class="num">${o.initial}</td><td class="num">${o.sold}</td><td class="num">+${o.sold - o.initial}</td><td>${o.note ? esc(o.note) : 'なし（入力ミスの可能性）'}</td></tr>`).join('')
+              + `</tbody></table>` : '';
 
-        // 3. 時間帯別
-        const slotTxt = R.slots.map(sl =>
-            `・${sl.label}〜：${yen(sl.rev)}` + (sl.top.length ? '　' + sl.top.map((t, i) => `${i + 1}位 ${t.name}(${t.count})`).join(' / ') : '')
-        ).join('\n');
+        // 3. 時間帯別（売上・客数・客単価を並べた表）
+        const peakRev = R.slots.length ? Math.max(...R.slots.map(sl => sl.rev)) : 0;
+        const slotRows = R.slots.map(sl =>
+            `<tr${sl.rev === peakRev ? ' class="peak-row"' : ''}><td>${esc(sl.range)}</td><td class="num">${yen(sl.rev)}</td><td class="num">${sl.count}人</td><td class="num">${sl.count ? yen(sl.avg) : '—'}</td><td>${sl.top.map(t => esc(t.name) + '×' + t.count).join('、') || '—'}</td></tr>`
+        ).join('');
 
         // 4. 残在庫の推移（凡例をHTMLリストで別描画。線種で識別＝モノクロ可）
         const legend = (R.stock ? R.stock.series : []).map((se, idx) =>
@@ -3785,7 +4154,11 @@
         // 5. 客層・カテゴリ
         const typeRows = R.types.map(t => `<tr><td>${esc(t.type)}</td><td class="num">${t.count}人</td><td class="num">${yen(t.avg)}</td></tr>`).join('');
         const catRows = R.categories.map(c => `<tr><td>${esc(c.name)}</td><td class="num">${yen(c.rev)}</td><td class="num">${c.pct}%</td></tr>`).join('');
-        const coTxt = R.copairs.length ? R.copairs.map(p => `・${p.pair}：${p.count}回`).join('\n') : '・データなし';
+        const coBlock = R.copairs.length
+            ? `<table class="rep-table"><thead><tr><th>組み合わせ</th><th class="num">回数</th></tr></thead><tbody>`
+              + R.copairs.map(p => `<tr><td>${esc(p.pair)}</td><td class="num">${p.count}回</td></tr>`).join('')
+              + `</tbody></table>`
+            : `<div class="note-box"><div class="note-foot">同時に2種類以上買われた会計はありませんでした。</div></div>`;
 
         // 7. 参考メモ（推奨仕入れ）
         const recRows = R.recs.map(r => {
@@ -3798,11 +4171,11 @@
                 <header class="report-header">
                     <div>
                         <div class="title">販売会 集計結果</div>
-                        <div class="sub">${esc(currentSession || '前回の販売会')}</div>
+                        <div class="sub">${esc(reportSessionName())}</div>
                     </div>
                     <div class="meta">
                         <div class="grand">総売上 ${yen(s.totalRev)}</div>
-                        <div>出力: ${now}　泰山木POS</div>
+                        <div>出力: ${now}　${esc(shopInfo().name)}</div>
                     </div>
                 </header>
 
@@ -3821,16 +4194,21 @@
                         <tbody>${abcRows}</tbody>
                     </table>
                     <div class="sub-heading">完売時刻と販売スピード</div>
-                    <pre class="rep-pre">${esc(soldOutTxt)}</pre>
+                    ${soldOutBlock}
+                    ${inStockNote}
                     ${R.oversoldItems.length ? `
                     <div class="sub-heading" style="color:#c0392b; border-color:#e6b0aa;">⚠ 販売数 &gt; 仕入数（在庫入力の確認を推奨）</div>
-                    <pre class="rep-pre">${esc(oversoldTxt)}</pre>` : ''}
+                    ${oversoldBlock}` : ''}
                 </section>
 
-                <section class="report-section">
-                    <div class="report-heading">3. 時間帯別の客数</div>
+                <section class="report-section report-section--long">
+                    <div class="report-heading">3. 時間帯別の売上・客数・客単価</div>
                     <div class="chart-container">${custSvg}</div>
-                    <pre class="rep-pre">${esc(slotTxt)}</pre>
+                    <table class="rep-table">
+                        <thead><tr><th>時間帯</th><th class="num">売上</th><th class="num">客数</th><th class="num">客単価</th><th>よく出た商品</th></tr></thead>
+                        <tbody>${slotRows}</tbody>
+                    </table>
+                    <div class="note-box"><div class="note-foot">網かけの行が、最も売れた時間帯です。</div></div>
                 </section>
 
                 <section class="report-section">
@@ -3852,19 +4230,19 @@
                         </div>
                     </div>
                     <div class="sub-heading">よく一緒に買われた商品（併売分析）</div>
-                    <pre class="rep-pre">${esc(coTxt)}</pre>
+                    ${coBlock}
                 </section>
 
                 <section class="report-section report-section--long">
-                    <div class="report-heading">6. 次回インサイト</div>
+                    <div class="report-heading">6. 完売と売り逃し</div>
                     <div class="key-box">
-                        <div class="key-head">完売と売り逃し（客層・味の傾向・在庫切れ）</div>
+                        <div class="key-head">早く売り切れた商品と、そのために売り逃した分</div>
                         <div class="key-body">${esc(R.insight)}</div>
                     </div>
                 </section>
 
                 <section class="report-section report-section--long">
-                    <div class="report-heading">7. 次回準備の参考メモ</div>
+                    <div class="report-heading">7. 次回の仕入れ数の目安</div>
                     <table class="rep-table">
                         <thead><tr><th>商品</th><th class="num">今回仕入</th><th class="num">販売</th><th class="num">参考仕入</th><th>増減</th><th>理由</th></tr></thead>
                         <tbody>${recRows}</tbody>
@@ -3899,6 +4277,8 @@
             '<style>@page{size:A4;margin:15mm;} html,body{margin:0;background:#fff;} ' +
             'body{padding:16px;} @media print{body{padding:0;}} ' +
             '.report-note{background:#eef; color:#334; font-size:13px; padding:10px 14px; border-radius:8px; margin-bottom:14px;} ' +
+            /* グラフの軸の説明は、画面と同じく左右に分けて置く（くっついて読めなくなるのを防ぐ） */
+            '.chart-cap{display:flex; justify-content:space-between; gap:10px; font-size:9.5px; color:#777; margin:0 2px 4px;} ' +
             '@media print{.report-note{display:none;}}</style>' +
             '</head><body>' +
             '<div class="report-note">印刷ダイアログが自動で開きます。閉じてしまった場合はこのページで印刷（またはブラウザの共有）から「PDFとして保存 / ファイルに保存」を選べます。</div>' +
@@ -4033,8 +4413,22 @@
         return true;
     }
 
+    // 書き出し・引き継ぎ用のデータ。領収書の設定（発行者名・但し書き）も同梱して、
+    // 別の端末へ移した時に領収書の名前だけ初期値に戻ってしまうのを防ぐ。
+    // ※ collectData() 自体には入れない（保存や過去の販売会の閲覧にも使われるため純粋に保つ）
+    function collectPortableData() {
+        return Object.assign({}, collectData(), { shopInfo: shopInfo() });
+    }
+
+    // 取り込んだデータに領収書の設定が入っていれば書き戻す
+    function applyPortableExtras(data) {
+        if (data && data.shopInfo && data.shopInfo.name) {
+            try { localStorage.setItem(SHOP_INFO_KEY, JSON.stringify(data.shopInfo)); } catch (e) {}
+        }
+    }
+
     function exportBackup() {
-        triggerDownload(`taizanboku_backup_${dateStamp()}.json`, JSON.stringify(collectData(), null, 2), 'application/json');
+        triggerDownload(`taizanboku_backup_${dateStamp()}.json`, JSON.stringify(collectPortableData(), null, 2), 'application/json');
     }
 
     // データ差し替え後の画面更新をまとめて行う（復元・引き継ぎで共用）
@@ -4073,6 +4467,7 @@
                 }
                 if (!confirm('現在のデータを、選んだバックアップの内容で上書きします。よろしいですか？')) return;
                 applyData(data);
+                applyPortableExtras(data);
                 afterDataReplaced('バックアップから復元しました');
             } catch (err) {
                 alert('ファイルの読み込みに失敗しました。');
@@ -4085,7 +4480,7 @@
 
     // ▼ 端末間の引き継ぎ（コピー＆貼り付け）：ファイルを使わずにデータを移す ▼
     async function copyHandoffData() {
-        const text = JSON.stringify(collectData());
+        const text = JSON.stringify(collectPortableData());
         let ok = false;
         try {
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -4111,6 +4506,7 @@
         if (!data || !Array.isArray(data.products)) { alert('このデータは泰山木POSの引き継ぎデータではないようです。'); return; }
         if (!confirm('現在のデータを、貼り付けた内容で上書きします。よろしいですか？')) return;
         applyData(data);
+        applyPortableExtras(data);
         if (ta) ta.value = '';
         afterDataReplaced('引き継ぎデータを取り込みました');
     }
@@ -4121,10 +4517,10 @@
         if (!confirm('【注意】この端末に保存されている売上履歴・設定などをすべて削除し、初期状態に戻します。\n\n先に「設定 → データの書き出し」で控えを取ることをおすすめします。\n\nこのまま初期化を始めますか？')) return;
         if (!confirm('最終確認：本当に削除してよろしいですか？この操作は取り消せません。')) return;
         try {
+            // 「設定もすべて削除して初期状態に戻す」と案内しているので、
+            // 領収書の設定など、このアプリが作った鍵はまとめて消す。
             Object.keys(localStorage).forEach(k => {
-                if (k === 'taizanboku_pos_data' || k === 'taizanboku_device_id' || k.indexOf('taizanboku_pos_data_corrupt_') === 0) {
-                    localStorage.removeItem(k);
-                }
+                if (k.indexOf('taizanboku_') === 0) localStorage.removeItem(k);
             });
         } catch (e) {
             console.warn('初期化中にエラーが発生しました', e);
@@ -4388,44 +4784,128 @@
         if (n > 0) el.innerHTML = `<svg class="ic"><use href="#ic-clock"/></svg>客属性が未入力：<b>${n}件</b>（タップで一覧）`;
     }
 
-    // 指定した会計のレシートを印刷用ウィンドウで開く（ブラウザのPDF保存が使える）
+    // ▼▼▼ 領収書 ▼▼▼
+    // 【設計】お客様にお渡しする紙なので、一般的な領収書の体裁にそろえる。
+    //   ・表題は「領収書」。システム名（POS）は印字しない
+    //   ・発行者は data/shop.js（または設定画面）で登録した団体名・店名
+    //   ・「客No.」は店内の管理番号なので、お客様向けには「No.」（取引番号）として小さく出す
+    //   ・宛名（上様）・但し書き・「上記正に領収いたしました」を入れる
+    const SHOP_INFO_KEY = 'taizanboku_pos_shop';
+
+    function shopInfo() {
+        const base = window.SHOP_INFO || {};
+        let saved = {};
+        try { saved = JSON.parse(localStorage.getItem(SHOP_INFO_KEY) || '{}') || {}; } catch (e) { saved = {}; }
+        return {
+            name: (saved.name != null && saved.name !== '') ? saved.name : (base.name || '泰山木'),
+            note: (saved.note != null && saved.note !== '') ? saved.note : (base.note || 'お品代'),
+            contact: (saved.contact != null) ? saved.contact : (base.contact || '')
+        };
+    }
+
+    // 設定画面：入力欄に今の値を入れ、見本を描く
+    function renderReceiptSettings() {
+        const s = shopInfo();
+        const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+        set('shop-name-input', s.name);
+        set('shop-note-input', s.note);
+        set('shop-contact-input', s.contact);
+        const box = document.getElementById('receipt-preview');
+        if (!box) return;
+        box.innerHTML = `
+            <div class="receipt-preview">
+                <div class="rp-title">領　収　書</div>
+                <div class="rp-no">No. 12　　${new Date().getFullYear()}年${new Date().getMonth() + 1}月${new Date().getDate()}日</div>
+                <div class="rp-to"><span class="rp-line"></span><span>様</span></div>
+                <div class="rp-amount"><span>金額</span><b>¥1,200</b></div>
+                <div class="rp-note">但し　<b>${escHtml(s.note)}</b>　として</div>
+                <div class="rp-stmt">上記正に領収いたしました。</div>
+                <div class="rp-issuer"><span>発行者</span><b>${escHtml(s.name)}</b>${s.contact ? `<span>${escHtml(s.contact)}</span>` : ''}</div>
+            </div>`;
+    }
+
+    function saveShopInfo() {
+        const v = id => (document.getElementById(id) || {}).value || '';
+        const name = v('shop-name-input').trim();
+        if (!name) { playError(); alert('発行者（団体名・店名）を入力してください。'); return; }
+        try {
+            localStorage.setItem(SHOP_INFO_KEY, JSON.stringify({
+                name, note: v('shop-note-input').trim() || 'お品代', contact: v('shop-contact-input').trim()
+            }));
+        } catch (e) { playError(); alert('保存できませんでした。'); return; }
+        renderReceiptSettings();
+        renderSettingsMenu();
+        showToast('領収書の設定を保存しました');
+    }
+
     function printReceipt(idx) {
         const h = salesHistory[idx];
         if (!h) return;
+        const shop = shopInfo();
+        const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const yen = n => '¥' + Number(n || 0).toLocaleString('ja-JP');
         const t = new Date(h.time);
-        const dtStr = `${t.getFullYear()}/${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')} ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
+        const dtStr = `${t.getFullYear()}年${t.getMonth() + 1}月${t.getDate()}日 ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
         const lines = itemLines(h.items).map(l =>
-            `<tr><td>${l.name}</td><td style="text-align:center;">${l.qty}</td><td style="text-align:right;">¥${l.price}</td><td style="text-align:right;">¥${l.subtotal}</td></tr>`).join('');
-        const cashStr = (h.cash != null) ? `¥${h.cash}` : '—';
-        const changeStr = (h.change != null) ? `¥${h.change}` : '—';
+            `<tr><td>${esc(l.name)}</td><td class="c">${l.qty}</td><td class="r">${yen(l.price)}</td><td class="r">${yen(l.subtotal)}</td></tr>`).join('');
+        const payRows = (h.cash != null)
+            ? `<div class="pay"><span>お預かり</span><span>${yen(h.cash)}</span></div>
+               <div class="pay"><span>お釣り</span><span>${yen(h.change || 0)}</span></div>` : '';
 
         const win = window.open('', '_blank');
         win.document.write(`
-            <html><head><title>レシート No.${h.no || ''}</title>
+            <html><head><meta charset="utf-8"><title>領収書 No.${esc(h.no || '')}</title>
             <style>
-                body { font-family: 'Hiragino Kaku Gothic ProN', sans-serif; color:#333; padding:20px; max-width:360px; margin:0 auto; }
-                h1 { font-size:20px; text-align:center; margin:0 0 4px; }
-                .sub { text-align:center; font-size:12px; color:#888; margin-bottom:12px; }
-                .meta { font-size:13px; display:flex; justify-content:space-between; margin-bottom:8px; }
-                table { width:100%; border-collapse:collapse; font-size:13px; }
-                th { border-bottom:2px solid #333; text-align:left; padding:4px 0; }
-                td { padding:4px 0; border-bottom:1px dashed #DDD; }
-                .total { display:flex; justify-content:space-between; font-size:18px; font-weight:bold; margin-top:10px; border-top:2px solid #333; padding-top:8px; }
-                .pay { display:flex; justify-content:space-between; font-size:14px; margin-top:6px; color:#555; }
-                .foot { text-align:center; font-size:12px; color:#888; margin-top:16px; }
+                * { box-sizing: border-box; }
+                body { font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', sans-serif; color:#222; padding:20px; max-width:380px; margin:0 auto; line-height:1.5; }
+                h1 { font-size:22px; text-align:center; margin:0 0 2px; letter-spacing:0.4em; text-indent:0.4em; }
+                .no { text-align:center; font-size:11px; color:#888; margin-bottom:14px; }
+                .to { display:flex; align-items:flex-end; gap:6px; font-size:15px; margin-bottom:14px; }
+                .to .line { flex:1; border-bottom:1px solid #555; padding-bottom:2px; }
+                .to .suffix { font-size:13px; color:#555; }
+                .amount { border:2px solid #222; border-radius:4px; padding:10px 12px; display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+                .amount .lbl { font-size:13px; color:#555; }
+                .amount .val { font-size:26px; font-weight:bold; font-variant-numeric:tabular-nums; }
+                .note { font-size:13px; margin-bottom:14px; }
+                .note b { font-weight:bold; }
+                .stmt { font-size:12.5px; margin:12px 0 16px; }
+                .detail-head { font-size:11px; color:#888; margin:0 0 4px; }
+                table { width:100%; border-collapse:collapse; font-size:12.5px; }
+                th { border-bottom:1.5px solid #444; text-align:left; padding:4px 2px; font-size:11px; color:#666; font-weight:normal; }
+                td { padding:4px 2px; border-bottom:1px dotted #CCC; }
+                td.c { text-align:center; } td.r, th.r { text-align:right; font-variant-numeric:tabular-nums; }
+                th.c { text-align:center; }
+                .total { display:flex; justify-content:space-between; font-size:16px; font-weight:bold; margin-top:8px; border-top:1.5px solid #444; padding-top:7px; }
+                .pay { display:flex; justify-content:space-between; font-size:12.5px; color:#555; margin-top:3px; }
+                .issuer { margin-top:22px; padding-top:10px; border-top:1px solid #DDD; font-size:12.5px; }
+                .issuer .nm { font-size:15px; font-weight:bold; }
+                .issuer .ct { color:#666; font-size:11.5px; }
+                .foot { text-align:center; font-size:11.5px; color:#888; margin-top:14px; }
                 @media print { body { padding:0; } }
             </style></head>
             <body>
-                <h1>泰山木POS</h1>
-                <div class="sub">${(currentSession || '').replace(/</g, '')}</div>
-                <div class="meta"><span>客No. ${h.no || '-'}</span><span>${dtStr}</span></div>
+                <h1>領収書</h1>
+                <div class="no">No. ${esc(h.no || '-')}　　${dtStr}</div>
+
+                <div class="to"><span class="line">&nbsp;</span><span class="suffix">様</span></div>
+
+                <div class="amount"><span class="lbl">金額</span><span class="val">${yen(h.total)}</span></div>
+                <div class="note">但し　<b>${esc(shop.note)}</b>　として</div>
+                <div class="stmt">上記正に領収いたしました。</div>
+
+                <div class="detail-head">明細</div>
                 <table>
-                    <thead><tr><th>商品</th><th style="text-align:center;">数</th><th style="text-align:right;">単価</th><th style="text-align:right;">小計</th></tr></thead>
+                    <thead><tr><th>品名</th><th class="c">数量</th><th class="r">単価</th><th class="r">金額</th></tr></thead>
                     <tbody>${lines}</tbody>
                 </table>
-                <div class="total"><span>合計</span><span>¥${h.total}</span></div>
-                <div class="pay"><span>お預かり</span><span>${cashStr}</span></div>
-                <div class="pay"><span>お釣り</span><span>${changeStr}</span></div>
+                <div class="total"><span>合計</span><span>${yen(h.total)}</span></div>
+                ${payRows}
+
+                <div class="issuer">
+                    <div style="font-size:11px; color:#888;">発行者</div>
+                    <div class="nm">${esc(shop.name)}</div>
+                    ${shop.contact ? `<div class="ct">${esc(shop.contact)}</div>` : ''}
+                </div>
                 <div class="foot">ありがとうございました</div>
                 <script>window.onload=function(){window.print();setTimeout(function(){window.close();},400);};<\/script>
             </body></html>
@@ -4433,6 +4913,33 @@
         win.document.close();
     }
     // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ グラフ共通の見た目 ▼▼▼
+    // 【方針】2つのグラフ（時間帯別・在庫の減り方）で軸・文字・色をそろえる。
+    // また、SVGを拡大縮小せず「1単位＝1px」で描くことで、会計件数が少なくて
+    // グラフが小さい時でも文字だけが不自然に大きくなることを防ぐ。
+    const CHART_GRID = '#DCD8D1';     // 目盛り線（--line と同じ）
+    const CHART_INK = '#5F5A53';      // 目盛りの文字（--text-light と同じ。屋外でも読める濃さ）
+    const CHART_H = 226;              // 描画高さ（2つのグラフ共通）
+    const CHART_FS = 11;              // 目盛りの文字サイズ（実寸px）
+
+    // 描画できる幅を測る。画面に出ていない時（display:none）は画面幅から見積もる。
+    function chartWidth(box, min = 260) {
+        let w = box.clientWidth;
+        if (!w) {
+            const panel = document.getElementById('page-panel');
+            w = ((panel && panel.clientWidth) || window.innerWidth) - 36;
+        }
+        return Math.max(min, Math.round(w - 22)); // .chart-box の左右パディング分
+    }
+
+    // グラフの上に出す単位の説明（縦軸・横軸が何かを一目で分かるように）
+    function chartCaption(yLabel, xLabel) {
+        return `<div class="chart-cap"><span>縦：${yLabel}</span><span>横：${xLabel}</span></div>`;
+    }
+    function chartEmpty() {
+        return '<p class="chart-empty">会計を記録すると、ここにグラフが表示されます。</p>';
+    }
 
     // ▼▼▼ 残在庫の推移グラフ（折れ線）▼▼▼
     // 検証済みカテゴリカルパレット（8色）。9商品目以降は同色＋破線で識別（色＋線種の複合エンコード）。
@@ -4470,34 +4977,33 @@
         if (!box) return;
         const data = buildStockTimeline();
         if (!data) {
-            box.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:6px;">売上が記録されるとここにグラフが表示されます。</p>';
+            box.innerHTML = chartEmpty();
             if (legendBox) legendBox.innerHTML = '';
             return;
         }
 
-        const W = 620, H = 300, mL = 40, mR = 12, mT = 22, mB = 40;
+        // 拡大縮小しない（1単位＝1px）ので、文字は常に指定どおりの大きさで出る
+        const W = chartWidth(box), H = CHART_H, mL = 36, mR = 12, mT = 14, mB = 26;
         const plotW = W - mL - mR, plotH = H - mT - mB;
         const xOf = t => mL + ((t - data.t0) / (data.t1 - data.t0)) * plotW;
         const yOf = v => mT + (1 - v / data.maxStock) * plotH;
         const fmt = t => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
 
-        let svg = `<svg viewBox="0 0 ${W} ${H}" style="width:100%; min-width:520px; height:auto; font-family:inherit;">`;
-        // Y軸グリッド＆目盛り（0〜max を数段）
-        const ySteps = 4;
+        let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="font-family:inherit; display:block; margin:0 auto;">`;
+        // Y軸グリッド＆目盛り（在庫数が少ない時は目盛りを整数に丸めて重複させない）
+        const ySteps = Math.max(1, Math.min(4, data.maxStock));
         for (let i = 0; i <= ySteps; i++) {
             const val = Math.round((data.maxStock / ySteps) * i);
             const y = yOf(val);
-            svg += `<line x1="${mL}" y1="${y}" x2="${W - mR}" y2="${y}" stroke="#e1e0d9" stroke-width="1"/>`;
-            svg += `<text x="${mL - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="#898781">${val}</text>`;
+            svg += `<line x1="${mL}" y1="${y.toFixed(1)}" x2="${W - mR}" y2="${y.toFixed(1)}" stroke="${CHART_GRID}" stroke-width="1"/>`;
+            svg += `<text x="${mL - 7}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="${CHART_FS}" fill="${CHART_INK}">${val}</text>`;
         }
         // X軸目盛り（開始・中間・終了）
         [data.t0, (data.t0 + data.t1) / 2, data.t1].forEach((t, i) => {
             const x = xOf(t);
             const anchor = i === 0 ? 'start' : (i === 2 ? 'end' : 'middle');
-            svg += `<text x="${x}" y="${H - mB + 20}" text-anchor="${anchor}" font-size="11" fill="#898781">${fmt(t)}</text>`;
+            svg += `<text x="${x.toFixed(1)}" y="${H - mB + 17}" text-anchor="${anchor}" font-size="${CHART_FS}" fill="${CHART_INK}">${fmt(t)}</text>`;
         });
-        svg += `<text x="${mL}" y="${H - 4}" font-size="11" fill="#898781">時刻 →</text>`;
-        svg += `<text x="4" y="${mT - 8}" font-size="11" fill="#898781">残数(個)</text>`;
         // 各商品の折れ線
         data.series.forEach((s, idx) => {
             const color = CHART_PALETTE[idx % 8];
@@ -4506,11 +5012,11 @@
             const isDim = chartHighlight && chartHighlight !== s.name;
             const isFocus = chartHighlight === s.name;
             const opacity = isDim ? 0.12 : 1;
-            const width = isFocus ? 4 : 2;
+            const width = isFocus ? 3.5 : 2;
             svg += `<path d="${path}" fill="none" stroke="${color}" stroke-width="${width}" ${dash} opacity="${opacity}" stroke-linejoin="round" stroke-linecap="round"/>`;
         });
         svg += `</svg>`;
-        box.innerHTML = svg;
+        box.innerHTML = chartCaption('残り個数', '時刻') + svg;
 
         // 凡例（色＋線種＋商品名。タップでその商品を強調）
         if (legendBox) {
@@ -4541,13 +5047,25 @@
         const first = floorSlot(Math.min(...times));
         const last = floorSlot(Math.max(...times));
 
-        const counts = {};
-        times.forEach(t => { const s = floorSlot(t); counts[s] = (counts[s] || 0) + 1; });
+        const counts = {}, revs = {};
+        salesHistory.forEach(h => {
+            const s = floorSlot(new Date(h.time).getTime());
+            counts[s] = (counts[s] || 0) + 1;
+            revs[s] = (revs[s] || 0) + h.total;
+        });
 
         const slots = [];
         for (let t = first; t <= last; t += slotMs) {
             const d = new Date(t);
-            slots.push({ label: `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`, count: counts[t] || 0 });
+            const e = new Date(t + slotMs);
+            const hm = x => `${x.getHours()}:${String(x.getMinutes()).padStart(2, '0')}`;
+            const count = counts[t] || 0, rev = revs[t] || 0;
+            slots.push({
+                label: hm(d),
+                range: `${hm(d)}〜${hm(e)}`,
+                count, rev,
+                avg: count > 0 ? Math.floor(rev / count) : 0
+            });
         }
         return { slots, maxCount: Math.max(1, ...slots.map(s => s.count)) };
     }
@@ -4557,44 +5075,48 @@
         if (!box) return;
         const data = buildCustomerTimeline();
         if (!data) {
-            box.innerHTML = '<p style="font-size:12px; color:var(--text-light); margin:6px;">売上が記録されるとここにグラフが表示されます。</p>';
+            box.innerHTML = chartEmpty();
             return;
         }
 
-        const barW = 34, gap = 8, mL = 34, mR = 12, mT = 16, mB = 40;
-        const plotH = 200;
-        const W = mL + mR + data.slots.length * (barW + gap);
-        const H = mT + plotH + mB;
+        // 在庫グラフと同じ高さ・同じ文字サイズ。拡大縮小しないので、
+        // 時間帯が1つしかない時でも数字だけが大きくなることはない。
+        const H = CHART_H, mL = 36, mR = 12, mT = 18, mB = 26;
+        const plotH = H - mT - mB;
+        let W = chartWidth(box);
+        const gap = 8, n = data.slots.length;
+        // 棒の太さは「入るだけ広げる」が、細すぎ・太すぎは抑える
+        let barW = Math.min(42, Math.max(14, Math.floor((W - mL - mR) / n) - gap));
+        let groupW = n * (barW + gap) - gap;
+        let x0 = mL + Math.max(0, ((W - mL - mR) - groupW) / 2); // 少ない時は中央に寄せる
+        if (groupW > W - mL - mR) { W = mL + mR + groupW; x0 = mL; } // 多い時は横スクロール
         const yOf = v => mT + (1 - v / data.maxCount) * plotH;
 
-        // 高さを固定し、幅はアスペクト比から算出（縦に巨大化するのを防ぐ）。
-        // 棒が多い場合はコンテナ側の横スクロールで対応する。
-        const dispH = 240;
-        const dispW = Math.round(dispH * W / H);
-        let svg = `<svg viewBox="0 0 ${W} ${H}" style="height:${dispH}px; width:${dispW}px; max-width:none; font-family:inherit;">`;
-        // Y軸グリッド＆目盛り（整数の客数）
-        const ySteps = Math.min(data.maxCount, 4);
+        let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="font-family:inherit; display:block; margin:0 auto;">`;
+        // Y軸グリッド＆目盛り（客数は整数なので、目盛りが重複しないよう段数を抑える）
+        const ySteps = Math.max(1, Math.min(data.maxCount, 4));
         for (let i = 0; i <= ySteps; i++) {
             const val = Math.round((data.maxCount / ySteps) * i);
             const y = yOf(val);
-            svg += `<line x1="${mL}" y1="${y}" x2="${W - mR}" y2="${y}" stroke="#e1e0d9" stroke-width="1"/>`;
-            svg += `<text x="${mL - 6}" y="${y + 4}" text-anchor="end" font-size="11" fill="#898781">${val}</text>`;
+            svg += `<line x1="${mL}" y1="${y.toFixed(1)}" x2="${W - mR}" y2="${y.toFixed(1)}" stroke="${CHART_GRID}" stroke-width="1"/>`;
+            svg += `<text x="${mL - 7}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="${CHART_FS}" fill="${CHART_INK}">${val}</text>`;
         }
-        // 棒＋各棒の上に客数、下に時刻
+        // 時刻ラベルは重ならない間隔で間引く
+        const labelEvery = Math.max(1, Math.ceil(34 / (barW + gap)));
         data.slots.forEach((s, i) => {
-            const x = mL + i * (barW + gap);
+            const x = x0 + i * (barW + gap);
             const y = yOf(s.count);
             const h = mT + plotH - y;
             if (s.count > 0) {
-                svg += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="4" fill="#2a78d6"/>`;
-                svg += `<text x="${x + barW / 2}" y="${y - 4}" text-anchor="middle" font-size="11" font-weight="bold" fill="#0b0b0b">${s.count}</text>`;
+                svg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${h.toFixed(1)}" rx="3" fill="${CHART_PALETTE[0]}"/>`;
+                svg += `<text x="${(x + barW / 2).toFixed(1)}" y="${(y - 5).toFixed(1)}" text-anchor="middle" font-size="${CHART_FS}" font-weight="700" fill="#2E2A26">${s.count}</text>`;
             }
-            svg += `<text x="${x + barW / 2}" y="${H - mB + 16}" text-anchor="middle" font-size="10" fill="#898781">${s.label}</text>`;
+            if (i % labelEvery === 0 || i === n - 1) {
+                svg += `<text x="${(x + barW / 2).toFixed(1)}" y="${H - mB + 17}" text-anchor="middle" font-size="${CHART_FS - 1}" fill="${CHART_INK}">${s.label}</text>`;
+            }
         });
-        svg += `<text x="${mL}" y="${H - 6}" font-size="11" fill="#898781">時刻 →</text>`;
-        svg += `<text x="2" y="${mT - 4}" font-size="11" fill="#898781">人数</text>`;
         svg += `</svg>`;
-        box.innerHTML = svg;
+        box.innerHTML = chartCaption('客数（人）', '時刻（15分ごと）') + svg;
     }
     // ▲▲▲ ここまで ▲▲▲
 
