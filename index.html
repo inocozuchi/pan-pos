@@ -47,6 +47,9 @@
             --danger-bg: #FBEDE9;
             --danger-ink: #A44030;
             --low-ink: #E06C00;       /* 残りわずかの強調 */
+            /* すりガラス調のバー（ヘッダー・ボトムナビ）。奥の内容がうっすら透ける */
+            --glass-bg: rgba(255,255,255,0.78);
+            --glass-line: rgba(46,42,38,0.10);
 
             /* 角丸は 3段階＋ピルに統一（細かいパーツ=sm／箱・ボタン=md／モーダル=lg） */
             --r-sm: 8px;
@@ -152,7 +155,9 @@
         }
 
         header {
-            background: var(--surface);
+            background: var(--glass-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
             padding: 12px 20px;
             display: flex;
             justify-content: space-between;
@@ -233,7 +238,8 @@
             transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
         }
 
-        .product-btn:active { transform: translateY(1px) scale(0.995); box-shadow: 0 1px 2px rgba(46,42,38,0.05); }
+        .product-btn:active { transform: scale(0.955); box-shadow: 0 1px 2px rgba(46,42,38,0.05); }
+        .product-btn { transition: transform .14s cubic-bezier(.32,.72,0,1), box-shadow .12s ease, filter .12s ease; }
         @media (hover: hover) {
             .product-btn:hover { filter: brightness(0.98); box-shadow: 0 3px 8px rgba(46,42,38,0.10); }
         }
@@ -318,7 +324,7 @@
             letter-spacing: 0.01em;
             transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
         }
-        .action-btn:active { transform: translateY(1px); }
+        .action-btn:active { transform: scale(0.97); }
         @media (hover: hover) { .action-btn:hover { filter: brightness(0.97); } }
         .btn-undo { background-color: var(--btn-neutral); flex: 1; }
         .btn-reserve { background-color: var(--btn-neutral); flex: 1; }
@@ -350,10 +356,14 @@
 
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(90, 78, 77, 0.6);
+            background: rgba(60, 52, 48, 0.45);
+            backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
             display: none;
             justify-content: center; align-items: center; z-index: 100;
         }
+        @keyframes modalPop { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: none; } }
+        @keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+        .modal[style*="flex"] .modal-content { animation: modalPop .3s cubic-bezier(.32,.72,0,1) both; }
         .modal-content {
             background: var(--white);
             width: 90%; max-width: 450px;
@@ -418,6 +428,19 @@
         }
         .change-display .chg-none { font-size: 13px; font-weight: bold; color: var(--accent-ink); margin-top: 4px; }
 
+        /* お会計画面の上部バー：戻るは他の画面と同じ「左上」に置く */
+        .co-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; margin-bottom: 2px; }
+        .co-head h2 { margin: 0; text-align: center; font-size: 20px; }
+        .sheet-back {
+            justify-self: start; display: inline-flex; align-items: center; gap: 1px;
+            background: none; border: none; border-radius: var(--r-md);
+            margin-left: -6px; padding: 8px 10px 8px 6px; min-width: 72px; min-height: 40px;
+            font-size: 15px; font-weight: 600; color: var(--accent); cursor: pointer; font-family: inherit;
+            transition: background .15s ease, transform .12s ease;
+        }
+        .sheet-back .ic { width: 20px; height: 20px; stroke-width: 2.2; }
+        .sheet-back:active { background: var(--accent-soft); transform: scale(0.96); }
+
 
         .res-card {
             background: var(--bg-color); border-radius: var(--r-md); padding: 15px;
@@ -462,14 +485,17 @@
             .total-display { margin-bottom: 0; }
 
             /* ▼ 会計モーダルを全画面化して1画面に収める（見切れ・スクロール解消）▼ */
+            #checkout-modal { align-items: flex-end; }
             #checkout-modal .modal-content {
                 width: 100%; max-width: none; height: 100dvh; max-height: 100dvh;
                 border-radius: 0; padding: 10px 14px calc(8px + env(safe-area-inset-bottom, 0px));
                 gap: 4px;
+                animation: sheetUp .34s cubic-bezier(.32, .72, 0, 1) both !important;
             }
             #checkout-modal .checkout-left { flex: 0 0 auto; }
             #checkout-modal .checkout-right { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
-            #checkout-modal h2 { font-size: 20px; margin-bottom: 2px !important; }
+            #checkout-modal .co-head h2 { font-size: 18px; }
+            #checkout-modal .sheet-back { min-height: 36px; padding: 6px 8px 6px 4px; font-size: 14px; }
             #checkout-modal .receipt-list { max-height: 18vh; margin: 6px 0; }
             #checkout-modal .receipt-item { font-size: 15px; }
             /* 合計表示（左区画）を少し詰める */
@@ -520,7 +546,9 @@
              お釣りの内訳や点数を足したぶん、小さい端末では「完了・記録」が画面外に出てしまう
              ため。縦に余裕のある端末（844px以上）は読みやすい余白のままにしておく。 */
         @media (max-width: 768px) and (max-height: 740px) {
-            #checkout-modal h2 { font-size: 16px; }
+            #checkout-modal .co-head h2 { font-size: 16px; }
+            #checkout-modal .co-head { margin-bottom: 0; }
+            #checkout-modal .sheet-back { min-height: 32px; padding: 4px 8px 4px 4px; }
             #checkout-modal .receipt-list { max-height: 15vh; margin: 4px 0; }
             /* 点数はレシート明細と左下のカートで確認できるので、狭い端末では合計だけ出す */
             #checkout-modal .co-summary .co-row:not(.co-grand) { display: none; }
@@ -573,26 +601,37 @@
 
         /* 操作フィードバックのトースト（会計完了・取消など） */
         #toast {
-            position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%) translateY(16px);
-            background: rgba(38,34,30,0.95); color: #fff; padding: 12px 24px; border-radius: var(--r-pill);
-            font-weight: bold; font-size: 15px; box-shadow: 0 6px 20px rgba(0,0,0,0.22);
-            opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+            position: fixed; left: 50%; bottom: 84px;
+            transform: translateX(-50%) translateY(14px) scale(0.96);
+            background: rgba(38,34,30,0.86);
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+            color: #fff; padding: 12px 22px; border-radius: var(--r-pill);
+            font-weight: bold; font-size: 15px; box-shadow: 0 8px 28px rgba(0,0,0,0.26);
+            opacity: 0; pointer-events: none;
+            transition: opacity .24s ease, transform .32s cubic-bezier(.32,.72,0,1);
             z-index: 200; max-width: 90vw; text-align: center;
         }
-        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 
         /* ▼▼▼ 常設ボトムナビ：主要画面へ1タップで到達（初見でも導線が見える）▼▼▼ */
         #bottom-nav {
-            display: flex; background: var(--white); border-top: 1px solid var(--line);
-            box-shadow: 0 -3px 14px rgba(90,78,77,0.08); z-index: 150; flex-shrink: 0;
+            display: flex; background: var(--glass-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-top: 1px solid var(--glass-line);
+            z-index: 150; flex-shrink: 0;
             padding: 5px 6px calc(5px + env(safe-area-inset-bottom, 0px));
         }
         .nav-item {
             flex: 1; border: none; background: none; cursor: pointer; font-family: inherit;
             display: flex; flex-direction: column; align-items: center; gap: 3px;
             padding: 6px 2px 5px; color: var(--text-light); font-weight: bold; font-size: 11px;
-            border-radius: var(--r-md); position: relative; transition: color .12s ease, background .12s ease;
+            border-radius: var(--r-md); position: relative;
+            transition: color .18s ease, background .18s ease, transform .12s ease;
         }
+        .nav-item:active { transform: scale(0.93); }
+        .nav-item.active .nav-ico { transform: scale(1.06); }
+        .nav-item .nav-ico { transition: transform .2s cubic-bezier(.32,.72,0,1); }
         .nav-item .nav-ico { font-size: 23px; line-height: 1; }
         .nav-item.active { color: var(--accent-ink); background: var(--accent-soft); }
         @media (hover: hover) { .nav-item:hover { background: var(--btn-neutral); } }
@@ -636,38 +675,66 @@
         .action-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
         .action-btn .ic { width: 17px; height: 17px; vertical-align: 0; }
 
-        /* ▼▼▼ 画面（ページ）の切り替え：重ねずに入れ替える ▼▼▼ */
-        #app-main { flex: 1; min-height: 0; display: flex; position: relative; }
+        /* ▼▼▼ 画面（ページ）の切り替え：重ねずに入れ替える ▼▼▼
+           動きの向きで前後関係が伝わるようにする（進む＝右から、戻る＝左から）。 */
+        #app-main { flex: 1; min-height: 0; display: flex; position: relative; overflow: hidden; }
         .page { flex: 1; min-height: 0; display: none; flex-direction: column; }
         .page.active { display: flex; }
 
+        @keyframes slideFromRight { from { opacity: 0; transform: translate3d(26px, 0, 0); } to { opacity: 1; transform: none; } }
+        @keyframes slideFromLeft  { from { opacity: 0; transform: translate3d(-26px, 0, 0); } to { opacity: 1; transform: none; } }
+        /* iOS の画面遷移に近い、はじめ速く終わりゆっくりの曲線 */
+        .anim-forward { animation: slideFromRight .34s cubic-bezier(.32, .72, 0, 1) both; }
+        .anim-back    { animation: slideFromLeft  .34s cubic-bezier(.32, .72, 0, 1) both; }
+
+        /* 画面上部のバー：いつでも同じ位置に「戻る」と見出しがある */
         .panel-head {
-            display: flex; align-items: center; gap: 10px; flex-shrink: 0;
-            padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--surface);
+            display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+            padding: 8px 14px; min-height: 50px;
+            border-bottom: 1px solid var(--line);
+            background: var(--glass-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            position: relative; z-index: 3;
         }
         .panel-head h2 { font-size: 17px; margin: 0; font-weight: 700; color: var(--text-main); min-width: 0; overflow-wrap: anywhere; }
+        /* 戻るボタンは常に左上の同じ位置。押しやすいよう周囲に広い当たり判定を持たせる */
         .panel-back {
-            display: none; align-items: center; gap: 3px; flex-shrink: 0;
-            background: var(--btn-neutral); border: none; border-radius: var(--r-sm);
-            padding: 7px 12px 7px 8px; font-size: 13px; font-weight: bold;
-            color: var(--text-main); cursor: pointer; font-family: inherit;
+            display: none; align-items: center; gap: 1px; flex-shrink: 0;
+            background: none; border: none; border-radius: var(--r-md);
+            margin-left: -8px; padding: 9px 10px 9px 6px; min-width: 76px; min-height: 40px;
+            font-size: 15px; font-weight: 600; color: var(--accent); cursor: pointer; font-family: inherit;
+            transition: background .15s ease, transform .12s ease;
         }
+        .panel-back .ic { width: 20px; height: 20px; stroke-width: 2.2; }
         .panel-back.show { display: inline-flex; }
-        .panel-body { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 16px 20px; }
+        .panel-back:active { background: var(--accent-soft); transform: scale(0.96); }
+        /* 戻るが無い時も見出しの位置がずれないように、同じ幅をあけておく */
+        .panel-head::before { content: ''; width: 0; }
+        .panel-head.no-back h2 { margin-left: 2px; }
+
+        .panel-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 16px 20px; }
         .panel-view { display: none; }
         .panel-view.active { display: block; }
         .sub-view { display: block; }
 
-        /* 一覧 →個別、の2段階メニュー（項目を選んでから中身を出す） */
-        .menu-list { display: flex; flex-direction: column; gap: 8px; }
+        /* 一覧 →個別、の2段階メニュー（項目を選んでから中身を出す）
+           iOSの設定のように、ひとかたまりのカードの中に区切り線で並べる。 */
+        .menu-list {
+            display: flex; flex-direction: column;
+            background: var(--surface); border-radius: var(--r-lg);
+            box-shadow: 0 1px 3px rgba(46,42,38,.06), 0 6px 18px rgba(46,42,38,.05);
+            overflow: hidden;
+        }
         .menu-row {
             display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
-            background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--r-md);
-            padding: 14px 14px; cursor: pointer; font-family: inherit; color: var(--text-main);
-            transition: background .12s ease;
+            background: none; border: none; border-bottom: 1px solid var(--line);
+            padding: 14px 16px; min-height: 60px; cursor: pointer; font-family: inherit; color: var(--text-main);
+            transition: background .15s ease, transform .12s ease;
         }
-        .menu-row:active { background: var(--accent-soft); }
-        @media (hover: hover) { .menu-row:hover { border-color: var(--line-strong); } }
+        .menu-row:last-child { border-bottom: none; }
+        .menu-row:active { background: var(--accent-soft); transform: scale(0.985); }
+        @media (hover: hover) { .menu-row:hover { background: var(--sunken); } }
         .menu-row > .ic:first-child { width: 22px; height: 22px; color: var(--accent); }
         .menu-row .mr-body { flex: 1; min-width: 0; }
         .menu-row .mr-title { display: block; font-size: 15px; font-weight: 700; }
@@ -675,7 +742,13 @@
         .menu-row .mr-go { width: 18px; height: 18px; color: var(--text-light); }
         .menu-row.is-danger > .ic:first-child { color: var(--danger); }
         .menu-row.is-disabled { opacity: .5; pointer-events: none; }
-        @media (min-width: 769px) { .menu-list { display: grid; grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 769px) {
+            .menu-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; }
+            /* 2列のときは右列の区切り線が浮くので、縦線で区切る */
+            .menu-list .menu-row:nth-child(odd) { border-right: 1px solid var(--line); }
+            .menu-list .menu-row:nth-last-child(-n+2):nth-child(odd) { border-bottom: none; }
+            .menu-list .menu-row:last-child { border-bottom: none; }
+        }
         /* スマホでは項目を詰めて、メニュー全体がスクロールなしで収まるようにする */
         @media (max-width: 768px) {
             .menu-list { gap: 7px; }
@@ -684,19 +757,28 @@
             .menu-row .mr-title { font-size: 14.5px; }
             .menu-row .mr-sub { font-size: 11.5px; margin-top: 2px; }
             .panel-body { padding: 12px 14px 16px; }
-            .panel-head { padding: 8px 14px; }
+            .panel-head { padding: 6px 12px; min-height: 46px; }
             .panel-head h2 { font-size: 16px; }
+            /* 在庫調整の1行（価格・仕入れ数）が折り返さないよう、狭い画面では詰める */
+            #live-stock-list .ls-row { gap: 6px !important; }
+            #live-stock-list .ls-row label { font-size: 11px !important; }
+            #live-stock-list .ls-price { width: 66px !important; }
+            #live-stock-list .ls-stock { width: 52px !important; }
+            #live-stock-list .step-btn { width: 28px; height: 28px; }
         }
 
         /* 集計のメニュー（項目カード） */
         .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         @media (min-width: 769px) { .menu-grid { grid-template-columns: repeat(3, 1fr); } }
         .menu-card {
-            background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--r-md);
-            padding: 14px 10px; cursor: pointer; font-family: inherit; color: var(--text-main);
-            display: flex; flex-direction: column; align-items: center; gap: 7px; text-align: center;
+            background: var(--surface); border: none; border-radius: var(--r-lg);
+            padding: 16px 10px; cursor: pointer; font-family: inherit; color: var(--text-main);
+            display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+            box-shadow: 0 1px 3px rgba(46,42,38,.06), 0 6px 18px rgba(46,42,38,.05);
+            transition: transform .12s ease, background .15s ease;
         }
-        .menu-card:active { background: var(--accent-soft); }
+        .menu-card:active { background: var(--accent-soft); transform: scale(0.96); }
+        @media (hover: hover) { .menu-card:hover { background: var(--sunken); } }
         .menu-card .ic { width: 24px; height: 24px; color: var(--accent); }
         .menu-card span { font-size: 13.5px; font-weight: 700; line-height: 1.35; }
 
@@ -741,6 +823,14 @@
         .hdr-btn:active { transform: translateY(1px); }
         .hdr-btn.is-close { background: var(--white); color: var(--accent-ink); box-shadow: inset 0 0 0 2px var(--accent); }
         /* ▲▲▲ ここまで ▲▲▲ */
+
+        /* 端末側で「視差効果を減らす」を選んでいる時は動きを止める */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+            }
+        }
 
         /* ▼ PDF（印刷）用レポート ▼
            画面では隠す。スタイルは別ウィンドウ印刷でも再利用するため、下の
@@ -1069,14 +1159,12 @@
                 <label class="field-label">販売会の名前</label>
                 <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
                 <p class="settings-hint">あとから集計を見分けるための名前です。日付を入れておくと分かりやすくなります。</p>
-                <button class="action-btn btn-secondary" style="width:100%;" onclick="panelBack()"><svg class="ic"><use href="#ic-check"/></svg>決定</button>
             </div>
 
             <!-- 商品と仕入れ数 -->
             <div class="sub-view" id="sub-open-stock" style="display:none;">
                 <div id="inventory-apply"></div>
                 <div id="inventory-setup-list" class="setup-list"></div>
-                <button class="action-btn btn-secondary" style="width:100%; margin-top:10px;" onclick="panelBack()"><svg class="ic"><use href="#ic-check"/></svg>決定</button>
             </div>
 
             <!-- 開店時の共有コード -->
@@ -1085,7 +1173,6 @@
                 <label class="field-label">共有コード（任意）</label>
                 <input type="text" id="sync-event-code-input" placeholder="例: pansale-1101">
                 <div id="sync-status" class="settings-hint"></div>
-                <button class="action-btn btn-secondary" style="width:100%; margin-top:10px;" onclick="panelBack()"><svg class="ic"><use href="#ic-check"/></svg>決定</button>
             </div>
 
             <!-- データを取り込んで始める -->
@@ -1116,7 +1203,11 @@
 <div id="checkout-modal" class="modal">
     <div class="modal-content checkout-wide">
         <div class="checkout-left">
-            <h2 style="margin-top:0; text-align:center;">お会計</h2>
+            <div class="co-head">
+                <button class="sheet-back" onclick="closeModal('checkout-modal')"><svg class="ic"><use href="#ic-left"/></svg>戻る</button>
+                <h2>お会計</h2>
+                <span></span>
+            </div>
             <ul class="receipt-list" id="checkout-receipt"></ul>
             <!-- 点数→合計を縦に並べ、金額は右揃え・等幅数字で読み間違いを防ぐ -->
             <div class="co-summary">
@@ -1170,9 +1261,8 @@
                 <div class="chg-breakdown" id="change-breakdown"></div>
             </div>
 
-            <div style="display:flex; gap:10px;">
-                <button class="action-btn btn-undo" style="flex:1;" onclick="closeModal('checkout-modal')">戻る</button>
-                <button class="action-btn btn-checkout" style="flex:2; margin-top:0;" onclick="completeTransaction()">完了・記録</button>
+            <div>
+                <button class="action-btn btn-checkout" style="width:100%; margin-top:0;" onclick="completeTransaction()">完了・記録</button>
             </div>
         </div>
     </div>
@@ -2416,10 +2506,9 @@
             alert('営業中は過去の販売会を開けません。閉店してからご覧ください。');
             return;
         }
-        showTab('analytics');            // 先にタブを開く（showTab は閲覧状態をいったん解除する）
-        reportViewSnapshot = a.snapshot; // そのうえで閲覧対象を指定して描画し直す
-        withSnapshot(a.snapshot, () => updateAnalytics());
-        showAnalyticsSection('summary');
+        reportViewSnapshot = a.snapshot;
+        withSnapshot(a.snapshot, () => { updateAnalytics(); renderAnalyticsMenu(); });
+        openPanel('analytics', 'report:summary');
         showToast(`「${a.name}」の集計を表示しています`);
     }
 
@@ -2799,16 +2888,15 @@
                 note.innerHTML = `<svg class="ic"><use href="#ic-archive"/></svg><span>「${escHtml(reportViewSnapshot.sessionName || '無題')}」の集計を表示しています（閉店済み）</span>`;
             }
         }
-        // 集計の中を見ている状態から一覧へ戻った、という見出し・戻るボタンの整理
-        if (currentView === 'analytics') {
-            currentSub = null;
-            document.getElementById('panel-title').textContent = VIEW_TITLES.analytics;
-            document.getElementById('panel-back').classList.remove('show');
-        }
     }
 
     // 過去の販売会を閲覧中は、その回のデータで描画する（グラフや操作ログもずれないように）
     function showAnalyticsSection(key) {
+        // 集計の個別項目も1つの画面として履歴に積む（戻る＝一覧へ、で他の画面と同じ挙動）
+        if (currentView === 'analytics' && currentSub !== 'report:' + key) {
+            openPanel('analytics', 'report:' + key);
+            return;
+        }
         return inReportContext(() => showAnalyticsSectionInner(key));
     }
 
@@ -2822,13 +2910,6 @@
         }
         document.getElementById('analytics-menu').style.display = 'none';
         document.getElementById('analytics-detail').style.display = 'block';
-        // 見出しは画面上部に出し、戻るボタンで一覧へ帰れるようにする
-        if (currentView === 'analytics') {
-            currentSub = 'report';
-            document.getElementById('panel-title').textContent = ANALYTICS_TITLES[key] || '';
-            document.getElementById('panel-back').classList.add('show');
-            document.getElementById('panel-body').scrollTop = 0;
-        }
         document.querySelectorAll('.analytics-sec').forEach(el => el.style.display = 'none');
         const sec = document.getElementById('sec-' + key);
         if (sec) sec.style.display = 'block';
@@ -3217,60 +3298,103 @@
         'open-import': 'データを取り込んで始める'
     };
 
-    // いま開いている画面とサブ画面（戻る操作のために覚えておく）
+    // ▼ 画面の履歴（スタック）▼
+    // 「戻る」は常に “ひとつ前の画面” へ戻る。レジへ一気に戻る導線は置かない。
+    // ・ボトムナビのタブを押した時 … 履歴をそのタブから始め直す（タブ移動は戻る対象にしない）
+    // ・項目を開いた時           … 履歴に積む（戻るボタンが出る）
+    let navStack = [{ view: 'register', sub: null }];
     let currentView = 'register';
     let currentSub = null;
+    let navDir = 'forward';     // 画面の入れ替わり方向（アニメーションの向きに使う）
 
+    function navTop() { return navStack[navStack.length - 1]; }
+
+    // ボトムナビ：そのタブを起点にして履歴をやり直す
     function navTo(section) {
-        if (section === 'register') return showRegister();
-        openPanel(section);
+        navStack = [{ view: section, sub: null }];
+        navDir = 'forward';
+        renderNav();
+    }
+
+    // 項目を開く：履歴に積む（＝戻るボタンでここへ帰れる）
+    function openPanel(view, sub) {
+        const top = navTop();
+        if (top && top.view === view && (top.sub || null) === (sub || null)) { renderNav(); return; }
+        navStack.push({ view, sub: sub || null });
+        navDir = 'forward';
+        renderNav();
     }
 
     function showRegister() {
-        currentView = 'register';
-        currentSub = null;
-        document.getElementById('page-panel').classList.remove('active');
-        document.getElementById('page-register').classList.add('active');
-        setActiveNav('register');
+        navStack = [{ view: 'register', sub: null }];
+        navDir = 'back';
+        renderNav();
     }
 
-    function openPanel(view, sub) {
-        currentView = view;
-        currentSub = sub || null;
-        document.getElementById('page-register').classList.remove('active');
-        document.getElementById('page-panel').classList.add('active');
-        PANEL_VIEWS.forEach(v => {
-            const el = document.getElementById('view-' + v);
-            if (el) el.classList.toggle('active', v === view);
-        });
-        // サブ画面の出し分け（メニューか、選んだ項目か）
-        const root = document.getElementById('view-' + view);
-        if (root) {
-            const subs = root.querySelectorAll(':scope > .sub-view');
-            if (subs.length) {
-                const wantId = currentSub ? ('sub-' + currentSub) : subs[0].id;
-                subs.forEach(el => { el.style.display = (el.id === wantId) ? 'block' : 'none'; });
-            }
-        }
-        // 見出しと戻るボタン
-        document.getElementById('panel-title').textContent =
-            currentSub ? (SUB_TITLES[currentSub] || '') : (VIEW_TITLES[view] || '');
-        document.getElementById('panel-back').classList.toggle('show', !!currentSub || view === 'session');
-        setActiveNav(view === 'session' ? null : view);
-        document.getElementById('panel-body').scrollTop = 0;
-        refreshView(view, currentSub);
-    }
-
-    // 1段階だけ戻る（サブ画面 → メニュー → レジ）
+    // ひとつ前の画面へ戻る
     function panelBack() {
-        if (currentView === 'analytics' && currentSub === 'report') { showAnalyticsMenu(); return; }
-        if (currentSub) {
-            // 共有コードの追加画面からは、共有の画面へ戻る
-            const parent = (currentSub === 'sync-add') ? 'sync' : null;
-            openPanel(currentView, parent);
-            return;
+        if (navStack.length <= 1) { navTo('register'); return; }
+        navStack.pop();
+        navDir = 'back';
+        renderNav();
+    }
+
+    // いまの履歴の先頭にあわせて画面を描く
+    function renderNav() {
+        const top = navTop();
+        currentView = top.view;
+        currentSub = top.sub;
+        const reg = document.getElementById('page-register');
+        const panel = document.getElementById('page-panel');
+        const onRegister = currentView === 'register';
+
+        setPageActive(reg, onRegister);
+        setPageActive(panel, !onRegister);
+
+        if (!onRegister) {
+            PANEL_VIEWS.forEach(v => {
+                const el = document.getElementById('view-' + v);
+                if (el) el.classList.toggle('active', v === currentView);
+            });
+            const root = document.getElementById('view-' + currentView);
+            if (root) {
+                const subs = root.querySelectorAll(':scope > .sub-view');
+                if (subs.length) {
+                    const wantId = currentSub ? ('sub-' + currentSub) : subs[0].id;
+                    subs.forEach(el => {
+                        const show = el.id === wantId;
+                        el.style.display = show ? 'block' : 'none';
+                        if (show) animateIn(el);
+                    });
+                }
+            }
+            const reportKey = (currentSub || '').startsWith('report:') ? currentSub.slice(7) : null;
+            document.getElementById('panel-title').textContent = reportKey
+                ? (ANALYTICS_TITLES[reportKey] || '')
+                : (currentSub ? (SUB_TITLES[currentSub] || '') : (VIEW_TITLES[currentView] || ''));
+            document.getElementById('panel-body').scrollTop = 0;
         }
-        showRegister();
+        // 戻るボタンは「ひとつ前があるか」だけで決まる（どの画面でも同じ位置・同じ意味）
+        const backBtn = document.getElementById('panel-back');
+        const canBack = navStack.length > 1;
+        backBtn.classList.toggle('show', canBack);
+        document.querySelector('.panel-head').classList.toggle('no-back', !canBack);
+        setActiveNav(currentView === 'session' ? null : currentView);
+        if (!onRegister) refreshView(currentView, currentSub);
+    }
+
+    // 表示の切り替えにアニメーションを添える（動きで前後関係が分かるように）
+    function setPageActive(el, active) {
+        if (!el) return;
+        const was = el.classList.contains('active');
+        el.classList.toggle('active', active);
+        if (active && !was) animateIn(el);
+    }
+
+    function animateIn(el) {
+        el.classList.remove('anim-forward', 'anim-back');
+        void el.offsetWidth;                      // アニメーションをやり直させる
+        el.classList.add(navDir === 'back' ? 'anim-back' : 'anim-forward');
     }
 
     // 画面を開いた時に中身を作り直す
@@ -3292,18 +3416,20 @@
             else if (sub === 'open-name') updateSessionTabView();
         }
         else if (view === 'analytics') {
+            if (sub && sub.startsWith('report:')) {
+                inReportContext(() => showAnalyticsSectionInner(sub.slice(7)));
+                return;
+            }
             // 「売上集計」は基本“いまのデータ”を見せる。
             // ただし閉店後でレジが空のときは、直前に閉店した販売会の集計を自動で出す。
-            if (!sub) {
-                reportViewSnapshot = null;
-                if (!currentSession && salesHistory.length === 0) {
-                    const latest = sessionArchive[sessionArchive.length - 1];
-                    if (latest && latest.snapshot) reportViewSnapshot = latest.snapshot;
-                }
-                inReportContext(() => updateAnalytics());
-                renderAnalyticsMenu();
-                showAnalyticsMenu();
+            reportViewSnapshot = null;
+            if (!currentSession && salesHistory.length === 0) {
+                const latest = sessionArchive[sessionArchive.length - 1];
+                if (latest && latest.snapshot) reportViewSnapshot = latest.snapshot;
             }
+            inReportContext(() => updateAnalytics());
+            renderAnalyticsMenu();
+            showAnalyticsMenu();
         }
     }
 
@@ -4502,12 +4628,12 @@
                         <span style="font-size:13px; color:var(--text-light);">残り</span>
                         <span class="num" style="font-size:17px; font-weight:bold; min-width:38px; text-align:right; color:${oversold ? 'var(--danger)' : (p.stock <= 5 ? 'var(--low-ink)' : 'var(--text-main)')};">${p.stock}</span>
                     </div>
-                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <div class="ls-row" style="display:flex; gap:8px; align-items:center;">
                         <label style="font-size:12px; color:var(--text-light);">価格</label>
-                        <input type="number" value="${p.price}" class="num" style="width:78px; padding:6px; text-align:right; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" onchange="setLivePrice(${p.id}, this.value)">
-                        <label style="font-size:12px; color:var(--text-light); margin-left:4px;">仕入れ数</label>
+                        <input type="number" value="${p.price}" class="num ls-price" style="width:78px; padding:6px; text-align:right; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" onchange="setLivePrice(${p.id}, this.value)">
+                        <label style="font-size:12px; color:var(--text-light); margin-left:2px;">仕入れ数</label>
                         <button class="step-btn minus" onclick="adjustLiveInitialStock(${p.id}, -1)">−</button>
-                        <input type="number" value="${p.initialStock}" class="num" style="width:62px; padding:6px; text-align:center; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" onchange="setLiveInitialStock(${p.id}, this.value)">
+                        <input type="number" value="${p.initialStock}" class="num ls-stock" style="width:62px; padding:6px; text-align:center; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" onchange="setLiveInitialStock(${p.id}, this.value)">
                         <button class="step-btn plus" onclick="adjustLiveInitialStock(${p.id}, 1)">＋</button>
                     </div>
                     ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:6px; padding:6px; font-size:12px; border:1px solid var(--line-strong); border-radius:var(--r-sm);" onchange="setProductNote(${p.id}, this.value)">` : ''}
