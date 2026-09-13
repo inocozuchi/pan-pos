@@ -52,14 +52,17 @@
             --glass-line: rgba(46,42,38,0.10);
 
             /* 角丸は 3段階＋ピルに統一（細かいパーツ=sm／箱・ボタン=md／モーダル=lg） */
-            --r-sm: 8px;
-            --r-md: 12px;
-            --r-lg: 18px;
+            --r-sm: 9px;
+            --r-md: 13px;
+            --r-lg: 20px;
             --r-pill: 999px;
+            /* 影は「近くの薄い影＋遠くの広い影」の2枚重ねにすると、浮き方が自然になる */
+            --shadow-card: 0 1px 2px rgba(46,42,38,.05), 0 8px 24px rgba(46,42,38,.06);
+            --shadow-raised: 0 2px 6px rgba(46,42,38,.07), 0 14px 34px rgba(46,42,38,.09);
         }
 
         /* 金額は桁が揃う等幅数字で表示する（アプリ全体で統一） */
-        .num, .total-amount, .co-summary .co-val, .change-display { font-variant-numeric: tabular-nums; }
+        .num, .total-amount, .co-summary .co-val { font-variant-numeric: tabular-nums; }
 
         /* 画面全体が左右・上下に不必要に動く（ラバーバンド/バウンス）のを防止。
            body だけでなく html 側にも同じ制約をかけないと、iPad/iPhoneのSafariでは
@@ -73,7 +76,9 @@
         }
 
        body {
-            font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
             background-color: var(--bg-color);
             color: var(--text-main);
             margin: 0;
@@ -117,16 +122,26 @@
         /* 追加ここまで */
 
         /* ▼▼▼ お会計画面の横長化＆客属性ボタン化 ▼▼▼ */
-        .customer-type-group { display: flex; gap: 5px; width: 100%; }
+        /* 客属性：iOSのセグメンテッドコントロール（ひとつの枠の中で選んだところが白く浮く） */
+        .customer-type-group {
+            display: flex; gap: 2px; width: 100%;
+            background: var(--btn-neutral); border-radius: 11px; padding: 2px;
+        }
         .type-btn {
-            flex: 1; text-align: center; background: var(--white); border: 2px solid var(--line-strong);
-            border-radius: var(--r-sm); padding: 10px 2px; font-weight: bold; cursor: pointer;
-            font-size: 14px; transition: all 0.2s;
+            flex: 1; text-align: center; background: none; border: none;
+            border-radius: 9px; padding: 8px 2px; font-weight: 600; cursor: pointer;
+            font-size: 13.5px; color: var(--text-light);
+            transition: background .2s ease, color .2s ease, box-shadow .2s ease, transform .12s ease;
         }
         .type-btn input[type="radio"] { display: none; } /* ラジオボタンの丸を隠す */
-        .type-btn:has(input:checked) { background: var(--accent); color: white; border-color: var(--accent); }
-        .type-btn.type-later { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn-ink); } /* 後で入力（未入力フラグ） */
-        .type-btn.type-later:has(input:checked) { background: var(--warn-solid); border-color: var(--warn-solid); color: white; }
+        .type-btn:active { transform: scale(0.96); }
+        .type-btn:has(input:checked) {
+            background: var(--white); color: var(--accent-ink); font-weight: 700;
+            box-shadow: 0 1px 3px rgba(46,42,38,.14), 0 0 0 .5px rgba(46,42,38,.04);
+        }
+        /* 「後で」＝まだ入れていない印なので、選ばれている間は色で気づけるようにする */
+        .type-btn.type-later { color: var(--warn-ink); }
+        .type-btn.type-later:has(input:checked) { background: var(--warn-solid); color: #fff; }
         
         @media (min-width: 769px) {
             .checkout-wide { max-width: 940px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
@@ -140,11 +155,11 @@
         @media (min-width: 769px) and (max-height: 860px) {
             #checkout-modal .modal-content { padding: 18px; }
             #checkout-modal h2 { font-size: 22px; margin-bottom: 6px; }
-            #cash-input { font-size: 26px; padding: 12px 16px; margin: 8px 0; }
+            .cash-display { padding: 10px 14px; margin-top: 8px; }
+            .cash-display #cash-input, .cash-display .chg-amount { font-size: 26px; }
             .tenkey-grid { gap: 9px; margin-top: 10px; }
             .tenkey-btn { min-height: 54px; padding: 10px; font-size: 26px; }
-            .change-display { margin: 10px 0; padding: 8px 10px; }
-            .change-display .chg-amount { font-size: 28px; }
+
         }
         /* ▲▲▲ ここまで ▲▲▲ */
 
@@ -158,7 +173,7 @@
             background: var(--glass-bg);
             backdrop-filter: saturate(180%) blur(20px);
             -webkit-backdrop-filter: saturate(180%) blur(20px);
-            padding: 12px 20px;
+            padding: 12px max(20px, env(safe-area-inset-right)) 12px max(20px, env(safe-area-inset-left));
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -203,6 +218,7 @@
 
         #app-container {
             display: flex;
+            min-width: 0;
             flex-direction: row-reverse; /* 商品ボタンを右、カート（小計）を左に配置（右利き向け） */
             flex: 1;
             overflow: hidden;
@@ -262,6 +278,7 @@
 
         #sidebar {
             flex: 1;
+            min-width: 0;
             background-color: var(--white);
             border-right: 1px solid var(--line);
             display: flex;
@@ -272,7 +289,9 @@
 
         #cart-list {
             flex: 1;
+            min-width: 0;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 15px;
         }
 
@@ -292,12 +311,17 @@
         .cart-item {
             display: flex;
             justify-content: space-between;
+            gap: 8px;
+            min-width: 0;
             padding: 10px 0;
             border-bottom: 1px dashed var(--line);
             font-size: 16px;
         }
+        .cart-item > span:first-child { min-width: 0; }
+        .cart-item > span:first-child > span:last-child { min-width: 0; overflow-wrap: anywhere; }
 
         footer {
+            min-width: 0;
             background-color: var(--sunken-deep);
             padding: 15px;
             display: flex;
@@ -310,7 +334,8 @@
         .total-display .total-label { font-size: 18px; font-weight: 700; color: var(--text-light); letter-spacing: 0.02em; }
         .total-display .total-amount { font-size: 36px; font-weight: 800; color: var(--text-main); font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
 
-        .action-row { display: flex; gap: 10px; }
+        .action-row { display: flex; gap: 10px; min-width: 0; }
+        .action-row .action-btn { min-width: 0; }
         .action-btn {
             padding: 13px;
             border-radius: var(--r-md);
@@ -368,8 +393,8 @@
             background: var(--white);
             width: 90%; max-width: 450px;
             padding: 24px;
-            border-radius: var(--r-lg);
-            box-shadow: 0 18px 50px rgba(38,34,30,0.22);
+            border-radius: 22px;
+            box-shadow: 0 24px 60px rgba(38,34,30,0.24);
             max-height: 92vh;
             overflow-y: auto;
             display: flex;
@@ -412,21 +437,35 @@
             padding: 16px 18px; width: calc(100% - 36px);
         }
 
-        /* お釣り表示：金額＋「何をいくつ返すか」の内訳（渡し間違い・もたつきの防止） */
-        .change-display {
-            margin: 15px 0; text-align: center; background: var(--accent-soft);
-            border-radius: var(--r-md); padding: 10px 12px;
+        /* ▼ レジの表示窓（お預かり・お釣り）▼
+           テンキーやボタンと見間違えないよう、濃い面に白文字の「表示」として作る。
+           押す場所ではないことが、色と形だけで分かるようにするのが目的。 */
+        .cash-display {
+            background: var(--text-main); border-radius: var(--r-md);
+            padding: 12px 16px; margin: 10px 0 0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,.35);
         }
-        .change-display .chg-amount { font-size: 32px; color: var(--accent-ink); font-weight: bold; }
-        .change-display .chg-label { font-size: 14px; color: var(--accent-ink); font-weight: bold; margin-right: 6px; }
-        .change-display .chg-breakdown {
-            display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: center; margin-top: 7px;
+        .cash-display .cd-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+        .cash-display .cd-label { font-size: 13px; color: rgba(255,255,255,.62); font-weight: 600; flex-shrink: 0; }
+        .cash-display .cd-sep { height: 1px; background: rgba(255,255,255,.16); margin: 8px 0; }
+        /* 入力欄は「窓の中の数字」として見せる（枠も背景も持たせない） */
+        .cash-display #cash-input {
+            flex: 1; min-width: 0; width: auto; margin: 0; padding: 0;
+            background: none; border: none; border-radius: 0; outline: none;
+            color: #fff; font-size: 30px; font-weight: 700; text-align: right;
+            font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
         }
-        .change-display .chg-breakdown span {
-            background: var(--white); color: var(--text-main); border-radius: var(--r-pill);
-            padding: 3px 10px; font-size: 13px; font-weight: 700; white-space: nowrap;
+        .cash-display #cash-input::placeholder { color: rgba(255,255,255,.30); }
+        .cash-display .chg-amount {
+            font-size: 30px; font-weight: 800; color: var(--btn-sweet);
+            font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
         }
-        .change-display .chg-none { font-size: 13px; font-weight: bold; color: var(--accent-ink); margin-top: 4px; }
+        .cash-display .chg-breakdown { display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: flex-end; margin-top: 8px; }
+        .cash-display .chg-breakdown span {
+            background: rgba(255,255,255,.13); color: #fff; border-radius: var(--r-pill);
+            padding: 3px 10px; font-size: 12.5px; font-weight: 700; white-space: nowrap;
+        }
+        .cash-display .chg-none { font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,.62); margin-top: 6px; text-align: right; width: 100%; }
 
         /* お会計画面の上部バー：戻るは他の画面と同じ「左上」に置く */
         .co-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; margin-bottom: 2px; }
@@ -465,7 +504,8 @@
                 font-family: inherit; font-size: 13px; font-weight: bold; color: var(--text-main);
                 text-align: left; flex-shrink: 0;
             }
-            #cart-toggle #cart-toggle-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+            #cart-toggle { overflow: hidden; min-width: 0; }
+            #cart-toggle #cart-toggle-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             #cart-toggle .ic { width: 16px; height: 16px; color: var(--text-light); }
             .action-row { display: flex; }
             .btn-checkout { padding: 12px; }
@@ -486,6 +526,12 @@
 
             /* ▼ 会計モーダルを全画面化して1画面に収める（見切れ・スクロール解消）▼ */
             #checkout-modal { align-items: flex-end; }
+            #checkout-modal .modal-content { position: relative; }
+            #checkout-modal .sheet-grabber {
+                display: block; position: absolute; top: 5px; left: 50%; transform: translateX(-50%);
+                width: 36px; height: 4px; border-radius: 999px; background: var(--line-strong);
+            }
+            #checkout-modal .co-head { margin-top: 6px; }
             #checkout-modal .modal-content {
                 width: 100%; max-width: none; height: 100dvh; max-height: 100dvh;
                 border-radius: 0; padding: 10px 14px calc(8px + env(safe-area-inset-bottom, 0px));
@@ -506,17 +552,17 @@
             /* 客属性ボックスを薄く */
             #checkout-modal .checkout-right > div:first-child { padding: 8px !important; margin-bottom: 6px !important; }
             .type-btn { font-size: 13px; padding: 9px 2px; }
-            #cash-input { font-size: 26px; padding: 12px 14px; margin: 6px 0; }
+            .cash-display { padding: 9px 13px; margin-top: 6px; }
+            .cash-display #cash-input, .cash-display .chg-amount { font-size: 25px; }
+            .cash-display .cd-sep { margin: 6px 0; }
             #cash-suggestions { margin-top: 4px !important; }
             #cash-suggestions .action-btn { padding: 9px !important; font-size: 15px !important; }
 
             /* テンキーを縮めて全キーを画面内に収める */
             .tenkey-grid { gap: 7px; margin-top: 7px; }
             .tenkey-btn { font-size: 22px; padding: 0; min-height: 46px; }
-            .change-display { margin: 8px 0 6px; padding: 7px 10px; }
-            .change-display .chg-amount { font-size: 24px; }
-            .change-display .chg-breakdown { margin-top: 5px; gap: 3px 5px; }
-            .change-display .chg-breakdown span { font-size: 12px; padding: 2px 8px; }
+            .cash-display .chg-breakdown { margin-top: 6px; gap: 3px 5px; }
+            .cash-display .chg-breakdown span { font-size: 12px; padding: 2px 8px; }
 
             /* 戻る・完了は常に画面下に固定（押せない問題を解消）*/
             #checkout-modal .checkout-right > div:last-child {
@@ -556,16 +602,16 @@
             #checkout-modal .co-summary .co-row.co-grand .co-val { font-size: 21px; }
             #checkout-modal .checkout-right > div:first-child { padding: 6px !important; margin-bottom: 4px !important; }
             .type-btn { font-size: 12px; padding: 7px 1px; }
-            #cash-input { font-size: 22px; padding: 9px 12px; margin: 4px 0; }
+            .cash-display { padding: 7px 12px; margin-top: 4px; }
+            .cash-display #cash-input, .cash-display .chg-amount { font-size: 22px; }
+            .cash-display .cd-sep { margin: 5px 0; }
+            .cash-display .cd-label { font-size: 12px; }
             #cash-suggestions .action-btn { padding: 7px !important; font-size: 14px !important; }
             .tenkey-grid { gap: 5px; margin-top: 5px; }
             .tenkey-btn { font-size: 20px; min-height: 40px; }
-            .change-display { margin: 5px 0 4px; padding: 5px 8px; }
-            .change-display .chg-amount { font-size: 20px; }
-            .change-display .chg-label { font-size: 13px; }
-            .change-display .chg-breakdown { margin-top: 3px; }
-            .change-display .chg-breakdown span { font-size: 11px; padding: 1px 7px; }
-            .change-display .chg-none { font-size: 12px; margin-top: 2px; }
+            .cash-display .chg-breakdown { margin-top: 4px; }
+            .cash-display .chg-breakdown span { font-size: 11px; padding: 1px 7px; }
+            .cash-display .chg-none { font-size: 11.5px; margin-top: 3px; }
             #checkout-modal .checkout-right > div:last-child .btn-checkout { font-size: 17px; padding: 13px; }
         }
 
@@ -577,12 +623,15 @@
             .card-strip > p { flex: 1; }
         }
         /* 仕入れ数設定：横長デバイスでは商品をカード横並び＋横スクロール */
-        .setup-list { background:var(--sunken); border:2px solid var(--line); padding:10px; border-radius:var(--r-md); margin-bottom:15px; max-height:230px; overflow-y:auto; }
-        .setup-card { padding:0 0 8px 8px; margin-bottom:8px; border-bottom:1px solid var(--line); }
+        .setup-list { background:none; border:none; padding:0; margin-bottom:15px; max-height:none; }
+        .setup-card {
+            background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-card);
+            padding: 12px 14px; margin-bottom: 10px;
+        }
         .setup-add-btn { width:100%; margin-top:10px; }
         @media (min-width: 769px) {
-            .setup-list { display:flex; flex-wrap:nowrap; gap:10px; overflow-x:auto; overflow-y:hidden; max-height:none; align-items:flex-start; }
-            .setup-card { min-width:190px; max-width:210px; flex-shrink:0; border:2px solid var(--line); border-radius:var(--r-md); padding:10px 10px 10px 8px; margin-bottom:0; background:var(--white); }
+            .setup-list { display:flex; flex-wrap:nowrap; gap:12px; overflow-x:auto; overflow-y:hidden; align-items:flex-start; padding:4px 2px 12px; }
+            .setup-card { min-width:200px; max-width:220px; flex-shrink:0; padding:12px 14px; margin-bottom:0; }
             .setup-add-btn { width:auto; min-width:100px; flex-shrink:0; align-self:stretch; margin-top:0; }
         }
 
@@ -678,7 +727,7 @@
         /* ▼▼▼ 画面（ページ）の切り替え：重ねずに入れ替える ▼▼▼
            動きの向きで前後関係が伝わるようにする（進む＝右から、戻る＝左から）。 */
         #app-main { flex: 1; min-height: 0; display: flex; position: relative; overflow: hidden; }
-        .page { flex: 1; min-height: 0; display: none; flex-direction: column; }
+        .page { flex: 1; min-height: 0; min-width: 0; display: none; flex-direction: column; }
         .page.active { display: flex; }
 
         @keyframes slideFromRight { from { opacity: 0; transform: translate3d(26px, 0, 0); } to { opacity: 1; transform: none; } }
@@ -723,7 +772,7 @@
         .menu-list {
             display: flex; flex-direction: column;
             background: var(--surface); border-radius: var(--r-lg);
-            box-shadow: 0 1px 3px rgba(46,42,38,.06), 0 6px 18px rgba(46,42,38,.05);
+            box-shadow: var(--shadow-card);
             overflow: hidden;
         }
         .menu-row {
@@ -774,7 +823,7 @@
             background: var(--surface); border: none; border-radius: var(--r-lg);
             padding: 16px 10px; cursor: pointer; font-family: inherit; color: var(--text-main);
             display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
-            box-shadow: 0 1px 3px rgba(46,42,38,.06), 0 6px 18px rgba(46,42,38,.05);
+            box-shadow: var(--shadow-card);
             transition: transform .12s ease, background .15s ease;
         }
         .menu-card:active { background: var(--accent-soft); transform: scale(0.96); }
@@ -823,6 +872,30 @@
         .hdr-btn:active { transform: translateY(1px); }
         .hdr-btn.is-close { background: var(--white); color: var(--accent-ink); box-shadow: inset 0 0 0 2px var(--accent); }
         /* ▲▲▲ ここまで ▲▲▲ */
+
+        /* オン・オフはiOSのスイッチの形に（何が起きるか一目で分かる） */
+        .ios-switch {
+            appearance: none; -webkit-appearance: none; margin: 0; flex-shrink: 0;
+            width: 44px; height: 26px; border-radius: var(--r-pill);
+            background: var(--line-strong); position: relative; cursor: pointer;
+            transition: background .22s cubic-bezier(.32,.72,0,1);
+        }
+        .ios-switch::after {
+            content: ''; position: absolute; top: 2px; left: 2px;
+            width: 22px; height: 22px; border-radius: 50%; background: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,.2);
+            transition: transform .22s cubic-bezier(.32,.72,0,1);
+        }
+        .ios-switch:checked { background: var(--btn-savory); }
+        .ios-switch:checked::after { transform: translateX(18px); }
+        .ios-switch:active::after { width: 25px; }
+        .setup-card label:has(.ios-switch) { justify-content: space-between; }
+
+        /* スマホのお会計シートの上端につまみを出す（下から出てきたことが分かる） */
+        .sheet-grabber { display: none; }
+
+        /* キーボードで操作している時だけ、選択中の枠を出す（タッチ時は出さない） */
+        :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
         /* 端末側で「視差効果を減らす」を選んでいる時は動きを止める */
         @media (prefers-reduced-motion: reduce) {
@@ -1202,6 +1275,7 @@
 
 <div id="checkout-modal" class="modal">
     <div class="modal-content checkout-wide">
+        <div class="sheet-grabber"></div>
         <div class="checkout-left">
             <div class="co-head">
                 <button class="sheet-back" onclick="closeModal('checkout-modal')"><svg class="ic"><use href="#ic-left"/></svg>戻る</button>
@@ -1233,8 +1307,20 @@
                 <button type="button" id="last-type-quick" style="display:none; width:100%; margin-top:8px; padding:8px; font-size:14px; font-weight:bold; border:2px dashed var(--accent); border-radius:var(--r-sm); background:var(--white); color:var(--accent-ink); cursor:pointer; font-family:inherit;" onclick="applyLastCustomerType()"></button>
             </div>
             
-            <input type="text" id="cash-input" placeholder="預かり金額" readonly>
-            
+            <!-- レジの表示窓：お預かりとお釣りをひとまとめにして「読むところ」だと分かるようにする -->
+            <div class="cash-display">
+                <div class="cd-row">
+                    <span class="cd-label">お預かり</span>
+                    <input type="text" id="cash-input" placeholder="0" readonly>
+                </div>
+                <div class="cd-sep"></div>
+                <div class="cd-row cd-change">
+                    <span class="cd-label">お釣り</span>
+                    <span class="chg-amount">¥<span id="change-amount">0</span></span>
+                </div>
+                <div class="chg-breakdown" id="change-breakdown"></div>
+            </div>
+
             <div id="cash-suggestions" style="display: flex; gap: 10px; margin-top: 5px;">
                 <button class="action-btn btn-accent-outline" style="flex: 1; padding: 10px; font-size: 16px;" onclick="setCashExact()">ちょうど</button>
             </div>
@@ -1255,12 +1341,6 @@
                 <button class="action-btn tenkey-btn clear-btn" onclick="clearCash()">C</button>
             </div>
             
-            <!-- お釣りは金額だけでなく「何をいくつ返すか」も出す（渡し間違い・もたつきの防止） -->
-            <div class="change-display">
-                <span class="chg-label">お釣り</span><span class="chg-amount">¥<span id="change-amount">0</span></span>
-                <div class="chg-breakdown" id="change-breakdown"></div>
-            </div>
-
             <div>
                 <button class="action-btn btn-checkout" style="width:100%; margin-top:0;" onclick="completeTransaction()">完了・記録</button>
             </div>
@@ -2038,11 +2118,12 @@
             list.innerHTML += `
                 <div class="setup-card" style="border-left:6px solid ${catColor(p.type)}; ${p.active === false ? 'opacity:0.5;' : ''}">
                     <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-light); margin-bottom:4px; cursor:pointer;">
-                        <input type="checkbox" ${p.active === false ? '' : 'checked'} onchange="updateTempProduct(${p.id}, 'active', this.checked)"> この回で販売する
+                        <span>この回で販売する</span>
+                        <input class="ios-switch" type="checkbox" ${p.active === false ? '' : 'checked'} onchange="updateTempProduct(${p.id}, 'active', this.checked)">
                     </label>
                     <div style="display:flex; gap:5px; align-items:center;">
                         <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
-                        <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger); color:#fff;">×</button>
+                        <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
                     </div>
                     <div style="display:flex; gap:5px; margin-top:5px;">
                         <div style="flex:1; min-width:0;">
@@ -3106,7 +3187,6 @@
                 res += `\n→ ヒント: 職員は${st[0]}、学生は${gk[0]}が多めでした。来店ピークの時間差と客層に合わせて配分すると良いかもしれません。\n`;
             }
         }
-        res += `\n※味の傾向は商品名のキーワードから推定した簡易判定です（クラウドAIではありません）。\n`;
         return res;
     }
     // ▲▲▲ ここまで ▲▲▲
