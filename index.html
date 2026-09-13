@@ -15,55 +15,57 @@
     <link rel="icon" href="icons/icon-192.png">
     <style>
         /* ▼▼▼ 配色 ▼▼▼
-           【方針】屋外（直射日光の下）での見やすさを最優先に、iOSらしい
-           「白い面＋はっきりした色」の組み合わせにしている。
-           ・文字と背景の明暗差は、小さい文字で 4.5:1 以上、
-             商品ボタンの品名のように必ず読む文字は 7:1 以上を確保する。
-             （日なたでは画面が白っぽく飛ぶため、淡い色どうしの組み合わせは読めなくなる）
-           ・カテゴリの色分けは続けるが、淡いパステルは日光で白飛びして
-             3色の区別がつかないため、彩度を上げたうえで
-             ボタンの上辺に濃い色の帯を足し、色が飛んでも見分けられるようにした。
+           【方針】iOS の標準アプリと同じ考え方で、「白い面＋淡い色」を基調にして
+           やわらかい印象にする。画面を色で埋めず、強調したいところだけ色を使う。
+             ・面（商品ボタン・情報の箱）… 淡いパステル。文字は濃いグレーで読ませる
+             ・操作（会計へ進む・戻る・選択中）… 青（iOS の標準色にならう）
+             ・本当に注目してほしいところ（お預かり・お釣り）… 黒に近い濃い面
+           【読みやすさの下限】屋外でも読めるよう、明暗差は実測して
+             小さい文字 4.5:1 以上／商品名など必ず読む文字 7:1 以上 を満たす範囲で
+             できるだけ淡い色を選んでいる。
+           【カテゴリの色分け】面は淡いままにして、ボタンの上辺に細い濃色の帯を置く。
+             日なたで面の色が白飛びしても、この帯で3分類を見分けられる。
            ・色を足すときは必ずこの変数を使う（各所に直接書かない）。 */
         :root {
-            --bg-color: #F2F0EC;      /* 画面の地。白い面を浮かせるための、ごく薄い暖色グレー */
+            --bg-color: #F2F2F7;      /* 画面の地。白い面を浮かせるための、ごく薄いグレー */
             --surface: #FFFFFF;
             --white: #FFFFFF;
             --header-bg: #FFFFFF;
-            --line: #DCD8D1;          /* 区切り線・枠（屋外で見えるよう従来より濃く） */
-            --line-strong: #BEB9B1;
-            /* カテゴリ3色：面（文字を載せる薄い色） */
-            --btn-sweet: #FBD68C;     /* パン（ゴールド） */
-            --btn-savory: #C3E3A0;    /* クッキー（グリーン） */
-            --btn-drink: #A5DCE8;     /* ドリンク（スカイ） */
-            /* カテゴリ3色：帯・凡例に使う濃い色（白飛びしても見分けられる） */
-            --cat-sweet-ink: #B97400;
-            --cat-savory-ink: #3E7D2E;
-            --cat-drink-ink: #0E7490;
-            /* 主要アクション・強調（朱色）。白文字を載せても 6.1:1 を確保できる濃さ */
-            --accent: #B4341A;
-            --accent-ink: #A02F17;    /* 文字・価格用 */
-            --accent-soft: #FBE9E4;   /* 選択中の淡い背景 */
-            --btn-neutral: #ECEAE5;   /* 補助ボタン */
-            --text-main: #1A1815;     /* ほぼ黒（白地に 16:1） */
-            --text-light: #5F5A53;    /* 補助文字（白地に 6.8:1） */
+            --line: #E4E3E8;          /* 区切り線・枠（細く淡く） */
+            --line-strong: #C9C8CF;
+            /* カテゴリ3色：面（文字を載せる淡い色。濃い文字で 14:1 以上） */
+            --btn-sweet: #FDE8C6;     /* パン（クリーム） */
+            --btn-savory: #E0F0D4;    /* クッキー（ミントグリーン） */
+            --btn-drink: #D6EBF7;     /* ドリンク（ペールブルー） */
+            /* カテゴリ3色：帯・凡例に使う濃い色（面が白飛びしても見分けられる） */
+            --cat-sweet-ink: #AD6E00;
+            --cat-savory-ink: #3F8F30;
+            --cat-drink-ink: #0E7E9C;
+            /* 操作の色（iOS の青）。白文字を載せても、白地に文字を置いても 4.96:1 */
+            --accent: #0A6CE0;
+            --accent-ink: #0A5FC4;    /* 小さい文字・アイコン用にもう少し濃く */
+            --accent-soft: #E8F1FE;   /* 選択中・押した時の淡い背景 */
+            --btn-neutral: #F0F0F3;   /* 補助ボタン（文字を載せても 4.6:1） */
+            --text-main: #1C1C1E;     /* ほぼ黒（白地に 15:1） */
+            --text-light: #6C6C70;    /* 補助文字（白地に 5.2:1） */
 
-            --sunken: #F5F3EF;        /* 一段へこんだ面（入力欄・情報ボックスの背景） */
-            --sunken-deep: #FAF9F6;   /* ごく薄いへこみ（フッター等） */
-            --positive: #E4F2DC;      /* 「増やす・進める」補助ボタン／営業中バナー */
-            --positive-line: #A9CE92;
-            --positive-ink: #2E6B24;
-            --warn-bg: #FFF4DE;       /* 注意（未入力の残りなど） */
-            --warn-line: #E0AE55;
+            --sunken: #F7F7FA;        /* 一段へこんだ面（入力欄・情報ボックスの背景） */
+            --sunken-deep: #FBFBFD;   /* ごく薄いへこみ（フッター等） */
+            --positive: #E6F4E4;      /* 「増やす・進める」補助ボタン／営業中バナー */
+            --positive-line: #B9DDB2;
+            --positive-ink: #2C7530;
+            --warn-bg: #FFF6E6;       /* 注意（未入力の残りなど） */
+            --warn-line: #EFCF93;
             --warn-ink: #8A5300;
-            --warn-solid: #9A5A00;    /* 白文字を載せる注意色（5.5:1） */
-            --danger: #B23A2C;        /* 危険・警告（取消・初期化・超過販売） */
-            --danger-bg: #FBE9E6;
-            --danger-ink: #9A2F22;
-            --low-ink: #B85000;       /* 残りわずかの強調（白地に 5.0:1） */
-            --muted-ink: #67625B;     /* 販売しない・準備中など、控えめだが読める文字 */
+            --warn-solid: #FFE2A8;    /* 注意を示す淡い面（濃い橙の文字を載せて 5.0:1） */
+            --danger: #CC3A2E;        /* 危険・警告（取消・初期化・超過販売） */
+            --danger-bg: #FDECEA;
+            --danger-ink: #B3261E;
+            --low-ink: #B65A00;       /* 残りわずかの強調（白地に 4.7:1） */
+            --muted-ink: #6C6C70;     /* 販売しない・準備中など、控えめだが読める文字 */
             /* すりガラス調のバー（ヘッダー・ボトムナビ）。奥の内容がうっすら透ける */
-            --glass-bg: rgba(255,255,255,0.84);
-            --glass-line: rgba(26,24,21,0.12);
+            --glass-bg: rgba(255,255,255,0.82);
+            --glass-line: rgba(28,28,30,0.10);
 
             /* 角丸は 3段階＋ピルに統一（細かいパーツ=sm／箱・ボタン=md／モーダル=lg） */
             --r-sm: 9px;
@@ -71,8 +73,8 @@
             --r-lg: 20px;
             --r-pill: 999px;
             /* 影は「近くの薄い影＋遠くの広い影」の2枚重ねにすると、浮き方が自然になる */
-            --shadow-card: 0 1px 2px rgba(46,42,38,.05), 0 8px 24px rgba(46,42,38,.06);
-            --shadow-raised: 0 2px 6px rgba(46,42,38,.07), 0 14px 34px rgba(46,42,38,.09);
+            --shadow-card: 0 1px 2px rgba(28,28,30,.04), 0 6px 18px rgba(28,28,30,.05);
+            --shadow-raised: 0 2px 5px rgba(28,28,30,.06), 0 12px 28px rgba(28,28,30,.07);
         }
 
         /* 金額は桁が揃う等幅数字で表示する（アプリ全体で統一） */
@@ -135,7 +137,7 @@
         /* iOSのキーパッドにならい、枠線ではなく「うっすら浮いた面」でキーを表す。
            （.action-btn が後方で box-shadow:none を指定するため、クラス2つ分の指定にしている） */
         .action-btn.tenkey-btn {
-            box-shadow: 0 1px 2px rgba(46,42,38,.09), 0 0 0 .5px rgba(46,42,38,.06);
+            box-shadow: 0 1px 2px rgba(28,28,30,.09), 0 0 0 .5px rgba(28,28,30,.06);
         }
         .tenkey-btn {
             background-color: var(--white);
@@ -173,7 +175,7 @@
         .customer-type-group::before {
             content: ''; position: absolute; top: 2px; bottom: 2px; left: 2px;
             width: calc((100% - 4px) / 6); border-radius: 9px; background: var(--white);
-            box-shadow: 0 1px 3px rgba(46,42,38,.16), 0 0 0 .5px rgba(46,42,38,.04);
+            box-shadow: 0 1px 3px rgba(28,28,30,.16), 0 0 0 .5px rgba(28,28,30,.04);
             transition: transform .3s cubic-bezier(.32,.72,0,1), background-color .22s ease;
             pointer-events: none;
         }
@@ -187,7 +189,7 @@
         .type-btn:has(input:checked) { color: var(--accent-ink); font-weight: 700; }
         /* 「後で」＝まだ入れていない印なので、選ばれている間は色で気づけるようにする */
         .type-btn.type-later { color: var(--warn-ink); }
-        .type-btn.type-later:has(input:checked) { color: #fff; }
+        .type-btn.type-later:has(input:checked) { color: var(--warn-ink); }
         
         @media (min-width: 769px) {
             .checkout-wide { max-width: 940px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
@@ -297,7 +299,7 @@
             font-size: 14px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 1px 2px rgba(46,42,38,0.06);
+            box-shadow: 0 1px 2px rgba(28,28,30,0.06);
             transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
         }
 
@@ -306,29 +308,29 @@
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
             background: var(--cat-bar, transparent);
         }
-        .product-btn:active { transform: scale(0.955); box-shadow: 0 1px 2px rgba(46,42,38,0.05); }
+        .product-btn:active { transform: scale(0.955); box-shadow: 0 1px 2px rgba(28,28,30,0.05); }
         .product-btn { transition: transform .14s cubic-bezier(.32,.72,0,1), box-shadow .12s ease, filter .12s ease; }
         @media (hover: hover) {
-            .product-btn:hover { filter: brightness(0.98); box-shadow: 0 3px 8px rgba(46,42,38,0.10); }
+            .product-btn:hover { filter: brightness(0.98); box-shadow: 0 3px 8px rgba(28,28,30,0.10); }
         }
         /* 準備中・完売は「控えめ」にするが、屋外でも読める濃さは残す */
         .product-btn.out-of-stock { pointer-events: none; color: var(--muted-ink); box-shadow: none; }
         /* 完売した実商品：過少入力対策で押せる（超過販売可）。見た目は控えめ */
-        .product-btn.sold-open { color: var(--muted-ink); box-shadow: 0 1px 3px rgba(26,24,21,0.06); }
+        .product-btn.sold-open { color: var(--muted-ink); box-shadow: 0 1px 3px rgba(28,28,30,0.06); }
         .product-btn.sold-open .price { color: var(--muted-ink); }
         /* 長い商品名でも欠けないように、3行までで省略する（途中で切れるより読める） */
         .product-btn .pname {
             line-height: 1.25; overflow-wrap: anywhere; word-break: break-word; letter-spacing: 0.01em;
             display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
         }
-        .product-btn .price { color: var(--accent-ink); font-size: 19px; font-weight: 800; margin-top: 5px; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
+        .product-btn .price { color: var(--text-main); font-size: 19px; font-weight: 800; margin-top: 5px; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
         .product-btn.out-of-stock .price { color: var(--muted-ink); opacity: .7; }
         /* 在庫の数は白い丸に載せて、面の色に関係なく同じ読みやすさにする */
         .product-btn .stock { font-size: 11px; color: var(--text-main); font-weight: 700; margin-top: 6px; background: rgba(255,255,255,0.88); border-radius: var(--r-pill); padding: 2px 9px; }
 
         .soldout-badge {
             position: absolute; top: 8px; right: 8px;
-            background: var(--accent); color: #fff; font-size: 11px; font-weight: bold;
+            background: var(--warn-ink); color: #fff; font-size: 11px; font-weight: bold;
             padding: 3px 9px; border-radius: var(--r-pill); box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
         .soldout-badge.prep { background: var(--muted-ink); }
@@ -411,7 +413,7 @@
         @media (hover: hover) { .action-btn:hover { filter: brightness(0.97); } }
         .btn-undo { background-color: var(--btn-neutral); flex: 1; }
         .btn-reserve { background-color: var(--btn-neutral); flex: 1; }
-        .btn-checkout { background-color: var(--accent); color: #fff; width: 100%; font-size: 18px; padding: 16px; margin-top: 6px; box-shadow: 0 4px 12px rgba(194,94,62,0.28); }
+        .btn-checkout { background-color: var(--accent); color: #fff; width: 100%; font-size: 18px; padding: 16px; margin-top: 6px; box-shadow: 0 4px 12px rgba(10,108,224,0.24); }
         @media (hover: hover) { .btn-checkout:hover { filter: brightness(1.03); } }
 
         /* ▼▼▼ ボタンの役割を3段階に統一（既存のレジアプリと同じ考え方）▼▼▼
@@ -453,7 +455,7 @@
             width: 90%; max-width: 450px;
             padding: 24px;
             border-radius: 22px;
-            box-shadow: 0 24px 60px rgba(38,34,30,0.24);
+            box-shadow: 0 24px 60px rgba(28,28,30,0.18);
             max-height: 92vh;
             overflow-y: auto;
             display: flex;
@@ -532,7 +534,7 @@
         .cash-suggest .cs-btn {
             flex: 1; min-width: 0; padding: 9px 4px; font-size: 15.5px; font-weight: 700; margin: 0;
             background: var(--white); color: var(--text-main);
-            box-shadow: inset 0 0 0 1px var(--line-strong), 0 1px 2px rgba(46,42,38,.04);
+            box-shadow: inset 0 0 0 1px var(--line-strong), 0 1px 2px rgba(28,28,30,.04);
         }
 
         /* 客属性（任意）：お金の流れを邪魔しないよう、枠を持たせず控えめに置く */
@@ -601,7 +603,7 @@
             }
             .product-btn .price { font-size: 18px; margin-top: 3px; }
             .product-btn .stock { font-size: 10.5px; margin-top: 3px; padding: 1px 7px; }
-            #sidebar { flex: 0 0 auto; border-left: none; border-right: none; border-top: 1px solid var(--line-strong); box-shadow: 0 -3px 14px rgba(90,78,77,0.07); }
+            #sidebar { flex: 0 0 auto; border-left: none; border-right: none; border-top: 1px solid var(--line-strong); box-shadow: 0 -3px 14px rgba(28,28,30,0.07); }
             #cart-list { flex: 0 0 auto; max-height: 0; overflow: hidden; padding: 0 12px; transition: max-height .18s ease, padding .18s ease; }
             #sidebar.cart-open #cart-list { max-height: 40vh; overflow-y: auto; padding: 10px 12px; }
             #cart-toggle {
@@ -897,7 +899,7 @@
         #closed-cta.show { display: flex; }
         .closed-card {
             background: var(--white); border-radius: var(--r-lg); padding: 30px 26px; text-align: center;
-            max-width: 380px; width: 100%; box-shadow: 0 10px 28px rgba(90,78,77,0.14);
+            max-width: 380px; width: 100%; box-shadow: 0 10px 28px rgba(28,28,30,0.14);
             display: flex; flex-direction: column; gap: 12px; align-items: center;
         }
         .closed-card .cc-title { font-size: 21px; font-weight: bold; color: var(--text-main); }
@@ -2337,7 +2339,7 @@
             div.innerHTML = `
                 <div class="res-header">
                     <span><svg class="ic"><use href="#ic-users"/></svg>${escHtml(res.name)} 様</span>
-                    <span style="color:var(--accent);">合計: ¥${res.total}</span>
+                    <span style="font-weight:bold;">合計: ¥${res.total}</span>
                 </div>
                 <div style="font-size:13px; color:var(--text-light);">
                     ${res.items.map(i => i.name).join(', ')}
@@ -3948,9 +3950,13 @@
         let totalItems = 0, cashTotal = 0, changeTotal = 0, cashKnown = 0;
         const itemStats = {}, coPurchase = {};
 
+        // 時間帯は「何時何分か」ではなく絶対時刻で区切る。
+        // 時刻の文字列で区切ると、日をまたいで営業した時に前日と翌日の同じ時刻が
+        // ひとつに混ざり、並び順も逆転してしまうため。
+        const SLOT_MS = 15 * 60000;
         sorted.forEach(h => {
             const d = new Date(h.time);
-            const label = `${d.getHours()}:${String(Math.floor(d.getMinutes() / 15) * 15).padStart(2, '0')}`;
+            const label = Math.floor(d.getTime() / SLOT_MS) * SLOT_MS;
             timeSlotRev[label] = (timeSlotRev[label] || 0) + h.total;
             timeSlotCust[label] = (timeSlotCust[label] || 0) + 1;
             if (!timeSlotItems[label]) timeSlotItems[label] = {};
@@ -3972,7 +3978,9 @@
         });
 
         const customers = sorted.length;
-        const peak = Object.entries(timeSlotRev).sort((a, b) => b[1] - a[1])[0];
+        const hm = ms => { const x = new Date(Number(ms)); return `${x.getHours()}:${String(x.getMinutes()).padStart(2, '0')}`; };
+        const peakEntry = Object.entries(timeSlotRev).sort((a, b) => b[1] - a[1])[0];
+        const peak = peakEntry ? [hm(peakEntry[0]), peakEntry[1]] : null;
 
         // ABC分析（売上降順・累積比率）
         const abc = []; let cum = 0;
@@ -4004,17 +4012,16 @@
             .map(p => ({ name: p.name, sold: itemCounts[p.name] || 0, initial: p.initialStock, note: p.note || '' }));
 
         // 時間帯別は「売上・客数・客単価」を並べた表にするため、客数も持たせる
-        const hhmm = s => { const [h2, m2] = s.split(':').map(Number); return h2 * 60 + m2; };
         const slots = Object.keys(timeSlotRev)
-            .sort((a, b) => hhmm(a) - hhmm(b))
-            .map(s => {
-                const cust = timeSlotCust[s] || 0;
-                const endMin = hhmm(s) + 15;
-                const range = `${s}〜${String(Math.floor(endMin / 60) % 24)}:${String(endMin % 60).padStart(2, '0')}`;
+            .map(Number)
+            .sort((a, b) => a - b)
+            .map(k => {
+                const cust = timeSlotCust[k] || 0;
                 return {
-                    label: s, range, rev: timeSlotRev[s], count: cust,
-                    avg: cust > 0 ? Math.floor(timeSlotRev[s] / cust) : 0,
-                    top: Object.entries(timeSlotItems[s]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => ({ name: n, count: c }))
+                    label: hm(k), range: `${hm(k)}〜${hm(k + SLOT_MS)}`,
+                    rev: timeSlotRev[k], count: cust,
+                    avg: cust > 0 ? Math.floor(timeSlotRev[k] / cust) : 0,
+                    top: Object.entries(timeSlotItems[k]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => ({ name: n, count: c }))
                 };
             });
 
@@ -4677,7 +4684,7 @@
                     </div>
                     <div style="border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); padding:6px 0;">${lines}</div>
                     <div style="display:flex; justify-content:space-between; font-weight:bold;">
-                        <span>合計</span><span style="color:var(--accent);">¥${h.total}</span>
+                        <span>合計</span><span style="font-weight:bold;">¥${h.total}</span>
                     </div>
                     <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-light);">
                         <span>お預かり ${cashStr}</span><span>お釣り ${changeStr}</span>
