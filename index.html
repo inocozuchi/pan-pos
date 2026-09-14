@@ -927,11 +927,13 @@
             -webkit-backdrop-filter: saturate(180%) blur(20px);
             box-shadow: 0 -1px 0 rgba(28,29,34,.04), 0 -6px 18px rgba(28,29,34,.06);
             z-index: 150; flex-shrink: 0;
-            /* iPhone のホームインジケータ（画面下の横線）と重ならないよう、
-               安全領域のぶんに加えて余白を足し、ボタンを画面の端から離す。
-               端末の角が丸い機種でも、ボタンの角が欠けたり
-               下端のジェスチャーを誤って触ったりしないようにするため。 */
-            padding: 6px 6px calc(14px + env(safe-area-inset-bottom, 0px));
+            /* iPhone は画面の四隅が丸く、下端にホームインジケータがある。
+               ボタンが角で欠けたり、下端のジェスチャーを誤って触ったりしないよう、
+               上下左右すべてに余裕を持たせる（安全領域があればそのぶんも足す）。 */
+            padding-top: 8px;
+            padding-left: max(18px, env(safe-area-inset-left, 0px));
+            padding-right: max(18px, env(safe-area-inset-right, 0px));
+            padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px));
         }
         .nav-item {
             flex: 1; border: none; background: none; cursor: pointer; font-family: inherit;
@@ -1230,62 +1232,80 @@
     </style>
     <!-- レポート本体のスタイル（別ウィンドウ印刷でも読み込むため独立させる。.report-root 配下限定でアプリ画面に影響なし） -->
     <style id="report-css">
+        /* ▼ 書き出す集計レポート（紙・PDF）の見た目 ▼
+           アプリ本体を寒色のモノクロ基調に変えたので、こちらも同じ考え方でそろえる。
+           ・地はグレーの濃淡、強調は青1色、危険だけ紅
+           ・紙なので影が使えないぶん、罫線は細く・数を減らし、余白と面の濃さで区切る
+           ・白黒印刷でも読めるよう、色だけに頼らず「濃さ」の差も付ける */
         .report-root {
-            --ink: #1f1f1f; --muted: #666; --accent: #c0405a; --line: #c9c4be;
-            --box-bg: #fbfbfa; --key-bg: #454545; --hatch: #e6e2dc;
-            font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', Meiryo, sans-serif;
-            color: var(--ink); font-size: 10.5px; line-height: 1.5;
+            --ink: #1C1D22; --muted: #6B6E7A; --accent: #0A6CE0; --line: #D8DAE2;
+            --box-bg: #F7F8FB; --key-bg: #1C1D22; --tint: #EAF1FD; --danger: #B3263C;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', Meiryo, sans-serif;
+            color: var(--ink); font-size: 10.5px; line-height: 1.55;
             font-variant-numeric: tabular-nums;
+            -webkit-font-smoothing: antialiased;
         }
+        /* 見出し：太い罫線を1本だけ引き、総売上を右に大きく置く */
         .report-header {
             display: flex; justify-content: space-between; align-items: flex-end;
-            border-bottom: 2px solid var(--accent); padding-bottom: 6px; margin-bottom: 10px;
+            border-bottom: 1.5px solid var(--ink); padding-bottom: 7px; margin-bottom: 12px;
         }
-        .report-header .title { font-size: 19px; font-weight: bold; letter-spacing: 0.04em; }
-        .report-header .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-        .report-header .meta { text-align: right; font-size: 10px; color: var(--muted); }
-        .report-header .grand { font-size: 15px; font-weight: bold; color: var(--accent); }
-        .report-section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 9px; }
+        .report-header .title { font-size: 20px; font-weight: bold; letter-spacing: 0.02em; }
+        .report-header .sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+        .report-header .meta { text-align: right; font-size: 9.5px; color: var(--muted); }
+        .report-header .grand { font-size: 17px; font-weight: bold; color: var(--ink); letter-spacing: -0.01em; }
+        .report-section { break-inside: avoid; page-break-inside: avoid; margin-bottom: 11px; }
         .report-section--long { break-inside: auto; page-break-inside: auto; }
+        /* 節の見出し：左の細い青い線で段落の始まりを示す */
         .report-heading {
-            font-size: 12.5px; font-weight: bold; margin: 0 0 5px; padding-left: 8px;
-            border-left: 5px solid var(--accent); break-after: avoid; page-break-after: avoid;
+            font-size: 12.5px; font-weight: bold; margin: 0 0 6px; padding-left: 7px;
+            border-left: 3px solid var(--accent); break-after: avoid; page-break-after: avoid;
         }
+        /* 小見出し：罫線を使わず、字間と色だけで段を作る */
         .sub-heading {
-            font-size: 11px; font-weight: bold; margin: 7px 0 3px; padding: 1px 6px;
-            background: var(--box-bg); border-bottom: 1px solid var(--line);
+            font-size: 10px; font-weight: bold; color: var(--muted); margin: 9px 0 3px;
+            letter-spacing: 0.06em;
         }
+        /* 概要：罫線の箱ではなく、薄い面の上に項目を並べる */
         .summary-box {
-            border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px;
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 3px 22px;
+            background: var(--box-bg); border-radius: 5px; padding: 9px 13px;
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px 24px;
         }
-        .summary-box .stat { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--line); padding: 2px 0; }
+        .summary-box .stat { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 0; border-bottom: 1px solid #E7E9EF; }
         .summary-box .stat-label { color: var(--muted); }
         .summary-box .stat-val { font-weight: bold; }
-        .key-box { border: 1px solid var(--line); border-radius: 6px; }
-        .key-box .key-head { background: var(--key-bg); color: #fff; font-weight: bold; padding: 4px 10px; font-size: 11px; border-radius: 5px 5px 0 0; }
-        .key-box .key-body { padding: 6px 10px; white-space: pre-wrap; }
-        .note-box { border: 1.5px dashed var(--accent); border-radius: 6px; padding: 6px 10px; margin-top: 6px; }
+        /* 文章のかたまり（完売と売り逃し）は濃い面の見出しで区切る */
+        .key-box { border-radius: 5px; overflow: hidden; background: var(--box-bg); }
+        .key-box .key-head { background: var(--key-bg); color: #fff; font-weight: bold; padding: 5px 11px; font-size: 10.5px; letter-spacing: 0.03em; }
+        .key-box .key-body { padding: 8px 11px; white-space: pre-wrap; }
+        /* 注記：破線をやめ、薄い青の面にする */
+        .note-box { background: var(--tint); border-radius: 5px; padding: 6px 10px; margin-top: 7px; }
         .note-foot { font-size: 9px; color: var(--muted); }
-        table.rep-table { width: 100%; border-collapse: collapse; break-inside: auto; page-break-inside: auto; }
+        /* 表：縦罫は引かず、横の細い線と見出し行の面だけで整える */
+        table.rep-table { width: 100%; border-collapse: collapse; break-inside: auto; page-break-inside: auto; margin-top: 2px; }
         table.rep-table thead { display: table-header-group; }
-        table.rep-table th { text-align: left; font-size: 9.5px; color: var(--muted); border-bottom: 1.5px solid var(--ink); padding: 3px 4px; }
-        table.rep-table td { padding: 2.5px 4px; border-bottom: 1px solid #eee; }
+        table.rep-table th {
+            text-align: left; font-size: 9px; font-weight: bold; color: var(--muted);
+            background: var(--box-bg); border-bottom: 1px solid var(--line);
+            padding: 4px 5px; letter-spacing: 0.04em; white-space: nowrap;
+        }
+        table.rep-table td { padding: 3.5px 5px; border-bottom: 1px solid #EDEFF4; }
         table.rep-table tr { break-inside: avoid; page-break-inside: avoid; }
         table.rep-table td.num, table.rep-table th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-        table.rep-table tbody tr:nth-child(even) td { background: #FAF9F6; }  /* 行を追いやすくする薄い縞 */
-        table.rep-table tr.peak-row td { background: #FBE9E4; font-weight: bold; }
-        .rank { font-weight: bold; white-space: nowrap; padding: 0 5px; border-radius: 3px; }
-        .rank.rank-a { background: repeating-linear-gradient(45deg, #d0d0d0, #d0d0d0 1.5px, transparent 1.5px, transparent 4px); }
-        .rank.rank-b { background: var(--hatch); }
-        .rank.rank-c { background: transparent; }
-        .chart-container { break-inside: avoid; page-break-inside: avoid; height: 190px; margin: 4px 0; text-align: center; }
+        table.rep-table tbody tr:nth-child(even) td { background: #FAFBFD; }  /* 行を追いやすい薄い縞 */
+        table.rep-table tr.peak-row td { background: var(--tint); font-weight: bold; }
+        /* ABCランク：白黒印刷でも差が出るよう、濃さの階段にする（文字の A/B/C も残す） */
+        .rank { font-weight: bold; white-space: nowrap; padding: 1px 6px; border-radius: 3px; font-size: 9.5px; }
+        .rank.rank-a { background: var(--accent); color: #fff; }
+        .rank.rank-b { background: #D6DCE8; color: var(--ink); }
+        .rank.rank-c { background: var(--box-bg); color: var(--muted); }
+        .chart-container { break-inside: avoid; page-break-inside: avoid; height: 190px; margin: 6px 0; text-align: center; }
         .chart-container svg { height: 100% !important; width: auto !important; max-width: 100% !important; min-width: 0 !important; }
-        .stock-legend { columns: 3; column-gap: 16px; font-size: 9px; margin-top: 5px; list-style: none; padding: 0; }
-        .stock-legend li { break-inside: avoid; display: flex; align-items: center; gap: 5px; margin-bottom: 1.5px; }
+        .stock-legend { columns: 3; column-gap: 16px; font-size: 9px; margin-top: 6px; list-style: none; padding: 0; color: var(--muted); }
+        .stock-legend li { break-inside: avoid; display: flex; align-items: center; gap: 5px; margin-bottom: 2px; }
         .lg-line { display: inline-block; width: 16px; border-top: 2px solid var(--ink); flex-shrink: 0; }
         .lg-line.dashed { border-top-style: dashed; }
-        .two-col { display: flex; gap: 18px; }
+        .two-col { display: flex; gap: 20px; }
         .two-col > div { flex: 1; }
     </style>
 </head>
@@ -4354,7 +4374,7 @@
                 <div class="stat"><span class="stat-label">会計取消</span><span class="stat-val">${s.voidCount}件</span></div>
                 <div class="stat"><span class="stat-label">属性の事後入力</span><span class="stat-val">${s.typeEditedLater}件（${s.customers ? Math.round(s.typeEditedLater / s.customers * 100) : 0}%）</span></div>
                 <div class="stat"><span class="stat-label">品目の事後修正</span><span class="stat-val">${s.itemEdited}件</span></div>
-                ${s.pendingLeft > 0 ? `<div class="stat"><span class="stat-label" style="color:#c0392b;">属性 未入力のまま</span><span class="stat-val" style="color:#c0392b;">${s.pendingLeft}件</span></div>` : ''}
+                ${s.pendingLeft > 0 ? `<div class="stat"><span class="stat-label" style="color:#B3263C;">属性 未入力のまま</span><span class="stat-val" style="color:#B3263C;">${s.pendingLeft}件</span></div>` : ''}
                 ${R.profit ? `
                 <div class="stat"><span class="stat-label">原価合計（原価入力品）</span><span class="stat-val">${yen(R.profit.cogs)}</span></div>
                 <div class="stat"><span class="stat-label">粗利（原価入力品）</span><span class="stat-val">${yen(R.profit.profit)}（粗利率 ${R.profit.margin}%）</span></div>` : ''}
@@ -4459,7 +4479,7 @@
                 <section class="report-section${comp ? ' report-section--long' : ''}">
                     <div class="report-heading">1. 概要</div>
                     ${summaryBox}
-                    ${R.integrity.length ? `<div class="note-box" style="border-color:#c0392b; margin-top:6px;"><div class="note-foot" style="color:#c0392b;">⚠ 整合性チェック：${R.integrity.map(esc).join(' / ')}</div></div>` : ''}
+                    ${R.integrity.length ? `<div class="note-box" style="border-color:#B3263C; margin-top:6px;"><div class="note-foot" style="color:#B3263C;">⚠ 整合性チェック：${R.integrity.map(esc).join(' / ')}</div></div>` : ''}
                     ${comparisonBox}
                 </section>
 
@@ -4474,7 +4494,7 @@
                     ${soldOutBlock}
                     ${inStockNote}
                     ${R.oversoldItems.length ? `
-                    <div class="sub-heading" style="color:#c0392b; border-color:#e6b0aa;">⚠ 販売数 &gt; 仕入数（在庫入力の確認を推奨）</div>
+                    <div class="sub-heading" style="color:#B3263C; border-color:#E8B9C2;">⚠ 販売数 &gt; 仕入数（在庫入力の確認を推奨）</div>
                     ${oversoldBlock}` : ''}
                 </section>
 
@@ -4553,9 +4573,9 @@
             '<style>' + css + '</style>' +
             '<style>@page{size:A4;margin:15mm;} html,body{margin:0;background:#fff;} ' +
             'body{padding:16px;} @media print{body{padding:0;}} ' +
-            '.report-note{background:#eef; color:#334; font-size:13px; padding:10px 14px; border-radius:8px; margin-bottom:14px;} ' +
+            '.report-note{background:#EAF1FD; color:#1C1D22; font-size:12.5px; padding:11px 14px; border-radius:8px; margin-bottom:16px;} ' +
             /* グラフの軸の説明は、画面と同じく左右に分けて置く（くっついて読めなくなるのを防ぐ） */
-            '.chart-cap{display:flex; justify-content:space-between; gap:10px; font-size:9.5px; color:#777; margin:0 2px 4px;} ' +
+            '.chart-cap{display:flex; justify-content:space-between; gap:10px; font-size:9px; color:#6B6E7A; margin:0 2px 5px; letter-spacing:0.03em;} ' +
             '@media print{.report-note{display:none;}}</style>' +
             '</head><body>' +
             '<div class="report-note">印刷ダイアログが自動で開きます。閉じてしまった場合はこのページで印刷（またはブラウザの共有）から「PDFとして保存 / ファイルに保存」を選べます。</div>' +
@@ -5195,8 +5215,8 @@
     // 【方針】2つのグラフ（時間帯別・在庫の減り方）で軸・文字・色をそろえる。
     // また、SVGを拡大縮小せず「1単位＝1px」で描くことで、会計件数が少なくて
     // グラフが小さい時でも文字だけが不自然に大きくなることを防ぐ。
-    const CHART_GRID = '#DCD8D1';     // 目盛り線（--line と同じ）
-    const CHART_INK = '#5F5A53';      // 目盛りの文字（--text-light と同じ。屋外でも読める濃さ）
+    const CHART_GRID = '#E3E5EC';     // 目盛り線（--line と同じ）
+    const CHART_INK = '#6B6E7A';      // 目盛りの文字（--text-light と同じ。屋外でも読める濃さ）
     const CHART_H = 226;              // 描画高さ（2つのグラフ共通）
     const CHART_FS = 11;              // 目盛りの文字サイズ（実寸px）
 
