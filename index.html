@@ -627,12 +627,60 @@
         .res-card .rc-act.danger:active { background: var(--danger-bg); }
         .res-card .rc-act.primary { color: var(--accent); font-weight: 700; }
 
+        /* ▼ 未入力の会計と、入力済みの会計をひと目で見分けられるようにする ▼
+           どちらも同じ選択ボタンを出していた頃は、白いつまみが付いているかどうかの
+           違いしかなく、並べた時に区別がつかなかった。
+           未入力＝カードの左に太い帯＋赤い「未入力」の行＋選択ボタンを開く。
+           入力済み＝選んだ値の札だけを小さく置く（押すと選び直せる）。 */
+        .res-card.is-pending {
+            /* 地の色との差を保ったまま、左端の帯だけで「これは手つかず」と分かるようにする */
+            box-shadow: var(--shadow-card), inset 5px 0 0 var(--danger);
+        }
+        .res-card .rc-flag {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 12.5px; font-weight: 700; color: var(--danger-ink);
+            margin-top: -3px;
+        }
+        .res-card .rc-flag .ic { width: 15px; height: 15px; stroke-width: 2.2; }
+        /* 入力済みの行：札ひとつだけ。カードの中が静かになり、未入力が目立つ */
+        .res-card .rc-types.done { gap: 8px; }
+        .res-card .rc-chip {
+            display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0;
+            background: var(--accent-soft); color: var(--accent-ink);
+            border: none; border-radius: var(--r-pill); cursor: pointer; font-family: inherit;
+            padding: 6px 13px; min-height: 32px; font-size: 13px; font-weight: 700;
+            transition: background .15s ease, transform .12s ease;
+        }
+        .res-card .rc-chip:active { background: var(--positive-line); transform: scale(0.96); }
+        .res-card .rc-chip .ic { width: 14px; height: 14px; stroke-width: 2.6; }
+        .res-card .rc-types-note { font-size: 11.5px; color: var(--text-light); }
+
+        /* 未入力の知らせ：一覧の外・上に置くので、タブレットで横に並べても列に割り込まない */
+        #records-notice {
+            display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+            background: var(--danger-bg); color: var(--danger-ink);
+            border-radius: var(--r-md); box-shadow: var(--shadow-card);
+            padding: 11px 14px; margin-bottom: 12px; font-size: 13px; font-weight: 600;
+        }
+        #records-notice .ic { width: 18px; height: 18px; flex-shrink: 0; stroke-width: 2.2; }
+        #records-notice .rn-text { flex: 1; min-width: 160px; line-height: 1.45; }
+        #records-notice .rn-btn {
+            flex-shrink: 0; background: var(--surface); color: var(--danger-ink);
+            border: none; border-radius: var(--r-pill); cursor: pointer; font-family: inherit;
+            padding: 8px 15px; min-height: 36px; font-size: 13px; font-weight: 700;
+            transition: background .15s ease, transform .12s ease;
+        }
+        #records-notice .rn-btn:active { transform: scale(0.96); }
+        #records-notice .rn-btn.on { background: var(--danger); color: #fff; }
+
         /* 客属性の選択はセグメント風に1つの枠へまとめる */
         .res-card .rc-types { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .res-card .rc-types.pending .rc-types-label { color: var(--danger-ink); font-weight: 700; }
         .res-card .rc-types .rc-types-label { font-size: 12px; color: var(--text-light); flex-shrink: 0; }
         .res-card .rc-types .rc-seg { display: flex; gap: 2px; background: var(--btn-neutral); border-radius: 10px; padding: 2px; flex: 1; min-width: 0; }
         .res-card .rc-types .rc-seg button {
             flex: 1; min-width: 0; padding: 9px 2px; min-height: 34px; font-size: 12.5px; font-weight: 600; font-family: inherit;
+            white-space: nowrap; letter-spacing: -0.01em;   /* 「その他」が2行に折れないように */
             border: none; border-radius: 8px; background: none; color: var(--text-light); cursor: pointer;
             transition: background .18s ease, color .18s ease, transform .12s ease;
         }
@@ -704,7 +752,9 @@
             #checkout-modal .modal-content {
                 width: 100%; max-width: none; height: auto; max-height: 94dvh;
                 border-radius: 22px 22px 0 0;
-                padding: 12px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+                /* 下の余白はボトムナビと同じだけ取る。iPhone は画面の角が丸く、
+                   下端を2回押すと Siri が出てしまうので、完了ボタンを端に寄せない。 */
+                padding: 12px 14px calc(26px + env(safe-area-inset-bottom, 0px));
                 gap: 4px;
                 animation: sheetUp .34s cubic-bezier(.32, .72, 0, 1) both !important;
             }
@@ -1123,6 +1173,34 @@
             .btn-stack:has(> :only-child) { grid-template-columns: 1fr; }
         }
         .btn-stack .action-btn { width: 100%; margin-top: 0; }
+
+        /* ▼ 発表用のまとめ：種類を選ぶボタンと、紙の見本 ▼ */
+        .dg-picker { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+        @media (min-width: 769px) { .dg-picker { grid-template-columns: repeat(4, 1fr); } }
+        .dg-pick {
+            display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left;
+            background: var(--surface); border: none; border-radius: var(--r-md); box-shadow: var(--shadow-card);
+            padding: 11px 13px; min-height: 62px; cursor: pointer; font-family: inherit; color: var(--text-main);
+            transition: background .15s ease, transform .12s ease, box-shadow .15s ease;
+        }
+        .dg-pick:active { transform: scale(0.97); }
+        .dg-pick .dg-pick-t { font-size: 14px; font-weight: 700; line-height: 1.3; }
+        .dg-pick .dg-pick-s { font-size: 11.5px; color: var(--text-light); line-height: 1.35; }
+        /* 選ばれている1枚は、面の色と内側の縁取りで示す（線で囲わず、色の差で） */
+        .dg-pick.on { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+        .dg-pick.on .dg-pick-t { color: var(--accent-ink); }
+        .dg-pick.on .dg-pick-s { color: var(--accent-ink); }
+        .dg-cap { font-size: 11.5px; color: var(--text-light); margin: 0 auto 5px; max-width: 720px; }
+        /* 紙の見本：幅720pxで組んだものを、置ける幅に合わせて縮めて見せる */
+        .dg-stage {
+            overflow: hidden; background: #fff; border-radius: var(--r-md); box-shadow: var(--shadow-raised);
+            max-width: 720px; margin: 0 auto;   /* 紙より広い画面では、紙の幅で止めて中央に置く */
+        }
+        .dg-stage .digest-page {
+            width: 720px; box-sizing: border-box; padding: 26px 30px; background: #fff;
+            transform-origin: top left; will-change: transform;
+        }
+
         .field-label { display: block; font-size: 13px; font-weight: bold; color: var(--text-main); margin-bottom: 2px; }
         .chart-box { background: var(--white); border: none; box-shadow: var(--shadow-card); border-radius: var(--r-md); padding: 12px 10px; margin-bottom: 10px; overflow-x: auto; text-align: center; }
         #handoff-paste {
@@ -1349,6 +1427,38 @@
         .lg-line.dashed { border-top-style: dashed; }
         .two-col { display: flex; gap: 20px; }
         .two-col > div { flex: 1; }
+
+        /* ▼ 発表用のまとめ（1枚もの）▼
+           人前で映す・配ることが前提なので、本編のレポートより文字と数字を大きくし、
+           1枚に入れる項目を絞る。色は本編と同じ「グレーの濃淡＋青1色」。 */
+        .digest { font-size: 12px; }
+        .digest .dg-head {
+            display: flex; justify-content: space-between; align-items: flex-end; gap: 16px;
+            border-bottom: 2px solid var(--ink); padding-bottom: 9px; margin-bottom: 15px;
+        }
+        .digest .dg-title { font-size: 24px; font-weight: bold; letter-spacing: 0.01em; line-height: 1.2; }
+        .digest .dg-sub { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+        .digest .dg-meta { text-align: right; font-size: 10px; color: var(--muted); white-space: nowrap; line-height: 1.5; }
+        .digest .dg-meta-v { font-size: 19px; font-weight: bold; color: var(--ink); letter-spacing: -0.01em; }
+        /* 大きな数字：1つだけ濃い面に置いて主役をはっきりさせる */
+        .digest .dg-big { display: grid; grid-template-columns: repeat(2, 1fr); gap: 11px; }
+        .digest .dg-cell { background: var(--box-bg); border-radius: 8px; padding: 15px 18px; }
+        .digest .dg-cell .k { font-size: 11px; color: var(--muted); letter-spacing: 0.07em; font-weight: bold; }
+        .digest .dg-cell .v { font-size: 33px; font-weight: bold; letter-spacing: -0.02em; line-height: 1.2; margin-top: 3px; }
+        .digest .dg-cell .v .u { font-size: 17px; margin-left: 2px; }
+        .digest .dg-cell .s { font-size: 10px; color: var(--muted); margin-top: 3px; }
+        .digest .dg-cell.dg-lead { grid-column: 1 / -1; background: var(--key-bg); color: #fff; }
+        .digest .dg-cell.dg-lead .k, .digest .dg-cell.dg-lead .s { color: #AFC8EA; }
+        .digest .dg-cell.dg-lead .v { font-size: 46px; }
+        .digest .dg-sub-head { font-size: 11px; font-weight: bold; color: var(--muted); letter-spacing: 0.07em; margin: 14px 0 4px; }
+        .digest .dg-sub-head:first-of-type { margin-top: 0; }
+        .digest table.dg-table th { font-size: 10px; padding: 6px 7px; }
+        .digest table.dg-table td { font-size: 12.5px; padding: 6.5px 7px; }
+        .digest .dg-rank { font-weight: bold; color: var(--accent); }
+        .digest .dg-bar { display: block; width: 100%; height: 8px; background: #E4E7EE; border-radius: 4px; overflow: hidden; }
+        .digest .dg-bar i { display: block; height: 100%; background: var(--accent); }
+        .digest .dg-note { margin-top: 12px; background: var(--tint); border-radius: 6px; padding: 9px 13px; font-size: 11px; line-height: 1.6; }
+        .digest .dg-foot { margin-top: 16px; font-size: 9.5px; color: var(--muted); text-align: right; }
     </style>
 </head>
 <body>
@@ -1481,6 +1591,7 @@
 
         <!-- ---------- 会計記録 ---------- -->
         <div class="panel-view" id="view-records">
+            <div id="records-notice" style="display:none;"></div>
             <div id="records-list" class="card-strip"></div>
         </div>
 
@@ -1511,6 +1622,7 @@
                 <div id="sec-insight" class="analytics-sec" style="display:none;"></div>
                 <div id="sec-next" class="analytics-sec" style="display:none;"></div>
                 <div id="sec-trend" class="analytics-sec" style="display:none;"></div>
+                <div id="sec-digest" class="analytics-sec" style="display:none;"></div>
                 <div id="sec-log" class="analytics-sec" style="display:none;"></div>
                 <div id="sec-export" class="analytics-sec" style="display:none;">
                     <p class="settings-hint">集計結果をファイルに書き出します。</p>
@@ -2475,6 +2587,7 @@
     }
 
     function renderReservations() {
+        updateNavBadges();   // 予約の増減も、その場でバッジに反映する
         const warn = document.getElementById('reservation-sync-warning');
         if (warn) warn.style.display = syncMode ? 'block' : 'none';
         const list = document.getElementById('reservation-list');
@@ -2927,7 +3040,11 @@
             reportViewSnapshot = closedSnapshot;
             withSnapshot(closedSnapshot, () => updateAnalytics());
             showTab('analytics');
-            showAnalyticsSection('insight'); // 閉店時は次回インサイトを表示
+            // 閉店した直後にいちばん知りたいのは「今日はどうだったか」なので、
+            // 総売上・来店人数・客単価と前回比が1枚に出る「発表用のまとめ」を最初に出す。
+            // 次回に向けた「完売と売り逃し」は、集計の一覧からいつでも開ける。
+            digestKind = 'oneline';
+            showAnalyticsSection('digest');
             showToast(`「${closedName}」を集計して保存しました`);
         } else {
             updateAnalytics();
@@ -3199,6 +3316,7 @@
         { key: 'insight', icon: 'bulb',    title: '完売と売り逃し' },
         { key: 'next',    icon: 'clipboard', title: '次回の仕入れ数の目安' },
         { key: 'trend',   icon: 'up',      title: '販売会ごとの推移' },
+        { key: 'digest',  icon: 'file',    title: '発表用のまとめ' },
         { key: 'log',     icon: 'list',    title: '操作の履歴' },
         { key: 'export',  icon: 'download', title: '書き出し（PDF・CSV）' }
     ];
@@ -3264,6 +3382,7 @@
         else if (key === 'stock') renderStockChart();
         else if (key === 'insight') document.getElementById('sec-insight').innerHTML = secInsightHTML();
         else if (key === 'trend') document.getElementById('sec-trend').innerHTML = secTrendHTML();
+        else if (key === 'digest') { document.getElementById('sec-digest').innerHTML = secDigestHTML(); renderDigestPreview(); }
         else if (key === 'log') renderOperationLog();
         // export はボタンのみ（静的）
     }
@@ -3416,6 +3535,9 @@
                 const pct = totalCust ? Math.round(t.count / totalCust * 100) : 0;
                 return `<tr><td class="nm">${escHtml(t.type)}</td><td class="num">${t.count}人</td><td class="num">${pctBar(pct)}<span class="sub">${pct}%</span></td><td class="num">${yenStr(t.avg)}</td></tr>`;
             }).join('') + `</tbody></table>` : '<div class="a-empty">客属性の入力がありませんでした。</div>';
+        // 「後で」のまま残っている会計は「不明」として数えている。
+        // どちらも同じ「不明」に入るので、内訳が分かるように件数を添える。
+        if (R.summary.pendingLeft > 0) h += `<p class="a-note">「不明」${R.summary.pendingLeft}件は、まだ客属性を入力していない会計です。会計記録の画面から割り当てられます。</p>`;
 
         h += `<div class="a-head">カテゴリ別の売上と占有率</div>
         <table class="a-table"><thead><tr><th>カテゴリ</th><th class="num">売上</th><th class="num" style="min-width:82px;">占有率</th></tr></thead><tbody>`
@@ -3564,6 +3686,216 @@
             }).join('') + `</tbody></table>
         <p class="a-note">閉店するたびに、その回の売上が自動でここに積み上がります。増減は1つ前の回との比較です。</p>`;
         return h;
+    }
+
+    // ▼▼▼ 発表用のまとめ ▼▼▼
+    // 販売会のあとに結果を発表する時、集計の全部は出せないので、
+    // 「これだけ見せれば伝わる」1枚をいくつか用意して、そのままPDFにできるようにする。
+    // 画面に出す見本と、書き出すPDFは同じHTMLから作るので、見たままが印刷される。
+    const DIGEST_SHEETS = [
+        { key: 'oneline', title: '売上ハイライト', sub: '大きな数字と前回比' },
+        { key: 'best',    title: '売れ筋ベスト10', sub: '何がどれだけ売れたか' },
+        { key: 'time',    title: '時間帯の動き',   sub: '1時間ごとの売上と客数' },
+        { key: 'segment', title: '客層とカテゴリ', sub: '誰が何を買ったか' }
+    ];
+    let digestKind = 'oneline';
+
+    function secDigestHTML() {
+        const R = buildReportData();
+        if (!R) return '<div class="a-empty">まだ売上データがありません。</div>';
+        return `
+            <p class="settings-hint">発表用に、要点だけをまとめた1枚を作ります。下から種類を選ぶと、印刷される見た目がそのまま出ます。</p>
+            <div class="dg-picker">${DIGEST_SHEETS.map(s => `
+                <button class="dg-pick${digestKind === s.key ? ' on' : ''}" onclick="selectDigest('${s.key}')">
+                    <span class="dg-pick-t">${s.title}</span>
+                    <span class="dg-pick-s">${s.sub}</span>
+                </button>`).join('')}</div>
+            <div class="dg-cap">印刷される見本（実物と同じ組み方を、画面の幅に合わせて縮めています）</div>
+            <div class="dg-stage" id="digest-stage"><div class="digest-page" id="digest-page"></div></div>
+            <div class="btn-stack" style="margin-top:12px;">
+                <button class="action-btn btn-checkout" style="margin-top:0;" onclick="printDigest(false)"><svg class="ic"><use href="#ic-file"/></svg>この1枚をPDFで保存・印刷</button>
+                <button class="action-btn btn-secondary" onclick="printDigest(true)"><svg class="ic"><use href="#ic-file"/></svg>4種類まとめてPDF（4ページ）</button>
+            </div>
+            <p class="settings-hint" style="margin-top:10px;">もっと細かい数字が必要なときは「書き出し（PDF・CSV）」から全項目のレポートを出せます。</p>`;
+    }
+
+    function selectDigest(key) {
+        digestKind = key;
+        document.querySelectorAll('.dg-pick').forEach((b, i) => b.classList.toggle('on', DIGEST_SHEETS[i].key === key));
+        renderDigestPreview();
+    }
+
+    // 見本を紙の形のまま縮めて画面に収める（幅720pxの紙を、置ける幅に合わせて縮小）
+    const DIGEST_PAPER_W = 720;
+    function renderDigestPreview() {
+        const stage = document.getElementById('digest-stage');
+        const page = document.getElementById('digest-page');
+        if (!stage || !page) return;
+        page.innerHTML = inReportContext(() => digestSheetHTML(digestKind));
+        const scale = Math.min(1, stage.clientWidth / DIGEST_PAPER_W);
+        page.style.transform = `scale(${scale})`;
+        stage.style.height = Math.ceil(page.offsetHeight * scale) + 'px';
+    }
+    // 画面の向きを変えた時などに、見本の大きさを合わせ直す
+    window.addEventListener('resize', () => {
+        const sec = document.getElementById('sec-digest');
+        if (sec && sec.style.display !== 'none' && document.getElementById('digest-page')) renderDigestPreview();
+    });
+
+    function printDigest(all) { return inReportContext(() => printDigestInner(all)); }
+    function printDigestInner(all) {
+        const R = buildReportData();
+        if (!R) { alert('まとめる売上データがありません。'); return; }
+        const keys = all ? DIGEST_SHEETS.map(s => s.key) : [digestKind];
+        document.getElementById('print-report').innerHTML =
+            keys.map((k, i) => `<div${i > 0 ? ' style="break-before:page; page-break-before:always;"' : ''}>${digestSheetHTML(k)}</div>`).join('');
+        openReportWindow(all ? '発表用のまとめ' : (DIGEST_SHEETS.find(s => s.key === digestKind) || {}).title);
+    }
+
+    // 1枚ぶんのHTML。画面の見本とPDFで同じものを使う。
+    function digestSheetHTML(kind) {
+        const R = buildReportData();
+        if (!R) return '';
+        const esc = escHtml;
+        const yen = n => '¥' + Number(n || 0).toLocaleString('ja-JP');
+        const s = R.summary;
+        const sheet = DIGEST_SHEETS.find(x => x.key === kind) || DIGEST_SHEETS[0];
+        const span = digestTimeSpan(R);
+        const head = `
+            <div class="dg-head">
+                <div>
+                    <div class="dg-title">${esc(reportSessionName())}</div>
+                    <div class="dg-sub">${esc(sheet.title)}${span ? '　／　' + esc(span) : ''}</div>
+                </div>
+                <div class="dg-meta">売上合計<br><span class="dg-meta-v">${yen(s.totalRev)}</span></div>
+            </div>`;
+        const foot = `<div class="dg-foot">泰山木POS で集計　${new Date().toLocaleDateString('ja-JP')}</div>`;
+        let body = '';
+
+        if (kind === 'oneline') {
+            const soldOutN = R.soldOut.length;
+            body = `
+                <div class="dg-big">
+                    <div class="dg-cell dg-lead">
+                        <div class="k">総売上</div>
+                        <div class="v">${yen(s.totalRev)}</div>
+                        <div class="s">${esc(reportSessionName())}${span ? '（' + esc(span) + '）' : ''}</div>
+                    </div>
+                    <div class="dg-cell"><div class="k">来店人数</div><div class="v">${s.customers}<span class="u">人</span></div><div class="s">会計の件数</div></div>
+                    <div class="dg-cell"><div class="k">客単価</div><div class="v">${yen(s.avg)}</div><div class="s">1人あたりの平均</div></div>
+                    <div class="dg-cell"><div class="k">販売点数</div><div class="v">${Math.round(s.avgItems * s.customers)}<span class="u">点</span></div><div class="s">1人あたり ${s.avgItems}点</div></div>
+                    <div class="dg-cell"><div class="k">完売した商品</div><div class="v">${soldOutN}<span class="u">品</span></div><div class="s">${soldOutN ? '最初の完売 ' + esc(R.soldOut[0].timeStr) : '完売はなし'}</div></div>
+                </div>
+                ${digestHighlightNote(R)}`;
+        } else if (kind === 'best') {
+            const top = R.abc.slice(0, 10);
+            const maxRev = Math.max(1, ...top.map(a => a.rev));
+            body = top.length ? `
+                <table class="rep-table dg-table">
+                    <thead><tr><th class="num" style="width:34px;">順位</th><th>商品</th><th class="num">販売数</th><th class="num">売上</th><th style="width:110px;">売上の大きさ</th></tr></thead>
+                    <tbody>${top.map((a, i) => `
+                        <tr${i === 0 ? ' class="peak-row"' : ''}>
+                            <td class="num dg-rank">${i + 1}</td>
+                            <td>${esc(a.name)}</td>
+                            <td class="num">${a.sold}点</td>
+                            <td class="num">${yen(a.rev)}</td>
+                            <td><span class="dg-bar"><i style="width:${Math.round(a.rev / maxRev * 100)}%"></i></span></td>
+                        </tr>`).join('')}</tbody>
+                </table>
+                <div class="dg-note">上位${top.length}品で売上の${Math.round(top.reduce((x, a) => x + a.rev, 0) / Math.max(1, s.totalRev) * 100)}%を占めています。${R.soldOut.length ? '完売：' + esc(R.soldOut.slice(0, 6).map(o => o.name).join('、')) + (R.soldOut.length > 6 ? ' ほか' : '') : ''}</div>`
+                : '<div class="dg-note">販売された商品がありません。</div>';
+        } else if (kind === 'time') {
+            const hours = digestHourly(R);
+            const maxRev = Math.max(1, ...hours.map(h => h.rev));
+            body = hours.length ? `
+                <table class="rep-table dg-table">
+                    <thead><tr><th>時間帯</th><th class="num">売上</th><th class="num">客数</th><th class="num">客単価</th><th style="width:150px;">売上の大きさ</th></tr></thead>
+                    <tbody>${hours.map(h => `
+                        <tr${h.rev === maxRev ? ' class="peak-row"' : ''}>
+                            <td>${esc(h.range)}</td>
+                            <td class="num">${yen(h.rev)}</td>
+                            <td class="num">${h.count}人</td>
+                            <td class="num">${yen(h.avg)}</td>
+                            <td><span class="dg-bar"><i style="width:${Math.round(h.rev / maxRev * 100)}%"></i></span></td>
+                        </tr>`).join('')}</tbody>
+                </table>
+                <div class="dg-note">いちばん売れた時間帯は${esc((hours.find(h => h.rev === maxRev) || {}).range || '-')}で、${yen(maxRev)}（全体の${Math.round(maxRev / Math.max(1, s.totalRev) * 100)}%）でした。</div>`
+                : '<div class="dg-note">時間帯のデータがありません。</div>';
+        } else {
+            const typeRows = R.types.slice().sort((a, b) => b.count - a.count);
+            const typeTotal = typeRows.reduce((x, t) => x + t.count, 0);
+            body = `
+                <div class="dg-sub-head">客属性別</div>
+                ${typeRows.length ? `<table class="rep-table dg-table">
+                    <thead><tr><th>客属性</th><th class="num">人数</th><th class="num">割合</th><th class="num">客単価</th><th class="num">売上</th></tr></thead>
+                    <tbody>${typeRows.map(t => `
+                        <tr><td>${esc(t.type)}</td><td class="num">${t.count}人</td>
+                        <td class="num">${Math.round(t.count / Math.max(1, typeTotal) * 100)}%</td>
+                        <td class="num">${yen(t.avg)}</td><td class="num">${yen(t.avg * t.count)}</td></tr>`).join('')}</tbody>
+                </table>` : '<div class="dg-note">客属性の入力がありませんでした。</div>'}
+                <div class="dg-sub-head">カテゴリ別</div>
+                ${R.categories.length ? `<table class="rep-table dg-table">
+                    <thead><tr><th>カテゴリ</th><th class="num">売上</th><th class="num">構成比</th><th style="width:150px;">売上の大きさ</th></tr></thead>
+                    <tbody>${R.categories.map(c => `
+                        <tr><td>${esc(c.name)}</td><td class="num">${yen(c.rev)}</td><td class="num">${c.pct}%</td>
+                        <td><span class="dg-bar"><i style="width:${c.pct}%"></i></span></td></tr>`).join('')}</tbody>
+                </table>` : '<div class="dg-note">カテゴリの内訳がありません。</div>'}
+                ${s.pendingLeft > 0 ? `<div class="dg-note">※「不明」${s.pendingLeft}件は、客属性を入力しないまま記録した会計です。</div>` : ''}`;
+        }
+        return `<div class="report-root digest">${head}${body}${foot}</div>`;
+    }
+
+    // 営業時間（最初の会計〜最後の会計）
+    function digestTimeSpan(R) {
+        if (!R.slots.length) return '';
+        const a = R.slots[0], b = R.slots[R.slots.length - 1];
+        const end = new Date(b.key + 15 * 60000);
+        return `${a.label}〜${end.getHours()}:${String(end.getMinutes()).padStart(2, '0')}`;
+    }
+
+    // 15分ごとのままでは発表には細かすぎるので、1時間ごとにまとめ直す
+    function digestHourly(R) {
+        const HOUR = 3600000;
+        const map = {};
+        R.slots.forEach(sl => {
+            const k = Math.floor(sl.key / HOUR) * HOUR;
+            if (!map[k]) map[k] = { key: k, rev: 0, count: 0 };
+            map[k].rev += sl.rev; map[k].count += sl.count;
+        });
+        return Object.values(map).sort((a, b) => a.key - b.key).map(h => {
+            const st = new Date(h.key), en = new Date(h.key + HOUR);
+            return { ...h, range: `${st.getHours()}:00〜${en.getHours()}:00`, avg: h.count ? Math.floor(h.rev / h.count) : 0 };
+        });
+    }
+
+    // ハイライトに添える一言（事実だけを短く）。
+    // 前回の販売会の記録があれば、発表でいちばん使う「前回比」も添える。
+    function digestHighlightNote(R) {
+        const s = R.summary;
+        const bits = [];
+        const top = R.abc[0];
+        if (top) bits.push(`いちばん売れたのは「${escHtml(top.name)}」（${top.sold}点・${'¥' + Number(top.rev).toLocaleString('ja-JP')}）`);
+        if (s.peak) bits.push(`売上のピークは${escHtml(s.peak.label)}〜の15分間`);
+        if (R.soldOut.length) bits.push(`${R.soldOut.length}品が完売`);
+        let note = bits.length ? `<div class="dg-note">${bits.join('　／　')}。</div>` : '';
+
+        const c = R.comparison;
+        if (c) {
+            const arrow = m => m.diff > 0 ? '▲' : (m.diff < 0 ? '▼' : '±');
+            const pct = m => m.pct == null ? '—' : `${m.pct > 0 ? '+' : ''}${m.pct}%`;
+            const yen = n => '¥' + Number(n || 0).toLocaleString('ja-JP');
+            note += `
+                <div class="dg-sub-head">前回（${escHtml(c.prevName)}）との比較</div>
+                <table class="rep-table dg-table">
+                    <thead><tr><th>項目</th><th class="num">今回</th><th class="num">前回</th><th class="num">増減</th></tr></thead>
+                    <tbody>
+                        <tr><td>売上</td><td class="num">${yen(c.totalRev.now)}</td><td class="num">${yen(c.totalRev.prev)}</td><td class="num">${arrow(c.totalRev)} ${pct(c.totalRev)}</td></tr>
+                        <tr><td>来店人数</td><td class="num">${c.customerCount.now}人</td><td class="num">${c.customerCount.prev}人</td><td class="num">${arrow(c.customerCount)} ${pct(c.customerCount)}</td></tr>
+                        <tr><td>客単価</td><td class="num">${yen(c.avgSpend.now)}</td><td class="num">${yen(c.avgSpend.prev)}</td><td class="num">${arrow(c.avgSpend)} ${pct(c.avgSpend)}</td></tr>
+                    </tbody>
+                </table>`;
+        }
+        return note;
     }
 
     function secNextHTML() {
@@ -4352,7 +4684,7 @@
             .map(k => {
                 const cust = timeSlotCust[k] || 0;
                 return {
-                    label: hm(k), range: `${hm(k)}〜${hm(k + SLOT_MS)}`,
+                    key: k, label: hm(k), range: `${hm(k)}〜${hm(k + SLOT_MS)}`,
                     rev: timeSlotRev[k], count: cust,
                     avg: cust > 0 ? Math.floor(timeSlotRev[k] / cust) : 0,
                     top: Object.entries(timeSlotItems[k]).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => ({ name: n, count: c }))
@@ -4564,6 +4896,7 @@
                         <div>
                             <div class="sub-heading">客属性別 来店人数と客単価</div>
                             <table class="rep-table"><thead><tr><th>客属性</th><th class="num">人数</th><th class="num">客単価</th></tr></thead><tbody>${typeRows}</tbody></table>
+                            ${s.pendingLeft > 0 ? `<div class="note-foot">「不明」${s.pendingLeft}件は客属性を入力しないまま記録した会計です。</div>` : ''}
                         </div>
                         <div>
                             <div class="sub-heading">カテゴリ別 売上と占有率</div>
@@ -4600,7 +4933,7 @@
     // タブレット(iPad等)で「印刷はできるが端末に保存できない」問題への対策：
     // アプリ本体は position:fixed の1画面構成で保存に回しにくいため、レシートと同じく
     // 別文書として開くことで、印刷プレビューから「PDFとして保存 / ファイルに保存」を確実に使える。
-    function openReportWindow() {
+    function openReportWindow(docTitle) {
         const inner = document.getElementById('print-report').innerHTML;
         const css = (document.getElementById('report-css') || {}).textContent || '';
         const win = window.open('', '_blank');
@@ -4613,7 +4946,7 @@
         win.document.write(
             '<!doctype html><html lang="ja"><head><meta charset="utf-8">' +
             '<meta name="viewport" content="width=device-width, initial-scale=1">' +
-            '<title>販売会 集計結果</title>' +
+            '<title>' + escHtml(docTitle || '販売会 集計結果') + '</title>' +
             '<style>' + css + '</style>' +
             '<style>@page{size:A4;margin:15mm;} html,body{margin:0;background:#fff;} ' +
             'body{padding:16px;} @media print{body{padding:0;}} ' +
@@ -4963,23 +5296,43 @@
         return Object.values(map).map(l => ({ ...l, subtotal: l.price * l.qty }));
     }
 
+    // 「未入力だけ表示」の絞り込みと、入力済みカードで選び直しを開いている番号
+    let recordsPendingOnly = false;
+    let recordTypeEditIdx = null;
+
+    function openRecordType(idx) { recordTypeEditIdx = idx; renderRecords(); }
+    function toggleRecordsPendingOnly() { recordsPendingOnly = !recordsPendingOnly; renderRecords(); }
+
+    // 未入力の知らせ。一覧の外に置くので、タブレットで横一列に並べても
+    // カードの列に割り込まず、画面の幅いっぱいに出る。
+    function renderRecordsNotice(pendingCount) {
+        const box = document.getElementById('records-notice');
+        if (!box) return;
+        if (pendingCount <= 0) { box.style.display = 'none'; box.innerHTML = ''; return; }
+        box.style.display = 'flex';
+        box.innerHTML = `
+            <svg class="ic"><use href="#ic-alert"/></svg>
+            <span class="rn-text">客属性が未入力の会計が<b>${pendingCount}件</b>あります。カードの属性ボタンを押すと割り当てられます。</span>
+            <button class="rn-btn${recordsPendingOnly ? ' on' : ''}" onclick="toggleRecordsPendingOnly()">${recordsPendingOnly ? 'すべて表示' : '未入力だけ表示'}</button>`;
+    }
+
     function renderRecords() {
         const list = document.getElementById('records-list');
         if (!list) return;
+        renderRecordsNotice(salesHistory.filter(h => h.pendingType).length);
         if (salesHistory.length === 0) {
             list.innerHTML = '<p style="color:var(--text-light); text-align:center; margin-top:20px;">まだ会計済のデータはありません。</p>';
             return;
         }
         // 属性未入力（後で）を先頭に、次に新しい会計順
-        const rows = salesHistory.map((h, idx) => ({ h, idx }))
+        let rows = salesHistory.map((h, idx) => ({ h, idx }))
             .sort((a, b) => (Number(!!b.h.pendingType) - Number(!!a.h.pendingType)) || (new Date(b.h.time) - new Date(a.h.time)));
         const pendingCount = salesHistory.filter(h => h.pendingType).length;
-        const summary = pendingCount > 0
-            ? `<div style="background:var(--warn-bg); border:2px solid var(--warn-line); border-radius:var(--r-md); padding:8px 12px; margin-bottom:10px; font-size:13px; color:var(--warn-ink); font-weight:bold; align-self:flex-start; max-width:260px; flex-shrink:0;">客属性が未入力の会計：${pendingCount}件（各カードの属性ボタンをタップして割り当て）</div>`
-            : '';
+        if (recordsPendingOnly && pendingCount === 0) recordsPendingOnly = false;
+        if (recordsPendingOnly) rows = rows.filter(r => r.h.pendingType);
         const TYPES = ['学生', '教員', '職員', 'その他', '不明'];
 
-        list.innerHTML = summary + rows.map(({ h, idx }) => {
+        list.innerHTML = rows.map(({ h, idx }) => {
             const t = new Date(h.time);
             const dtStr = `${t.getFullYear()}/${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')} ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
             const editing = editingRecordIdx === idx;
@@ -5008,16 +5361,31 @@
                         <button class="rc-act" onclick="printReceipt(${idx})"><svg class="ic"><use href="#ic-printer"/></svg>領収書</button>
                         <button class="rc-act" onclick="toggleEditRecord(${idx})"><svg class="ic"><use href="#ic-pencil"/></svg>修正</button>
                     </div>`;
+            // 客属性は「まだ入れていない」時だけ大きく出す。
+            // 入力済みのカードで同じ選択ボタンを出しっぱなしにすると、
+            // どれが未入力でどれが済んでいるのか一目で分からなくなるため、
+            // 済んだものは選んだ値の札だけを小さく置き、押すと選び直せるようにする。
+            const typeOpen = h.pendingType || recordTypeEditIdx === idx;
+            const seg = `<span class="rc-seg">${TYPES.map(ty => { const on = h.customerType === ty && !h.pendingType; return `<button class="${on ? 'on' : ''}" onclick="setRecordType(${idx}, '${ty}')">${ty}</button>`; }).join('')}</span>`;
+            const typeBlock = typeOpen
+                ? `<div class="rc-types${h.pendingType ? ' pending' : ''}">
+                        ${h.pendingType ? '' : '<span class="rc-types-label">選び直す</span>'}
+                        ${seg}
+                    </div>`
+                : `<div class="rc-types done">
+                        <button class="rc-chip" onclick="openRecordType(${idx})" aria-label="客属性を選び直す">
+                            <svg class="ic"><use href="#ic-check"/></svg>${escHtml(h.customerType || '不明')}
+                        </button>
+                        <span class="rc-types-note">客属性 入力済み</span>
+                    </div>`;
             return `
-                <div class="res-card"${editing ? ' style="outline:2px solid var(--accent);"' : ''}>
+                <div class="res-card${h.pendingType ? ' is-pending' : ''}"${editing ? ' style="outline:2px solid var(--accent);"' : ''}>
                     <div class="res-header">
                         <span class="rc-no">客No. ${h.no || '-'}${h.deviceLabel ? ` <span style="font-size:11px; color:var(--text-light); font-weight:normal;">［${h.deviceLabel}］</span>` : ''}${h.edited ? ' <span style="font-size:11px; color:var(--danger-ink); font-weight:normal;">(修正済)</span>' : ''}</span>
                         <span style="color:var(--text-light); font-size:12.5px; font-weight:normal;">${dtStr}</span>
                     </div>
-                    <div class="rc-types">
-                        ${h.pendingType ? '<span class="rc-types-label" style="color:var(--warn-ink); font-weight:700;">未入力</span>' : '<span class="rc-types-label">客属性</span>'}
-                        <span class="rc-seg">${TYPES.map(ty => { const on = h.customerType === ty && !h.pendingType; return `<button class="${on ? 'on' : ''}" onclick="setRecordType(${idx}, '${ty}')">${ty}</button>`; }).join('')}</span>
-                    </div>
+                    ${h.pendingType ? '<div class="rc-flag"><svg class="ic"><use href="#ic-alert"/></svg>客属性が未入力</div>' : ''}
+                    ${typeBlock}
                     <div class="rc-sep"></div>
                     <div class="rc-lines">${lines}</div>
                     <div class="rc-sep"></div>
@@ -5099,6 +5467,7 @@
         if (!rec) return;
         if (syncMode) {
             if (type && type !== '不明') lastCustomerType = type;
+            recordTypeEditIdx = null;
             syncUpdateSale(rec.remoteId, { customerType: type, pendingType: false, typeEditedLater: true });
             logEdit(`属性入力 客No.${rec.no || '-'}：${type}`);
             playSound();
@@ -5107,6 +5476,7 @@
         rec.customerType = type;
         rec.pendingType = false;
         rec.typeEditedLater = true; // 会計後に属性が入力・変更された
+        recordTypeEditIdx = null;   // 選び終わったら札に畳む（選んだ値がその場で見える）
         if (type && type !== '不明') lastCustomerType = type; // 直前値として記憶
         logEdit(`属性入力 客No.${rec.no || '-'}：${type}`);
         playSound();
@@ -5118,6 +5488,10 @@
 
     // レジ画面に「属性 後で入力：N件」を常時表示（未入力のリマインド）
     function updatePendingReminder() {
+        // 未入力の件数が変わったら、下のナビのバッジも必ず合わせる。
+        // 以前はレジ画面を描き直した時にしか更新していなかったため、
+        // 会計記録の画面で属性を入れてもバッジの数字が古いままだった。
+        updateNavBadges();
         const el = document.getElementById('pending-reminder');
         if (!el) return;
         const n = salesHistory.filter(h => h.pendingType).length;
