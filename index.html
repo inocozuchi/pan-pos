@@ -205,7 +205,7 @@
         
         @media (min-width: 769px) {
             .checkout-wide { max-width: 940px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
-            .checkout-left { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--line); padding-right: 20px; }
+            .checkout-left { flex: 1; display: flex; flex-direction: column; padding-right: 22px; }
             .checkout-right { flex: 1.2; display: flex; flex-direction: column; justify-content: space-between; }
             .checkout-left .receipt-list { flex: 1; max-height: none; }
         }
@@ -240,7 +240,7 @@
             gap: 12px;
             /* 区切りは線ではなく、ごく淡い影で表す（洗練した見え方にするため）。
                線を消しても、影で面の前後関係は分かる。 */
-            box-shadow: 0 1px 0 rgba(28,29,34,.04), 0 4px 14px rgba(28,29,34,.05);
+            box-shadow: 0 6px 20px rgba(28,29,34,.07), 0 2px 6px rgba(28,29,34,.04);
             z-index: 10;
         }
 
@@ -304,7 +304,7 @@
         .product-btn {
             position: relative;
             overflow: hidden;
-            border: 1px solid rgba(0,0,0,0.05);
+            border: none;
             border-radius: var(--r-md);
             color: var(--text-main);
             display: flex;
@@ -356,10 +356,10 @@
             flex: 1;
             min-width: 0;
             background-color: var(--white);
-            border-right: 1px solid var(--line);
             display: flex;
             flex-direction: column;
-            box-shadow: 2px 0 15px rgba(0,0,0,0.02);
+            /* 縦の区切り線はやめ、面の色の違いと横方向のやわらかい影で分ける */
+            box-shadow: 6px 0 22px rgba(28,29,34,.06);
             z-index: 5;
         }
 
@@ -376,7 +376,7 @@
             display: none; align-items: center; justify-content: center; gap: 6px;
             background: var(--warn-bg); color: var(--warn-ink); font-weight: bold;
             font-size: 13px; text-align: center; padding: 8px; cursor: pointer;
-            border-bottom: 2px solid var(--warn-line); flex-shrink: 0; font-family: inherit;
+            flex-shrink: 0; font-family: inherit;
             border-left: none; border-right: none; border-top: none; width: 100%;
         }
         #pending-reminder.show { display: flex; }
@@ -389,10 +389,8 @@
             justify-content: space-between;
             gap: 8px;
             min-width: 0;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--line);
+            padding: 9px 0;
             font-size: 16px;
-            box-shadow: none;
         }
         .cart-item > span:first-child { min-width: 0; }
         .cart-item > span:first-child > span:last-child { min-width: 0; overflow-wrap: anywhere; }
@@ -404,7 +402,8 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            border-top: 1px solid var(--line);
+            /* 線ではなく、上向きのやわらかい影で「別の面」であることを示す */
+            box-shadow: 0 -5px 16px rgba(28,29,34,.05);
         }
 
         .total-display { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
@@ -482,11 +481,11 @@
         .receipt-list {
             list-style: none; padding: 0; margin: 15px 0;
             max-height: 150px; overflow-y: auto;
-            border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+            /* 囲み線はやめ、上下の余白だけで区切る */
         }
         .receipt-item {
             display: flex; justify-content: space-between;
-            padding: 8px 0; font-size: 15px; border-bottom: 1px solid var(--sunken);
+            padding: 7px 0; font-size: 15px;
         }
 
         /* お会計画面の明細サマリー（点数・小計・合計を右揃えで縦に並べる） */
@@ -499,17 +498,19 @@
         /* 点数は合計に添えて1行にまとめる（行数を減らして読む場所を1つに） */
         .co-summary .co-count { font-size: 13px; font-weight: 600; color: var(--text-light); }
         .co-summary .co-row.co-grand {
-            border-top: 2px solid var(--line-strong); margin-top: 6px; padding-top: 8px;
+            margin-top: 10px; padding-top: 2px;
             font-size: 17px; color: var(--text-main); font-weight: 700;
         }
         .co-summary .co-row.co-grand .co-val { font-size: 30px; font-weight: 800; letter-spacing: 0.01em; }
 
         input[type="number"], input[type="text"] {
             width: calc(100% - 30px); padding: 12px 15px; font-size: 18px;
-            margin: 10px 0; border-radius: var(--r-md); border: 2px solid var(--line);
+            margin: 10px 0; border-radius: var(--r-md); border: none;
             background: var(--sunken); color: var(--text-main); outline: none;
+            box-shadow: inset 0 0 0 1px rgba(28,29,34,.05);
         }
-        input:focus { border-color: var(--accent); }
+        /* 入力中は枠線ではなく、青いふちどりで示す */
+        input:focus { box-shadow: inset 0 0 0 2px var(--accent); }
 
         /* お会計の預かり金額入力を大きく・見やすく */
         #cash-input {
@@ -527,7 +528,8 @@
         }
         .cash-display .cd-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
         .cash-display .cd-label { font-size: 13px; color: rgba(255,255,255,.62); font-weight: 600; flex-shrink: 0; }
-        .cash-display .cd-sep { height: 1px; background: rgba(255,255,255,.16); margin: 8px 0; }
+        /* 濃い面の中も線で区切らず、余白だけで「お預かり」と「お釣り」を分ける */
+        .cash-display .cd-sep { height: 10px; }
         /* 入力欄は「窓の中の数字」として見せる（枠も背景も持たせない） */
         .cash-display #cash-input {
             flex: 1; min-width: 0; width: auto; margin: 0; padding: 0;
@@ -600,7 +602,8 @@
         .res-actions { display: flex; gap: 10px; }
 
         /* カード内の区切りは、枠ではなく極細のヘアラインで（iOSのリスト風） */
-        .res-card .rc-sep { height: 1px; background: var(--line); transform: scaleY(0.5); transform-origin: top; margin: 1px 0; }
+        /* カードの中の仕切り線はやめ、上下の余白で段を作る */
+        .res-card .rc-sep { height: 3px; }
         .res-card .rc-lines { display: flex; flex-direction: column; gap: 1px; }
         .res-card .rc-total { display: flex; justify-content: space-between; align-items: baseline; font-weight: 700; font-size: 16px; }
         .res-card .rc-total .num { font-size: 20px; font-weight: 800; }
@@ -616,10 +619,7 @@
             transition: background .15s ease, transform .12s ease;
         }
         .res-card .rc-act:active { background: var(--accent-soft); transform: scale(0.96); }
-        .res-card .rc-act + .rc-act::before {
-            content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
-            width: 1px; transform: scaleX(0.5); background: var(--line);
-        }
+        /* ボタン同士の縦線もやめ、押した時の面の色だけで区別する */
         .res-card .rc-act .ic { width: 15px; height: 15px; }
         .res-card .rc-act.danger { color: var(--danger-ink); }
         .res-card .rc-act.danger:active { background: var(--danger-bg); }
@@ -659,13 +659,13 @@
             }
             .product-btn .price { font-size: 18px; margin-top: 3px; }
             .product-btn .stock { font-size: 10.5px; margin-top: 3px; padding: 1px 7px; }
-            #sidebar { flex: 0 0 auto; border-left: none; border-right: none; border-top: 1px solid var(--line-strong); box-shadow: 0 -3px 14px rgba(28,28,30,0.07); }
+            /* スマホではカートが下に来る。線ではなく上向きの影で「別の面」だと示す */
+            #sidebar { flex: 0 0 auto; border: none; box-shadow: 0 -6px 20px rgba(28,29,34,.09); }
             #cart-list { flex: 0 0 auto; max-height: 0; overflow: hidden; padding: 0 12px; transition: max-height .18s ease, padding .18s ease; }
             #sidebar.cart-open #cart-list { max-height: 40vh; overflow-y: auto; padding: 10px 12px; }
             #cart-toggle {
                 display: flex; align-items: center; justify-content: space-between; gap: 8px;
-                width: 100%; background: var(--sunken); border: none; border-top: 1px solid var(--line);
-                border-bottom: 1px solid var(--line); padding: 7px 12px; cursor: pointer;
+                width: 100%; background: var(--sunken); border: none; padding: 8px 12px; cursor: pointer;
                 font-family: inherit; font-size: 13px; font-weight: bold; color: var(--text-main);
                 text-align: left; flex-shrink: 0;
             }
@@ -722,7 +722,7 @@
             .type-btn { font-size: 13px; padding: 9px 2px; }
             .cash-display { padding: 9px 13px; margin-top: 6px; }
             .cash-display #cash-input, .cash-display .chg-amount { font-size: 25px; }
-            .cash-display .cd-sep { margin: 6px 0; }
+            .cash-display .cd-sep { height: 8px; }
             .cash-suggest { margin-top: 7px; gap: 6px; }
             .cash-suggest .cs-btn { padding: 8px 3px; font-size: 14.5px; }
 
@@ -774,7 +774,7 @@
             .type-btn { font-size: 12px; padding: 7px 1px; }
             .cash-display { padding: 7px 12px; margin-top: 4px; }
             .cash-display #cash-input, .cash-display .chg-amount { font-size: 22px; }
-            .cash-display .cd-sep { margin: 5px 0; }
+            .cash-display .cd-sep { height: 6px; }
             .cash-display .cd-label { font-size: 12px; }
             .cash-suggest { margin-top: 5px; }
             .cash-suggest .cs-btn { padding: 7px 3px; font-size: 14px; }
@@ -839,7 +839,8 @@
             font-size: 11.5px; font-weight: 700; color: var(--text-light); text-align: left;
             padding: 8px 10px; background: var(--sunken); white-space: nowrap;
         }
-        .a-table td { padding: 8px 10px; border-bottom: 1px solid var(--sunken); vertical-align: middle; }
+        .a-table td { padding: 8px 10px; vertical-align: middle; }
+        .a-table tbody tr:nth-child(even) td { background: var(--sunken); }  /* 線の代わりに、ごく薄い縞で行を追う */
         .a-table tr:last-child td { border-bottom: none; }
         .a-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
         .a-table .nm { font-weight: 600; line-height: 1.35; }
@@ -888,7 +889,7 @@
         .receipt-preview .rp-amount b { font-size: 21px; font-variant-numeric: tabular-nums; }
         .receipt-preview .rp-note { margin-bottom: 8px; }
         .receipt-preview .rp-stmt { font-size: 12px; color: var(--text-light); margin-bottom: 14px; }
-        .receipt-preview .rp-issuer { border-top: 1px solid var(--line); padding-top: 9px; display: flex; flex-direction: column; gap: 1px; }
+        .receipt-preview .rp-issuer { margin-top: 4px; display: flex; flex-direction: column; gap: 1px; }
         .receipt-preview .rp-issuer span { font-size: 11px; color: var(--text-light); }
         .receipt-preview .rp-issuer b { font-size: 14.5px; }
 
@@ -925,7 +926,7 @@
             display: flex; background: var(--glass-bg);
             backdrop-filter: saturate(180%) blur(20px);
             -webkit-backdrop-filter: saturate(180%) blur(20px);
-            box-shadow: 0 -1px 0 rgba(28,29,34,.04), 0 -6px 18px rgba(28,29,34,.06);
+            box-shadow: 0 -6px 22px rgba(28,29,34,.08), 0 -2px 6px rgba(28,29,34,.04);
             z-index: 150; flex-shrink: 0;
             /* iPhone は画面の四隅が丸く、下端にホームインジケータがある。
                ボタンが角で欠けたり、下端のジェスチャーを誤って触ったりしないよう、
@@ -1004,7 +1005,7 @@
         .panel-head {
             display: flex; align-items: center; gap: 6px; flex-shrink: 0;
             padding: 8px 14px; min-height: 50px;
-            box-shadow: 0 1px 0 rgba(28,29,34,.04), 0 4px 14px rgba(28,29,34,.05);
+            box-shadow: 0 6px 20px rgba(28,29,34,.06), 0 2px 6px rgba(28,29,34,.03);
             background: var(--glass-bg);
             backdrop-filter: saturate(180%) blur(20px);
             -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -1033,27 +1034,21 @@
 
         /* 一覧 →個別、の2段階メニュー（項目を選んでから中身を出す）
            iOSの設定のように、ひとかたまりのカードの中に区切り線で並べる。 */
+        /* 区切り線をやめ、1項目＝1枚の浮いたカードにする。
+           線を引かなくても、面と影とすき間で「別の項目」だと分かる。 */
         .menu-list {
-            display: flex; flex-direction: column;
-            background: var(--surface); border-radius: var(--r-lg);
-            box-shadow: var(--shadow-card);
-            overflow: hidden;
+            display: flex; flex-direction: column; gap: 8px;
+            background: none; box-shadow: none;
         }
-        /* iOSの設定アプリと同じく、区切り線はアイコンの先から引く（左端までは引かない）。
-           線は端末の解像度に合わせた極細のヘアラインにして、すっきり見せる。 */
         .menu-row {
             position: relative;
             display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
-            background: none; border: none;
+            background: var(--surface); border: none;
+            border-radius: var(--r-md); box-shadow: var(--shadow-card);
             padding: 14px 16px; min-height: 60px; cursor: pointer; font-family: inherit; color: var(--text-main);
-            transition: background .15s ease, transform .12s ease;
+            transition: background .15s ease, transform .12s ease, box-shadow .15s ease;
         }
-        .menu-row + .menu-row::before {
-            content: ''; position: absolute; top: 0; left: 50px; right: 0;
-            height: 1px; transform: scaleY(0.5); transform-origin: top;
-            background: var(--line);
-        }
-        .menu-row:active { background: var(--accent-soft); transform: scale(0.985); }
+        .menu-row:active { background: var(--accent-soft); transform: scale(0.985); box-shadow: none; }
         @media (hover: hover) { .menu-row:hover { background: var(--sunken); } }
         .menu-row > .ic:first-child { width: 22px; height: 22px; color: var(--accent); }
         .menu-row .mr-body { flex: 1; min-width: 0; }
@@ -1065,15 +1060,14 @@
         @media (min-width: 769px) {
             .menu-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; }
             /* 2列のときは右列の区切り線が浮くので、縦線で区切る */
-            .menu-list .menu-row:nth-child(odd) { border-right: 1px solid var(--line); }
-            /* 2列のときは、上の段（1つ目・2つ目）には横線を引かない */
-            .menu-list .menu-row:nth-child(-n+2)::before { display: none; }
+            .menu-list { gap: 10px; }
         }
         /* スマホでは項目を詰めて、メニュー全体がスクロールなしで収まるようにする */
         @media (max-width: 768px) {
-            .menu-list { gap: 0; }
-            .menu-row { padding: 10px 12px; gap: 10px; }
-            .menu-row + .menu-row::before { left: 42px; }
+            /* カードにすき間を取ったぶん、1項目の高さを詰めて
+               スマホでもメニュー全体がスクロールなしで収まるようにする */
+            .menu-list { gap: 6px; }
+            .menu-row { padding: 9px 13px; min-height: 52px; gap: 10px; }
             .menu-row > .ic:first-child { width: 20px; height: 20px; }
             .menu-row .mr-title { font-size: 14.5px; }
             .menu-row .mr-sub { font-size: 11.5px; margin-top: 2px; }
@@ -1128,7 +1122,8 @@
         .chart-box { background: var(--white); border: none; box-shadow: var(--shadow-card); border-radius: var(--r-md); padding: 12px 10px; margin-bottom: 10px; overflow-x: auto; text-align: center; }
         #handoff-paste {
             width: 100%; box-sizing: border-box; height: 64px; margin: 4px 0 0; padding: 10px; font-size: 13px;
-            border: 2px solid var(--line); border-radius: var(--r-md); background: var(--sunken);
+            border: none; border-radius: var(--r-md); background: var(--sunken);
+            box-shadow: inset 0 0 0 1px rgba(28,29,34,.05);
             color: var(--text-main); resize: vertical; font-family: inherit;
         }
 
@@ -2510,21 +2505,21 @@
                         <input class="ios-switch" type="checkbox" ${p.active === false ? '' : 'checked'} onchange="updateTempProduct(${p.id}, 'active', this.checked)">
                     </label>
                     <div style="display:flex; gap:5px; align-items:center;">
-                        <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
+                        <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
                         <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
                     </div>
                     <div style="display:flex; gap:5px; margin-top:5px;">
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">価格</div>
-                            <input type="number" value="${p.price}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" placeholder="価格" onchange="updateTempProduct(${p.id}, 'price', this.value)">
+                            <input type="number" value="${p.price}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="価格" onchange="updateTempProduct(${p.id}, 'price', this.value)">
                         </div>
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">仕入れ数</div>
-                            <input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">
+                            <input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">
                         </div>
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">原価（任意）</div>
-                            <input type="number" value="${p.cost != null ? p.cost : ''}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" placeholder="—" onchange="updateTempProduct(${p.id}, 'cost', this.value)">
+                            <input type="number" value="${p.cost != null ? p.cost : ''}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="—" onchange="updateTempProduct(${p.id}, 'cost', this.value)">
                         </div>
                     </div>
                     ${hint}
@@ -5449,13 +5444,13 @@
                     </div>
                     <div class="ls-row" style="display:flex; gap:8px; align-items:center;">
                         <label style="font-size:12px; color:var(--text-light);">価格</label>
-                        <input type="number" value="${p.price}" class="num ls-price" style="width:78px; padding:6px; text-align:right; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" onchange="setLivePrice(${p.id}, this.value)">
+                        <input type="number" value="${p.price}" class="num ls-price" style="width:78px; padding:6px; text-align:right; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLivePrice(${p.id}, this.value)">
                         <label style="font-size:12px; color:var(--text-light); margin-left:2px;">仕入れ数</label>
                         <button class="step-btn minus" onclick="adjustLiveInitialStock(${p.id}, -1)">−</button>
-                        <input type="number" value="${p.initialStock}" class="num ls-stock" style="width:62px; padding:6px; text-align:center; font-size:14px; border:1px solid var(--line-strong); border-radius:var(--r-sm); margin:0;" onchange="setLiveInitialStock(${p.id}, this.value)">
+                        <input type="number" value="${p.initialStock}" class="num ls-stock" style="width:62px; padding:6px; text-align:center; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLiveInitialStock(${p.id}, this.value)">
                         <button class="step-btn plus" onclick="adjustLiveInitialStock(${p.id}, 1)">＋</button>
                     </div>
-                    ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:6px; padding:6px; font-size:12px; border:1px solid var(--line-strong); border-radius:var(--r-sm);" onchange="setProductNote(${p.id}, this.value)">` : ''}
+                    ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:6px; padding:6px; font-size:12px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken);" onchange="setProductNote(${p.id}, this.value)">` : ''}
                 </div>
             `;
         });
