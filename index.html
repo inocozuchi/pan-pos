@@ -135,7 +135,7 @@
         .panel-head, header, #bottom-nav, .cash-display, .stat-tile {
             -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
         }
-        .panel-body, #cart-list, .receipt-list, .modal-content, .a-wrap, .chart-box, main {
+        .panel-body, #cart-list, .receipt-list, .modal-content, .a-wrap, .chart-box, #product-grid {
             -webkit-overflow-scrolling: touch;
         }
 
@@ -205,7 +205,7 @@
         
         @media (min-width: 769px) {
             .checkout-wide { max-width: 940px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
-            .checkout-left { flex: 1; display: flex; flex-direction: column; border-right: 2px dashed var(--line); padding-right: 20px; }
+            .checkout-left { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--line); padding-right: 20px; }
             .checkout-right { flex: 1.2; display: flex; flex-direction: column; justify-content: space-between; }
             .checkout-left .receipt-list { flex: 1; max-height: none; }
         }
@@ -224,7 +224,7 @@
         /* ▲▲▲ ここまで ▲▲▲ */
 
         @media (min-width: 769px) {
-            main {
+            #product-grid {
                 grid-auto-rows: minmax(102px, 150px) !important;  /* 商品名3行が切れない高さ */
             }
         }
@@ -286,7 +286,9 @@
             position: relative; /* 閉店中CTA(#closed-cta)の重ね合わせ基準 */
         }
 
-        main {
+        /* 商品ボタンの並び。ページ全体を包む <main id="app-main"> にも当たってしまい、
+           各画面が左右に10〜15px ずれていたので、商品グリッドだけを指すようにしている。 */
+        #product-grid {
             flex: 2;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -386,7 +388,7 @@
             gap: 8px;
             min-width: 0;
             padding: 10px 0;
-            border-bottom: 1px dashed var(--line);
+            border-bottom: 1px solid var(--line);
             font-size: 16px;
         }
         .cart-item > span:first-child { min-width: 0; }
@@ -477,7 +479,7 @@
         .receipt-list {
             list-style: none; padding: 0; margin: 15px 0;
             max-height: 150px; overflow-y: auto;
-            border-top: 2px dashed var(--line); border-bottom: 2px dashed var(--line);
+            border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
         }
         .receipt-item {
             display: flex; justify-content: space-between;
@@ -491,6 +493,8 @@
             padding: 4px 0; font-size: 14px; color: var(--text-light);
         }
         .co-summary .co-row .co-val { color: var(--text-main); font-weight: 700; }
+        /* 点数は合計に添えて1行にまとめる（行数を減らして読む場所を1つに） */
+        .co-summary .co-count { font-size: 13px; font-weight: 600; color: var(--text-light); }
         .co-summary .co-row.co-grand {
             border-top: 2px solid var(--line-strong); margin-top: 6px; padding-top: 8px;
             font-size: 17px; color: var(--text-main); font-weight: 700;
@@ -552,14 +556,6 @@
         /* 客属性（任意）：お金の流れを邪魔しないよう、枠を持たせず控えめに置く */
         .co-type { margin-top: 12px; }
         .co-type .co-type-label { display: block; font-size: 11.5px; color: var(--text-light); font-weight: 600; margin: 0 2px 5px; }
-        .co-type #last-type-quick {
-            display: none; width: 100%; margin-top: 7px; padding: 8px; font-size: 13.5px; font-weight: 700;
-            border: none; border-radius: var(--r-sm); background: var(--accent-soft); color: var(--accent-ink);
-            cursor: pointer; font-family: inherit; align-items: center; justify-content: center; gap: 5px;
-            transition: transform .12s ease;
-        }
-        .co-type #last-type-quick:active { transform: scale(0.97); }
-        .co-type #last-type-quick .ic { width: 16px; height: 16px; }
 
         /* 会計を終えるボタン（1つだけ・押す前に結果が分かる2段表示） */
         .co-action { margin-top: 12px; }
@@ -589,12 +585,57 @@
         .sheet-back:active { background: var(--accent-soft); transform: scale(0.96); }
 
 
+        /* 1件の会計＝1枚の白いカード。地の色と同じだと境目が分からなかったので、
+           白い面＋やわらかい影で「ここからここまでが1会計」が一目で分かるようにする。 */
         .res-card {
-            background: var(--bg-color); border-radius: var(--r-md); padding: 15px;
-            margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px;
+            background: var(--surface); border-radius: var(--r-lg); padding: 14px 16px;
+            margin-bottom: 12px; display: flex; flex-direction: column; gap: 9px;
+            box-shadow: var(--shadow-card);
         }
-        .res-header { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 1px solid var(--line); padding-bottom: 5px; }
+        .res-header { display: flex; justify-content: space-between; align-items: baseline; font-weight: bold; }
+        .res-header .rc-no { font-size: 17px; letter-spacing: 0.01em; }
         .res-actions { display: flex; gap: 10px; }
+
+        /* カード内の区切りは、枠ではなく極細のヘアラインで（iOSのリスト風） */
+        .res-card .rc-sep { height: 1px; background: var(--line); transform: scaleY(0.5); transform-origin: top; margin: 1px 0; }
+        .res-card .rc-lines { display: flex; flex-direction: column; gap: 1px; }
+        .res-card .rc-total { display: flex; justify-content: space-between; align-items: baseline; font-weight: 700; font-size: 16px; }
+        .res-card .rc-total .num { font-size: 20px; font-weight: 800; }
+        .res-card .rc-pay { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-light); }
+        /* 操作は文字だけのボタンを横一列に。区切りは縦のヘアラインだけ */
+        .res-card .rc-acts { display: flex; align-items: stretch; margin: 2px -4px -4px; }
+        .res-card .rc-act {
+            flex: 1; min-width: 0; position: relative;
+            display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+            background: none; border: none; cursor: pointer; font-family: inherit;
+            padding: 9px 4px; font-size: 13.5px; font-weight: 600; color: var(--accent);
+            border-radius: var(--r-sm);
+            transition: background .15s ease, transform .12s ease;
+        }
+        .res-card .rc-act:active { background: var(--accent-soft); transform: scale(0.96); }
+        .res-card .rc-act + .rc-act::before {
+            content: ''; position: absolute; left: 0; top: 20%; bottom: 20%;
+            width: 1px; transform: scaleX(0.5); background: var(--line);
+        }
+        .res-card .rc-act .ic { width: 15px; height: 15px; }
+        .res-card .rc-act.danger { color: var(--danger-ink); }
+        .res-card .rc-act.danger:active { background: var(--danger-bg); }
+        .res-card .rc-act.primary { color: var(--accent); font-weight: 700; }
+
+        /* 客属性の選択はセグメント風に1つの枠へまとめる */
+        .res-card .rc-types { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .res-card .rc-types .rc-types-label { font-size: 12px; color: var(--text-light); flex-shrink: 0; }
+        .res-card .rc-types .rc-seg { display: flex; gap: 2px; background: var(--btn-neutral); border-radius: 10px; padding: 2px; flex: 1; min-width: 0; }
+        .res-card .rc-types .rc-seg button {
+            flex: 1; min-width: 0; padding: 5px 2px; font-size: 12px; font-weight: 600; font-family: inherit;
+            border: none; border-radius: 8px; background: none; color: var(--text-light); cursor: pointer;
+            transition: background .18s ease, color .18s ease, transform .12s ease;
+        }
+        .res-card .rc-types .rc-seg button:active { transform: scale(0.95); }
+        .res-card .rc-types .rc-seg button.on {
+            background: var(--surface); color: var(--accent-ink); font-weight: 700;
+            box-shadow: 0 1px 3px rgba(28,29,34,.14), 0 0 0 .5px rgba(28,29,34,.04);
+        }
 
         @media (max-width: 768px) {
             #app-container { flex-direction: column; }
@@ -607,7 +648,7 @@
                ・3行ぶんが入る高さを確保する
                ・それでも収まらない名前は「…」で省略する（途中で欠けるより読める）
                ・在庫の数字は補助情報なので、スマホでは小さめにして名前と価格の場所を優先する */
-            main { flex: 1; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(100px, 124px); padding: 10px; gap: 8px; }
+            #product-grid { flex: 1; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(100px, 124px); padding: 10px; gap: 8px; }
             .product-btn { padding: 6px 6px 5px; }
             .product-btn .pname {
                 display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
@@ -653,14 +694,17 @@
                 width: 36px; height: 4px; border-radius: 999px; background: var(--line-strong);
             }
             #checkout-modal .co-head { margin-top: 6px; }
+            /* iOSのシートと同じく、画面いっぱいに広げず「中身の高さ」で下からせり上がる。
+               全画面にしていた時は、中身が足りないぶんが会計ボタンの上の空白になっていた。 */
             #checkout-modal .modal-content {
-                width: 100%; max-width: none; height: 100dvh; max-height: 100dvh;
-                border-radius: 0; padding: 10px 14px calc(8px + env(safe-area-inset-bottom, 0px));
+                width: 100%; max-width: none; height: auto; max-height: 94dvh;
+                border-radius: 22px 22px 0 0;
+                padding: 12px 14px calc(14px + env(safe-area-inset-bottom, 0px));
                 gap: 4px;
                 animation: sheetUp .34s cubic-bezier(.32, .72, 0, 1) both !important;
             }
             #checkout-modal .checkout-left { flex: 0 0 auto; }
-            #checkout-modal .checkout-right { flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
+            #checkout-modal .checkout-right { flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0; }
             #checkout-modal .co-head h2 { font-size: 18px; }
             #checkout-modal .sheet-back { min-height: 36px; padding: 6px 8px 6px 4px; font-size: 14px; }
             #checkout-modal .receipt-list { max-height: 18vh; margin: 6px 0; }
@@ -686,9 +730,10 @@
             .cash-display .chg-breakdown span { font-size: 12px; padding: 2px 8px; }
             .co-type { margin-top: 9px; }
 
-            /* 会計ボタンは常に画面下に固定（押せない問題を解消）*/
+            /* 中身が画面より高くなった時だけ、会計ボタンが下に貼り付いて隠れないようにする
+               （margin-top:auto を外したので、普段は中身のすぐ下に並ぶ＝余計な空白が出ない） */
             #checkout-modal .co-action {
-                position: sticky; bottom: 0; margin-top: auto;
+                position: sticky; bottom: 0;
                 background: var(--white); padding-top: 8px; z-index: 1;
             }
             #checkout-primary .cp-main { font-size: 18px; }
@@ -697,7 +742,7 @@
             header { padding: 9px 14px; }
             .app-title { font-size: 18px; gap: 8px; }
             .session-info { font-size: 12px; padding: 4px 10px; max-width: 46vw; }
-            #bottom-nav { padding: 3px 4px calc(3px + env(safe-area-inset-bottom, 0px)); }
+
             .nav-item { font-size: 10px; padding: 5px 2px 4px; gap: 2px; border-radius: var(--r-sm); }
             .nav-item .nav-ico { font-size: 20px; }
             .product-btn .pname { line-height: 1.2; }
@@ -860,9 +905,9 @@
 
         /* 操作フィードバックのトースト（会計完了・取消など） */
         #toast {
-            position: fixed; left: 50%; bottom: 84px;
+            position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px));
             transform: translateX(-50%) translateY(14px) scale(0.96);
-            background: rgba(38,34,30,0.86);
+            background: rgba(28,29,34,0.88);
             backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
             color: #fff; padding: 12px 22px; border-radius: var(--r-pill);
             font-weight: bold; font-size: 15px; box-shadow: 0 8px 28px rgba(0,0,0,0.26);
@@ -879,7 +924,11 @@
             -webkit-backdrop-filter: saturate(180%) blur(20px);
             border-top: 1px solid var(--glass-line);
             z-index: 150; flex-shrink: 0;
-            padding: 5px 6px calc(5px + env(safe-area-inset-bottom, 0px));
+            /* iPhone のホームインジケータ（画面下の横線）と重ならないよう、
+               安全領域のぶんに加えて余白を足し、ボタンを画面の端から離す。
+               端末の角が丸い機種でも、ボタンの角が欠けたり
+               下端のジェスチャーを誤って触ったりしないようにするため。 */
+            padding: 6px 6px calc(14px + env(safe-area-inset-bottom, 0px));
         }
         .nav-item {
             flex: 1; border: none; background: none; cursor: pointer; font-family: inherit;
@@ -1518,9 +1567,8 @@
             <ul class="receipt-list" id="checkout-receipt"></ul>
             <!-- 点数→合計を縦に並べ、金額は右揃え・等幅数字で読み間違いを防ぐ -->
             <div class="co-summary">
-                <div class="co-row"><span>点数</span><span class="co-val"><span id="modal-count">0</span> 点</span></div>
                 <div class="co-row co-grand" onclick="setCashExact()" style="cursor:pointer;" title="タップするとお預かり金額に合計額が入ります">
-                    <span>合計</span>
+                    <span>合計 <span class="co-count">（<span id="modal-count">0</span>点）</span></span>
                     <span class="co-val">¥<span id="modal-total">0</span></span>
                 </div>
             </div>
@@ -1570,7 +1618,6 @@
                     <label class="type-btn"><input type="radio" name="customerType" value="不明"> 不明</label>
                     <label class="type-btn type-later"><input type="radio" name="customerType" value="__later__" checked> 後で</label>
                 </div>
-                <button type="button" id="last-type-quick" onclick="applyLastCustomerType()"></button>
             </div>
 
             <!-- 会計を終える操作は1つだけ。押す前に何が起きるかがボタンに書いてある -->
@@ -1721,7 +1768,7 @@
     let analyticsSections = null; // 集計結果（項目別テキスト）のキャッシュ
     let operationLog = [];   // 事後編集・部分修正などの操作履歴（運用振り返り用）
     let comparisonBaseline = null; // 今回の販売会と比較する「前回の実績」（開店時に確定）
-    let lastCustomerType = null;   // 直前に選ばれた客属性（属性入力の高速化用）
+    let lastCustomerType = null;   // 直前に選ばれた客属性（保存データの互換のため保持）
     // 会計の二重記録を防ぐための通し番号。お会計画面を開くたびに +1 され、
     // 記録が成立した番号は checkoutRecordedToken に控えて、同じ番号では二度と記録しない。
     let checkoutOpenToken = 0;
@@ -2082,28 +2129,8 @@
         renderChangeBreakdown(0);
         renderCashSuggestions(total);
         updateCheckoutPrimary();
-        renderLastTypeQuick();
         showNav(false); // 会計中はナビを隠して集中できるように
         document.getElementById('checkout-modal').style.display = 'flex';
-    }
-
-    // 「直前と同じ客属性」ワンタップ設定（属性入力の高速化）
-    function renderLastTypeQuick() {
-        const btn = document.getElementById('last-type-quick');
-        if (!btn) return;
-        if (lastCustomerType && lastCustomerType !== '__later__') {
-            btn.innerHTML = `<svg class="ic"><use href="#ic-users"/></svg>直前と同じ：${escHtml(lastCustomerType)}`;
-            btn.style.display = 'flex';
-        } else {
-            btn.style.display = 'none';
-        }
-    }
-
-    function applyLastCustomerType() {
-        if (!lastCustomerType) return;
-        const radios = document.getElementsByName('customerType');
-        for (let i = 0; i < radios.length; i++) radios[i].checked = (radios[i].value === lastCustomerType);
-        playSound(880, 0.05);
     }
 
     // ▼▼▼ スマート預かり金：合計額から「出されやすい金額」を提案（会計速度アップ）▼▼▼
@@ -2124,9 +2151,8 @@
     function renderCashSuggestions(total) {
         const box = document.getElementById('cash-suggestions');
         if (!box) return;
-        box.innerHTML = `<span class="cs-label">お預かり</span>`
-            + suggestCashAmounts(total).map(v =>
-                `<button class="action-btn num cs-btn" onclick="setCash(${v})">¥${v.toLocaleString('ja-JP')}</button>`).join('');
+        box.innerHTML = suggestCashAmounts(total).map(v =>
+            `<button class="action-btn num cs-btn" onclick="setCash(${v})">¥${v.toLocaleString('ja-JP')}</button>`).join('');
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -4677,30 +4703,30 @@
             }).join('');
             const cashStr = (h.cash != null) ? `¥${h.cash}` : '—';
             const changeStr = (h.change != null) ? `¥${h.change}` : '—';
+            // 操作は塗りのボタンを3つ並べず、iOSのリストと同じ「文字だけのボタン」を1列に置く。
+            // カードの中が静かになり、1件ずつの区切りが目立つようになる。
             const actions = editing
-                ? `<button class="action-btn btn-checkout" style="width:100%; padding:8px; font-size:14px; margin-top:0;" onclick="toggleEditRecord(null)"><svg class="ic"><use href="#ic-check"/></svg>修正を終了</button>`
-                : `<div style="display:flex; gap:8px;">
-                        <button class="action-btn btn-danger" style="flex:1; padding:8px; font-size:14px;" onclick="voidSale(${idx})"><svg class="ic"><use href="#ic-undo"/></svg>取り消し</button>
-                        <button class="action-btn btn-reserve" style="flex:1; padding:8px; font-size:14px;" onclick="printReceipt(${idx})"><svg class="ic"><use href="#ic-printer"/></svg>レシート</button>
-                    </div>
-                    <button class="action-btn btn-undo" style="width:100%; padding:7px; font-size:13px;" onclick="toggleEditRecord(${idx})"><svg class="ic"><use href="#ic-pencil"/></svg>品目・点数を修正</button>`;
+                ? `<div class="rc-acts"><button class="rc-act primary" onclick="toggleEditRecord(null)"><svg class="ic"><use href="#ic-check"/></svg>修正を終了</button></div>`
+                : `<div class="rc-acts">
+                        <button class="rc-act danger" onclick="voidSale(${idx})"><svg class="ic"><use href="#ic-undo"/></svg>取り消し</button>
+                        <button class="rc-act" onclick="printReceipt(${idx})"><svg class="ic"><use href="#ic-printer"/></svg>領収書</button>
+                        <button class="rc-act" onclick="toggleEditRecord(${idx})"><svg class="ic"><use href="#ic-pencil"/></svg>修正</button>
+                    </div>`;
             return `
                 <div class="res-card"${editing ? ' style="outline:2px solid var(--accent);"' : ''}>
                     <div class="res-header">
-                        <span>客No. ${h.no || '-'}${h.deviceLabel ? ` <span style="font-size:11px; color:var(--text-light); font-weight:normal;">［${h.deviceLabel}］</span>` : ''}${h.edited ? ' <span style="font-size:11px; color:var(--danger-ink); font-weight:normal;">(修正済)</span>' : ''}</span>
-                        <span style="color:var(--text-light); font-size:13px; font-weight:normal;">${dtStr}</span>
+                        <span class="rc-no">客No. ${h.no || '-'}${h.deviceLabel ? ` <span style="font-size:11px; color:var(--text-light); font-weight:normal;">［${h.deviceLabel}］</span>` : ''}${h.edited ? ' <span style="font-size:11px; color:var(--danger-ink); font-weight:normal;">(修正済)</span>' : ''}</span>
+                        <span style="color:var(--text-light); font-size:12.5px; font-weight:normal;">${dtStr}</span>
                     </div>
-                    <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin:3px 0;">
-                        ${h.pendingType ? '<span style="font-size:11px; color:var(--warn-ink); font-weight:bold;">未入力</span>' : '<span style="font-size:12px; color:var(--text-light);">客属性:</span>'}
-                        ${TYPES.map(ty => { const on = h.customerType === ty && !h.pendingType; return `<button onclick="setRecordType(${idx}, '${ty}')" style="padding:3px 9px; font-size:12px; border-radius:var(--r-sm); cursor:pointer; border:1px solid ${on ? 'var(--accent)' : 'var(--line-strong)'}; background:${on ? 'var(--accent)' : '#FFF'}; color:${on ? '#FFF' : 'var(--text-main)'};">${ty}</button>`; }).join('')}
+                    <div class="rc-types">
+                        ${h.pendingType ? '<span class="rc-types-label" style="color:var(--warn-ink); font-weight:700;">未入力</span>' : '<span class="rc-types-label">客属性</span>'}
+                        <span class="rc-seg">${TYPES.map(ty => { const on = h.customerType === ty && !h.pendingType; return `<button class="${on ? 'on' : ''}" onclick="setRecordType(${idx}, '${ty}')">${ty}</button>`; }).join('')}</span>
                     </div>
-                    <div style="border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); padding:6px 0;">${lines}</div>
-                    <div style="display:flex; justify-content:space-between; font-weight:bold;">
-                        <span>合計</span><span style="font-weight:bold;">¥${h.total}</span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; font-size:13px; color:var(--text-light);">
-                        <span>お預かり ${cashStr}</span><span>お釣り ${changeStr}</span>
-                    </div>
+                    <div class="rc-sep"></div>
+                    <div class="rc-lines">${lines}</div>
+                    <div class="rc-sep"></div>
+                    <div class="rc-total"><span>合計</span><span class="num">¥${h.total}</span></div>
+                    <div class="rc-pay"><span>お預かり ${cashStr}</span><span>お釣り ${changeStr}</span></div>
                     ${actions}
                 </div>`;
         }).join('');
