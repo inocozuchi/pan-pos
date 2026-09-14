@@ -238,7 +238,9 @@
             justify-content: space-between;
             align-items: center;
             gap: 12px;
-            border-bottom: 1px solid var(--line);
+            /* 区切りは線ではなく、ごく淡い影で表す（洗練した見え方にするため）。
+               線を消しても、影で面の前後関係は分かる。 */
+            box-shadow: 0 1px 0 rgba(28,29,34,.04), 0 4px 14px rgba(28,29,34,.05);
             z-index: 10;
         }
 
@@ -390,6 +392,7 @@
             padding: 10px 0;
             border-bottom: 1px solid var(--line);
             font-size: 16px;
+            box-shadow: none;
         }
         .cart-item > span:first-child { min-width: 0; }
         .cart-item > span:first-child > span:last-child { min-width: 0; overflow-wrap: anywhere; }
@@ -834,7 +837,7 @@
         }
         .a-table th {
             font-size: 11.5px; font-weight: 700; color: var(--text-light); text-align: left;
-            padding: 8px 10px; background: var(--sunken); border-bottom: 1px solid var(--line); white-space: nowrap;
+            padding: 8px 10px; background: var(--sunken); white-space: nowrap;
         }
         .a-table td { padding: 8px 10px; border-bottom: 1px solid var(--sunken); vertical-align: middle; }
         .a-table tr:last-child td { border-bottom: none; }
@@ -922,7 +925,7 @@
             display: flex; background: var(--glass-bg);
             backdrop-filter: saturate(180%) blur(20px);
             -webkit-backdrop-filter: saturate(180%) blur(20px);
-            border-top: 1px solid var(--glass-line);
+            box-shadow: 0 -1px 0 rgba(28,29,34,.04), 0 -6px 18px rgba(28,29,34,.06);
             z-index: 150; flex-shrink: 0;
             /* iPhone のホームインジケータ（画面下の横線）と重ならないよう、
                安全領域のぶんに加えて余白を足し、ボタンを画面の端から離す。
@@ -999,7 +1002,7 @@
         .panel-head {
             display: flex; align-items: center; gap: 6px; flex-shrink: 0;
             padding: 8px 14px; min-height: 50px;
-            border-bottom: 1px solid var(--line);
+            box-shadow: 0 1px 0 rgba(28,29,34,.04), 0 4px 14px rgba(28,29,34,.05);
             background: var(--glass-bg);
             backdrop-filter: saturate(180%) blur(20px);
             -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -1101,8 +1104,8 @@
         /* 情報ボックス（注意・状態表示） */
         .notice {
             display: flex; align-items: flex-start; gap: 8px;
-            border: 1.5px solid var(--line); background: var(--surface);
-            border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 12px; font-size: 13px;
+            border: none; background: var(--surface); box-shadow: var(--shadow-card);
+            border-radius: var(--r-md); padding: 11px 13px; margin-bottom: 12px; font-size: 13px;
         }
         .notice .ic { width: 17px; height: 17px; margin-top: 1px; }
         .notice-danger { background: var(--danger-bg); border-color: var(--danger); color: var(--danger-ink); font-weight: bold; }
@@ -1120,7 +1123,7 @@
         }
         .btn-stack .action-btn { width: 100%; margin-top: 0; }
         .field-label { display: block; font-size: 13px; font-weight: bold; color: var(--text-main); margin-bottom: 2px; }
-        .chart-box { background: var(--white); border: 1.5px solid var(--line); border-radius: var(--r-md); padding: 10px; margin-bottom: 10px; overflow-x: auto; text-align: center; }
+        .chart-box { background: var(--white); border: none; box-shadow: var(--shadow-card); border-radius: var(--r-md); padding: 12px 10px; margin-bottom: 10px; overflow-x: auto; text-align: center; }
         #handoff-paste {
             width: 100%; box-sizing: border-box; height: 64px; margin: 4px 0 0; padding: 10px; font-size: 13px;
             border: 2px solid var(--line); border-radius: var(--r-md); background: var(--sunken);
@@ -1165,6 +1168,44 @@
         :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
         /* 端末側で「視差効果を減らす」を選んでいる時は動きを止める */
+        /* ▼▼▼ 動き（モーション）▼▼▼
+           【方針】レジなので「速く・短く・意味のある動き」だけにする。
+           数字や商品名が動いている最中に読めなくなると誤入力につながるため、
+           位置が大きく動く演出は使わず、0.2〜0.35秒で収まる控えめな動きにしている。
+           端末で「視差効果を減らす」を選んでいる場合は、下の指定ですべて止まる。 */
+
+        /* 一覧に並ぶカードが、少しずつ時間をずらして出てくる（並び順が目で追える） */
+        @keyframes riseIn { from { opacity: 0; transform: translate3d(0, 10px, 0); } to { opacity: 1; transform: none; } }
+        .res-card, .stat-tile, .a-table, .menu-list, .chart-box, .arc-card {
+            animation: riseIn .34s cubic-bezier(.32, .72, 0, 1) both;
+        }
+        .res-card:nth-child(2), .stat-tile:nth-child(2) { animation-delay: .04s; }
+        .res-card:nth-child(3), .stat-tile:nth-child(3) { animation-delay: .08s; }
+        .res-card:nth-child(4), .stat-tile:nth-child(4) { animation-delay: .12s; }
+        .res-card:nth-child(n+5), .stat-tile:nth-child(n+5) { animation-delay: .16s; }
+        .a-table { animation-delay: .06s; }
+
+        /* カートに商品が入った時、その行だけがすっと現れる */
+        @keyframes cartIn { from { opacity: 0; transform: translate3d(-8px, 0, 0); } to { opacity: 1; transform: none; } }
+        .cart-item { animation: cartIn .26s cubic-bezier(.32, .72, 0, 1) both; }
+
+        /* 合計金額が変わった時に、数字だけを軽く弾ませる（変わったことに気づける） */
+        @keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.07); } 100% { transform: scale(1); } }
+        .total-amount.bump, .cash-display .chg-amount.bump { animation: bump .28s cubic-bezier(.32, .72, 0, 1); }
+
+        /* 画面が重なる時、背景のすりガラスもふわっと出す */
+        @keyframes backdropIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal[style*="flex"] { animation: backdropIn .22s ease both; }
+
+        /* ボトムナビの現在地は、下の丸みのある面が動いて移る */
+        .nav-item .nav-ico { transition: transform .26s cubic-bezier(.32, .72, 0, 1); }
+        .nav-item:active .nav-ico { transform: scale(0.88); }
+
+        /* 押した時の反応は短く。指を離すとゆっくり戻る（iOSの手ざわり） */
+        .product-btn, .action-btn, .menu-row, .nav-item, .type-btn, .tenkey-btn, .rc-act, .cs-btn {
+            transition-timing-function: cubic-bezier(.32, .72, 0, 1);
+        }
+
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: .01ms !important; animation-iteration-count: 1 !important;
@@ -1406,6 +1447,7 @@
                 <div id="sec-segment" class="analytics-sec" style="display:none;"></div>
                 <div id="sec-insight" class="analytics-sec" style="display:none;"></div>
                 <div id="sec-next" class="analytics-sec" style="display:none;"></div>
+                <div id="sec-trend" class="analytics-sec" style="display:none;"></div>
                 <div id="sec-log" class="analytics-sec" style="display:none;"></div>
                 <div id="sec-export" class="analytics-sec" style="display:none;">
                     <p class="settings-hint">集計結果をファイルに書き出します。</p>
@@ -1555,7 +1597,8 @@
     <button class="nav-item" id="nav-settings" onclick="navTo('settings')"><svg class="ic nav-ico"><use href="#ic-gear"/></svg>設定</button>
 </nav>
 
-<div id="checkout-modal" class="modal">
+<!-- 背景（すりガラスの部分）をタップすると、商品一覧へ戻る -->
+<div id="checkout-modal" class="modal" onclick="dismissCheckoutOnBackdrop(event)">
     <div class="modal-content checkout-wide">
         <div class="sheet-grabber"></div>
         <div class="checkout-left">
@@ -1766,6 +1809,9 @@
     let receiptCounter = 0;  // 客No.（会計ごとの通し番号）
     let voidCount = 0;       // この販売会での会計取り消し件数
     let analyticsSections = null; // 集計結果（項目別テキスト）のキャッシュ
+    // 「販売会ごとの推移」は複数回にまたがる集計なので、過去の回を開いている間も
+    // 実際に保存されている一覧を見る必要がある（スナップショット内の一覧は空のため）。
+    let liveArchiveRef = [];
     let operationLog = [];   // 事後編集・部分修正などの操作履歴（運用振り返り用）
     let comparisonBaseline = null; // 今回の販売会と比較する「前回の実績」（開店時に確定）
     let lastCustomerType = null;   // 直前に選ばれた客属性（保存データの互換のため保持）
@@ -2055,7 +2101,9 @@
             list.innerHTML = `<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><svg class="ic ce-icon" style="width:34px; height:34px; color:var(--line-strong);"><use href="#ic-basket"/></svg><br>商品をタップして<br>お会計に追加してください${repeatBtn}</div>`;
         }
 
-        document.getElementById('cart-total').innerText = total;
+        const cartTotalEl = document.getElementById('cart-total');
+        cartTotalEl.innerText = total;
+        bumpIfChanged(cartTotalEl, total);
         document.getElementById('cart-count').innerText = cart.length > 0 ? `(${cart.length}点)` : '';
 
         // スマホ用の「カートを開くボタン」の見出し（何が入っているかを1行で示す）
@@ -2189,7 +2237,9 @@
         const total = parseInt(document.getElementById('modal-total').innerText);
         const cash = parseInt(document.getElementById('cash-input').value) || 0;
         const change = Math.max(0, cash - total);
-        document.getElementById('change-amount').innerText = change;
+        const changeEl = document.getElementById('change-amount');
+        changeEl.innerText = change;
+        bumpIfChanged(changeEl, change);
         renderChangeBreakdown(change);
         updateCheckoutPrimary();
     }
@@ -2584,6 +2634,26 @@
         renderRecords();
         updateAnalytics();
         showToast('販売会を再開しました');
+    }
+
+    // お会計シートの外側（すりガラスの部分）をタップした時だけ閉じる。
+    // シートの中を押した時に閉じないよう、押した場所が背景そのものかを確かめる。
+    // 数字が「変わった時だけ」軽く弾ませる。
+    // 毎回動かすと目が疲れるので、前回と同じ値なら何もしない。
+    function bumpIfChanged(el, value) {
+        if (!el) return;
+        const next = String(value);
+        if (el.dataset.prev === next) return;
+        el.dataset.prev = next;
+        const target = el.closest('.total-amount, .chg-amount') || el;
+        target.classList.remove('bump');
+        void target.offsetWidth;      // アニメーションをやり直させる
+        target.classList.add('bump');
+    }
+
+    function dismissCheckoutOnBackdrop(ev) {
+        if (ev.target !== ev.currentTarget) return;
+        closeModal('checkout-modal');
     }
 
     function closeModal(id) {
@@ -3065,6 +3135,7 @@
         { key: 'segment', icon: 'users',   title: '客層・カテゴリ別' },
         { key: 'insight', icon: 'bulb',    title: '完売と売り逃し' },
         { key: 'next',    icon: 'clipboard', title: '次回の仕入れ数の目安' },
+        { key: 'trend',   icon: 'up',      title: '販売会ごとの推移' },
         { key: 'log',     icon: 'list',    title: '操作の履歴' },
         { key: 'export',  icon: 'download', title: '書き出し（PDF・CSV）' }
     ];
@@ -3128,7 +3199,8 @@
         else if (key === 'next') document.getElementById('sec-next').innerHTML = secNextHTML();
         else if (key === 'time') { document.getElementById('sec-time-text').innerHTML = secTimeHTML(); renderCustomerChart(); }
         else if (key === 'stock') renderStockChart();
-        else if (key === 'insight') document.getElementById('sec-insight').innerHTML = `<div class="a-pre">${escHtml(analyticsSections.insight || 'データがありません')}</div>`;
+        else if (key === 'insight') document.getElementById('sec-insight').innerHTML = secInsightHTML();
+        else if (key === 'trend') document.getElementById('sec-trend').innerHTML = secTrendHTML();
         else if (key === 'log') renderOperationLog();
         // export はボタンのみ（静的）
     }
@@ -3294,23 +3366,161 @@
         return h;
     }
 
+    function secInsightHTML() {
+        const d = inReportContext(() => buildInsightData());
+        if (!d) return '<div class="a-empty">まだ売上データがありません。</div>';
+        let h = `<div class="a-head">完売した商品と、売り逃した分</div>`;
+        if (d.soldOut.length) {
+            h += `<table class="a-table">
+                <thead><tr><th>商品</th><th class="num">完売</th><th class="num">売り逃し</th></tr></thead>
+                <tbody>` + d.soldOut.map(s2 => `<tr>
+                    <td class="nm">${escHtml(s2.name)}</td>
+                    <td class="num">${escHtml(s2.timeStr)}</td>
+                    <td class="num">${s2.missed > 0 ? `約${s2.missed}個<span class="sub">約${yenStr(s2.lostRev)}</span>` : '<span style="color:var(--text-light);">わずか</span>'}</td>
+                </tr>`).join('') + `</tbody></table>`;
+            if (d.lost.totalUnits > 0) {
+                h += `<div class="stat-grid" style="margin-top:10px;">
+                    <div class="stat-tile"><span class="k">売り逃した数（推定）</span><span class="v">約${d.lost.totalUnits}<span style="font-size:14px; font-weight:600;">個</span></span></div>
+                    <div class="stat-tile"><span class="k">その金額（推定）</span><span class="v">約${yenStr(d.lost.totalRev)}</span></div>
+                </div>
+                <p class="a-note">完売までの売れる速さを、残りの営業時間に当てはめた概算です。早く売り切れた商品は、次回の仕入れを増やす候補になります。</p>`;
+            }
+        } else {
+            h += `<div class="a-empty">完売した商品はありませんでした（売り逃しもありません）。</div>`;
+        }
+
+        if (d.bundle) {
+            h += `<div class="a-head">セット販売の提案</div>
+            <div class="notice notice-accent"><svg class="ic"><use href="#ic-bulb"/></svg><span>${escHtml(d.bundle)}</span></div>`;
+        }
+
+        if (d.segments.length) {
+            h += `<div class="a-head">客層別の傾向</div>
+            <table class="a-table">
+                <thead><tr><th>客属性</th><th class="num">人数</th><th class="num">来店ピーク</th><th>味の傾向</th></tr></thead>
+                <tbody>` + d.segments.map(sg => `<tr>
+                    <td class="nm">${escHtml(sg.type)}<span class="sub" style="white-space:normal;">${sg.top.map(t => escHtml(t.name) + '×' + t.count).join('、') || '—'}</span></td>
+                    <td class="num">${sg.count}人</td>
+                    <td class="num">${sg.peak ? escHtml(sg.peak) + '〜' : '—'}</td>
+                    <td>${sg.taste ? escHtml(sg.taste) : '—'}</td>
+                </tr>`).join('') + `</tbody></table>
+            <p class="a-note">商品名は、その客層によく出たものです。</p>`;
+        }
+
+        if (d.tastes.length) {
+            h += `<div class="a-head">味の傾向別の売上</div>
+            <table class="a-table">
+                <thead><tr><th>味の傾向</th><th class="num">売上</th><th class="num">個数</th><th class="num" style="min-width:82px;">割合</th></tr></thead>
+                <tbody>` + d.tastes.map(t => `<tr>
+                    <td class="nm">${escHtml(t.name)}</td>
+                    <td class="num">${yenStr(t.rev)}</td>
+                    <td class="num">${t.count}個</td>
+                    <td class="num">${pctBar(t.pct)}<span class="sub">${t.pct}%</span></td>
+                </tr>`).join('') + `</tbody></table>`;
+        }
+
+        if (d.hint) {
+            h += `<div class="a-head">ヒント</div>
+            <div class="notice notice-accent"><svg class="ic"><use href="#ic-bulb"/></svg><span>${escHtml(d.hint)}</span></div>`;
+        }
+        return h;
+    }
+
+    // 販売会ごとの推移（閉店して記録に残った回を、新しい順に並べて比べる）
+    function secTrendHTML() {
+        const rows = [...liveArchiveRef].filter(a => a && a.date);
+        if (rows.length === 0) {
+            return `<div class="a-empty">まだ記録がありません。閉店すると、その回の売上がここに積み上がっていきます。</div>`;
+        }
+        const asc = [...rows].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const maxRev = Math.max(1, ...asc.map(a => a.totalRev || 0));
+        const dstr = d => { const x = new Date(d); return `${x.getMonth() + 1}/${x.getDate()}`; };
+
+        // 棒グラフ（他のグラフと同じ作り：拡大縮小せず 1単位＝1px で描く）
+        const box = document.getElementById('sec-trend');
+        const H = CHART_H, mL = 44, mR = 12, mT = 18, mB = 30;
+        const plotH = H - mT - mB;
+        let W = chartWidth(box);
+        const gap = 10, n = asc.length;
+        let barW = Math.min(52, Math.max(16, Math.floor((W - mL - mR) / n) - gap));
+        let groupW = n * (barW + gap) - gap;
+        let x0 = mL + Math.max(0, ((W - mL - mR) - groupW) / 2);
+        if (groupW > W - mL - mR) { W = mL + mR + groupW; x0 = mL; }
+        const yOf = v => mT + (1 - v / maxRev) * plotH;
+        let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="font-family:inherit; display:block; margin:0 auto;">`;
+        for (let i = 0; i <= 4; i++) {
+            const val = Math.round(maxRev / 4 * i);
+            const y = yOf(val);
+            svg += `<line x1="${mL}" y1="${y.toFixed(1)}" x2="${W - mR}" y2="${y.toFixed(1)}" stroke="${CHART_GRID}" stroke-width="1"/>`;
+            svg += `<text x="${mL - 7}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="${CHART_FS}" fill="${CHART_INK}">${val >= 10000 ? Math.round(val / 1000) + 'k' : val}</text>`;
+        }
+        const labelEvery = Math.max(1, Math.ceil(38 / (barW + gap)));
+        asc.forEach((a, i) => {
+            const x = x0 + i * (barW + gap);
+            const y = yOf(a.totalRev || 0);
+            const hh = mT + plotH - y;
+            svg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${Math.max(0, hh).toFixed(1)}" rx="3" fill="${CHART_PALETTE[0]}"/>`;
+            if (i % labelEvery === 0 || i === n - 1) {
+                svg += `<text x="${(x + barW / 2).toFixed(1)}" y="${H - mB + 17}" text-anchor="middle" font-size="${CHART_FS - 1}" fill="${CHART_INK}">${dstr(a.date)}</text>`;
+            }
+        });
+        svg += `</svg>`;
+
+        const totalAll = asc.reduce((t, a) => t + (a.totalRev || 0), 0);
+        const custAll = asc.reduce((t, a) => t + (a.customerCount || 0), 0);
+        const best = [...asc].sort((x, y2) => (y2.totalRev || 0) - (x.totalRev || 0))[0];
+
+        let h = `<div class="stat-grid">
+            <div class="stat-tile hero"><span class="k">これまでの合計売上</span><span class="v">${yenStr(totalAll)}</span><span class="s">${asc.length}回ぶんの記録</span></div>
+            <div class="stat-tile"><span class="k">のべ来店人数</span><span class="v">${custAll}<span style="font-size:14px; font-weight:600;">人</span></span></div>
+            <div class="stat-tile"><span class="k">1回あたりの平均売上</span><span class="v">${yenStr(Math.round(totalAll / asc.length))}</span></div>
+            <div class="stat-tile"><span class="k">いちばん売れた回</span><span class="v" style="font-size:19px;">${escHtml(best.name || '無題')}</span><span class="s">${yenStr(best.totalRev || 0)}</span></div>
+        </div>`;
+        h += `<div class="a-head">売上の推移</div><div class="chart-box">${chartCaption('売上', '販売会（古い順）')}${svg}</div>`;
+
+        // 表は新しい順。前回からの増減も添える
+        const desc = [...asc].reverse();
+        h += `<div class="a-head">1回ごとの記録</div>
+        <table class="a-table">
+            <thead><tr><th>販売会</th><th class="num">売上</th><th class="num">客数</th><th class="num">客単価</th></tr></thead>
+            <tbody>` + desc.map((a, i) => {
+                const prev = desc[i + 1];
+                let diff = '';
+                if (prev) {
+                    const d2 = (a.totalRev || 0) - (prev.totalRev || 0);
+                    const cls = d2 > 0 ? 'a-up' : (d2 < 0 ? 'a-down' : 'a-flat');
+                    const mk = d2 > 0 ? '▲ +' : (d2 < 0 ? '▼ −' : '→ ±');
+                    diff = `<span class="sub"><span class="${cls}">${mk}${yenStr(Math.abs(d2)).replace('¥', '¥')}</span></span>`;
+                }
+                return `<tr>
+                    <td class="nm">${escHtml(a.name || '無題')}<span class="sub">${new Date(a.date).toLocaleDateString('ja-JP')}</span></td>
+                    <td class="num">${yenStr(a.totalRev || 0)}${diff}</td>
+                    <td class="num">${a.customerCount || 0}人</td>
+                    <td class="num">${yenStr(a.avgSpend || 0)}</td>
+                </tr>`;
+            }).join('') + `</tbody></table>
+        <p class="a-note">閉店するたびに、その回の売上が自動でここに積み上がります。増減は1つ前の回との比較です。</p>`;
+        return h;
+    }
+
     function secNextHTML() {
         const R = buildReportData();
         if (!R || !R.recs.length) return '<div class="a-empty">データがありません。</div>';
+        // 理由は列にせず商品名の下に添える。狭い画面で「販 売 実 績 な し」のように
+        // 1文字ずつ縦に折り返してしまい、まったく読めなくなっていたため。
         return `<div class="a-head">次回の仕入れ数の目安</div>
-        <div class="a-wrap"><table class="a-table">
-            <thead><tr><th>商品</th><th class="num">今回の仕入</th><th class="num">販売</th><th class="num">次回の目安</th><th>理由</th></tr></thead>
+        <table class="a-table">
+            <thead><tr><th>商品</th><th class="num">今回</th><th class="num">販売</th><th class="num">次回の目安</th></tr></thead>
             <tbody>` + R.recs.map(r => {
                 const up = r.recommended > r.initial, down = r.recommended < r.initial;
                 const mark = up ? '<span class="a-up">▲</span>' : (down ? '<span class="a-down">▼</span>' : '<span class="a-flat">→</span>');
                 return `<tr>
-                    <td class="nm">${escHtml(r.name)}</td>
+                    <td class="nm">${escHtml(r.name)}<span class="sub" style="white-space:normal;">${escHtml(r.reason)}</span></td>
                     <td class="num">${r.initial}</td>
                     <td class="num">${r.sold}</td>
                     <td class="num nm">${mark} ${r.recommended}</td>
-                    <td style="font-size:12px; color:var(--text-light);">${escHtml(r.reason)}</td>
                 </tr>`;
-            }).join('') + `</tbody></table></div>
+            }).join('') + `</tbody></table>
         <p class="a-note">今回の実績にもとづく目安です。季節・天候・イベントで需要は大きく変わるため、参考程度にご利用ください。</p>`;
     }
 
@@ -3416,7 +3626,8 @@
     }
 
     // 閉店時の「次回インサイト」テキストを作る。
-    function computeInsights() {
+    // 「完売と売り逃し」を構造化して返す（画面は表・カードで、書き出しは文章で使う）
+    function buildInsightData() {
         if (salesHistory.length === 0) return null;
         const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
 
@@ -3444,57 +3655,77 @@
         });
         const totalTaste = Object.values(tasteAgg).reduce((s, v) => s + v.count, 0);
 
-        // 完売時刻と取りこぼし（機会損失）をひとつにまとめて表示。
+        // 完売時刻と取りこぼし（機会損失）
         // ※販売ペース（消化の速さ）は「商品別」セクションに集約し、ここでは重複させない。
         const lost = buildLostSales();
         const lostMap = {};
         lost.items.forEach(l => { lostMap[l.name] = l; });
+        const soldOutRows = soldOut.map(so => {
+            const l = lostMap[so.name];
+            return {
+                name: so.name,
+                timeStr: `${so.t.getHours()}:${String(so.t.getMinutes()).padStart(2, '0')}`,
+                missed: l ? l.missed : 0,
+                lostRev: l ? l.lostRev : 0
+            };
+        });
+
+        const segments = ['学生', '教員', '職員', 'その他', '不明'].map(ct => {
+            const d = typeAgg[ct];
+            if (!d || d.count === 0) return null;
+            const peakSlot = Object.entries(d.slots).sort((a, b) => b[1] - a[1])[0];
+            const topTaste = Object.entries(d.taste).sort((a, b) => b[1] - a[1])[0];
+            return {
+                type: ct, count: d.count,
+                peak: peakSlot ? peakSlot[0] : null,
+                top: Object.entries(d.items).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([n, c]) => ({ name: n, count: c })),
+                taste: topTaste ? topTaste[0] : null
+            };
+        }).filter(Boolean);
+
+        const tastes = ['甘い系', 'しょっぱい系', 'ドリンク', '不明']
+            .filter(t => tasteAgg[t])
+            .map(t => ({ name: t, count: tasteAgg[t].count, rev: tasteAgg[t].rev, pct: totalTaste > 0 ? Math.round(tasteAgg[t].count / totalTaste * 100) : 0 }));
+
+        // 職員と学生で味の傾向が違えば一言ヒント
+        let hint = null;
+        if (typeAgg['職員'] && typeAgg['学生']) {
+            const st = Object.entries(typeAgg['職員'].taste).sort((a, b) => b[1] - a[1])[0];
+            const gk = Object.entries(typeAgg['学生'].taste).sort((a, b) => b[1] - a[1])[0];
+            if (st && gk && st[0] !== gk[0]) {
+                hint = `職員は${st[0]}、学生は${gk[0]}が多めでした。来店ピークの時間差と客層に合わせて配分すると良いかもしれません。`;
+            }
+        }
+
+        return { soldOut: soldOutRows, lost, bundle: buildBundleSuggestion(), segments, tastes, hint };
+    }
+
+    // 書き出し（PDF）用に、上の集計を文章へ組み立てる
+    function computeInsights() {
+        const d = buildInsightData();
+        if (!d) return null;
         let res = `[完売時刻と取りこぼし（機会損失）の推定]\n`;
-        if (soldOut.length > 0) {
-            soldOut.forEach(s => {
-                const tstr = `${s.t.getHours()}:${String(s.t.getMinutes()).padStart(2, '0')}`;
-                const l = lostMap[s.name];
-                if (l) res += `・${s.name}: ${tstr} 完売 → あと約${l.missed}個（約¥${l.lostRev}）売れた可能性\n`;
-                else res += `・${s.name}: ${tstr} 完売（終了間際のため取りこぼしは小）\n`;
+        if (d.soldOut.length > 0) {
+            d.soldOut.forEach(s2 => {
+                res += s2.missed > 0
+                    ? `・${s2.name}: ${s2.timeStr} 完売 → あと約${s2.missed}個（約¥${s2.lostRev}）売れた可能性\n`
+                    : `・${s2.name}: ${s2.timeStr} 完売（終了間際のため取りこぼしは小）\n`;
             });
-            if (lost.totalUnits > 0) {
-                res += `→ 合計 約${lost.totalUnits}個・約¥${lost.totalRev} を取りこぼした可能性があります（早期完売品は次回増量を検討）\n`;
+            if (d.lost.totalUnits > 0) {
+                res += `→ 合計 約${d.lost.totalUnits}個・約¥${d.lost.totalRev} を取りこぼした可能性があります（早期完売品は次回増量を検討）\n`;
                 res += `※完売までの販売ペースを残り営業時間に当てはめた概算です。\n`;
             }
         } else {
             res += `・完売した商品はありませんでした\n`;
         }
-
-        // 併売セットの提案（1文）
-        const bundle = buildBundleSuggestion();
-        if (bundle) res += `\n[セット販売の提案]\n・${bundle}\n`;
-
+        if (d.bundle) res += `\n[セット販売の提案]\n・${d.bundle}\n`;
         res += `\n[客層別の傾向（次回の仕入れ目安）]\n`;
-        ['学生', '教員', '職員', 'その他', '不明'].forEach(ct => {
-            const d = typeAgg[ct];
-            if (!d || d.count === 0) return;
-            const topItems = Object.entries(d.items).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => `${x[0]}(${x[1]})`).join('、');
-            const peakSlot = Object.entries(d.slots).sort((a, b) => b[1] - a[1])[0];
-            const topTaste = Object.entries(d.taste).sort((a, b) => b[1] - a[1])[0];
-            res += `・${ct}（${d.count}人）: 来店ピーク ${peakSlot ? peakSlot[0] + '〜' : '-'} / 売れ筋 ${topItems || '-'} / 味の傾向 ${topTaste ? topTaste[0] : '-'}\n`;
+        d.segments.forEach(sg => {
+            res += `・${sg.type}（${sg.count}人）: 来店ピーク ${sg.peak ? sg.peak + '〜' : '-'} / 売れ筋 ${sg.top.map(t => `${t.name}(${t.count})`).join('、') || '-'} / 味の傾向 ${sg.taste || '-'}\n`;
         });
-
         res += `\n[味の傾向別の売上]\n`;
-        ['甘い系', 'しょっぱい系', 'ドリンク', '不明'].forEach(t => {
-            if (tasteAgg[t]) {
-                const pct = totalTaste > 0 ? Math.round(tasteAgg[t].count / totalTaste * 100) : 0;
-                res += `・${t}: ¥${tasteAgg[t].rev}（${tasteAgg[t].count}個・${pct}%）\n`;
-            }
-        });
-
-        // 職員と学生で味の傾向が違えば一言ヒント
-        if (typeAgg['職員'] && typeAgg['学生']) {
-            const st = Object.entries(typeAgg['職員'].taste).sort((a, b) => b[1] - a[1])[0];
-            const gk = Object.entries(typeAgg['学生'].taste).sort((a, b) => b[1] - a[1])[0];
-            if (st && gk && st[0] !== gk[0]) {
-                res += `\n→ ヒント: 職員は${st[0]}、学生は${gk[0]}が多めでした。来店ピークの時間差と客層に合わせて配分すると良いかもしれません。\n`;
-            }
-        }
+        d.tastes.forEach(t => { res += `・${t.name}: ¥${t.rev}（${t.count}個・${t.pct}%）\n`; });
+        if (d.hint) res += `\n→ ヒント: ${d.hint}\n`;
         return res;
     }
     // ▲▲▲ ここまで ▲▲▲
@@ -3806,6 +4037,7 @@
             else if (sub === 'open-name') updateSessionTabView();
         }
         else if (view === 'analytics') {
+            liveArchiveRef = sessionArchive;   // スナップショットを読み込む前に控える
             if (sub && sub.startsWith('report:')) {
                 inReportContext(() => showAnalyticsSectionInner(sub.slice(7)));
                 return;
