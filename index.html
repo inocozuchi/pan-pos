@@ -10,6 +10,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="泰山木POS">
     <meta name="mobile-web-app-capable" content="yes">
+    <!-- 画面いちばん上（時刻・電波が出ている帯）の色。ヘッダーと同じ色にして、
+         帯とヘッダーの境目が線のように見えないようにする。 -->
+    <meta name="theme-color" content="#FCFCFE">
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" href="icons/icon-192.png">
@@ -74,6 +77,7 @@
             --danger-ink: #B3263C;
             --low-ink: #B3263C;       /* 残りわずかの強調（危険と同じ紅でそろえる） */
             --muted-ink: #6B6E7A;     /* 販売しない・準備中など、控えめだが読める文字 */
+            --on-face-sub: #5F6270;   /* 淡い面（商品ボタン）の上に載せる補助文字。どの面でも 5:1 以上 */
             --on-dark: #9EC5FF;       /* 黒に近い面の上で強調する数字（お釣り・総売上） */
             /* すりガラス調のバー（ヘッダー・ボトムナビ）。奥の内容がうっすら透ける */
             --glass-bg: rgba(255,255,255,0.82);
@@ -229,6 +233,11 @@
             }
         }
 
+        /* レジ画面には見出しバーが無いので、その時だけヘッダーが下端の影を受け持つ */
+        body:has(#page-register.active) header {
+            box-shadow: 0 8px 22px rgba(28,29,34,.07), 0 2px 6px rgba(28,29,34,.03);
+        }
+
         header {
             background: var(--glass-bg);
             backdrop-filter: saturate(180%) blur(20px);
@@ -238,9 +247,11 @@
             justify-content: space-between;
             align-items: center;
             gap: 12px;
-            /* 区切りは線ではなく、ごく淡い影で表す（洗練した見え方にするため）。
-               線を消しても、影で面の前後関係は分かる。 */
-            box-shadow: 0 6px 20px rgba(28,29,34,.07), 0 2px 6px rgba(28,29,34,.04);
+            /* ヘッダーと、その下の見出しバーは同じ色の面なので、
+               間に影を落とすと1本の線のように見えてしまう。
+               影は「上のバーのかたまり」の下端だけに付け、
+               ヘッダー自身は影を持たない（＝2本のバーが1枚に見える）。 */
+            box-shadow: none;
             z-index: 10;
         }
 
@@ -336,13 +347,13 @@
         .product-btn.sold-open .price { color: var(--muted-ink); }
         /* 長い商品名でも欠けないように、3行までで省略する（途中で切れるより読める） */
         .product-btn .pname {
-            line-height: 1.25; overflow-wrap: anywhere; word-break: break-word; letter-spacing: 0.01em;
+            line-height: 1.34; overflow-wrap: anywhere; word-break: break-word; letter-spacing: 0.01em;
             display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
         }
         .product-btn .price { color: var(--text-main); font-size: 19px; font-weight: 800; margin-top: 5px; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
         .product-btn.out-of-stock .price { color: var(--muted-ink); opacity: .7; }
-        /* 在庫の数は白い丸に載せて、面の色に関係なく同じ読みやすさにする */
-        .product-btn .stock { font-size: 11px; color: var(--text-main); font-weight: 700; margin-top: 6px; background: rgba(255,255,255,0.88); border-radius: var(--r-pill); padding: 2px 9px; }
+        /* 在庫の数は囲みを付けず小さな文字だけにする（面の要素を減らして商品名と価格を主役にする） */
+        .product-btn .stock { font-size: 11.5px; color: var(--on-face-sub); font-weight: 600; margin-top: 5px; letter-spacing: 0.01em; }
 
         .soldout-badge {
             position: absolute; top: 8px; right: 8px;
@@ -630,7 +641,7 @@
         .res-card .rc-types .rc-types-label { font-size: 12px; color: var(--text-light); flex-shrink: 0; }
         .res-card .rc-types .rc-seg { display: flex; gap: 2px; background: var(--btn-neutral); border-radius: 10px; padding: 2px; flex: 1; min-width: 0; }
         .res-card .rc-types .rc-seg button {
-            flex: 1; min-width: 0; padding: 5px 2px; font-size: 12px; font-weight: 600; font-family: inherit;
+            flex: 1; min-width: 0; padding: 9px 2px; min-height: 34px; font-size: 12.5px; font-weight: 600; font-family: inherit;
             border: none; border-radius: 8px; background: none; color: var(--text-light); cursor: pointer;
             transition: background .18s ease, color .18s ease, transform .12s ease;
         }
@@ -655,7 +666,7 @@
             .product-btn { padding: 6px 6px 5px; }
             .product-btn .pname {
                 display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
-                overflow: hidden; font-size: 13.5px;
+                overflow: hidden; font-size: 13.5px; line-height: 1.32;
             }
             .product-btn .price { font-size: 18px; margin-top: 3px; }
             .product-btn .stock { font-size: 10.5px; margin-top: 3px; padding: 1px 7px; }
@@ -748,8 +759,7 @@
 
             .nav-item { font-size: 10px; padding: 5px 2px 4px; gap: 2px; border-radius: var(--r-sm); }
             .nav-item .nav-ico { font-size: 20px; }
-            .product-btn .pname { line-height: 1.2; }
-            .product-btn .stock { margin-top: 2px; }
+            .product-btn .stock { margin-top: 3px; }
             /* 空カートの案内をコンパクトに（縦の占有を削減） */
             .cart-empty { margin-top: 16px !important; font-size: 14px !important; line-height: 1.5 !important; }
             .cart-empty .ce-emoji { font-size: 26px !important; }
@@ -1005,7 +1015,8 @@
         .panel-head {
             display: flex; align-items: center; gap: 6px; flex-shrink: 0;
             padding: 8px 14px; min-height: 50px;
-            box-shadow: 0 6px 20px rgba(28,29,34,.06), 0 2px 6px rgba(28,29,34,.03);
+            /* ヘッダーと合わせた「上のバーのかたまり」の下端。ここにだけ影を落とす */
+            box-shadow: 0 8px 22px rgba(28,29,34,.07), 0 2px 6px rgba(28,29,34,.03);
             background: var(--glass-bg);
             backdrop-filter: saturate(180%) blur(20px);
             -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -1203,6 +1214,48 @@
             transition-timing-function: cubic-bezier(.32, .72, 0, 1);
         }
 
+        /* ▼ レジ以外の画面の動き ▼
+           会計の速さに関係しない画面（集計・記録・設定）では、
+           もう少し表情のある動きを付けて、切り替わりを気持ちよくする。
+           ただし「読む前に文字が動き終わっている」長さ（0.5秒以内）に収める。 */
+
+        /* 数字のタイルは、ふわっと浮き上がってくる */
+        @keyframes tileIn { from { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.97); } to { opacity: 1; transform: none; } }
+        .stat-tile { animation: tileIn .42s cubic-bezier(.32, .72, 0, 1) both; }
+
+        /* 表の行も、上から順に現れる（10行目以降はまとめて出す） */
+        @keyframes rowIn { from { opacity: 0; transform: translate3d(0, 6px, 0); } to { opacity: 1; transform: none; } }
+        .analytics-sec tbody tr { animation: rowIn .3s cubic-bezier(.32, .72, 0, 1) both; }
+        .analytics-sec tbody tr:nth-child(1) { animation-delay: .02s; }
+        .analytics-sec tbody tr:nth-child(2) { animation-delay: .05s; }
+        .analytics-sec tbody tr:nth-child(3) { animation-delay: .08s; }
+        .analytics-sec tbody tr:nth-child(4) { animation-delay: .11s; }
+        .analytics-sec tbody tr:nth-child(5) { animation-delay: .14s; }
+        .analytics-sec tbody tr:nth-child(6) { animation-delay: .17s; }
+        .analytics-sec tbody tr:nth-child(7) { animation-delay: .20s; }
+        .analytics-sec tbody tr:nth-child(8) { animation-delay: .23s; }
+        .analytics-sec tbody tr:nth-child(n+9) { animation-delay: .26s; }
+
+        /* グラフの棒は下から伸び、折れ線は左から引かれる */
+        @keyframes barGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+        .chart-box svg rect { transform-box: fill-box; transform-origin: bottom; animation: barGrow .5s cubic-bezier(.32, .72, 0, 1) both; }
+        /* 折れ線は「線を引く」演出にしない。
+           CSS で stroke-dasharray を触ると、9商品目以降を破線で見分けている指定を
+           上書きしてしまい、どの線がどの商品か分からなくなるため。
+           グラフ全体をふわっと出すだけにする。 */
+        @keyframes chartIn { from { opacity: 0; } to { opacity: 1; } }
+        .chart-box svg { animation: chartIn .45s ease-out both; }
+
+        /* 集計メニューのカードは、押すと少し沈む */
+        .menu-card { transition: transform .14s cubic-bezier(.32,.72,0,1), box-shadow .14s ease, background .14s ease; }
+        .menu-card:active { transform: scale(0.95); }
+
+        /* 画面の切り替えは、少し大きめに動かして前後関係を強く見せる（レジ以外） */
+        #page-panel.anim-forward { animation: panelFromRight .4s cubic-bezier(.32, .72, 0, 1) both; }
+        #page-panel.anim-back { animation: panelFromLeft .4s cubic-bezier(.32, .72, 0, 1) both; }
+        @keyframes panelFromRight { from { opacity: 0; transform: translate3d(34px, 0, 0) scale(.99); } to { opacity: 1; transform: none; } }
+        @keyframes panelFromLeft  { from { opacity: 0; transform: translate3d(-34px, 0, 0) scale(.99); } to { opacity: 1; transform: none; } }
+
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: .01ms !important; animation-iteration-count: 1 !important;
@@ -1314,7 +1367,8 @@
   <symbol id="ic-calendar" viewBox="0 0 24 24"><path d="M4 6h16v14H4z"/><path d="M8 3v4M16 3v4M4 10h16"/></symbol>
   <symbol id="ic-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></symbol>
   <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M7.5 17v-5M12 17V6M16.5 17v-8"/></symbol>
-  <symbol id="ic-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M19.2 14a1.6 1.6 0 00.3 1.8l.1.1a1.9 1.9 0 11-2.7 2.7l-.1-.1a1.6 1.6 0 00-1.8-.3 1.6 1.6 0 00-1 1.5v.2a1.9 1.9 0 11-3.8 0v-.1a1.6 1.6 0 00-1-1.5 1.6 1.6 0 00-1.8.3l-.1.1a1.9 1.9 0 11-2.7-2.7l.1-.1a1.6 1.6 0 00.3-1.8 1.6 1.6 0 00-1.5-1h-.2a1.9 1.9 0 110-3.8h.1a1.6 1.6 0 001.5-1 1.6 1.6 0 00-.3-1.8l-.1-.1a1.9 1.9 0 112.7-2.7l.1.1a1.6 1.6 0 001.8.3H10a1.6 1.6 0 001-1.5v-.2a1.9 1.9 0 113.8 0v.1a1.6 1.6 0 001 1.5 1.6 1.6 0 001.8-.3l.1-.1a1.9 1.9 0 112.7 2.7l-.1.1a1.6 1.6 0 00-.3 1.8v.1a1.6 1.6 0 001.5 1h.2a1.9 1.9 0 110 3.8h-.1a1.6 1.6 0 00-1.5 1z"/></symbol>
+  <!-- 歯車：細かい円弧の集まりだと小さく描いた時に潰れて花のように見えるため、直線で組んだ形にしている -->
+  <symbol id="ic-gear" viewBox="0 0 24 24"><path d="M10.35,2.64 L13.65,2.64 L13.69,5.21 L15.61,6.00 L17.45,4.22 L19.78,6.55 L18.00,8.39 L18.79,10.31 L21.36,10.35 L21.36,13.65 L18.79,13.69 L18.00,15.61 L19.78,17.45 L17.45,19.78 L15.61,18.00 L13.69,18.79 L13.65,21.36 L10.35,21.36 L10.31,18.79 L8.39,18.00 L6.55,19.78 L4.22,17.45 L6.00,15.61 L5.21,13.69 L2.64,13.65 L2.64,10.35 L5.21,10.31 L6.00,8.39 L4.22,6.55 L6.55,4.22 L8.39,6.00 L10.31,5.21 Z" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.4"/></symbol>
   <symbol id="ic-store" viewBox="0 0 24 24"><path d="M3.5 9l1.5-5h14l1.5 5"/><path d="M4.5 9v11h15V9M3.5 9h17"/><path d="M9.5 20v-6h5v6"/></symbol>
   <symbol id="ic-power" viewBox="0 0 24 24"><path d="M12 3v9"/><path d="M6.7 6.7a8 8 0 1010.6 0"/></symbol>
   <symbol id="ic-box" viewBox="0 0 24 24"><path d="M4 7.5h16V20H4z"/><path d="M4 7.5L6 3.5h12l2 4"/><path d="M9.5 12h5"/></symbol>
