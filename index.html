@@ -122,7 +122,8 @@
             overscroll-behavior: none;
         }
         
-        /* ダブルタップでの画面拡大を防止する設定 */
+        /* ダブルタップでの画面拡大を防止する設定（下の「* { touch-action: manipulation }」で
+           画面全体に広げているので、ここは残しておくだけの保険） */
         button, input, .product-btn, .menu-row, .menu-card {
             touch-action: manipulation;
         }
@@ -133,8 +134,19 @@
            ・文字やアイコンを指で長押しした時に選択・メニューが出ないようにする */
         * { -webkit-tap-highlight-color: transparent; }
         button, .product-btn, .menu-row, .menu-card, .nav-item, .type-btn, .tenkey-btn,
-        .panel-head, header, #bottom-nav, .cash-display, .stat-tile {
+        /* ▼ 指で触った時の「じゃまな反応」をアプリ全体で止める ▼
+           ・長押しすると文字が青く選ばれてコピーのメニューが出る
+           ・素早く2回たたくと画面が拡大する
+           どちらもレジの操作中には不要で、誤操作のもとになる。
+           文字を打つところ（入力欄）と、控えを取りたいところ（共有コードなど）だけは
+           これまでどおり選べるようにしておく。 */
+        html, body, #app-container, #app-main, .page, .modal {
             -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+        }
+        * { touch-action: manipulation; }
+        /* 縦にスクロールする面は、はじく操作を残す（manipulation は拡大だけを止める） */
+        input, textarea, select, [contenteditable="true"], .selectable {
+            -webkit-user-select: text; user-select: text; -webkit-touch-callout: default;
         }
         .panel-body, #cart-list, .receipt-list, .modal-content, .a-wrap, .chart-box, #product-grid {
             -webkit-overflow-scrolling: touch;
@@ -252,6 +264,25 @@
             color: var(--accent-ink); font-weight: 700; white-space: nowrap; overflow: hidden;
             text-overflow: ellipsis; max-width: 220px;
         }
+
+        /* ▼ ヘッダーの時計と天気 ▼
+           営業の主役ではないので、色も太さも控えめにして、数字だけが読めればよい扱いにする。 */
+        .hdr-now {
+            display: flex; align-items: baseline; gap: 10px; flex-shrink: 0;
+            font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
+        }
+        .hdr-now .hn-clock { font-size: 17px; font-weight: 700; color: var(--text-main); }
+        .hdr-now .hn-weather {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 13.5px; font-weight: 600; color: var(--text-light);
+        }
+        .hdr-now .hn-weather .ic { width: 16px; height: 16px; stroke-width: 1.9; }
+        /* 分が変わった時だけ、数字がふわっと入れ替わる */
+        @keyframes clockTick { from { opacity: .35; transform: translate3d(0,-2px,0); } to { opacity: 1; transform: none; } }
+        .hdr-now .hn-clock.tick { animation: clockTick .28s cubic-bezier(.32,.72,0,1); }
+        /* 狭い画面では天気を畳んで時計だけ残す */
+        @media (max-width: 900px) { .hdr-now .hn-weather { display: none !important; } }
+        @media (max-width: 460px) { .hdr-now { display: none !important; } }
 
         /* カテゴリ凡例（色の意味を明示） */
         .cat-legend { display: flex; gap: 14px; align-items: center; }
@@ -512,7 +543,17 @@
             box-shadow: inset 0 0 0 1px rgba(28,29,34,.05);
         }
         /* 入力中は枠線ではなく、青いふちどりで示す */
-        input:focus { box-shadow: inset 0 0 0 2px var(--accent); }
+        input:focus, select:focus { box-shadow: inset 0 0 0 2px var(--accent); }
+        /* 選ぶ欄も入力欄と同じ面・同じ角丸にそろえる（右端に下向きの印だけ足す） */
+        select {
+            appearance: none; -webkit-appearance: none;
+            width: 100%; box-sizing: border-box; padding: 12px 38px 12px 15px; font-size: 16px;
+            margin: 10px 0; border-radius: var(--r-md); border: none; font-family: inherit;
+            background: var(--sunken); color: var(--text-main); outline: none; cursor: pointer;
+            box-shadow: inset 0 0 0 1px rgba(28,29,34,.05);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B6E7A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 13px center; background-size: 17px 17px;
+        }
 
         /* お会計の預かり金額入力を大きく・見やすく */
         #cash-input {
@@ -1286,6 +1327,15 @@
         .ios-switch:checked::after { transform: translateX(18px); }
         .ios-switch:active::after { width: 25px; }
         .setup-card label:has(.ios-switch) { justify-content: space-between; }
+        /* スイッチ1つぶんの行（説明つき） */
+        .sw-row {
+            display: flex; align-items: center; gap: 14px;
+            background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card);
+            padding: 12px 15px; margin-bottom: 8px; min-height: 56px;
+        }
+        .sw-row .sw-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+        .sw-row .sw-text b { font-size: 14.5px; font-weight: 700; }
+        .sw-row .sw-text span { font-size: 11.5px; color: var(--text-light); line-height: 1.4; }
 
         /* スマホのお会計シートの上端につまみを出す（下から出てきたことが分かる） */
         .sheet-grabber { display: none; }
@@ -1367,6 +1417,43 @@
         /* 集計メニューのカードは、押すと少し沈む */
         .menu-card { transition: transform .14s cubic-bezier(.32,.72,0,1), box-shadow .14s ease, background .14s ease; }
         .menu-card:active { transform: scale(0.95); }
+
+        /* ▼ 割合の横棒が、左から伸びる ▼
+           （レジには出てこない集計だけの演出。数字は最初から出ているので読むのを邪魔しない） */
+        @keyframes barFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+        .a-bar > i { transform-origin: left center; animation: barFill .55s cubic-bezier(.32,.72,0,1) both; }
+        .a-table tbody tr:nth-child(2) .a-bar > i { animation-delay: .04s; }
+        .a-table tbody tr:nth-child(3) .a-bar > i { animation-delay: .08s; }
+        .a-table tbody tr:nth-child(4) .a-bar > i { animation-delay: .12s; }
+        .a-table tbody tr:nth-child(n+5) .a-bar > i { animation-delay: .16s; }
+        /* 発表用の見本の中の棒も同じように伸びる */
+        .digest .dg-bar > i { transform-origin: left center; animation: barFill .55s cubic-bezier(.32,.72,0,1) both; }
+
+        /* ▼ 積み上がりの折れ線を、左から引く ▼
+           この1本だけは線の種類を使い分けていないので、破線の指定を壊す心配がない。
+           （在庫の減り方のグラフは商品ごとに実線・破線で見分けているので、そちらは触らない） */
+        @keyframes paceDraw { from { stroke-dashoffset: var(--len, 2000); } to { stroke-dashoffset: 0; } }
+        #pace-chart svg path.pace-line {
+            stroke-dasharray: var(--len, 2000);
+            animation: paceDraw .9s cubic-bezier(.32, .72, 0, 1) both;
+        }
+        @keyframes paceArea { from { opacity: 0; } to { opacity: 1; } }
+        #pace-chart svg path.pace-area { animation: paceArea .9s ease-out both; }
+
+        /* ▼ 発表用のまとめ：種類を変えると、紙がすっと差し替わる ▼ */
+        @keyframes sheetSwap { from { opacity: 0; transform: translate3d(0, 8px, 0); } to { opacity: 1; transform: none; } }
+        .dg-stage .digest-page > .digest { animation: sheetSwap .32s cubic-bezier(.32,.72,0,1) both; }
+
+        /* ▼ 客属性の札が付いた瞬間、小さく弾む ▼ */
+        @keyframes chipPop { 0% { transform: scale(.8); opacity: 0; } 60% { transform: scale(1.06); } 100% { transform: scale(1); opacity: 1; } }
+        .res-card .rc-chip { animation: chipPop .3s cubic-bezier(.32,.72,0,1) both; }
+
+        /* ▼ 設定などの1行スイッチも、他のカードと同じように下から出る ▼ */
+        .sw-row, .dg-pick, .man-item { animation: riseIn .34s cubic-bezier(.32,.72,0,1) both; }
+        .man-item:nth-child(2), .dg-pick:nth-child(2) { animation-delay: .03s; }
+        .man-item:nth-child(3), .dg-pick:nth-child(3) { animation-delay: .06s; }
+        .man-item:nth-child(4), .dg-pick:nth-child(4) { animation-delay: .09s; }
+        .man-item:nth-child(n+5) { animation-delay: .12s; }
 
         /* 画面の切り替えは、少し大きめに動かして前後関係を強く見せる（レジ以外） */
         #page-panel.anim-forward { animation: panelFromRight .4s cubic-bezier(.32, .72, 0, 1) both; }
@@ -1629,6 +1716,12 @@
   <symbol id="ic-cart" viewBox="0 0 24 24"><path d="M3 5h2.2l2.3 10.5h9.6L19 8H6.2"/><circle cx="9.5" cy="19" r="1.4"/><circle cx="16.5" cy="19" r="1.4"/></symbol>
   <!-- 積み上がり（売上の積み上がり）：右肩上がりの折れ線 -->
   <symbol id="ic-trend" viewBox="0 0 24 24"><path d="M3.5 20V4"/><path d="M3.5 20h17"/><path d="M6.5 16.5l4-4.5 3.5 2.5 5-6.5"/></symbol>
+  <!-- 天気：小さく出しても形が分かるよう、線の数をしぼった単純な形にしている -->
+  <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.3"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></symbol>
+  <symbol id="ic-cloud" viewBox="0 0 24 24"><path d="M7 18.5h10a4 4 0 000-8 5.6 5.6 0 00-10.7 1.6A3.3 3.3 0 007 18.5z"/></symbol>
+  <symbol id="ic-rain" viewBox="0 0 24 24"><path d="M7 15h10a3.8 3.8 0 000-7.6A5.4 5.4 0 006.4 9 3.1 3.1 0 007 15z"/><path d="M8.5 18v2.5M12 18.5v3M15.5 18v2.5"/></symbol>
+  <symbol id="ic-snow" viewBox="0 0 24 24"><path d="M7 14h10a3.8 3.8 0 000-7.6A5.4 5.4 0 006.4 8 3.1 3.1 0 007 14z"/><path d="M8.5 18h.01M12 20h.01M15.5 18h.01M10.2 21h.01M13.8 21h.01" stroke-linecap="round" stroke-width="2.4"/></symbol>
+  <symbol id="ic-storm" viewBox="0 0 24 24"><path d="M7 14h10a3.8 3.8 0 000-7.6A5.4 5.4 0 006.4 8 3.1 3.1 0 007 14z"/><path d="M13 16l-3 4h3l-1 3.2"/></symbol>
 </svg>
 
 <header>
@@ -1638,6 +1731,13 @@
         <span class="session-info" id="session-display">閉店中</span>
     </div>
     <div class="header-right">
+        <!-- 時計と天気。表示するかどうかは「設定 → 時計と天気」で決める -->
+        <div class="hdr-now" id="hdr-now" style="display:none;">
+            <span class="hn-clock" id="hdr-clock"></span>
+            <span class="hn-weather" id="hdr-weather" style="display:none;">
+                <svg class="ic"><use id="hdr-weather-icon" href="#ic-sun"/></svg><span id="hdr-weather-temp"></span>
+            </span>
+        </div>
         <div class="cat-legend">
             <span><i style="background:var(--btn-sweet); --cat-ink:var(--cat-sweet-ink)"></i>パン</span>
             <span><i style="background:var(--btn-savory); --cat-ink:var(--cat-savory-ink)"></i>クッキー</span>
@@ -1843,6 +1943,21 @@
             </div>
 
             <div class="sub-view" id="sub-display" style="display:none;">
+                <div class="sw-row">
+                    <div class="sw-text"><b>時計を表示する</b><span>画面の右上に「時:分」を出します</span></div>
+                    <input type="checkbox" class="ios-switch" id="opt-clock" onchange="saveUiPrefs()">
+                </div>
+                <div class="sw-row">
+                    <div class="sw-text"><b>天気を表示する</b><span>時計のとなりに、いまの天気と気温を出します</span></div>
+                    <input type="checkbox" class="ios-switch" id="opt-weather" onchange="saveUiPrefs()">
+                </div>
+                <label class="field-label" style="margin-top:14px;">天気を見る地域</label>
+                <select id="opt-area" onchange="saveUiPrefs()"></select>
+                <p class="settings-hint">天気は30分ごとに取り直します。通信できないときは何も出しません（会計には影響しません）。</p>
+                <div id="weather-state" class="notice" style="margin-top:10px;"></div>
+                <button class="action-btn btn-secondary" style="width:100%; margin-top:10px;" onclick="refreshWeather(true)"><svg class="ic"><use href="#ic-refresh"/></svg>天気をいますぐ取り直す</button>
+
+                <label class="field-label" style="margin-top:20px;">全画面表示</label>
                 <button id="btn-fullscreen" class="action-btn btn-secondary" style="width:100%; display:none;" onclick="toggleFullscreen()"><svg class="ic"><use href="#ic-expand"/></svg>今すぐ全画面表示にする</button>
                 <p class="settings-hint" style="margin-top:10px;">ホーム画面に追加したアイコンから起動すると、アドレスバーや戻るボタンのない全画面で使えます。</p>
             </div>
@@ -2945,7 +3060,11 @@
                         <tr><td>設定</td><td>商品・在庫の調整、複数端末での共有、このマニュアルなど。</td></tr>
                     </tbody>
                 </table>
-                <p>画面の左上に<b>「戻る」</b>が出ているときは、ひとつ前の画面にもどれます。</p>`
+                <p>画面の左上に<b>「戻る」</b>が出ているときは、ひとつ前の画面にもどれます。</p>
+                <div class="man-box">
+                    <div class="man-box-h">時計と天気</div>
+                    <p>画面の右上には<b>時刻</b>が出ます。<b>「設定 → 画面の表示」</b>で、時計を消したり、となりに<b>天気と気温</b>を出したりできます（地域は一覧から選びます）。天気は通信できないときは何も出さないだけで、会計には影響しません。</p>
+                </div>`
         },
         {
             id: 'open', icon: 'store', title: '① 開店する', sub: '1日のはじめに1回だけ',
@@ -2957,6 +3076,10 @@
                     <li>複数の端末で同時に会計する場合だけ、<b>「複数端末で共有」</b>に責任者から指定された共有コードを入れます。1台だけなら空欄のままで構いません。</li>
                     <li>いちばん下の<b>「この内容で開店する」</b>を押して完了です。</li>
                 </ol>
+                <div class="man-box">
+                    <div class="man-box-h">名前が前と同じだったとき</div>
+                    <p>過去の記録に同じ名前があると、自動で<b>「文化祭 (2)」</b>のように番号が付きます。あとで集計を見るときに、どの回のものか分からなくなるのを防ぐためです。</p>
+                </div>
                 <div class="man-box">
                     <div class="man-box-h">やり直したいとき</div>
                     <ul class="man-list">
@@ -3122,6 +3245,227 @@
         }
     ];
 
+    // ▼▼▼ 集計の大きな数字を、0から数え上げて見せる ▼▼▼
+    // 【なぜ集計だけか】レジの画面は一瞬で正しい数字が読めることが最優先なので触らない。
+    // 集計は「見に行く画面」なので、数字が動くと結果が入ってきた感じが出る。
+    // 【安全のため】動きの途中でも最後は必ず本来の文字列に戻す。
+    // 端末が「視差効果を減らす」設定なら、いきなり最後の値を出す。
+    function countUpNumbers(root) {
+        if (!root) return;
+        const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        root.querySelectorAll('.stat-tile .v').forEach(el => {
+            const finalText = el.textContent;
+            // 「11:00〜」のような時刻は数え上げると意味が変わってしまうので触らない
+            if (/\d:\d/.test(finalText)) return;
+            // 「¥20,550」「60人」のように、数字と前後の飾りに分ける。数字が無ければ何もしない
+            const m = finalText.match(/^([^\d-]*)(-?[\d,]+(?:\.\d+)?)(.*)$/s);
+            if (!m) return;
+            const target = parseFloat(m[2].replace(/,/g, ''));
+            if (!isFinite(target) || target === 0) return;
+            if (reduce) return;
+            const decimals = (m[2].split('.')[1] || '').length;
+            const grouped = m[2].indexOf(',') !== -1;
+            const fmt = v => {
+                const n = decimals ? v.toFixed(decimals) : String(Math.round(v));
+                return grouped ? Number(n).toLocaleString('ja-JP', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) : n;
+            };
+            const DUR = 620;
+            const start = performance.now();
+            const tick = now => {
+                const t = Math.min(1, (now - start) / DUR);
+                // はじめ速く、終わりゆっくり（画面遷移と同じ曲線の感じ）
+                const e = 1 - Math.pow(1 - t, 3);
+                if (t < 1) {
+                    el.textContent = m[1] + fmt(target * e) + m[3];
+                    requestAnimationFrame(tick);
+                } else {
+                    el.textContent = finalText;   // 最後は必ず本来の文字に戻す
+                }
+            };
+            el.textContent = m[1] + fmt(0) + m[3];
+            requestAnimationFrame(tick);
+        });
+    }
+
+    // ▼▼▼ ヘッダーの時計と天気 ▼▼▼
+    // 【方針】どちらも「あると便利」なだけの飾りなので、
+    //   ・会計の流れには一切割り込ませない
+    //   ・通信できなくても、失敗しても、黙って出さないだけにする
+    //   ・場所は端末ごとの好みなので、売上データとは別の場所に保存する
+    const UI_PREF_KEY = 'taizanboku_pos_ui';
+    // 位置情報の許可を求めずに済むよう、地域は一覧から選ぶ方式にしている
+    const WEATHER_AREAS = [
+        { id: 'sapporo', name: '札幌', lat: 43.06, lon: 141.35 },
+        { id: 'sendai', name: '仙台', lat: 38.27, lon: 140.87 },
+        { id: 'tokyo', name: '東京', lat: 35.68, lon: 139.77 },
+        { id: 'yokohama', name: '横浜', lat: 35.44, lon: 139.64 },
+        { id: 'nagoya', name: '名古屋', lat: 35.18, lon: 136.91 },
+        { id: 'kyoto', name: '京都', lat: 35.01, lon: 135.77 },
+        { id: 'osaka', name: '大阪', lat: 34.69, lon: 135.50 },
+        { id: 'hiroshima', name: '広島', lat: 34.39, lon: 132.46 },
+        { id: 'fukuoka', name: '福岡', lat: 33.59, lon: 130.40 },
+        { id: 'naha', name: '那覇', lat: 26.21, lon: 127.68 }
+    ];
+    const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast';
+    const WEATHER_TTL = 30 * 60 * 1000;   // 30分は取り直さない
+
+    let uiPrefs = { clock: true, weather: false, area: 'tokyo' };
+    let weatherNow = null;      // { code, temp, at, area }
+    let weatherFetching = false;
+
+    function loadUiPrefs() {
+        try {
+            const raw = localStorage.getItem(UI_PREF_KEY);
+            if (raw) {
+                const d = JSON.parse(raw) || {};
+                uiPrefs = {
+                    clock: d.clock !== false,
+                    weather: !!d.weather,
+                    area: WEATHER_AREAS.some(a => a.id === d.area) ? d.area : 'tokyo'
+                };
+            }
+            const w = localStorage.getItem(UI_PREF_KEY + '_weather');
+            if (w) weatherNow = JSON.parse(w);
+        } catch (e) { /* 読めなくても既定値で動く */ }
+    }
+
+    function saveUiPrefs() {
+        const c = document.getElementById('opt-clock');
+        const w = document.getElementById('opt-weather');
+        const a = document.getElementById('opt-area');
+        if (c) uiPrefs.clock = c.checked;
+        if (w) uiPrefs.weather = w.checked;
+        if (a && a.value) uiPrefs.area = a.value;
+        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) { /* 保存できなくても動く */ }
+        renderClockNow();
+        if (uiPrefs.weather) refreshWeather(false);
+        renderWeatherState();
+    }
+
+    function renderClockSettings() {
+        const c = document.getElementById('opt-clock');
+        const w = document.getElementById('opt-weather');
+        const a = document.getElementById('opt-area');
+        if (c) c.checked = uiPrefs.clock;
+        if (w) w.checked = uiPrefs.weather;
+        if (a) {
+            a.innerHTML = WEATHER_AREAS.map(x => `<option value="${x.id}"${x.id === uiPrefs.area ? ' selected' : ''}>${x.name}</option>`).join('');
+        }
+        renderWeatherState();
+        if (uiPrefs.weather) refreshWeather(false);
+    }
+
+    function renderWeatherState() {
+        const box = document.getElementById('weather-state');
+        if (!box) return;
+        if (!uiPrefs.weather) {
+            box.className = 'notice';
+            box.innerHTML = '<svg class="ic"><use href="#ic-cloud"/></svg><span>天気は表示していません。</span>';
+            return;
+        }
+        if (weatherNow && weatherNow.area === uiPrefs.area) {
+            const area = WEATHER_AREAS.find(x => x.id === weatherNow.area);
+            const t = new Date(weatherNow.at);
+            box.className = 'notice notice-ok';
+            box.innerHTML = `<svg class="ic"><use href="#${weatherIcon(weatherNow.code)}"/></svg><span>${escHtml(area ? area.name : '')}：${escHtml(weatherLabel(weatherNow.code))} ${Math.round(weatherNow.temp)}℃<br><span style="font-weight:normal;">${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')} 時点の情報です</span></span>`;
+        } else {
+            box.className = 'notice';
+            box.innerHTML = '<svg class="ic"><use href="#ic-clock"/></svg><span>天気をまだ取得できていません。通信できる場所で「いますぐ取り直す」を押してください。</span>';
+        }
+    }
+
+    // 気象庁と同じ WMO の天気コードを、レジで見て分かる5つに丸める
+    function weatherIcon(code) {
+        if (code == null) return 'ic-cloud';
+        if (code >= 95) return 'ic-storm';
+        if (code >= 71 && code <= 77) return 'ic-snow';
+        if (code >= 85) return 'ic-snow';
+        if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return 'ic-rain';
+        if (code <= 1) return 'ic-sun';
+        return 'ic-cloud';
+    }
+    function weatherLabel(code) {
+        if (code == null) return '—';
+        if (code >= 95) return '雷雨';
+        if ((code >= 71 && code <= 77) || code >= 85) return '雪';
+        if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) return '雨';
+        if (code === 0) return '快晴';
+        if (code === 1) return '晴れ';
+        if (code === 2) return 'くもり時々晴れ';
+        return 'くもり';
+    }
+
+    // 天気を取りに行く。失敗しても何も起きない（前に取れた値があればそれを出し続ける）
+    function refreshWeather(force) {
+        if (!uiPrefs.weather || weatherFetching) return;
+        const fresh = weatherNow && weatherNow.area === uiPrefs.area && (Date.now() - weatherNow.at) < WEATHER_TTL;
+        if (fresh && !force) { renderClockNow(); return; }
+        const area = WEATHER_AREAS.find(x => x.id === uiPrefs.area);
+        if (!area || typeof fetch !== 'function') return;
+        weatherFetching = true;
+        const url = `${WEATHER_URL}?latitude=${area.lat}&longitude=${area.lon}&current=temperature_2m,weather_code&timezone=Asia%2FTokyo`;
+        // 待たされ続けないよう、8秒で打ち切る
+        const ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+        const timer = ctrl ? setTimeout(() => ctrl.abort(), 8000) : null;
+        fetch(url, ctrl ? { signal: ctrl.signal } : undefined)
+            .then(r => r.ok ? r.json() : Promise.reject(new Error('status ' + r.status)))
+            .then(d => {
+                const cur = d && d.current;
+                if (!cur || typeof cur.temperature_2m !== 'number') throw new Error('形式が違います');
+                weatherNow = { code: cur.weather_code, temp: cur.temperature_2m, at: Date.now(), area: area.id };
+                try { localStorage.setItem(UI_PREF_KEY + '_weather', JSON.stringify(weatherNow)); } catch (e) { /* 保存は必須ではない */ }
+                renderClockNow();
+                renderWeatherState();
+            })
+            .catch(e => {
+                // 通信できない・弾かれた・形式が違う。どれもレジの動作には関係ないので黙って諦める
+                console.warn('天気を取得できませんでした', e);
+                renderWeatherState();
+            })
+            .finally(() => { weatherFetching = false; if (timer) clearTimeout(timer); });
+    }
+
+    let lastClockText = '';
+    function renderClockNow() {
+        const box = document.getElementById('hdr-now');
+        const clock = document.getElementById('hdr-clock');
+        const wrap = document.getElementById('hdr-weather');
+        if (!box || !clock || !wrap) return;
+        const showWeather = uiPrefs.weather && weatherNow && weatherNow.area === uiPrefs.area;
+        box.style.display = (uiPrefs.clock || showWeather) ? 'flex' : 'none';
+        if (uiPrefs.clock) {
+            const d = new Date();
+            const text = `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+            clock.style.display = '';
+            if (text !== lastClockText) {
+                clock.textContent = text;
+                lastClockText = text;
+                // 分が変わった時だけ小さく動かす（毎秒動かすと視界の端でちらつく）
+                clock.classList.remove('tick');
+                void clock.offsetWidth;
+                clock.classList.add('tick');
+            }
+        } else {
+            clock.style.display = 'none';
+            lastClockText = '';
+        }
+        wrap.style.display = showWeather ? 'inline-flex' : 'none';
+        if (showWeather) {
+            document.getElementById('hdr-weather-icon').setAttribute('href', '#' + weatherIcon(weatherNow.code));
+            document.getElementById('hdr-weather-temp').textContent = `${Math.round(weatherNow.temp)}℃`;
+        }
+    }
+
+    function startClock() {
+        loadUiPrefs();
+        renderClockNow();
+        // 分が変わるところに合わせて動かす（1秒ごとに描き直さない）
+        setInterval(renderClockNow, 10000);
+        if (uiPrefs.weather) refreshWeather(false);
+        setInterval(() => refreshWeather(false), WEATHER_TTL);
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     // ▼ 売上目標 ▼
     // 決めるかどうかは自由。決めておくと、集計に達成率と、積み上がりグラフに目標の線が出る。
     function renderSalesGoal() {
@@ -3282,6 +3626,20 @@
         if (id === 'checkout-modal') showNav(true);       // 会計の集中モード解除でナビ復帰
     }
 
+    // 過去の販売会と名前がぶつからないように、後ろに (2) (3) … を付けて返す。
+    // 「文化祭2」のように数字で終わる名前とまぎれないよう、かっこで囲む形にしている。
+    function uniqueSessionName(name) {
+        const base = String(name || '').trim();
+        if (!base) return base;
+        const used = new Set(sessionArchive.map(a => (a && a.name ? String(a.name).trim() : '')));
+        if (!used.has(base)) return base;
+        for (let n = 2; n <= 999; n++) {
+            const candidate = `${base} (${n})`;
+            if (!used.has(candidate)) return candidate;
+        }
+        return `${base} (${Date.now()})`;
+    }
+
     async function startSession() {
         const name = document.getElementById('session-name-input').value;
         if (!name) { alert('名前を入力してください'); return; }
@@ -3369,6 +3727,18 @@
 
         // 開店時に「前回の販売会」を確定（今回の集計と比較するため）
         comparisonBaseline = sessionArchive.length ? sessionArchive[sessionArchive.length - 1] : null;
+
+        // 同じ名前の販売会が過去にあると、集計や「過去の販売会」の一覧でどちらか
+        // 見分けがつかなくなるので、名前の後ろに (2) (3) … を付けて区別する。
+        // ※共有に参加した場合は、他の端末と名前をそろえる必要があるので付けない。
+        if (!isJoining) {
+            const unique = uniqueSessionName(sharedName);
+            if (unique !== sharedName) {
+                showToast(`同じ名前の記録があるため「${unique}」で開店します`);
+                logEdit(`販売会名の重複を回避：${sharedName} → ${unique}`);
+            }
+            sharedName = unique;
+        }
 
         currentSession = sharedName;
         salesHistory = [];
@@ -3834,6 +4204,9 @@
         else if (key === 'digest') { document.getElementById('sec-digest').innerHTML = secDigestHTML(); renderDigestPreview(); }
         else if (key === 'log') renderOperationLog();
         // export はボタンのみ（静的）
+
+        // 大きな数字は0から数え上げて出す（集計の画面だけ）
+        if (sec) countUpNumbers(sec);
     }
 
     // ▼▼▼ 集計の各項目を「表」で描く ▼▼▼
@@ -4059,13 +4432,19 @@
         const pts = [{ t: p.first, rev: 0 }].concat(p.points);
         const d = pts.map((q, i) => `${i ? 'L' : 'M'}${xOf(q.t).toFixed(1)},${yOf(q.rev).toFixed(1)}`).join(' ');
         const area = d + ` L${xOf(p.last).toFixed(1)},${yOf(0).toFixed(1)} L${xOf(p.first).toFixed(1)},${yOf(0).toFixed(1)} Z`;
-        svg += `<path d="${area}" fill="${CHART_PALETTE[0]}" fill-opacity="0.12"/>`;
-        svg += `<path d="${d}" fill="none" stroke="${CHART_PALETTE[0]}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`;
+        svg += `<path class="pace-area" d="${area}" fill="${CHART_PALETTE[0]}" fill-opacity="0.12"/>`;
+        svg += `<path class="pace-line" d="${d}" fill="none" stroke="${CHART_PALETTE[0]}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`;
         svg += `<circle cx="${xOf(p.last).toFixed(1)}" cy="${yOf(R.summary.totalRev).toFixed(1)}" r="3.6" fill="${CHART_PALETTE[0]}"/>`;
         svg += `<text x="${mL}" y="${H - mB + 17}" text-anchor="start" font-size="${CHART_FS - 1}" fill="${CHART_INK}">${hhmm(p.first)}</text>`;
         svg += `<text x="${W - mR}" y="${H - mB + 17}" text-anchor="end" font-size="${CHART_FS - 1}" fill="${CHART_INK}">${hhmm(p.last)}</text>`;
         svg += `</svg>`;
         box.innerHTML = chartCaption('売上の累計', '時刻') + svg;
+        // 線を「左から引く」動きのために、実際の長さを測って渡す
+        // （長さが分からないとCSSだけでは正しく描けない）
+        const line = box.querySelector('path.pace-line');
+        if (line && typeof line.getTotalLength === 'function') {
+            try { line.style.setProperty('--len', Math.ceil(line.getTotalLength())); } catch (e) { /* 測れなくても線は出る */ }
+        }
     }
 
     // ▼ 買い方の傾向：1人が何点買ったか・どの価格帯が売れたか・何と何が一緒に買われたか ▼
@@ -5008,7 +5387,7 @@
         'receipt': '領収書の設定',
         'archive': '過去の販売会',
         'data': 'データの書き出し',
-        'display': '画面表示',
+        'display': '画面の表示',
         'reset': 'データの初期化',
         'open-name': '販売会の名前',
         'open-stock': '商品と仕入れ数',
@@ -5125,7 +5504,7 @@
             else if (sub === 'sync') renderSyncView();
             else if (sub === 'receipt') renderReceiptSettings();
             else if (sub === 'archive') renderArchiveList();
-            else if (sub === 'display') updateFullscreenButton();
+            else if (sub === 'display') { updateFullscreenButton(); renderClockSettings(); }
             else if (sub === 'manual') renderManual();
             else if (sub === 'goal') renderSalesGoal();
             if (sub === 'sync-add' || sub === 'sync') updateSyncUi();
@@ -5196,6 +5575,9 @@
         const syncSub = !window.FIREBASE_CONFIG ? 'この端末では使えません'
             : (syncMode ? `共有中（コード: ${escHtml(syncEventCode || '')}）` : (currentSession ? 'いまは1台だけで営業中' : '開店後に開始できます'));
         const archSub = sessionArchive.length ? `${sessionArchive.length}件の記録` : 'まだありません';
+        const areaName = (WEATHER_AREAS.find(a => a.id === uiPrefs.area) || {}).name || '';
+        const clockSub = ['全画面', uiPrefs.clock ? '時計' : null, uiPrefs.weather ? `天気（${areaName}）` : null]
+            .filter(Boolean).join('・');
         box.innerHTML =
             menuRow('book', '操作マニュアル', 'はじめての人向けの使い方（PDFにも出せます）', "openPanel('settings','manual')") +
             menuRow('sliders', '商品・在庫の調整', stockSub, "openPanel('settings','stock')", { disabled: !currentSession }) +
@@ -5204,7 +5586,7 @@
             menuRow('printer', '領収書の設定', `発行者「${escHtml(shopInfo().name)}」・但し書きの変更`, "openPanel('settings','receipt')") +
             menuRow('archive', '過去の販売会', archSub, "openPanel('settings','archive')") +
             menuRow('download', 'データの書き出し', 'バックアップの保存・端末間のコピー', "openPanel('settings','data')") +
-            menuRow('expand', '画面表示', '全画面表示にする', "openPanel('settings','display')") +
+            menuRow('clock', '画面の表示', clockSub, "openPanel('settings','display')") +
             menuRow('trash', 'データの初期化', '不具合が直らない時の最終手段', "openPanel('settings','reset')", { danger: true });
     }
 
@@ -5250,7 +5632,8 @@
         }
         if (syncMode) {
             box.className = 'notice notice-ok';
-            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>共有中です。<br>共有コード：<b>${escHtml(syncEventCode || '')}</b><br>この端末の表示名：${deviceLabel()}</span>`;
+            // 共有コードは他の端末に伝える値なので、ここだけは長押しでコピーできるようにする
+            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>共有中です。<br>共有コード：<b class="selectable">${escHtml(syncEventCode || '')}</b><br>この端末の表示名：${deviceLabel()}</span>`;
             acts.innerHTML =
                 `<button class="action-btn btn-secondary" onclick="stopSyncMidSession()"><svg class="ic"><use href="#ic-x"/></svg>共有をやめてこの端末だけで続ける</button>` +
                 `<button class="action-btn btn-secondary" onclick="leaveDeviceOnly()"><svg class="ic"><use href="#ic-power"/></svg>この端末の利用を終える（他の端末は継続）</button>`;
@@ -6986,6 +7369,7 @@
     // ▲▲▲ ここまで ▲▲▲
 
     loadData();
+    startClock();          // 時計・天気の設定を読み、ヘッダーの表示を始める
     prepareOpenSetup();
     showRegister();
     updateSessionTabView();
