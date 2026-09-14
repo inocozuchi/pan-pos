@@ -1137,6 +1137,20 @@
             #live-stock-list .step-btn { width: 28px; height: 28px; }
         }
 
+        /* iPhone SE のように縦が短い端末では、設定の9項目が1画面に入らず下が隠れてしまう。
+           行を詰め、説明は1行に収めて全部を見えるようにする。
+           （この指定は上のスマホ用の指定より後ろに置くこと。同じ強さなので、先に書くと負けてしまう） */
+        @media (max-width: 768px) and (max-height: 740px) {
+            .menu-list { gap: 4px; }
+            .menu-row { padding: 5px 12px; min-height: 46px; gap: 10px; }
+            .menu-row .mr-title { font-size: 13.5px; }
+            .menu-row .mr-sub {
+                font-size: 10.5px; margin-top: 0;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            }
+            .menu-row > .ic:first-child { width: 18px; height: 18px; }
+        }
+
         /* 集計のメニュー（項目カード） */
         .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         @media (min-width: 769px) { .menu-grid { grid-template-columns: repeat(3, 1fr); } }
@@ -1190,6 +1204,38 @@
         .dg-pick.on { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
         .dg-pick.on .dg-pick-t { color: var(--accent-ink); }
         .dg-pick.on .dg-pick-s { color: var(--accent-ink); }
+        /* ▼ 操作マニュアル：章ごとに開いて読む（本文の見た目は report-css の .man-root 側）▼ */
+        .man-item {
+            background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card);
+            margin-bottom: 8px; overflow: hidden;
+        }
+        .man-head {
+            display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+            background: none; border: none; cursor: pointer; font-family: inherit; color: var(--text-main);
+            padding: 13px 15px; min-height: 58px;
+            transition: background .15s ease;
+        }
+        .man-head:active { background: var(--accent-soft); }
+        .man-head .man-ic { width: 21px; height: 21px; flex-shrink: 0; color: var(--accent); }
+        .man-head .man-h-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+        .man-head .man-h-t { font-size: 15px; font-weight: 700; line-height: 1.3; }
+        .man-head .man-h-s { font-size: 11.5px; color: var(--text-light); line-height: 1.35; }
+        .man-head .man-caret { width: 17px; height: 17px; flex-shrink: 0; color: var(--text-light); }
+        .man-item.open .man-head { background: var(--accent-soft); }
+        .man-item.open .man-head .man-h-t { color: var(--accent-ink); }
+        .man-item.open .man-head .man-caret { color: var(--accent-ink); }
+        /* 本文は開いた時にすっと下りてくる */
+        .man-item .man-body { padding: 14px 16px 16px; animation: manOpen .3s cubic-bezier(.32,.72,0,1) both; }
+        @keyframes manOpen { from { opacity: 0; transform: translate3d(0,-6px,0); } to { opacity: 1; transform: none; } }
+        @media (max-width: 768px) {
+            .man-head { padding: 11px 13px; min-height: 54px; gap: 10px; }
+            .man-item .man-body { padding: 12px 13px 14px; }
+            /* 3つの箱を横に並べると折り返して矢印がはぐれるので、狭い画面では縦に積む */
+            .man-root .man-flow { flex-direction: column; align-items: stretch; gap: 5px; }
+            .man-root .man-flow .ar { text-align: center; transform: rotate(90deg); }
+        }
+        @media (min-width: 769px) { .man-item .man-body { max-width: 760px; } }
+
         .dg-cap { font-size: 11.5px; color: var(--text-light); margin: 0 auto 5px; max-width: 720px; }
         /* 紙の見本：幅720pxで組んだものを、置ける幅に合わせて縮めて見せる */
         .dg-stage {
@@ -1459,6 +1505,75 @@
         .digest .dg-bar i { display: block; height: 100%; background: var(--accent); }
         .digest .dg-note { margin-top: 12px; background: var(--tint); border-radius: 6px; padding: 9px 13px; font-size: 11px; line-height: 1.6; }
         .digest .dg-foot { margin-top: 16px; font-size: 9.5px; color: var(--muted); text-align: right; }
+
+        /* ▼ 操作マニュアル ▼
+           画面の中で読むときも、紙やPDFに出すときも、この1組の指定で見た目をそろえる。
+           （このスタイルは別ウィンドウの印刷にもそのまま読み込まれる） */
+        .man-root { font-size: 13.5px; line-height: 1.75; color: #1C1D22; }
+        .man-root h3 {
+            font-size: 17px; font-weight: bold; margin: 0 0 10px; padding-left: 9px;
+            border-left: 4px solid #0A6CE0; line-height: 1.35;
+            break-after: avoid; page-break-after: avoid;
+        }
+        .man-root h4 { font-size: 13.5px; font-weight: bold; margin: 14px 0 4px; color: #3A4254; letter-spacing: 0.03em; }
+        .man-root p { margin: 0 0 8px; }
+        .man-root b { color: #0A5FC4; }
+        /* 手順：番号を丸で囲んで、目で追える段にする */
+        .man-root ol.man-steps { list-style: none; counter-reset: st; margin: 8px 0 10px; padding: 0; }
+        .man-root ol.man-steps > li {
+            counter-increment: st; position: relative; padding: 0 0 0 30px; margin-bottom: 7px;
+            break-inside: avoid; page-break-inside: avoid;
+        }
+        .man-root ol.man-steps > li::before {
+            content: counter(st); position: absolute; left: 0; top: 2px;
+            width: 21px; height: 21px; border-radius: 50%; background: #E8F0FD; color: #0A5FC4;
+            font-size: 12px; font-weight: bold; text-align: center; line-height: 21px;
+        }
+        .man-root ul.man-list { margin: 6px 0 10px; padding-left: 19px; }
+        .man-root ul.man-list li { margin-bottom: 4px; }
+        /* 覚えておくこと・注意：面の濃さだけで区別する（色数を増やさない） */
+        .man-root .man-box {
+            border-radius: 7px; padding: 10px 13px; margin: 10px 0; font-size: 13px;
+            background: #F7F8FB; break-inside: avoid; page-break-inside: avoid;
+        }
+        .man-root .man-box.tip { background: #EAF1FD; }
+        .man-root .man-box.warn { background: #FCEAEE; }
+        .man-root .man-box .man-box-h { font-weight: bold; margin-bottom: 3px; }
+        .man-root .man-box.tip .man-box-h { color: #0A5FC4; }
+        .man-root .man-box.warn .man-box-h { color: #B3263C; }
+        /* 3タップの流れ図 */
+        .man-root .man-flow { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin: 10px 0 12px; }
+        .man-root .man-flow .fb {
+            background: #F7F8FB; border-radius: 8px; padding: 9px 13px; font-weight: bold; font-size: 13px;
+            text-align: center; flex: 1; min-width: 92px;
+        }
+        .man-root .man-flow .fb small { display: block; font-weight: normal; font-size: 11px; color: #6B6E7A; margin-top: 1px; }
+        .man-root .man-flow .ar { color: #0A6CE0; font-weight: bold; flex-shrink: 0; }
+        /* こんな時どうする？の表 */
+        .man-root table.man-qa { width: 100%; border-collapse: collapse; margin: 6px 0 10px; font-size: 13px; }
+        .man-root table.man-qa th {
+            text-align: left; background: #F7F8FB; color: #3A4254; font-size: 11.5px; letter-spacing: 0.04em;
+            padding: 6px 9px; border-bottom: 1px solid #D8DAE2; white-space: nowrap;
+        }
+        .man-root table.man-qa td { padding: 8px 9px; border-bottom: 1px solid #EDEFF4; vertical-align: top; line-height: 1.6; }
+        .man-root table.man-qa td:first-child { font-weight: bold; width: 34%; }
+        .man-root table.man-qa tr { break-inside: avoid; page-break-inside: avoid; }
+        /* チェックリスト：印刷して手で塗れる四角 */
+        .man-root ul.man-check { list-style: none; margin: 6px 0 10px; padding: 0; }
+        .man-root ul.man-check li { display: flex; gap: 8px; align-items: flex-start; padding: 4px 0; }
+        .man-root ul.man-check li::before {
+            content: ''; flex-shrink: 0; width: 14px; height: 14px; margin-top: 4px;
+            border: 1.6px solid #6B6E7A; border-radius: 3px;
+        }
+        .man-root .man-fill { border-bottom: 1px solid #B6BFD0; display: inline-block; min-width: 150px; }
+        /* 紙に出すときだけ：表紙ともくじを付け、章が途中でページをまたがないようにする。
+           （章ごとに必ず改ページすると、短い章で紙が何枚も余ってしまう） */
+        .man-print .man-sec { break-inside: avoid; page-break-inside: avoid; margin-bottom: 20px; }
+        .man-print .man-cover { text-align: center; padding: 40px 0 30px; border-bottom: 2px solid #1C1D22; margin-bottom: 20px; }
+        .man-print .man-cover .t { font-size: 28px; font-weight: bold; letter-spacing: 0.02em; }
+        .man-print .man-cover .s { font-size: 13px; color: #6B6E7A; margin-top: 7px; }
+        .man-print .man-toc { font-size: 13px; margin-bottom: 10px; }
+        .man-print .man-toc li { margin-bottom: 3px; }
     </style>
 </head>
 <body>
@@ -1506,6 +1621,14 @@
   <symbol id="ic-sliders" viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h4M12 16h8"/><path d="M15 5.5v5M10 13.5v5"/></symbol>
   <symbol id="ic-tag" viewBox="0 0 24 24"><path d="M11 3.5H20v9l-8.5 8.5L3 12.5z"/><circle cx="16.5" cy="7.5" r="1.3"/></symbol>
   <symbol id="ic-clipboard" viewBox="0 0 24 24"><path d="M9 4.5h6v2.5H9z"/><path d="M8 6H5.5v15h13V6H16"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4"/></symbol>
+  <!-- 本（操作マニュアル）：開いた本を1本の輪郭と背でつくる -->
+  <symbol id="ic-book" viewBox="0 0 24 24"><path d="M12 6.5C10.4 5.2 8.3 4.5 5.5 4.5H3.5v13h2c2.8 0 4.9.7 6.5 2 1.6-1.3 3.7-2 6.5-2h2v-13h-2c-2.8 0-4.9.7-6.5 2z"/><path d="M12 6.5v13"/></symbol>
+  <!-- 的（売上目標）：中心に向かう二重の輪 -->
+  <symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.6" fill="currentColor"/></symbol>
+  <!-- かご（買い方の傾向）：取っ手つきの手さげかご -->
+  <symbol id="ic-cart" viewBox="0 0 24 24"><path d="M3 5h2.2l2.3 10.5h9.6L19 8H6.2"/><circle cx="9.5" cy="19" r="1.4"/><circle cx="16.5" cy="19" r="1.4"/></symbol>
+  <!-- 積み上がり（売上の積み上がり）：右肩上がりの折れ線 -->
+  <symbol id="ic-trend" viewBox="0 0 24 24"><path d="M3.5 20V4"/><path d="M3.5 20h17"/><path d="M6.5 16.5l4-4.5 3.5 2.5 5-6.5"/></symbol>
 </svg>
 
 <header>
@@ -1614,6 +1737,11 @@
                     <div id="customer-chart" class="chart-box"></div>
                     <div id="sec-time-text"></div>
                 </div>
+                <div id="sec-pace" class="analytics-sec" style="display:none;">
+                    <div id="pace-chart" class="chart-box"></div>
+                    <div id="sec-pace-text"></div>
+                </div>
+                <div id="sec-basket" class="analytics-sec" style="display:none;"></div>
                 <div id="sec-stock" class="analytics-sec" style="display:none;">
                     <div id="stock-chart" class="chart-box"></div>
                     <div id="stock-chart-legend" style="display:flex; flex-wrap:wrap; gap:6px 12px;"></div>
@@ -1696,6 +1824,24 @@
             </div>
 
             <!-- 画面表示 -->
+            <!-- 売上目標（任意）。開店時にも設定でき、あとから変えられる -->
+            <div class="sub-view" id="sub-goal" style="display:none;">
+                <label class="field-label">この回の売上目標（円）</label>
+                <input type="number" id="sales-goal-input" inputmode="numeric" placeholder="例: 50000" min="0" step="1000">
+                <p class="settings-hint">決めておくと、売上集計の「売上の積み上がり」に達成率と、グラフに目標の線が出ます。空欄か0にすると目標なしになります。</p>
+                <button class="action-btn btn-checkout" style="width:100%; margin-top:12px;" onclick="saveSalesGoal()"><svg class="ic"><use href="#ic-check"/></svg>この目標で保存する</button>
+                <div id="goal-state" class="notice notice-accent" style="display:none; margin-top:12px;"></div>
+            </div>
+
+            <!-- 操作マニュアル（アプリの中で読める。紙やPDFにも出せる） -->
+            <div class="sub-view" id="sub-manual" style="display:none;">
+                <p class="settings-hint">はじめてレジに入る方向けの使い方です。読みたい項目をタップすると開きます。</p>
+                <div id="manual-body"></div>
+                <div class="btn-stack" style="margin-top:14px;">
+                    <button class="action-btn btn-secondary" onclick="printManual()"><svg class="ic"><use href="#ic-printer"/></svg>PDFで保存・印刷する</button>
+                </div>
+            </div>
+
             <div class="sub-view" id="sub-display" style="display:none;">
                 <button id="btn-fullscreen" class="action-btn btn-secondary" style="width:100%; display:none;" onclick="toggleFullscreen()"><svg class="ic"><use href="#ic-expand"/></svg>今すぐ全画面表示にする</button>
                 <p class="settings-hint" style="margin-top:10px;">ホーム画面に追加したアイコンから起動すると、アドレスバーや戻るボタンのない全画面で使えます。</p>
@@ -1990,6 +2136,7 @@
     let operationLog = [];   // 事後編集・部分修正などの操作履歴（運用振り返り用）
     let comparisonBaseline = null; // 今回の販売会と比較する「前回の実績」（開店時に確定）
     let lastCustomerType = null;   // 直前に選ばれた客属性（保存データの互換のため保持）
+    let salesGoal = 0;             // その回の売上目標（円）。0 なら決めていない
     // 会計の二重記録を防ぐための通し番号。お会計画面を開くたびに +1 され、
     // 記録が成立した番号は checkoutRecordedToken に控えて、同じ番号では二度と記録しない。
     let checkoutOpenToken = 0;
@@ -2752,6 +2899,303 @@
     document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
     // ▲▲▲ ここまで ▲▲▲
 
+    // ▼▼▼ 操作マニュアル ▼▼▼
+    // 【なぜアプリの中に入れたか】
+    // 以前は別ファイルのPDFで配っていたが、画面の名前やお会計の作りを直すたびに
+    // 中身が古くなり、レジ当番の手元にあるのは古い版、ということが起きていた。
+    // 本文をアプリと同じ場所に置けば、更新し忘れが起きない。
+    // 画面で読むときも、紙やPDFに出すときも、この同じ文章を使う。
+    const MANUAL = [
+        {
+            id: 'flow', icon: 'register', title: '全体の流れ', sub: 'まずこれだけ覚えれば使えます',
+            body: `
+                <p>レジ当番がすることは、<b>開店 → 会計（お客様ごとに繰り返し）→ 閉店</b>の3つだけです。</p>
+                <div class="man-flow">
+                    <div class="fb">① 開店する<small>1日のはじめに1回</small></div>
+                    <div class="ar">→</div>
+                    <div class="fb">② 会計する<small>お客様ごとに</small></div>
+                    <div class="ar">→</div>
+                    <div class="fb">③ 閉店する<small>1日の終わりに1回</small></div>
+                </div>
+                <div class="man-box tip">
+                    <div class="man-box-h">はじめに、この3つだけ</div>
+                    <ul class="man-list">
+                        <li>お会計は<b>「商品をタップ → 会計へ進む → 完了・記録」</b>の3タップが基本です。</li>
+                        <li>お釣りは自動で計算されます。<b>何円玉を何枚渡すか</b>まで画面に出ます。</li>
+                        <li>画面をとじても、再読み込みしても、営業中のデータは消えません。交代のときはそのまま次の人に渡せます。</li>
+                    </ul>
+                </div>`
+        },
+        {
+            id: 'screen', icon: 'expand', title: '画面の見かた', sub: '上のバーと、下の5つのボタン',
+            body: `
+                <h4>画面のいちばん上</h4>
+                <ul class="man-list">
+                    <li>左に<b>いまの状態</b>が出ます（「営業中: 販売会の名前」または「閉店中」）。</li>
+                    <li>右の<b>「開店する」／「閉店する」</b>が、営業を始める・終えるボタンです。</li>
+                </ul>
+                <h4>画面のいちばん下（5つのボタン）</h4>
+                <table class="man-qa">
+                    <thead><tr><th>ボタン</th><th>できること</th></tr></thead>
+                    <tbody>
+                        <tr><td>レジ</td><td>お会計をする画面。ふだんはここにいます。</td></tr>
+                        <tr><td>予約</td><td>先に取り置きしたお客様の一覧。受け取りに来たらここから清算します。</td></tr>
+                        <tr><td>会計記録</td><td>済んだ会計の一覧。取り消し・修正・領収書の発行ができます。</td></tr>
+                        <tr><td>売上集計</td><td>売れ行きや客層などの集計。発表用のまとめやPDFもここから。</td></tr>
+                        <tr><td>設定</td><td>商品・在庫の調整、複数端末での共有、このマニュアルなど。</td></tr>
+                    </tbody>
+                </table>
+                <p>画面の左上に<b>「戻る」</b>が出ているときは、ひとつ前の画面にもどれます。</p>`
+        },
+        {
+            id: 'open', icon: 'store', title: '① 開店する', sub: '1日のはじめに1回だけ',
+            body: `
+                <ol class="man-steps">
+                    <li>画面の右上の<b>「開店する」</b>を押します。</li>
+                    <li><b>「販売会の名前」</b>を確認します（例：11月1日 パン販売）。あとで集計を見分けるための名前です。すでに入っていればそのままで大丈夫です。</li>
+                    <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。</li>
+                    <li>複数の端末で同時に会計する場合だけ、<b>「複数端末で共有」</b>に責任者から指定された共有コードを入れます。1台だけなら空欄のままで構いません。</li>
+                    <li>いちばん下の<b>「この内容で開店する」</b>を押して完了です。</li>
+                </ol>
+                <div class="man-box">
+                    <div class="man-box-h">やり直したいとき</div>
+                    <ul class="man-list">
+                        <li><b>間違えて閉店した</b>…開店の画面の上に「間違えて閉店しましたか？」が出ます。<b>「直前の販売会を再開する」</b>で閉店前にもどせます。</li>
+                        <li><b>前回の続きや別の端末のデータから始めたい</b>…開店の画面の<b>「データを取り込んで始める」</b>を使います。</li>
+                    </ul>
+                </div>`
+        },
+        {
+            id: 'checkout', icon: 'yen', title: '② 会計する', sub: '基本の3タップ',
+            body: `
+                <ol class="man-steps">
+                    <li>お客様が選んだ商品を、<b>商品ボタン</b>から必要な数だけ押します（同じ商品を2個なら2回）。</li>
+                    <li><b>「会計へ進む」</b>（青い大きなボタン）を押します。</li>
+                    <li>お預かりした金額を、<b>テンキー</b>か<b>候補ボタン</b>（¥500・¥1,000 など）で入れます。</li>
+                    <li>黒い表示窓に<b>お釣りと、その内訳</b>（例：100円×3）が出るので、その通りにお釣りを渡します。</li>
+                    <li>いちばん下の<b>「完了・記録」</b>を押して会計終了です。</li>
+                </ol>
+                <div class="man-box tip">
+                    <div class="man-box-h">速く会計するコツ</div>
+                    <ul class="man-list">
+                        <li>ちょうどの金額を受け取ったときは、<b>金額を入れずにそのままボタンを押すだけ</b>です。ボタンが<b>「ちょうど受け取って完了」</b>に変わっています。</li>
+                        <li>客属性（学生・教員など）は<b>入れなくても会計できます</b>。急いでいるときは飛ばして、あとから「会計記録」でまとめて入れられます。</li>
+                        <li>お預かりが足りないときはボタンが押せなくなり、<b>あといくら足りないか</b>が出ます。</li>
+                        <li>上のすりガラスの部分を押すと、商品一覧にもどれます。</li>
+                    </ul>
+                </div>
+                <div class="man-box warn">
+                    <div class="man-box-h">打ち間違えたとき（会計を確定する前）</div>
+                    <p>最後の1つだけ取り消す＝<b>「1つ戻す」</b>。全部やり直す＝カートの一覧にある<b>「カートを全部取消す」</b>。どちらも自由にやり直せます。</p>
+                </div>`
+        },
+        {
+            id: 'fix', icon: 'undo', title: '会計のあとで直す', sub: '取り消し・修正・領収書',
+            body: `
+                <p>下の<b>「会計記録」</b>を開くと、済んだ会計が1件ずつカードで並びます。</p>
+                <table class="man-qa">
+                    <thead><tr><th>したいこと</th><th>操作</th></tr></thead>
+                    <tbody>
+                        <tr><td>会計をまるごと取り消す</td><td>カードの<b>「取り消し」</b>。売った商品は在庫にもどります。</td></tr>
+                        <tr><td>品目や点数だけ直す</td><td>カードの<b>「修正」</b>。＋−で点数を変え、終わったら「修正を終了」。</td></tr>
+                        <tr><td>領収書を出す</td><td>カードの<b>「領収書」</b>。宛名・但し書きは「設定 → 領収書の設定」で変えられます。</td></tr>
+                        <tr><td>客属性をあとから入れる</td><td>カードの選択ボタンを押すだけ。<b>左に紅い帯が付いているカード</b>がまだ入っていないものです。</td></tr>
+                    </tbody>
+                </table>
+                <div class="man-box">
+                    <div class="man-box-h">未入力をまとめて片づける</div>
+                    <p>未入力があると、画面の上に知らせが出ます。<b>「未入力だけ表示」</b>を押すと、まだのものだけが並ぶので順に押していけます。</p>
+                </div>`
+        },
+        {
+            id: 'reserve', icon: 'calendar', title: '予約を受ける', sub: '先に取り置きするとき',
+            body: `
+                <ol class="man-steps">
+                    <li>商品をカートに入れて<b>「予約保留」</b>を押します。</li>
+                    <li>お客様のお名前を入れます。</li>
+                    <li>受け取りに来たら、下の<b>「予約」</b>を開いて<b>「受取・清算」</b>を押し、ふだんどおり会計します。</li>
+                </ol>
+                <div class="man-box warn">
+                    <div class="man-box-h">閉店の前に</div>
+                    <p>未清算の予約が残っていると閉店できません。先にすべて清算するか、取り消してください。</p>
+                </div>`
+        },
+        {
+            id: 'adjust', icon: 'sliders', title: '営業中の調整', sub: '追加搬入・値段・商品を足す',
+            body: `
+                <p>下の<b>「設定 → 商品・在庫の調整」</b>を開きます。</p>
+                <ul class="man-list">
+                    <li><b>追加で搬入した</b>…「仕入れ数」を増やすだけ。残りの数は自動で計算し直されます。</li>
+                    <li><b>値段を変えたい</b>…その場で価格を書き替えられます。</li>
+                    <li><b>商品を足したい</b>…いちばん下の「販売する商品を追加する」から足せます。</li>
+                </ul>
+                <div class="man-box">
+                    <div class="man-box-h">売り切れたら</div>
+                    <p>商品ボタンに「完売」と出ます。押せば登録はできますが、その場合は<b>仕入れ数を超えた販売</b>として記録され、集計で注意が出ます。基本はお客様に売り切れをお伝えください。</p>
+                </div>`
+        },
+        {
+            id: 'sync', icon: 'link', title: '複数の端末で同時に会計する', sub: '2台以上でさばくとき',
+            body: `
+                <p>同じ<b>共有コード</b>を入れた端末どうしで、売上も在庫も自動でひとつにまとまります。</p>
+                <h4>はじめから共有する</h4>
+                <p>開店の画面の<b>「複数端末で共有」</b>に、責任者から指定されたコードを入れて開店します。全部の端末で<b>同じコード</b>にしてください。</p>
+                <h4>途中から共有したくなった</h4>
+                <p>開店し直す必要はありません。<b>「設定 → 複数端末で共有」</b>にコードを入れて<b>「このコードで共有を始める」</b>を押すと、ここまでの会計も在庫もそのまま引き継がれます。2台目は開店の画面で同じコードを入れて開店します。</p>
+                <div class="man-box warn">
+                    <div class="man-box-h">共有しているときの閉店</div>
+                    <p><b>「閉店する」は共有している販売会そのものを終わらせる操作</b>です。ほかの端末がまだ会計している場合は、先に声をかけてください。自分の端末だけ先に終えたいときは、「設定 → 複数端末で共有」の<b>「この端末の利用を終える」</b>を使います。</p>
+                </div>
+                <p>反映は電波の状況で数秒〜数十秒おくれることがあります。おくれても、その端末だけで会計を続けられます。</p>`
+        },
+        {
+            id: 'close', icon: 'power', title: '③ 閉店する', sub: '1日の終わりに1回だけ',
+            body: `
+                <ol class="man-steps">
+                    <li>未清算の<b>予約が残っていないか</b>確認します。</li>
+                    <li>画面の右上の<b>「閉店する」</b>を押します。</li>
+                    <li>確認の画面が出るので、内容を読んで<b>OK</b>を選びます。</li>
+                    <li>閉店すると<b>その回の売上が自動で集計され</b>、「発表用のまとめ」が出ます。</li>
+                </ol>
+                <p>閉店した記録は<b>「設定 → 過去の販売会」</b>に自動で保存され、レジの会計データは空になります。あとから集計を見たり、PDFを出したりできます。</p>`
+        },
+        {
+            id: 'report', icon: 'chart', title: '売上を見る・PDFにする', sub: '発表用のまとめと、くわしい集計',
+            body: `
+                <p>下の<b>「売上集計」</b>から見られます。</p>
+                <h4>発表用のまとめ</h4>
+                <p>結果を発表するときに使う、<b>要点だけの1枚</b>です。「売上ハイライト」「売れ筋ベスト10」「時間帯の動き」「客層とカテゴリ」の4種類から選べ、画面に出ている見本がそのままPDFになります。1枚だけでも、4種類まとめてでも保存できます。</p>
+                <h4>くわしい集計</h4>
+                <ul class="man-list">
+                    <li><b>売上の概要</b>…総売上・来店人数・客単価など。売上目標を決めていれば達成率も出ます。</li>
+                    <li><b>商品別の売れ行き</b>…どれがどれだけ売れたか、仕入れのうち何％はけたか、売れ残りはいくらか。</li>
+                    <li><b>時間帯別の客数／売上の積み上がり</b>…いつ混んだか、開店からどう積み上がったか。</li>
+                    <li><b>買い方の傾向</b>…1人が何点買ったか、どの価格帯が売れたか、何と何が一緒に買われたか。</li>
+                    <li><b>客層・カテゴリ別／完売と売り逃し／次回の仕入れ数の目安</b>…次回の準備に使えます。</li>
+                    <li><b>販売会ごとの推移</b>…回を重ねるほど、前回からの伸びが見えます。</li>
+                </ul>
+                <h4>書き出し</h4>
+                <p><b>「書き出し（PDF・CSV）」</b>から、全項目のレポート（PDF）、商品別CSV（精算用）、会計明細CSV、全データJSON を保存できます。</p>`
+        },
+        {
+            id: 'qa', icon: 'bulb', title: 'こんな時どうする？', sub: '困ったときの早見表',
+            body: `
+                <table class="man-qa">
+                    <thead><tr><th>こんな時</th><th>どうする</th></tr></thead>
+                    <tbody>
+                        <tr><td>画面が固まった・反応しない</td><td>ブラウザを<b>再読み込み</b>してください。営業中の記録と在庫は保存されているので消えません。開店からやり直す必要もありません。</td></tr>
+                        <tr><td>お預かりが足りないと出る</td><td>会計はまだ成立していません。正しい金額を入れ直してからボタンを押してください。</td></tr>
+                        <tr><td>まちがえて「完了・記録」を押した</td><td>「会計記録」からその会計を<b>取り消し</b>てください。売った商品は在庫にもどります。</td></tr>
+                        <tr><td>商品が売り切れた</td><td>ボタンに「完売」と出ます。お客様に売り切れをお伝えください。</td></tr>
+                        <tr><td>電池が少ない</td><td>会計のたびに保存されているので、電源が切れてもデータは残ります。充電してから開き直してください。</td></tr>
+                        <tr><td>ほかの端末の会計が反映されない</td><td>「設定 → 複数端末で共有」で状態を確認してください。電波が戻れば自動で追いつきます。</td></tr>
+                        <tr><td>交代する</td><td>そのまま次の人に渡してください。共有コードを使っている場合だけ、同じコードであることを確かめます。</td></tr>
+                        <tr><td>データを別の端末に移したい</td><td>「設定 → データの書き出し」で保存し、移す先の端末の開店画面の「データを取り込んで始める」で読み込みます。</td></tr>
+                    </tbody>
+                </table>`
+        },
+        {
+            id: 'check', icon: 'check', title: '当日チェックリスト', sub: '印刷して使えます',
+            body: `
+                <h4>開店前</h4>
+                <ul class="man-check">
+                    <li>端末の充電が十分にある</li>
+                    <li>通信の状況を確認した（複数端末で共有する場合）</li>
+                    <li>「① 開店する」の手順で開店した</li>
+                    <li>複数端末を使う場合、全部の端末で共有コードが同じ</li>
+                    <li>釣り銭の準備ができている</li>
+                </ul>
+                <h4>営業中</h4>
+                <ul class="man-check">
+                    <li>会計は必ず「完了・記録」まで押し切る</li>
+                    <li>売り切れの商品はお客様に一言添える</li>
+                    <li>追加搬入したら「設定 → 商品・在庫の調整」で仕入れ数を増やす</li>
+                </ul>
+                <h4>閉店時</h4>
+                <ul class="man-check">
+                    <li>未清算の予約がない</li>
+                    <li>「③ 閉店する」の手順で閉店し、集計を確認した</li>
+                    <li>必要ならPDF・CSVを保存した</li>
+                </ul>
+                <h4>連絡先</h4>
+                <p>責任者：<span class="man-fill"></span>　連絡先：<span class="man-fill"></span></p>`
+        }
+    ];
+
+    // ▼ 売上目標 ▼
+    // 決めるかどうかは自由。決めておくと、集計に達成率と、積み上がりグラフに目標の線が出る。
+    function renderSalesGoal() {
+        const input = document.getElementById('sales-goal-input');
+        if (input) input.value = salesGoal > 0 ? salesGoal : '';
+        updateGoalState();
+    }
+
+    function updateGoalState() {
+        const box = document.getElementById('goal-state');
+        if (!box) return;
+        if (!(salesGoal > 0)) { box.style.display = 'none'; return; }
+        const now = salesHistory.reduce((s, h) => s + h.total, 0);
+        const pct = Math.round(now / salesGoal * 100);
+        const rest = Math.max(0, salesGoal - now);
+        box.style.display = 'flex';
+        box.innerHTML = `<svg class="ic"><use href="#ic-target"/></svg><span>いまの売上 ${yenStr(now)}（達成率 <b>${pct}%</b>）${rest > 0 ? ` ／ 目標まであと ${yenStr(rest)}` : ' ／ 目標を達成しています'}</span>`;
+    }
+
+    function saveSalesGoal() {
+        const input = document.getElementById('sales-goal-input');
+        const v = Math.max(0, Math.floor(Number(input && input.value) || 0));
+        salesGoal = v;
+        saveData();
+        logEdit(v > 0 ? `売上目標を ¥${v.toLocaleString('ja-JP')} に設定` : '売上目標をなしにした');
+        playSound();
+        showToast(v > 0 ? `売上目標を ${yenStr(v)} にしました` : '売上目標をなしにしました');
+        updateGoalState();
+        updateAnalytics();
+        panelBack();
+    }
+
+    let manualOpenId = 'flow';   // 画面で開いている章（はじめは「全体の流れ」）
+
+    function renderManual() {
+        const box = document.getElementById('manual-body');
+        if (!box) return;
+        box.innerHTML = MANUAL.map(sec => {
+            const open = manualOpenId === sec.id;
+            return `
+                <div class="man-item${open ? ' open' : ''}">
+                    <button class="man-head" onclick="toggleManual('${sec.id}')" aria-expanded="${open}">
+                        <svg class="ic man-ic"><use href="#ic-${sec.icon}"/></svg>
+                        <span class="man-h-text"><span class="man-h-t">${sec.title}</span><span class="man-h-s">${sec.sub}</span></span>
+                        <svg class="ic man-caret"><use href="#ic-${open ? 'up' : 'down'}"/></svg>
+                    </button>
+                    ${open ? `<div class="man-body man-root">${sec.body}</div>` : ''}
+                </div>`;
+        }).join('');
+    }
+
+    function toggleManual(id) {
+        manualOpenId = (manualOpenId === id) ? null : id;
+        renderManual();
+    }
+
+    // マニュアルを1つの文書にして、印刷（PDF保存）できるように別ウィンドウで開く
+    function printManual() {
+        const now = new Date().toLocaleDateString('ja-JP');
+        document.getElementById('print-report').innerHTML = `
+            <div class="man-root man-print">
+                <div class="man-cover">
+                    <div class="t">泰山木POS 操作マニュアル</div>
+                    <div class="s">レジ当番の方向け ／ スマホ・タブレット共通</div>
+                    <div class="s">この冊子は アプリの「設定 → 操作マニュアル」からいつでも出せます（${now} 版）</div>
+                </div>
+                <h4>もくじ</h4>
+                <ol class="man-toc">${MANUAL.map(s => `<li>${s.title} — ${s.sub}</li>`).join('')}</ol>
+                ${MANUAL.map(s => `<div class="man-sec"><h3>${s.title}</h3>${s.body}</div>`).join('')}
+            </div>`;
+        openReportWindow('泰山木POS 操作マニュアル');
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     // 営業状態が変わった時に、ヘッダーのボタンと各メニューの表示をそろえる
     function updateSessionTabView() {
         const banner = document.getElementById('event-banner');
@@ -3025,6 +3469,7 @@
         receiptCounter = 0;
         voidCount = 0;
         operationLog = [];
+        salesGoal = 0;   // 目標はその回のものなので、次の回に持ち越さない（開店時にまた決める）
         products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; p.note = ''; });
 
         const disp = document.getElementById('session-display');
@@ -3311,6 +3756,8 @@
         { key: 'summary', icon: 'chart',   title: '売上の概要' },
         { key: 'items',   icon: 'box',     title: '商品別の売れ行き' },
         { key: 'time',    icon: 'clock',   title: '時間帯別の客数' },
+        { key: 'pace',    icon: 'trend',   title: '売上の積み上がり' },
+        { key: 'basket',  icon: 'cart',    title: '買い方の傾向' },
         { key: 'stock',   icon: 'sliders', title: '在庫の減り方' },
         { key: 'segment', icon: 'users',   title: '客層・カテゴリ別' },
         { key: 'insight', icon: 'bulb',    title: '完売と売り逃し' },
@@ -3379,6 +3826,8 @@
         else if (key === 'segment') document.getElementById('sec-segment').innerHTML = secSegmentHTML();
         else if (key === 'next') document.getElementById('sec-next').innerHTML = secNextHTML();
         else if (key === 'time') { document.getElementById('sec-time-text').innerHTML = secTimeHTML(); renderCustomerChart(); }
+        else if (key === 'pace') { document.getElementById('sec-pace-text').innerHTML = secPaceHTML(); renderPaceChart(); }
+        else if (key === 'basket') document.getElementById('sec-basket').innerHTML = secBasketHTML();
         else if (key === 'stock') renderStockChart();
         else if (key === 'insight') document.getElementById('sec-insight').innerHTML = secInsightHTML();
         else if (key === 'trend') document.getElementById('sec-trend').innerHTML = secTrendHTML();
@@ -3414,6 +3863,8 @@
             <div class="stat-tile"><span class="k">平均客単価</span><span class="v">${yenStr(s.avg)}</span><span class="s">最高 ${yenStr(s.maxSale)} / 最低 ${yenStr(s.minSale)}</span></div>
             <div class="stat-tile"><span class="k">平均買上点数</span><span class="v">${s.avgItems}<span style="font-size:14px; font-weight:600;">点</span></span></div>
             <div class="stat-tile"><span class="k">ピークの時間帯</span><span class="v" style="font-size:19px;">${s.peak ? escHtml(s.peak.label) + '〜' : '—'}</span><span class="s">${s.peak ? yenStr(s.peak.rev) : ''}</span></div>
+            ${R.goal ? `<div class="stat-tile"><span class="k">目標の達成率</span><span class="v">${R.goal.pct}<span style="font-size:14px; font-weight:600;">%</span></span><span class="s">目標 ${yenStr(R.goal.goal)}${R.goal.rest > 0 ? ' / あと ' + yenStr(R.goal.rest) : ' / 達成'}</span></div>` : ''}
+            ${R.pace.reliable ? `<div class="stat-tile"><span class="k">1時間あたりの売上</span><span class="v" style="font-size:20px;">${yenStr(R.pace.revPerHour)}</span><span class="s">1時間に ${R.pace.custPerHour}人</span></div>` : ''}
         </div>`;
 
         const rows = [];
@@ -3497,6 +3948,27 @@
             h += `<div class="a-head">完売した商品</div><div class="a-empty">完売した商品はありませんでした。</div>`;
         }
         if (R.inStock.length) h += `<p class="a-note">最後まで在庫があった商品：${R.inStock.map(escHtml).join('、')}</p>`;
+
+        // 売れ残りは「何個余ったか」だけでなく「いくらぶん余ったか」で見ると、
+        // 次回どれだけ仕入れを減らすかの判断がしやすい。
+        const L = R.leftover;
+        if (L.initial > 0) {
+            h += `<div class="a-head">売れ残り（仕入れたのに売れなかったぶん）</div>
+            <table class="a-table"><tbody>
+                <tr><td class="nm">仕入れ合計</td><td class="num">${L.initial}点</td></tr>
+                <tr><td class="nm">売れた合計</td><td class="num">${L.sold}点</td></tr>
+                <tr><td class="nm">全体の消化率</td><td class="num">${pctBar(L.sellThrough, L.sellThrough >= 100 ? 'full' : '')}<span class="sub">${L.sellThrough}%</span></td></tr>
+                <tr><td class="nm">売れ残り</td><td class="num">${L.leftQty}点<span class="sub">売価で ${yenStr(L.leftValue)} ぶん</span></td></tr>
+            </tbody></table>`;
+            if (L.rows.length) {
+                h += `<table class="a-table"><thead><tr><th>売れ残りの多い商品</th><th class="num">残り</th><th class="num">売価ぶん</th><th class="num">消化率</th></tr></thead><tbody>`
+                + L.rows.slice(0, 8).map(r => `<tr><td class="nm">${escHtml(r.name)}<span class="sub">仕入 ${r.initial} / 販売 ${r.sold}</span></td><td class="num">${r.left}点</td><td class="num">${yenStr(r.value)}</td><td class="num">${r.rate}%</td></tr>`).join('')
+                + `</tbody></table>
+                <p class="a-note">「売価ぶん」は、残った数にそのまま売値をかけた金額です（原価ではありません）。多いものから仕入れを見直すと、無駄が減らせます。</p>`;
+            } else {
+                h += `<p class="a-note">売れ残りはありませんでした。</p>`;
+            }
+        }
         if (R.oversoldItems.length) {
             h += `<div class="a-head" style="color:var(--danger-ink);">販売数が仕入れ数を超えています（在庫の入力を確認してください）</div>
             <table class="a-table"><thead><tr><th>商品</th><th class="num">仕入</th><th class="num">販売</th><th>備考</th></tr></thead><tbody>`
@@ -3522,6 +3994,112 @@
                     <td class="num">${s.count ? yenStr(s.avg) : '—'}</td>
                 </tr>`).join('') + `</tbody></table>
         <p class="a-note">色の付いた行が、最も売れた時間帯です。商品名は、その時間帯によく出たものです。</p>`;
+    }
+
+    // ▼ 売上の積み上がり：開店から閉店まで、売上がどう積み上がったか ▼
+    function secPaceHTML() {
+        const R = buildReportData();
+        if (!R) return '<div class="a-empty">まだ売上データがありません。</div>';
+        const p = R.pace, g = R.goal;
+        const hhmm = t => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
+        const hours = Math.floor(p.spanMin / 60), mins = Math.round(p.spanMin % 60);
+        let h = `<div class="a-head">さばいたペース</div>
+        <table class="a-table"><tbody>
+            <tr><td class="nm">営業していた時間</td><td class="num">${hours ? hours + '時間' : ''}${mins}分<span class="sub">${hhmm(p.first)} 〜 ${hhmm(p.last)}</span></td></tr>
+            <tr><td class="nm">1時間あたりの売上</td><td class="num">${p.reliable ? yenStr(p.revPerHour) : '—'}</td></tr>
+            <tr><td class="nm">1時間あたりの客数</td><td class="num">${p.reliable ? p.custPerHour + '人' : '—'}</td></tr>
+            <tr><td class="nm">会計と会計の間隔</td><td class="num">平均 ${p.avgGapMin}分<span class="sub">いちばん短い間隔 ${p.busiestGapMin}分</span></td></tr>
+        </tbody></table>`;
+        if (!p.reliable) h += `<p class="a-note">開店から10分たつと、1時間あたりのペースが出せるようになります（それより短いと数字が極端になるため出していません）。</p>`;
+
+        if (g) {
+            h += `<div class="a-head">売上目標の達成</div>
+            <table class="a-table"><tbody>
+                <tr><td class="nm">目標</td><td class="num">${yenStr(g.goal)}</td></tr>
+                <tr><td class="nm">いまの売上</td><td class="num">${yenStr(g.now)}</td></tr>
+                <tr><td class="nm">達成率</td><td class="num">${pctBar(g.pct)}<span class="sub">${g.pct}%</span></td></tr>
+                <tr><td class="nm">${g.rest > 0 ? '目標まであと' : '目標より多い'}</td><td class="num">${yenStr(g.rest > 0 ? g.rest : g.over)}</td></tr>
+            </tbody></table>`;
+        } else {
+            h += `<p class="a-note">売上目標を決めておくと、ここに達成率が出ます（設定 → 売上目標）。</p>`;
+        }
+        h += `<p class="a-note">上のグラフは、開店からの売上の積み上がりです。線の傾きが急なところほど、よく売れていた時間です。</p>`;
+        return h;
+    }
+
+    // 積み上がりの折れ線。目標を決めていれば、目標の線も重ねる
+    function renderPaceChart() {
+        const box = document.getElementById('pace-chart');
+        if (!box) return;
+        const R = buildReportData();
+        if (!R || R.pace.points.length < 2) { box.innerHTML = chartEmpty(); return; }
+        const p = R.pace;
+        const H = CHART_H, mL = 46, mR = 12, mT = 18, mB = 28;
+        const plotH = H - mT - mB;
+        const W = chartWidth(box);
+        const top = Math.max(R.summary.totalRev, R.goal ? R.goal.goal : 0) || 1;
+        const span = Math.max(1, p.last - p.first);
+        const xOf = t => mL + (t - p.first) / span * (W - mL - mR);
+        const yOf = v => mT + (1 - v / top) * plotH;
+        const hhmm = t => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
+
+        let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="font-family:inherit; display:block; margin:0 auto;">`;
+        for (let i = 0; i <= 4; i++) {
+            const val = Math.round(top / 4 * i), y = yOf(val);
+            svg += `<line x1="${mL}" y1="${y.toFixed(1)}" x2="${W - mR}" y2="${y.toFixed(1)}" stroke="${CHART_GRID}" stroke-width="1"/>`;
+            svg += `<text x="${mL - 7}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="${CHART_FS}" fill="${CHART_INK}">${val >= 10000 ? Math.round(val / 1000) + 'k' : val}</text>`;
+        }
+        // 目標の線（届いたかどうかが一目で分かる）
+        if (R.goal) {
+            const gy = yOf(R.goal.goal);
+            svg += `<line x1="${mL}" y1="${gy.toFixed(1)}" x2="${W - mR}" y2="${gy.toFixed(1)}" stroke="${CHART_PALETTE[1]}" stroke-width="1.6" stroke-dasharray="5 4"/>`;
+            svg += `<text x="${W - mR}" y="${(gy - 5).toFixed(1)}" text-anchor="end" font-size="${CHART_FS}" font-weight="700" fill="${CHART_PALETTE[1]}">目標 ${yenStr(R.goal.goal)}</text>`;
+        }
+        // 開店時点（0円）から積み上げる
+        const pts = [{ t: p.first, rev: 0 }].concat(p.points);
+        const d = pts.map((q, i) => `${i ? 'L' : 'M'}${xOf(q.t).toFixed(1)},${yOf(q.rev).toFixed(1)}`).join(' ');
+        const area = d + ` L${xOf(p.last).toFixed(1)},${yOf(0).toFixed(1)} L${xOf(p.first).toFixed(1)},${yOf(0).toFixed(1)} Z`;
+        svg += `<path d="${area}" fill="${CHART_PALETTE[0]}" fill-opacity="0.12"/>`;
+        svg += `<path d="${d}" fill="none" stroke="${CHART_PALETTE[0]}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`;
+        svg += `<circle cx="${xOf(p.last).toFixed(1)}" cy="${yOf(R.summary.totalRev).toFixed(1)}" r="3.6" fill="${CHART_PALETTE[0]}"/>`;
+        svg += `<text x="${mL}" y="${H - mB + 17}" text-anchor="start" font-size="${CHART_FS - 1}" fill="${CHART_INK}">${hhmm(p.first)}</text>`;
+        svg += `<text x="${W - mR}" y="${H - mB + 17}" text-anchor="end" font-size="${CHART_FS - 1}" fill="${CHART_INK}">${hhmm(p.last)}</text>`;
+        svg += `</svg>`;
+        box.innerHTML = chartCaption('売上の累計', '時刻') + svg;
+    }
+
+    // ▼ 買い方の傾向：1人が何点買ったか・どの価格帯が売れたか・何と何が一緒に買われたか ▼
+    function secBasketHTML() {
+        const R = buildReportData();
+        if (!R) return '<div class="a-empty">まだ売上データがありません。</div>';
+        const b = R.baskets;
+        let h = `<div class="a-head">1会計あたりの点数</div>
+        <table class="a-table">
+            <thead><tr><th>点数</th><th class="num">件数</th><th class="num" style="min-width:82px;">割合</th><th class="num">客単価</th></tr></thead>
+            <tbody>` + b.dist.map(d => `
+                <tr><td class="nm">${escHtml(d.label)}</td><td class="num">${d.count}件</td>
+                <td class="num">${pctBar(d.pct)}<span class="sub">${d.pct}%</span></td>
+                <td class="num">${yenStr(d.avg)}</td></tr>`).join('') + `</tbody></table>
+        <p class="a-note">2点以上まとめて買った方は ${b.multi}件（全体の${b.multiPct}%）。この割合が上がるほど、1人あたりの売上が伸びます。</p>`;
+
+        h += `<div class="a-head">価格帯別の売上</div>`;
+        h += R.priceBands.length ? `<table class="a-table">
+            <thead><tr><th>価格帯</th><th class="num">販売数</th><th class="num">売上</th><th class="num" style="min-width:82px;">構成比</th></tr></thead>
+            <tbody>` + R.priceBands.map(p => `
+                <tr><td class="nm">${escHtml(p.label)}<span class="sub">${p.kinds}品</span></td>
+                <td class="num">${p.qty}点</td><td class="num">${yenStr(p.rev)}</td>
+                <td class="num">${pctBar(p.pct)}<span class="sub">${p.pct}%</span></td></tr>`).join('') + `</tbody></table>`
+            : '<div class="a-empty">販売された商品がありません。</div>';
+
+        h += `<div class="a-head">よく一緒に買われた組み合わせ</div>`;
+        h += b.pairs.length ? `<table class="a-table">
+            <thead><tr><th>組み合わせ</th><th class="num">回数</th><th class="num">一緒に買う割合</th></tr></thead>
+            <tbody>` + b.pairs.map(p => `
+                <tr><td class="nm">${escHtml(p.a)} ＋ ${escHtml(p.b)}<span class="sub">「${escHtml(p.from)}」を買った方の${p.conf}%が「${escHtml(p.to)}」も</span></td>
+                <td class="num">${p.count}回</td><td class="num">${p.conf}%</td></tr>`).join('') + `</tbody></table>
+        <p class="a-note">割合が高い組み合わせは、並べて置いたりセットにしたりすると効きやすい組み合わせです。</p>`
+            : '<div class="a-empty">2種類以上を同時に買われた会計がありませんでした。</div>';
+        return h;
     }
 
     function secSegmentHTML() {
@@ -3785,6 +4363,7 @@
                     <div class="dg-cell"><div class="k">客単価</div><div class="v">${yen(s.avg)}</div><div class="s">1人あたりの平均</div></div>
                     <div class="dg-cell"><div class="k">販売点数</div><div class="v">${Math.round(s.avgItems * s.customers)}<span class="u">点</span></div><div class="s">1人あたり ${s.avgItems}点</div></div>
                     <div class="dg-cell"><div class="k">完売した商品</div><div class="v">${soldOutN}<span class="u">品</span></div><div class="s">${soldOutN ? '最初の完売 ' + esc(R.soldOut[0].timeStr) : '完売はなし'}</div></div>
+                    ${R.goal ? `<div class="dg-cell"><div class="k">目標の達成率</div><div class="v">${R.goal.pct}<span class="u">%</span></div><div class="s">目標 ${yen(R.goal.goal)}${R.goal.rest > 0 ? ' ／ あと ' + yen(R.goal.rest) : ' ／ 達成'}</div></div>` : ''}
                 </div>
                 ${digestHighlightNote(R)}`;
         } else if (kind === 'best') {
@@ -4213,6 +4792,127 @@
 
     // 前回の販売会（開店時に確定した comparisonBaseline）と今回を比較する。
     // 比較できない（前回データが無い・古い形式）場合は null を返す。
+    // ▼▼▼ 集計の追加ぶん（一般的なレジで見られる指標をそろえる）▼▼▼
+
+    // 売上目標に対して、いまどこまで来ているか
+    function buildGoal(totalRev) {
+        if (!(salesGoal > 0)) return null;
+        return {
+            goal: salesGoal, now: totalRev,
+            pct: Math.round(totalRev / salesGoal * 100),
+            rest: Math.max(0, salesGoal - totalRev),
+            over: Math.max(0, totalRev - salesGoal)
+        };
+    }
+
+    // 買い方の傾向（バスケット分析）。
+    // 1人が何点買ったかの分布と、一緒に買われた組み合わせの「起こりやすさ」を出す。
+    // 組み合わせは回数だけだと「よく売れる商品どうし」が上位に並ぶだけになるので、
+    // 「Aを買った人のうち何％がBも買ったか（信頼度）」を添えて、実際に効く組み合わせが分かるようにする。
+    function buildBaskets(sorted) {
+        const bucket = { 1: 0, 2: 0, 3: 0, 4: 0 };   // 4 は「4点以上」
+        const bucketRev = { 1: 0, 2: 0, 3: 0, 4: 0 };
+        sorted.forEach(h => {
+            const n = Math.min(4, Math.max(1, h.items.length));
+            bucket[n]++; bucketRev[n] += h.total;
+        });
+        const cust = sorted.length || 1;
+        const dist = [1, 2, 3, 4].map(n => ({
+            label: n < 4 ? `${n}点` : '4点以上',
+            count: bucket[n], pct: Math.round(bucket[n] / cust * 100),
+            rev: bucketRev[n], avg: bucket[n] ? Math.floor(bucketRev[n] / bucket[n]) : 0
+        })).filter(d => d.count > 0);
+
+        // 単品ごとの出現回数（信頼度の分母）
+        const solo = {};
+        sorted.forEach(h => [...new Set(h.items.map(i => i.name))].forEach(n => { solo[n] = (solo[n] || 0) + 1; }));
+        const pairCount = {};
+        sorted.forEach(h => {
+            const u = [...new Set(h.items.map(i => i.name))];
+            for (let i = 0; i < u.length; i++) for (let j = i + 1; j < u.length; j++) {
+                const k = JSON.stringify([u[i], u[j]].sort());
+                pairCount[k] = (pairCount[k] || 0) + 1;
+            }
+        });
+        const pairs = Object.entries(pairCount).map(([k, count]) => {
+            const [a, b] = JSON.parse(k);
+            // 多い方を「買った人」にすると割合が小さく出るので、両方向のうち高い方を見せる
+            const ca = Math.round(count / Math.max(1, solo[a]) * 100);
+            const cb = Math.round(count / Math.max(1, solo[b]) * 100);
+            const forward = ca >= cb;
+            return {
+                a, b, count,
+                from: forward ? a : b, to: forward ? b : a,
+                conf: Math.max(ca, cb)
+            };
+        }).sort((x, y) => y.count - x.count || y.conf - x.conf).slice(0, 8);
+
+        const multi = sorted.filter(h => h.items.length >= 2).length;
+        return { dist, pairs, multiPct: Math.round(multi / cust * 100), multi };
+    }
+
+    // 価格帯別の売上。どの値段の商品が全体を支えたかを見る
+    function buildPriceBands(itemCounts, itemRev) {
+        const bands = {};
+        products.forEach(p => {
+            const sold = itemCounts[p.name] || 0;
+            if (sold <= 0) return;
+            const price = p.price;
+            const key = price < 100 ? '100円未満'
+                : price < 150 ? '100〜149円'
+                : price < 200 ? '150〜199円'
+                : price < 300 ? '200〜299円'
+                : price < 500 ? '300〜499円' : '500円以上';
+            const order = price < 100 ? 0 : price < 150 ? 1 : price < 200 ? 2 : price < 300 ? 3 : price < 500 ? 4 : 5;
+            if (!bands[key]) bands[key] = { label: key, order, qty: 0, rev: 0, kinds: 0 };
+            bands[key].qty += sold;
+            bands[key].rev += (itemRev[p.name] || 0);
+            bands[key].kinds++;
+        });
+        const total = Object.values(bands).reduce((s, b) => s + b.rev, 0) || 1;
+        return Object.values(bands).sort((a, b) => a.order - b.order)
+            .map(b => ({ ...b, pct: Math.round(b.rev / total * 100) }));
+    }
+
+    // 売上の積み上がりと、さばくペース
+    function buildPace(sorted, totalRev) {
+        const first = new Date(sorted[0].time).getTime();
+        const last = new Date(sorted[sorted.length - 1].time).getTime();
+        const spanMin = Math.max(1, (last - first) / 60000);
+        let run = 0;
+        const points = sorted.map(h => { run += h.total; return { t: new Date(h.time).getTime(), rev: run }; });
+        // 会計と会計のあいだの時間（何分に1組来たか）
+        const gaps = [];
+        for (let i = 1; i < sorted.length; i++) gaps.push((new Date(sorted[i].time) - new Date(sorted[i - 1].time)) / 60000);
+        const avgGap = gaps.length ? gaps.reduce((a, b) => a + b, 0) / gaps.length : 0;
+        return {
+            points, first, last, spanMin,
+            // 営業した時間が短すぎるうちに「1時間あたり」を出すと、
+            // 数分の実績を60分に引き伸ばした極端な数字になってしまう。
+            // 10分以上たってから出す（それまでは画面に「まだ出せない」と書く）。
+            reliable: spanMin >= 10,
+            revPerHour: Math.round(totalRev / spanMin * 60),
+            custPerHour: Math.round(sorted.length / spanMin * 60 * 10) / 10,
+            avgGapMin: Math.round(avgGap * 10) / 10,
+            busiestGapMin: gaps.length ? Math.round(Math.min(...gaps) * 10) / 10 : 0
+        };
+    }
+
+    // 売れ残り（仕入れたのに売れなかったぶん）を、点数と売価の金額で出す
+    function buildLeftover(itemCounts) {
+        let initial = 0, sold = 0, leftQty = 0, leftValue = 0;
+        const rows = [];
+        products.forEach(p => {
+            if (!(p.initialStock > 0)) return;
+            const s = itemCounts[p.name] || 0;
+            const left = Math.max(0, p.initialStock - s);
+            initial += p.initialStock; sold += s; leftQty += left; leftValue += left * p.price;
+            if (left > 0) rows.push({ name: p.name, initial: p.initialStock, sold: s, left, value: left * p.price, rate: Math.round(s / p.initialStock * 100) });
+        });
+        rows.sort((a, b) => b.value - a.value);
+        return { initial, sold, leftQty, leftValue, rows, sellThrough: initial > 0 ? Math.round(sold / initial * 100) : 0 };
+    }
+
     function buildComparison() {
         const base = comparisonBaseline;
         if (!base || typeof base.totalRev !== 'number' || base.customerCount == null) return null;
@@ -4300,6 +5000,8 @@
     };
     // サブ画面の見出し（戻るボタンつきで表示される）
     const SUB_TITLES = {
+        'manual': '操作マニュアル',
+        'goal': '売上目標',
         'stock': '商品・在庫の調整',
         'sync': '複数端末で共有',
         'sync-add': '共有コードを追加',
@@ -4424,6 +5126,8 @@
             else if (sub === 'receipt') renderReceiptSettings();
             else if (sub === 'archive') renderArchiveList();
             else if (sub === 'display') updateFullscreenButton();
+            else if (sub === 'manual') renderManual();
+            else if (sub === 'goal') renderSalesGoal();
             if (sub === 'sync-add' || sub === 'sync') updateSyncUi();
         }
         else if (view === 'session') {
@@ -4493,7 +5197,9 @@
             : (syncMode ? `共有中（コード: ${escHtml(syncEventCode || '')}）` : (currentSession ? 'いまは1台だけで営業中' : '開店後に開始できます'));
         const archSub = sessionArchive.length ? `${sessionArchive.length}件の記録` : 'まだありません';
         box.innerHTML =
+            menuRow('book', '操作マニュアル', 'はじめての人向けの使い方（PDFにも出せます）', "openPanel('settings','manual')") +
             menuRow('sliders', '商品・在庫の調整', stockSub, "openPanel('settings','stock')", { disabled: !currentSession }) +
+            menuRow('target', '売上目標', salesGoal > 0 ? `${yenStr(salesGoal)}` : '決めていない', "openPanel('settings','goal')") +
             menuRow('link', '複数端末で共有', syncSub, "openPanel('settings','sync')", { disabled: !window.FIREBASE_CONFIG }) +
             menuRow('printer', '領収書の設定', `発行者「${escHtml(shopInfo().name)}」・但し書きの変更`, "openPanel('settings','receipt')") +
             menuRow('archive', '過去の販売会', archSub, "openPanel('settings','archive')") +
@@ -4526,6 +5232,7 @@
             (window.FIREBASE_CONFIG
                 ? menuRow('link', '複数端末で共有', code ? `コード: ${escHtml(code)}` : '使わない（1台で営業）', "openPanel('session','open-sync')")
                 : '') +
+            menuRow('target', '売上目標（任意）', salesGoal > 0 ? yenStr(salesGoal) : '決めない', "openPanel('settings','goal')") +
             menuRow('upload', 'データを取り込んで始める', '前回の続き・別の端末から引き継ぐ', "openPanel('session','open-import')");
         updateReopenRow();
     }
@@ -4707,6 +5414,11 @@
                 typeEditedLater, itemEdited, pendingLeft
             },
             abc, soldOut, inStock, oversoldItems, integrity: checkIntegrity(), slots, types, categories, copairs,
+            goal: buildGoal(totalRev),
+            baskets: buildBaskets(sorted),
+            priceBands: buildPriceBands(itemCounts, itemRev),
+            pace: buildPace(sorted, totalRev),
+            leftover: buildLeftover(itemCounts),
             stock: buildStockTimeline(),
             insight: computeInsights(),
             comparison: buildComparison(),
@@ -4746,6 +5458,8 @@
                 <div class="stat"><span class="stat-label">平均買上点数</span><span class="stat-val">${s.avgItems}個</span></div>
                 <div class="stat"><span class="stat-label">最高売上／最低売上</span><span class="stat-val">${yen(s.maxSale)} / ${yen(s.minSale)}</span></div>
                 <div class="stat"><span class="stat-label">ピーク時間帯</span><span class="stat-val">${s.peak ? esc(s.peak.label) + '〜 ' + yen(s.peak.rev) : '-'}</span></div>
+                ${R.goal ? `<div class="stat"><span class="stat-label">売上目標／達成率</span><span class="stat-val">${yen(R.goal.goal)}（${R.goal.pct}%）</span></div>` : ''}
+                ${R.leftover.initial > 0 ? `<div class="stat"><span class="stat-label">全体の消化率</span><span class="stat-val">${R.leftover.sellThrough}%（売れ残り ${R.leftover.leftQty}点・売価 ${yen(R.leftover.leftValue)}）</span></div>` : ''}
                 ${s.cashKnown > 0 ? `<div class="stat"><span class="stat-label">現金 お預り／お釣り</span><span class="stat-val">${yen(s.cashTotal)} / ${yen(s.changeTotal)}</span></div>` : ''}
                 <div class="stat"><span class="stat-label">会計取消</span><span class="stat-val">${s.voidCount}件</span></div>
                 <div class="stat"><span class="stat-label">属性の事後入力</span><span class="stat-val">${s.typeEditedLater}件（${s.customers ? Math.round(s.typeEditedLater / s.customers * 100) : 0}%）</span></div>
@@ -4819,18 +5533,39 @@
             `<tr${sl.rev === peakRev ? ' class="peak-row"' : ''}><td>${esc(sl.range)}</td><td class="num">${yen(sl.rev)}</td><td class="num">${sl.count}人</td><td class="num">${sl.count ? yen(sl.avg) : '—'}</td><td>${sl.top.map(t => esc(t.name) + '×' + t.count).join('、') || '—'}</td></tr>`
         ).join('');
 
-        // 4. 残在庫の推移（凡例をHTMLリストで別描画。線種で識別＝モノクロ可）
+        // 4. 積み上がりとペース・買い方・価格帯
+        renderPaceChart();
+        const paceSvg = document.getElementById('pace-chart').innerHTML;
+        const pc = R.pace;
+        const hhmm = t => { const d = new Date(t); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; };
+        const paceRows = [
+            ['営業していた時間', `${Math.floor(pc.spanMin / 60) ? Math.floor(pc.spanMin / 60) + '時間' : ''}${Math.round(pc.spanMin % 60)}分（${hhmm(pc.first)}〜${hhmm(pc.last)}）`],
+            ['1時間あたりの売上', pc.reliable ? yen(pc.revPerHour) : '—'],
+            ['1時間あたりの客数', pc.reliable ? pc.custPerHour + '人' : '—'],
+            ['会計と会計の平均間隔', pc.avgGapMin + '分'],
+            ['2点以上買った会計', `${R.baskets.multi}件（${R.baskets.multiPct}%）`]
+        ].concat(R.goal ? [
+            ['売上目標', yen(R.goal.goal)],
+            ['達成率', `${R.goal.pct}%（${R.goal.rest > 0 ? '残り ' + yen(R.goal.rest) : '達成'}）`]
+        ] : []).map(r => `<tr><td>${r[0]}</td><td class="num">${r[1]}</td></tr>`).join('');
+        const basketRows = R.baskets.dist.map(d =>
+            `<tr><td>${esc(d.label)}</td><td class="num">${d.count}件</td><td class="num">${d.pct}%</td><td class="num">${yen(d.avg)}</td></tr>`).join('');
+        const bandRows = R.priceBands.map(b =>
+            `<tr><td>${esc(b.label)}</td><td class="num">${b.qty}点</td><td class="num">${yen(b.rev)}</td><td class="num">${b.pct}%</td></tr>`).join('');
+
+        // 5. 残在庫の推移（凡例をHTMLリストで別描画。線種で識別＝モノクロ可）
         const legend = (R.stock ? R.stock.series : []).map((se, idx) =>
             `<li><span class="lg-line ${idx >= 8 ? 'dashed' : 'solid'}"></span>${esc(se.name)}（残${se.final}）</li>`
         ).join('');
 
-        // 5. 客層・カテゴリ
+        // 6. 客層・カテゴリ
         const typeRows = R.types.map(t => `<tr><td>${esc(t.type)}</td><td class="num">${t.count}人</td><td class="num">${yen(t.avg)}</td></tr>`).join('');
         const catRows = R.categories.map(c => `<tr><td>${esc(c.name)}</td><td class="num">${yen(c.rev)}</td><td class="num">${c.pct}%</td></tr>`).join('');
-        const coBlock = R.copairs.length
-            ? `<table class="rep-table"><thead><tr><th>組み合わせ</th><th class="num">回数</th></tr></thead><tbody>`
-              + R.copairs.map(p => `<tr><td>${esc(p.pair)}</td><td class="num">${p.count}回</td></tr>`).join('')
-              + `</tbody></table>`
+        const coBlock = R.baskets.pairs.length
+            ? `<table class="rep-table"><thead><tr><th>組み合わせ</th><th class="num">回数</th><th class="num">一緒に買う割合</th></tr></thead><tbody>`
+              + R.baskets.pairs.map(p => `<tr><td>${esc(p.a)} ＋ ${esc(p.b)}</td><td class="num">${p.count}回</td><td class="num">${p.conf}%</td></tr>`).join('')
+              + `</tbody></table>
+              <div class="note-box"><div class="note-foot">「一緒に買う割合」は、片方を買った方のうち、もう片方も買った方の割合です。割合が高いほど、並べて置く・セットにする効果が出やすい組み合わせです。</div></div>`
             : `<div class="note-box"><div class="note-foot">同時に2種類以上買われた会計はありませんでした。</div></div>`;
 
         // 7. 参考メモ（推奨仕入れ）
@@ -4884,14 +5619,31 @@
                     <div class="note-box"><div class="note-foot">網かけの行が、最も売れた時間帯です。</div></div>
                 </section>
 
+                <section class="report-section report-section--long">
+                    <div class="report-heading">4. 売上の積み上がりと、さばいたペース</div>
+                    <div class="chart-container">${paceSvg}</div>
+                    <div class="two-col">
+                        <div>
+                            <div class="sub-heading">ペース</div>
+                            <table class="rep-table"><tbody>${paceRows}</tbody></table>
+                        </div>
+                        <div>
+                            <div class="sub-heading">買い方（1会計あたりの点数）</div>
+                            <table class="rep-table"><thead><tr><th>点数</th><th class="num">件数</th><th class="num">割合</th><th class="num">客単価</th></tr></thead><tbody>${basketRows}</tbody></table>
+                        </div>
+                    </div>
+                    <div class="sub-heading">価格帯別の売上</div>
+                    <table class="rep-table"><thead><tr><th>価格帯</th><th class="num">販売数</th><th class="num">売上</th><th class="num">構成比</th></tr></thead><tbody>${bandRows}</tbody></table>
+                </section>
+
                 <section class="report-section">
-                    <div class="report-heading">4. 商品ごとの残在庫の推移</div>
+                    <div class="report-heading">5. 商品ごとの残在庫の推移</div>
                     <div class="chart-container">${stockSvg}</div>
                     <ul class="stock-legend">${legend}</ul>
                 </section>
 
                 <section class="report-section report-section--long">
-                    <div class="report-heading">5. 客層・カテゴリ</div>
+                    <div class="report-heading">6. 客層・カテゴリ</div>
                     <div class="two-col">
                         <div>
                             <div class="sub-heading">客属性別 来店人数と客単価</div>
@@ -4908,7 +5660,7 @@
                 </section>
 
                 <section class="report-section report-section--long">
-                    <div class="report-heading">6. 完売と売り逃し</div>
+                    <div class="report-heading">7. 完売と売り逃し</div>
                     <div class="key-box">
                         <div class="key-head">早く売り切れた商品と、そのために売り逃した分</div>
                         <div class="key-body">${esc(R.insight)}</div>
@@ -4916,7 +5668,7 @@
                 </section>
 
                 <section class="report-section report-section--long">
-                    <div class="report-heading">7. 次回の仕入れ数の目安</div>
+                    <div class="report-heading">8. 次回の仕入れ数の目安</div>
                     <table class="rep-table">
                         <thead><tr><th>商品</th><th class="num">今回仕入</th><th class="num">販売</th><th class="num">参考仕入</th><th>増減</th><th>理由</th></tr></thead>
                         <tbody>${recRows}</tbody>
@@ -5066,7 +5818,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode };
+        return { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, salesGoal };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -5084,6 +5836,7 @@
         comparisonBaseline = data.comparisonBaseline || null;
         lastCustomerType = data.lastCustomerType || null;
         syncEventCode = data.syncEventCode || null;
+        salesGoal = Number(data.salesGoal) > 0 ? Number(data.salesGoal) : 0;
         return true;
     }
 
@@ -5231,21 +5984,27 @@
         let csv = '﻿';
         csv += `販売会,${cell(currentSession || '前回')}\n`;
         csv += `出力日時,${new Date().toLocaleString('ja-JP')}\n\n`;
-        csv += `商品名,カテゴリ,単価,仕入れ数,販売数,消化率(%),完売時刻,原価,粗利,味,売上\n`;
+        // 売れ残りは点数だけでなく「売価でいくらぶんか」も列に入れる（仕入れの見直しに使える）
+        csv += `商品名,カテゴリ,単価,仕入れ数,販売数,消化率(%),売れ残り数,売れ残り売価,完売時刻,原価,粗利,味,売上\n`;
+        let totalLeft = 0, totalLeftValue = 0;
         rows.forEach(r => {
             const p = products.find(prod => prod.name === r.name);
             const cat = p ? (catNames[p.type] || '') : '';
             const initial = p ? (p.initialStock || 0) : 0;
             const sellThrough = initial > 0 ? Math.round(r.count / initial * 100) : '';
+            const left = Math.max(0, initial - r.count);
+            const leftValue = left * r.price;
+            totalLeft += left; totalLeftValue += leftValue;
             const soldOutStr = (p && p.soldOutTime) ? new Date(p.soldOutTime).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '';
             const cost = (p && p.cost != null) ? p.cost : '';
             let profit = '';
             if (p && p.cost != null) { profit = r.revenue - p.cost * r.count; totalCogs += p.cost * r.count; cogsKnown = true; }
             const taste = estimateTaste(r.name, p ? p.type : null);
-            csv += `${cell(r.name)},${cat},${r.price},${initial},${r.count},${sellThrough},${soldOutStr},${cost},${profit},${taste},${r.revenue}\n`;
+            csv += `${cell(r.name)},${cat},${r.price},${initial},${r.count},${sellThrough},${left},${leftValue},${soldOutStr},${cost},${profit},${taste},${r.revenue}\n`;
         });
         const totalProfit = cogsKnown ? (total - totalCogs) : '';
-        csv += `合計,,,,${totalCount},,,${cogsKnown ? totalCogs : ''},${totalProfit},,${total}\n`;
+        csv += `合計,,,,${totalCount},,${totalLeft},${totalLeftValue},,${cogsKnown ? totalCogs : ''},${totalProfit},,${total}\n`;
+        if (salesGoal > 0) csv += `\n売上目標,${salesGoal}\n達成率(%),${Math.round(total / salesGoal * 100)}\n`;
         triggerDownload(`taizanboku_精算_${dateStamp()}.csv`, csv, 'text/csv');
     }
 
