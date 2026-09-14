@@ -15,57 +15,69 @@
     <link rel="icon" href="icons/icon-192.png">
     <style>
         /* ▼▼▼ 配色 ▼▼▼
-           【方針】iOS の標準アプリと同じ考え方で、「白い面＋淡い色」を基調にして
-           やわらかい印象にする。画面を色で埋めず、強調したいところだけ色を使う。
-             ・面（商品ボタン・情報の箱）… 淡いパステル。文字は濃いグレーで読ませる
-             ・操作（会計へ進む・戻る・選択中）… 青（iOS の標準色にならう）
-             ・本当に注目してほしいところ（お預かり・お釣り）… 黒に近い濃い面
-           【読みやすさの下限】屋外でも読めるよう、明暗差は実測して
+           【方針】寒色のモノクロ（青みのグレー）を土台にして、色数をできるだけ絞る。
+           色は「意味があるところ」にだけ使い、それ以外は濃淡だけで差をつける。
+
+             1. 画面全体 … 青みのグレーの濃淡だけ（ほぼモノクロ）
+             2. 操作      … 青1色。押せるもの（会計へ進む・戻る・選択中・現在のタブ）だけ
+             3. 注目      … お預かり・お釣りは黒に近い濃い面。いちばん見てほしいので値で強調
+             4. 危険      … 紅1色。取消・初期化・在庫超過・残りわずかだけ
+             5. カテゴリ  … スレート／ティール／インディゴ。すべて寒色でそろえる
+
+           【なぜ完全なモノクロにしないか】
+             商品ボタンは23個並ぶので、色の手がかりが無いと文字を読まないと選べず、
+             急いでいる時に隣を押す事故が起きやすい。そこでカテゴリだけは色を残す。
+             ただし暖色（橙・緑）はやめて寒色でそろえ、面はごく淡くして
+             「ほぼモノクロの画面に、分類の気配だけがある」状態にしている。
+             注意（未入力・完売など）も色を増やさず、濃さの違いだけで示す。
+
+           【読みやすさの下限】屋外でも読めるよう明暗差を実測し、
              小さい文字 4.5:1 以上／商品名など必ず読む文字 7:1 以上 を満たす範囲で
-             できるだけ淡い色を選んでいる。
-           【カテゴリの色分け】面は淡いままにして、ボタンの上辺に細い濃色の帯を置く。
-             日なたで面の色が白飛びしても、この帯で3分類を見分けられる。
+             いちばん淡い色を選んでいる。
            ・色を足すときは必ずこの変数を使う（各所に直接書かない）。 */
         :root {
-            --bg-color: #F2F2F7;      /* 画面の地。白い面を浮かせるための、ごく薄いグレー */
+            --bg-color: #F2F3F7;      /* 画面の地。白い面を浮かせるための、青みのごく薄いグレー */
             --surface: #FFFFFF;
             --white: #FFFFFF;
             --header-bg: #FFFFFF;
-            --line: #E4E3E8;          /* 区切り線・枠（細く淡く） */
-            --line-strong: #C9C8CF;
-            /* カテゴリ3色：面（文字を載せる淡い色。濃い文字で 14:1 以上） */
-            --btn-sweet: #FDE8C6;     /* パン（クリーム） */
-            --btn-savory: #E0F0D4;    /* クッキー（ミントグリーン） */
-            --btn-drink: #D6EBF7;     /* ドリンク（ペールブルー） */
+            --line: #E3E5EC;          /* 区切り線・枠 */
+            --line-strong: #C7CAD4;
+            /* カテゴリ3色：面（寒色でそろえた、ごく薄い3色。濃い文字で 14:1 以上） */
+            --btn-sweet: #E9EEF6;     /* パン（ブルーグレー） */
+            --btn-savory: #E1F0EF;    /* クッキー（ティールグレー） */
+            --btn-drink: #EAE9F7;     /* ドリンク（インディゴグレー） */
             /* カテゴリ3色：帯・凡例に使う濃い色（面が白飛びしても見分けられる） */
-            --cat-sweet-ink: #AD6E00;
-            --cat-savory-ink: #3F8F30;
-            --cat-drink-ink: #0E7E9C;
-            /* 操作の色（iOS の青）。白文字を載せても、白地に文字を置いても 4.96:1 */
+            --cat-sweet-ink: #4A6FA5; /* スレートブルー */
+            --cat-savory-ink: #14837E; /* ティール */
+            --cat-drink-ink: #5D5BC4; /* インディゴ */
+            /* 操作の色（青1色の濃淡）。白文字を載せても、白地に文字を置いても 4.96:1 */
             --accent: #0A6CE0;
             --accent-ink: #0A5FC4;    /* 小さい文字・アイコン用にもう少し濃く */
-            --accent-soft: #E8F1FE;   /* 選択中・押した時の淡い背景 */
-            --btn-neutral: #F0F0F3;   /* 補助ボタン（文字を載せても 4.6:1） */
-            --text-main: #1C1C1E;     /* ほぼ黒（白地に 15:1） */
-            --text-light: #6C6C70;    /* 補助文字（白地に 5.2:1） */
+            --accent-soft: #E8F0FD;   /* 選択中・押した時の淡い背景 */
+            --btn-neutral: #F2F4F8;   /* 補助ボタン（文字を載せても 4.6:1） */
+            --text-main: #1C1D22;     /* ほぼ黒（白地に 17:1） */
+            --text-light: #6B6E7A;    /* 補助文字（白地に 5.1:1） */
 
-            --sunken: #F7F7FA;        /* 一段へこんだ面（入力欄・情報ボックスの背景） */
+            --sunken: #F7F8FB;        /* 一段へこんだ面（入力欄・情報ボックスの背景） */
             --sunken-deep: #FBFBFD;   /* ごく薄いへこみ（フッター等） */
-            --positive: #E6F4E4;      /* 「増やす・進める」補助ボタン／営業中バナー */
-            --positive-line: #B9DDB2;
-            --positive-ink: #2C7530;
-            --warn-bg: #FFF6E6;       /* 注意（未入力の残りなど） */
-            --warn-line: #EFCF93;
-            --warn-ink: #8A5300;
-            --warn-solid: #FFE2A8;    /* 注意を示す淡い面（濃い橙の文字を載せて 5.0:1） */
-            --danger: #CC3A2E;        /* 危険・警告（取消・初期化・超過販売） */
-            --danger-bg: #FDECEA;
-            --danger-ink: #B3261E;
-            --low-ink: #B65A00;       /* 残りわずかの強調（白地に 4.7:1） */
-            --muted-ink: #6C6C70;     /* 販売しない・準備中など、控えめだが読める文字 */
+            /* 「良い・進める」は青の淡い方を使う（緑を足さない） */
+            --positive: #E6EFFC;      /* 増やすボタン・営業中バナー */
+            --positive-line: #B9D3F5;
+            --positive-ink: #0A5FC4;
+            /* 「注意」は色を増やさず、地より一段濃いグレーで気づかせる */
+            --warn-bg: #DDE3EE;       /* 未入力の残り・完売など */
+            --warn-line: #B6BFD0;
+            --warn-ink: #3A4254;      /* 濃いスレート（淡い面に載せて 7.8:1） */
+            --warn-solid: #DDE3EE;    /* 「後で」のつまみ。濃い文字を載せる */
+            --danger: #C8324A;        /* 危険（取消・初期化・在庫超過）。紅1色だけ */
+            --danger-bg: #FCEAEE;
+            --danger-ink: #B3263C;
+            --low-ink: #B3263C;       /* 残りわずかの強調（危険と同じ紅でそろえる） */
+            --muted-ink: #6B6E7A;     /* 販売しない・準備中など、控えめだが読める文字 */
+            --on-dark: #9EC5FF;       /* 黒に近い面の上で強調する数字（お釣り・総売上） */
             /* すりガラス調のバー（ヘッダー・ボトムナビ）。奥の内容がうっすら透ける */
             --glass-bg: rgba(255,255,255,0.82);
-            --glass-line: rgba(28,28,30,0.10);
+            --glass-line: rgba(28,29,34,0.10);
 
             /* 角丸は 3段階＋ピルに統一（細かいパーツ=sm／箱・ボタン=md／モーダル=lg） */
             --r-sm: 9px;
@@ -518,7 +530,7 @@
         }
         .cash-display #cash-input::placeholder { color: rgba(255,255,255,.30); }
         .cash-display .chg-amount {
-            font-size: 30px; font-weight: 800; color: var(--btn-sweet);
+            font-size: 30px; font-weight: 800; color: var(--on-dark);
             font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
         }
         .cash-display .chg-breakdown { display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: flex-end; margin-top: 8px; }
@@ -767,7 +779,7 @@
         .stat-tile .s { font-size: 11.5px; color: var(--text-light); display: block; }
         .stat-tile.hero { grid-column: 1 / -1; background: var(--text-main); }
         .stat-tile.hero .k { color: rgba(255,255,255,0.62); }
-        .stat-tile.hero .v { font-size: 34px; color: var(--btn-sweet); }
+        .stat-tile.hero .v { font-size: 34px; color: var(--on-dark); }
         .stat-tile.hero .s { color: rgba(255,255,255,0.62); }
 
         /* 表（行列をそろえる） */
@@ -792,7 +804,7 @@
         /* 割合を示す横棒（消化率・占有率） */
         .a-bar { display: block; width: 100%; min-width: 34px; height: 6px; border-radius: var(--r-pill); background: var(--btn-neutral); overflow: hidden; margin-bottom: 2px; }
         .a-bar > i { display: block; height: 100%; border-radius: var(--r-pill); background: var(--accent); }
-        .a-bar.full > i { background: var(--btn-savory); }
+        .a-bar.full > i { background: var(--positive-ink); }
 
         /* ABCランクの色分け */
         .a-rank { display: inline-block; min-width: 18px; text-align: center; font-size: 11px; font-weight: 800; border-radius: var(--r-sm); padding: 2px 7px; }
@@ -1092,7 +1104,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,.2);
             transition: transform .22s cubic-bezier(.32,.72,0,1);
         }
-        .ios-switch:checked { background: var(--btn-savory); }
+        .ios-switch:checked { background: var(--accent); }
         .ios-switch:checked::after { transform: translateX(18px); }
         .ios-switch:active::after { width: 25px; }
         .setup-card label:has(.ios-switch) { justify-content: space-between; }
