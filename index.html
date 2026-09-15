@@ -2606,29 +2606,38 @@
                     </div>
                 </div>
                 <div class="menu-list" id="open-menu-list"></div>
-                <button class="action-btn btn-checkout" style="width:100%; margin-top:14px;" onclick="startSession()"><svg class="ic"><use href="#ic-store"/></svg>この内容で開店する</button>
+                <button class="action-btn btn-checkout" id="open-primary-btn" style="width:100%; margin-top:14px;" onclick="startSession()"><svg class="ic"><use href="#ic-store"/></svg>この内容で開店する</button>
             </div>
 
             <!-- 販売会の名前 -->
             <div class="sub-view" id="sub-open-name" style="display:none;">
                 <div id="event-banner" class="notice"></div>
                 <label class="field-label">販売会の名前</label>
-                <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
+                <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSessionName();}">
                 <p class="settings-hint">あとから集計を見分けるための名前です。日付を入れておくと分かりやすくなります。</p>
+                <button class="action-btn btn-checkout" style="width:100%; margin-top:12px;" onclick="confirmSessionName()"><svg class="ic"><use href="#ic-check"/></svg>この名前にする</button>
             </div>
 
             <!-- 商品と仕入れ数 -->
             <div class="sub-view" id="sub-open-stock" style="display:none;">
                 <div id="inventory-apply"></div>
                 <div id="inventory-setup-list" class="setup-list"></div>
+                <!-- 直したそばから控えているので、この一押しは「決めて戻る」だけ。
+                     何も押さずに戻っても同じだが、決め終わりが分かる場所が要る。 -->
+                <button class="action-btn btn-checkout" style="width:100%; margin-top:12px;" onclick="confirmOpenStock()"><svg class="ic"><use href="#ic-check"/></svg>この商品と仕入れ数にする</button>
             </div>
 
             <!-- 開店時の共有コード -->
             <div class="sub-view" id="sub-open-sync" style="display:none;">
                 <p class="settings-hint">一緒に使う<b>全部の端末で同じ「共有コード」</b>を入れると、売上をリアルタイムで共有します。<br>1台だけで使うなら<b>空欄のままでOK</b>です（あとから設定画面で共有を始めることもできます）。</p>
                 <label class="field-label">共有コード（任意）</label>
-                <input type="text" id="sync-event-code-input" placeholder="例: pansale-1101">
-                <div id="sync-status" class="settings-hint"></div>
+                <input type="text" id="sync-event-code-input" placeholder="例: pansale-1101" oninput="peekEventCode()" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmOpenSyncCode();}">
+                <!-- 入れたコードが「すでに開店中の販売会」かどうかを、その場で調べて出す。
+                     新しく開店するのか、動いている販売会に参加するのかは
+                     まったく違う行いなので、押す前に分かるようにする。 -->
+                <div id="open-sync-peek" class="notice" style="margin-top:10px; display:none;"></div>
+                <button class="action-btn btn-checkout" id="open-sync-ok" style="width:100%; margin-top:12px;" onclick="confirmOpenSyncCode()"><svg class="ic"><use href="#ic-check"/></svg>このコードを使う</button>
+                <div id="sync-status" class="settings-hint" style="margin-top:10px;"></div>
             </div>
 
             <!-- データを取り込んで始める -->
@@ -3784,11 +3793,15 @@
             body: `
                 <ol class="man-steps">
                     <li>画面の右上の<b>「開店する」</b>を押します。</li>
-                    <li><b>「販売会の名前」</b>を確認します（例：11月1日 パン販売）。あとで集計を見分けるための名前です。すでに入っていればそのままで大丈夫です。</li>
-                    <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。</li>
-                    <li>複数の端末で同時に会計する場合だけ、<b>「複数端末で共有」</b>に責任者から指定された共有コードを入れます。1台だけなら空欄のままで構いません。</li>
+                    <li><b>「販売会の名前」</b>を確認します（例：11月1日 パン販売）。あとで集計を見分けるための名前です。直したら<b>「この名前にする」</b>を押すと前の画面に戻ります。</li>
+                    <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。入れ終えたら<b>「この商品と仕入れ数にする」</b>を押します。</li>
+                    <li>複数の端末で同時に会計する場合だけ、<b>「複数端末で共有」</b>に責任者から指定された共有コードを入れて<b>「このコードで共有する」</b>を押します。1台だけなら空欄のままで構いません。</li>
                     <li>いちばん下の<b>「この内容で開店する」</b>を押して完了です。</li>
                 </ol>
+                <div class="man-box">
+                    <div class="man-box-h">どの画面も、下のボタンで決まります</div>
+                    <p>名前・商品・共有コードのどの画面にも、いちばん下に<b>決めるためのボタン</b>があります。押すと前の画面に戻り、決めた内容がその場に出ます。左上の<b>「戻る」</b>でも同じように残りますが、迷ったときは下のボタンを押してください。</p>
+                </div>
                 <div class="man-box">
                     <div class="man-box-h">名前が前と同じだったとき</div>
                     <p>過去の記録に同じ名前があると、自動で<b>「文化祭 (2)」</b>のように番号が付きます。あとで集計を見るときに、どの回のものか分からなくなるのを防ぐためです。</p>
@@ -3881,6 +3894,12 @@
                 <p>同じ<b>共有コード</b>を入れた端末どうしで、売上も在庫も自動でひとつにまとまります。</p>
                 <h4>はじめから共有する</h4>
                 <p>開店の画面の<b>「複数端末で共有」</b>に、責任者から指定されたコードを入れて開店します。全部の端末で<b>同じコード</b>にしてください。</p>
+                <div class="man-box">
+                    <div class="man-box-h">すでに始まっている販売会に入るとき</div>
+                    <p>コードを入れると、その場でそのコードを調べて<b>「このコードは『◯◯』として開店中です」</b>と出ます。このときボタンは<b>「『◯◯』に参加する」</b>に変わり、これを押すだけで合流できます（下の「この内容で開店する」を押し直す必要はありません）。</p>
+                    <p>合流すると、商品と仕入れ数は<b>先に開いている側のもの</b>になります。この画面で決めた商品は使われません。</p>
+                    <p>閉店済みのコードを入れたときは<b>赤い注意</b>が出て、ボタンは押せなくなります。前回の集計と混ざらないよう、別のコードにしてください。</p>
+                </div>
                 <h4>途中から共有したくなった</h4>
                 <p>開店し直す必要はありません。<b>「設定 → 複数端末で使う」</b>にコードを入れて<b>「この端末でも会計する」</b>を押すと、ここまでの会計も在庫もそのまま引き継がれます。</p>
                 <p><b>どの端末も、開店前でも営業中でも参加できます。</b>すでに営業を始めてしまった端末どうしでも、同じコードを入れれば途中から1つにまとまります。</p>
@@ -5128,6 +5147,7 @@
         if (!confirm(`「${a.name}」を閉店前の状態に戻して再開します。\n会計${a.customerCount}件・売上¥${a.totalRev.toLocaleString()} がレジに戻ります。\n\nよろしいですか？`)) return;
         applyData(JSON.parse(JSON.stringify(a.snapshot)));
         currentSession = a.name;
+        reportViewSnapshot = null;   // 閉店済みの集計を見ている状態を解く（再開後は今回の数字）
         sessionArchive.pop(); // 閉店そのものを取り消すので、保存された記録も戻す
         // 共有コードは引き継がない（共有側は既に「閉店済み」になっているため）。
         // もう一度共有したい場合は、営業中の画面から新しいコードで開始してもらう。
@@ -5218,7 +5238,10 @@
                         if (!makeNew) return;
                         code = sanitizeEventCode(code + '-' + Date.now());
                     } else if (Array.isArray(data.products) && data.products.length > 0) {
-                        const ok = confirm(
+                        // 共有コードの画面で「『◯◯』に参加する」と書かれたボタンを押して来た時は、
+                        // 何が起きるかをその画面で読んだうえで選んでいるので、重ねて聞かない。
+                        const alreadyTold = openSyncPeek.code === code && openSyncPeek.state === 'open';
+                        const ok = alreadyTold || confirm(
                             `共有コード「${code}」は既に「${data.name || '無題'}」として開店中です。\n` +
                             `この端末から参加しますか？\n` +
                             `※商品リストは共有中の内容を使用します。この画面で設定した商品名・価格・仕入れ数は使われません。`
@@ -5306,6 +5329,10 @@
         }
 
         currentSession = sharedName;
+        // 閉店した直後は「いま閉じた販売会の集計」を見せる状態のまま残っている。
+        // そのまま次の開店に進むと、集計やPDFの書き出しが前回の記録を指したままになる。
+        // 開店したら、見るのは必ず今回の販売会。
+        reportViewSnapshot = null;
         salesHistory = [];
         reservations = [];
         cart = [];
@@ -7141,7 +7168,7 @@
         else if (view === 'session') {
             if (!sub) renderOpenMenu();
             else if (sub === 'open-stock') renderInventorySetup();
-            else if (sub === 'open-sync') updateSyncUi();
+            else if (sub === 'open-sync') { updateSyncUi(); peekEventCode(); }
             else if (sub === 'open-name') updateSessionTabView();
         }
         else if (view === 'analytics') {
@@ -7236,6 +7263,151 @@
         tempSetupProducts = JSON.parse(JSON.stringify(products));
     }
 
+    // ▼▼▼ 共有コードの下調べ ▼▼▼
+    // 【なぜ必要か】「新しく開店する」のと「すでに開いている販売会に参加する」のは
+    // まったく違う行いなのに、どちらも同じ「この内容で開店する」ボタンだった。
+    // 押したあとの確認まで、どちらになるのか分からない。
+    // コードを入れた時点で調べておき、ボタンの文字そのものを変えて先に知らせる。
+    let openSyncPeek = { code: '', state: 'none', name: '' };   // none/new/open/closed/unknown
+    let openSyncPeekTimer = null;
+
+    function peekEventCode() {
+        const el = document.getElementById('sync-event-code-input');
+        const code = sanitizeEventCode((el && el.value || '').trim());
+        if (code !== openSyncPeek.code) openSyncPeek = { code, state: code ? 'checking' : 'none', name: '' };
+        renderOpenSyncPeek();
+        renderOpenMenu();
+        if (openSyncPeekTimer) clearTimeout(openSyncPeekTimer);
+        if (!code) return;
+        if (!syncReady || !fbDb) { openSyncPeek.state = 'unknown'; renderOpenSyncPeek(); renderOpenMenu(); return; }
+        // 打っている途中で何度も問い合わせないよう、手が止まってから調べる
+        openSyncPeekTimer = setTimeout(async () => {
+            openSyncPeekTimer = null;
+            try {
+                const snap = await fbDb.collection('events').doc(code).get();
+                if (openSyncPeek.code !== code) return;   // 調べている間に書き換えられた
+                if (!snap.exists) openSyncPeek = { code, state: 'new', name: '' };
+                else {
+                    const d = snap.data() || {};
+                    openSyncPeek = { code, state: d.status === 'closed' ? 'closed' : 'open', name: d.name || '無題' };
+                }
+            } catch (e) {
+                if (openSyncPeek.code === code) openSyncPeek.state = 'unknown';
+            }
+            renderOpenSyncPeek();
+            renderOpenMenu();
+        }, 500);
+    }
+
+    function renderOpenSyncPeek() {
+        const box = document.getElementById('open-sync-peek');
+        const btn = document.getElementById('open-sync-ok');
+        if (!box || !btn) return;
+        const p = openSyncPeek;
+        const set = (cls, icon, html) => {
+            box.style.display = '';
+            box.className = 'notice ' + cls;
+            box.innerHTML = `<svg class="ic"><use href="#ic-${icon}"/></svg><span>${html}</span>`;
+        };
+        btn.disabled = false;
+        btn.className = 'action-btn btn-checkout';
+        if (!p.code) {
+            box.style.display = 'none';
+            btn.innerHTML = '<svg class="ic"><use href="#ic-check"/></svg>1台だけで使う';
+            btn.className = 'action-btn btn-secondary';
+            return;
+        }
+        if (p.state === 'checking') {
+            set('', 'clock', 'このコードが使われていないか調べています…');
+            btn.innerHTML = '<svg class="ic"><use href="#ic-check"/></svg>このコードを使う';
+            return;
+        }
+        if (p.state === 'open') {
+            set('notice-ok', 'link', `このコードは<b>「${escHtml(p.name)}」として開店中</b>です。<br>参加すると、売上・在庫・商品がその販売会とひとつになります。<br>この画面で決めた商品と仕入れ数は使われません。`);
+            btn.innerHTML = `<svg class="ic"><use href="#ic-link"/></svg>「${escHtml(p.name)}」に参加する`;
+            return;
+        }
+        if (p.state === 'closed') {
+            set('notice-danger', 'alert', 'このコードの販売会は<b>閉店済み</b>です。前回の集計と混ざるので、別のコードにしてください。');
+            btn.innerHTML = '<svg class="ic"><use href="#ic-alert"/></svg>別のコードを入れてください';
+            btn.disabled = true;
+            btn.className = 'action-btn btn-secondary';
+            return;
+        }
+        if (p.state === 'unknown') {
+            set('notice-warn', 'alert', 'いま通信できないため、このコードが使われているか確かめられませんでした。<br>電波の良い場所で開き直すか、このまま進むこともできます。');
+            btn.innerHTML = '<svg class="ic"><use href="#ic-check"/></svg>このコードを使う';
+            return;
+        }
+        set('', 'plus', 'このコードで<b>新しく開店</b>します。<br>一緒に使う端末にも、同じコードを入れてください。');
+        btn.innerHTML = '<svg class="ic"><use href="#ic-check"/></svg>このコードで共有する';
+    }
+
+    function confirmOpenStock() {
+        const active = tempSetupProducts.filter(p => p.active !== false);
+        const total = active.reduce((s, p) => s + (p.initialStock || 0), 0);
+        playSound();
+        renderOpenMenu();
+        showToast(`${active.length}品・合計${total}個にしました`);
+        panelBack();
+    }
+
+    // 「この名前にする」「このコードを使う／参加する」を押した時
+    function confirmSessionName() {
+        const el = document.getElementById('session-name-input');
+        const v = (el && el.value || '').trim();
+        if (!v) { playError(); alert('販売会の名前を入れてください。'); return; }
+        el.value = v;
+        playSound();
+        renderOpenMenu();
+        showToast(`販売会の名前を「${v}」にしました`);
+        panelBack();
+    }
+
+    function confirmOpenSyncCode() {
+        const el = document.getElementById('sync-event-code-input');
+        const raw = (el && el.value || '').trim();
+        const code = sanitizeEventCode(raw);
+        if (openSyncPeek.code === code && openSyncPeek.state === 'closed') { playError(); return; }
+        if (el) el.value = code;
+        playSound();
+        renderOpenMenu();
+        // すでに開いている販売会だと分かっている時は、この画面のボタンが
+        // そのまま「合流する」ボタンになる。開店の準備へ戻って、もう一度
+        // 大きいボタンを押し直させない（＝合流だけを独立した一手にする）。
+        if (code && openSyncPeek.code === code && openSyncPeek.state === 'open') {
+            startSession();
+            return;
+        }
+        showToast(!code ? '1台だけで使います' : `共有コードを「${code}」にしました`);
+        panelBack();
+    }
+
+    // 開店の準備の1行に出す、共有コードの様子
+    function syncCodeSubLabel(code) {
+        if (!code) return '使わない（1台で営業）';
+        const p = openSyncPeek;
+        if (p.code === sanitizeEventCode(code)) {
+            if (p.state === 'open') return `「${escHtml(p.name)}」に参加します`;
+            if (p.state === 'closed') return `コード: ${escHtml(code)}（閉店済み・要変更）`;
+            if (p.state === 'new') return `コード: ${escHtml(code)}（新しく開店）`;
+        }
+        return `コード: ${escHtml(code)}`;
+    }
+
+    // いちばん下の大きいボタンは、これから起きることをそのまま書く。
+    // 「新しく開店する」のか「動いている販売会に参加する」のかを、押す前に見せる。
+    function updateOpenPrimaryButton() {
+        const btn = document.getElementById('open-primary-btn');
+        if (!btn) return;
+        const el = document.getElementById('sync-event-code-input');
+        const code = sanitizeEventCode((el && el.value || '').trim());
+        const joining = code && openSyncPeek.code === code && openSyncPeek.state === 'open';
+        btn.innerHTML = joining
+            ? `<svg class="ic"><use href="#ic-link"/></svg>「${escHtml(openSyncPeek.name)}」に参加する`
+            : '<svg class="ic"><use href="#ic-store"/></svg>この内容で開店する';
+    }
+
     function renderOpenMenu() {
         const box = document.getElementById('open-menu-list');
         if (!box) return;
@@ -7246,14 +7418,22 @@
         const totalStock = active.reduce((sum, p) => sum + (p.initialStock || 0), 0);
         const codeInput = document.getElementById('sync-event-code-input');
         const code = (codeInput && codeInput.value || '').trim();
+        // すでに開いている販売会に合流する時は、名前も商品も向こうのものを使う。
+        // ここで決めた中身は使われないので、そのことを行ごとに書いておく。
+        const joining = !!code && openSyncPeek.code === sanitizeEventCode(code) && openSyncPeek.state === 'open';
         box.innerHTML =
-            menuRow('tag', '販売会の名前', escHtml(nameInput ? nameInput.value : ''), "openPanel('session','open-name')") +
-            menuRow('box', '商品と仕入れ数', `${active.length}品・合計${totalStock}個`, "openPanel('session','open-stock')") +
+            menuRow('tag', '販売会の名前',
+                joining ? `「${escHtml(openSyncPeek.name)}」になります` : escHtml(nameInput ? nameInput.value : ''),
+                "openPanel('session','open-name')") +
+            menuRow('box', '商品と仕入れ数',
+                joining ? '参加先の商品を使います' : `${active.length}品・合計${totalStock}個`,
+                "openPanel('session','open-stock')") +
             (window.FIREBASE_CONFIG
-                ? menuRow('link', '複数端末で共有', code ? `コード: ${escHtml(code)}` : '使わない（1台で営業）', "openPanel('session','open-sync')")
+                ? menuRow('link', '複数端末で共有', syncCodeSubLabel(code), "openPanel('session','open-sync')")
                 : '') +
             menuRow('target', '売上目標（任意）', salesGoal > 0 ? yenStr(salesGoal) : '決めない', "openPanel('settings','goal')") +
             menuRow('upload', 'データを取り込んで始める', '前回の続き・別の端末から引き継ぐ', "openPanel('session','open-import')");
+        updateOpenPrimaryButton();
         updateReopenRow();
     }
 
