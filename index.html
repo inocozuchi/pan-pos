@@ -1352,6 +1352,124 @@
         }
         .cat-pick.on > i { opacity: 1; transform: scale(1.15); }
 
+        /* ▼▼▼ お客様用の表示（カスタマーディスプレイ）▼▼▼
+           お客様は少し離れたところから、斜めに見る。だから
+           ・数字はとにかく大きく、太く
+           ・面は暗くして、明かりの下でも金額が浮くように
+           ・出すのは「いま買うもの・合計・お預かり・お釣り」だけ */
+        #customer-display {
+            position: fixed; inset: 0; z-index: 400;
+            background: #14151A; color: #fff;
+            display: flex; flex-direction: column;
+            padding: calc(14px + env(safe-area-inset-top, 0px)) 20px calc(16px + env(safe-area-inset-bottom, 0px));
+            font-variant-numeric: tabular-nums;
+            animation: backdropIn .3s ease both;
+        }
+        #customer-display .cd-top {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0;
+        }
+        #customer-display .cd-shop { font-size: 17px; font-weight: 700; letter-spacing: 0.04em; color: #E8ECF5; }
+        #customer-display .cd-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 11.5px; color: #8A90A0; letter-spacing: 0.02em;
+        }
+        #customer-display .cd-link > i {
+            width: 8px; height: 8px; border-radius: 50%; background: #6B7080;
+            transition: background .3s ease;
+        }
+        #customer-display .cd-link.live > i { background: #35C77E; }
+        #customer-display .cd-link.lost > i { background: #E0637A; }
+
+        #customer-display .cd-main {
+            flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;
+        }
+        /* 待っている間 */
+        #customer-display .cd-idle { text-align: center; }
+        #customer-display .cd-idle .ic { width: 52px; height: 52px; color: #454A5C; stroke-width: 1.4; }
+        #customer-display .cd-idle-t { font-size: 30px; font-weight: 700; margin-top: 16px; letter-spacing: 0.06em; }
+        #customer-display .cd-idle-s { font-size: 14px; color: #8A90A0; margin-top: 8px; }
+
+        /* 買うものと合計 */
+        /* 明細は下から積み上げ、合計をいちばん下に置く（レジの表示器と同じ並び） */
+        #customer-display .cd-order { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; }
+        #customer-display .cd-items {
+            flex: 0 1 auto; min-height: 0; overflow-y: auto; margin-bottom: 14px;
+            display: flex; flex-direction: column; gap: 2px;
+        }
+        #customer-display .cd-item {
+            display: flex; align-items: baseline; gap: 10px; padding: 7px 0;
+            font-size: 19px; animation: cdRowIn .26s cubic-bezier(.32,.72,0,1) both;
+        }
+        @keyframes cdRowIn { from { opacity: 0; transform: translate3d(0,6px,0); } to { opacity: 1; transform: none; } }
+        #customer-display .cd-item .n { flex: 1; min-width: 0; overflow-wrap: anywhere; color: #E8ECF5; }
+        #customer-display .cd-item .q { font-size: 15px; color: #9AA0B0; white-space: nowrap; }
+        #customer-display .cd-item .v { font-weight: 700; white-space: nowrap; }
+        #customer-display .cd-total-row {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+            padding-top: 14px; flex-shrink: 0;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+        }
+        #customer-display .cd-total-k {
+            font-size: 19px; font-weight: 700; color: #B6BDCC; letter-spacing: 0.06em;
+            white-space: nowrap; flex-shrink: 0;
+            display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+        }
+        #customer-display .cd-count { font-size: 13px; color: #8A90A0; font-weight: 600; letter-spacing: 0.02em; }
+        #customer-display .cd-total-v {
+            font-size: 64px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;
+            color: #fff;
+        }
+        #customer-display .cd-total-v.bump { animation: bump .3s cubic-bezier(.32,.72,0,1); }
+
+        /* お預かりとお釣り */
+        #customer-display .cd-pay {
+            margin-top: 16px; padding-top: 14px; flex-shrink: 0;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+            animation: cdRowIn .3s cubic-bezier(.32,.72,0,1) both;
+        }
+        #customer-display .cd-pay-row {
+            display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+            font-size: 17px; color: #B6BDCC; padding: 4px 0;
+        }
+        #customer-display .cd-pay-row b { font-size: 30px; font-weight: 800; color: #E8ECF5; }
+        #customer-display .cd-pay-row.cd-change b { font-size: 44px; color: #9EC5FF; }
+
+        /* 会計が終わったあと */
+        #customer-display .cd-done { text-align: center; animation: cdRowIn .34s cubic-bezier(.32,.72,0,1) both; }
+        #customer-display .cd-done .ic { width: 54px; height: 54px; color: #35C77E; stroke-width: 2.2; }
+        #customer-display .cd-done-t { font-size: 30px; font-weight: 700; margin-top: 14px; letter-spacing: 0.04em; }
+        #customer-display .cd-done-s { font-size: 17px; color: #9AA0B0; margin-top: 10px; }
+
+        #customer-display .cd-exit {
+            /* 金額は右にそろえて出るので、戻すボタンは左下に置いて数字と重ならないようにする */
+            position: absolute; left: 6px; bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+            width: 40px; height: 40px; border: none; border-radius: 50%;
+            background: rgba(255,255,255,.06); color: #6B7080; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #customer-display .cd-exit .ic { width: 17px; height: 17px; }
+        #customer-display .cd-exit:active { background: rgba(255,255,255,.14); }
+
+        /* 縦が短い時（スマホを横向きに寝かせた時など）は、明細をやめて
+           お客様がいちばん見たい「合計・お預かり・お釣り」だけを大きく出す */
+        @media (max-height: 460px) {
+            #customer-display .cd-items { display: none; }
+            #customer-display .cd-total-row { box-shadow: none; padding-top: 0; }
+            #customer-display .cd-total-v { font-size: 76px; }
+            #customer-display .cd-idle .ic { width: 38px; height: 38px; }
+            #customer-display .cd-idle-t, #customer-display .cd-done-t { font-size: 26px; margin-top: 8px; }
+            #customer-display .cd-idle-s { margin-top: 4px; }
+        }
+
+        /* 横向き・大きい画面では、さらに大きく */
+        @media (min-width: 700px) {
+            #customer-display { padding-left: 42px; padding-right: 42px; }
+            #customer-display .cd-total-v { font-size: 96px; }
+            #customer-display .cd-item { font-size: 23px; }
+            #customer-display .cd-pay-row.cd-change b { font-size: 60px; }
+            #customer-display .cd-idle-t, #customer-display .cd-done-t { font-size: 40px; }
+        }
+
         /* 営業中に商品を足すフォーム（押すまで畳んでおく） */
         .add-card {
             background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-raised);
@@ -1968,6 +2086,14 @@
             <div class="sub-view" id="sub-sync" style="display:none;">
                 <div id="sync-state-box" class="notice"></div>
                 <div id="sync-actions" class="btn-stack"></div>
+                <label class="field-label" style="margin-top:18px;">この端末の役割</label>
+                <div class="menu-list" id="sync-role-list"></div>
+                <!-- 反映のおくれを実際に測る（体感ではなく数字で確かめられるように） -->
+                <div id="sync-speed" style="display:none;">
+                    <label class="field-label" style="margin-top:18px;">反映の速さ</label>
+                    <div id="sync-speed-box" class="notice"><svg class="ic"><use href="#ic-clock"/></svg><span>「速さを測る」を押すと、この端末が書いてから戻ってくるまでの時間を測ります。</span></div>
+                    <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="measureSyncLatency()"><svg class="ic"><use href="#ic-refresh"/></svg>速さを測る</button>
+                </div>
             </div>
 
             <!-- 共有コードの追加（入力画面） -->
@@ -2017,6 +2143,20 @@
                 <p class="settings-hint">決めておくと、売上集計の「売上の積み上がり」に達成率と、グラフに目標の線が出ます。空欄か0にすると目標なしになります。</p>
                 <button class="action-btn btn-checkout" style="width:100%; margin-top:12px;" onclick="saveSalesGoal()"><svg class="ic"><use href="#ic-check"/></svg>この目標で保存する</button>
                 <div id="goal-state" class="notice notice-accent" style="display:none; margin-top:12px;"></div>
+            </div>
+
+            <!-- お客様用の表示（カスタマーディスプレイ） -->
+            <div class="sub-view" id="sub-customer" style="display:none;">
+                <p class="settings-hint">この端末を<b>お客様に向ける金額表示</b>にします。レジ役の端末が打っている内容が、大きな文字でそのまま映ります。<b>会計はできなくなります</b>（ふだんのレジには左下の×からいつでも戻せます）。</p>
+                <div id="cd-state" class="notice"></div>
+                <label class="field-label" style="margin-top:14px;">共有コード</label>
+                <input type="text" id="cd-code-input" placeholder="レジ役の端末と同じコード" autocomplete="off" autocapitalize="characters">
+                <p class="settings-hint">レジ役の端末で使っているコードと<b>同じもの</b>を入れてください（設定 → 複数端末で使う で確認できます）。</p>
+                <button class="action-btn btn-checkout" style="width:100%; margin-top:10px;" onclick="startCustomerModeFromSettings()"><svg class="ic"><use href="#ic-users"/></svg>この端末をお客様用にする</button>
+                <div class="notice" style="margin-top:14px;">
+                    <svg class="ic"><use href="#ic-bulb"/></svg>
+                    <span>使い方の例：タブレットで会計し、スマートフォンをお客様側に立てておく。商品を打つたびに明細と合計が出て、お預かりを入れるとお釣りも出ます。</span>
+                </div>
             </div>
 
             <!-- 操作マニュアル（アプリの中で読める。紙やPDFにも出せる） -->
@@ -2199,6 +2339,41 @@
 
 <!-- 操作フィードバック用トースト -->
 <div id="toast"></div>
+
+<!-- ▼▼▼ お客様用の表示（カスタマーディスプレイ）▼▼▼
+     この端末を「お客様に向ける画面」にした時だけ、アプリ全体にかぶせて出す。
+     会計はしない。レジ役の端末が出している内容を受け取って映すだけ。 -->
+<div id="customer-display" style="display:none;">
+    <div class="cd-top">
+        <span class="cd-shop" id="cd-shop">泰山木</span>
+        <span class="cd-link" id="cd-link"><i></i><span id="cd-link-text">つないでいます…</span></span>
+    </div>
+    <div class="cd-main" id="cd-main">
+        <div class="cd-idle" id="cd-idle">
+            <svg class="ic"><use href="#ic-basket"/></svg>
+            <div class="cd-idle-t">いらっしゃいませ</div>
+            <div class="cd-idle-s">お会計の金額がこちらに出ます</div>
+        </div>
+        <div class="cd-order" id="cd-order" style="display:none;">
+            <div class="cd-items" id="cd-items"></div>
+            <div class="cd-total-row">
+                <span class="cd-total-k">合計<span class="cd-count" id="cd-count"></span></span>
+                <span class="cd-total-v" id="cd-total">¥0</span>
+            </div>
+            <div class="cd-pay" id="cd-pay" style="display:none;">
+                <div class="cd-pay-row"><span>お預かり</span><b id="cd-cash">¥0</b></div>
+                <div class="cd-pay-row cd-change"><span>お釣り</span><b id="cd-change">¥0</b></div>
+            </div>
+        </div>
+        <div class="cd-done" id="cd-done" style="display:none;">
+            <svg class="ic"><use href="#ic-check"/></svg>
+            <div class="cd-done-t">ありがとうございました</div>
+            <div class="cd-done-s" id="cd-done-s"></div>
+        </div>
+    </div>
+    <!-- 戻すところは小さく端に。お客様が触っても、確認を挟むので勝手には戻らない -->
+    <button class="cd-exit" onclick="exitCustomerMode()" aria-label="レジに戻す"><svg class="ic"><use href="#ic-x"/></svg></button>
+</div>
 
 <!-- PDF（印刷）用レポート：画面では非表示、印刷時のみ表示 -->
 <div id="print-report"></div>
@@ -2601,6 +2776,7 @@
     }
 
     function updateCartDisplay() {
+        publishCustomerDisplay();   // お客様用の画面にも、いまのカートを映す
         const list = document.getElementById('cart-list');
         list.innerHTML = '';
         let total = 0;
@@ -2718,6 +2894,8 @@
         updateCheckoutPrimary();
         showNav(false); // 会計中はナビを隠して集中できるように
         document.getElementById('checkout-modal').style.display = 'flex';
+        // 予約の清算では画面の合計がカートと違うので、開いた形のまますぐ送る
+        publishCustomerDisplay(true);
     }
 
     // ▼▼▼ スマート預かり金：合計額から「出されやすい金額」を提案（会計速度アップ）▼▼▼
@@ -2781,6 +2959,7 @@
         bumpIfChanged(changeEl, change);
         renderChangeBreakdown(change);
         updateCheckoutPrimary();
+        publishCustomerDisplay();   // お預かり・お釣りもお客様の画面に映す
     }
 
     // ▼▼▼ 会計を終えるボタン（1つだけ）▼▼▼
@@ -2930,6 +3109,7 @@
             ? `お釣り¥${record.change}（${changeDenoms(record.change).map(d => `${d.unit}×${d.count}`).join('・')}）`
             : 'お釣りなし';
         showToast(`記録しました（客No.${record.no} / ${chgText}）`);
+        publishCustomerDone(record);   // お客様の画面に「ありがとうございました」を出す
     }
 
     function promptReservation() {
@@ -3161,7 +3341,7 @@
                         <tr><td>予約</td><td>先に取り置きしたお客様の一覧。受け取りに来たらここから清算します。</td></tr>
                         <tr><td>会計記録</td><td>済んだ会計の一覧。取り消し・修正・領収書の発行ができます。</td></tr>
                         <tr><td>売上集計</td><td>売れ行きや客層などの集計。発表用のまとめやPDFもここから。</td></tr>
-                        <tr><td>設定</td><td>商品・在庫の調整、複数端末での共有、このマニュアルなど。</td></tr>
+                        <tr><td>設定</td><td>商品・在庫の調整、複数端末での共有、お客様用の表示、このマニュアルなど。</td></tr>
                     </tbody>
                 </table>
                 <p>画面の左上に<b>「戻る」</b>が出ているときは、ひとつ前の画面にもどれます。</p>
@@ -3269,12 +3449,32 @@
                 <h4>はじめから共有する</h4>
                 <p>開店の画面の<b>「複数端末で共有」</b>に、責任者から指定されたコードを入れて開店します。全部の端末で<b>同じコード</b>にしてください。</p>
                 <h4>途中から共有したくなった</h4>
-                <p>開店し直す必要はありません。<b>「設定 → 複数端末で共有」</b>にコードを入れて<b>「このコードで共有を始める」</b>を押すと、ここまでの会計も在庫もそのまま引き継がれます。2台目は開店の画面で同じコードを入れて開店します。</p>
+                <p>開店し直す必要はありません。<b>「設定 → 複数端末で使う」</b>にコードを入れて<b>「このコードで共有を始める」</b>を押すと、ここまでの会計も在庫もそのまま引き継がれます。2台目は開店の画面で同じコードを入れて開店します。</p>
                 <div class="man-box warn">
                     <div class="man-box-h">共有しているときの閉店</div>
-                    <p><b>「閉店する」は共有している販売会そのものを終わらせる操作</b>です。ほかの端末がまだ会計している場合は、先に声をかけてください。自分の端末だけ先に終えたいときは、「設定 → 複数端末で共有」の<b>「この端末の利用を終える」</b>を使います。</p>
+                    <p><b>「閉店する」は共有している販売会そのものを終わらせる操作</b>です。ほかの端末がまだ会計している場合は、先に声をかけてください。自分の端末だけ先に終えたいときは、「設定 → 複数端末で使う」の<b>「この端末の利用を終える」</b>を使います。</p>
                 </div>
-                <p>反映は電波の状況で数秒〜数十秒おくれることがあります。おくれても、その端末だけで会計を続けられます。</p>`
+                <p>反映は電波の状況でおくれることがあります。おくれても、その端末だけで会計を続けられます。<b>「設定 → 複数端末で使う → 速さを測る」</b>で、いまどのくらいおくれているかを数字で確かめられます。</p>`
+        },
+        {
+            id: 'display', icon: 'users', title: 'お客様に金額を見せる', sub: 'スマホを表示用に立てる',
+            body: `
+                <p>もう1台の端末を<b>お客様に向ける金額表示</b>にできます。レジ役の端末で打った内容が、そのまま大きな文字で映ります。</p>
+                <ol class="man-steps">
+                    <li>レジ役の端末を<b>共有コードを入れて</b>開店しておきます（「複数の端末で同時に会計する」と同じ準備です）。</li>
+                    <li>表示に使う端末で<b>「設定 → 複数端末で使う → お客様用の表示」</b>を開きます。</li>
+                    <li><b>同じ共有コード</b>を入れて<b>「この端末をお客様用にする」</b>を押します。</li>
+                    <li>お客様から見える向きに立てかけます。</li>
+                </ol>
+                <p>商品を打つたびに<b>明細と合計</b>が出ます。お預かりを入れると<b>お釣り</b>も出て、会計が終わると<b>「ありがとうございました」</b>に変わります。</p>
+                <div class="man-box tip">
+                    <div class="man-box-h">覚えておくこと</div>
+                    <ul class="man-list">
+                        <li>お客様用にした端末では<b>会計はできません</b>（映すだけです）。</li>
+                        <li>ふだんのレジに戻すときは、画面の<b>左下の×</b>を押します（確認が出ます）。</li>
+                        <li>電波が切れても表示のままです。つながり直すと自動でまた映ります。</li>
+                    </ul>
+                </div>`
         },
         {
             id: 'close', icon: 'power', title: '③ 閉店する', sub: '1日の終わりに1回だけ',
@@ -3320,7 +3520,7 @@
                         <tr><td>まちがえて「完了・記録」を押した</td><td>「会計記録」からその会計を<b>取り消し</b>てください。売った商品は在庫にもどります。</td></tr>
                         <tr><td>商品が売り切れた</td><td>ボタンに「完売」と出ます。お客様に売り切れをお伝えください。</td></tr>
                         <tr><td>電池が少ない</td><td>会計のたびに保存されているので、電源が切れてもデータは残ります。充電してから開き直してください。</td></tr>
-                        <tr><td>ほかの端末の会計が反映されない</td><td>「設定 → 複数端末で共有」で状態を確認してください。電波が戻れば自動で追いつきます。</td></tr>
+                        <tr><td>ほかの端末の会計が反映されない</td><td>「設定 → 複数端末で使う」で状態を確認してください。電波が戻れば自動で追いつきます。</td></tr>
                         <tr><td>交代する</td><td>そのまま次の人に渡してください。共有コードを使っている場合だけ、同じコードであることを確かめます。</td></tr>
                         <tr><td>データを別の端末に移したい</td><td>「設定 → データの書き出し」で保存し、移す先の端末の開店画面の「データを取り込んで始める」で読み込みます。</td></tr>
                     </tbody>
@@ -3396,6 +3596,276 @@
         });
     }
 
+    // ▼▼▼ お客様用の表示（カスタマーディスプレイ）▼▼▼
+    // 【何をするものか】
+    //   レジ役の端末（タブレット等）が、いま打っている内容を共有の置き場に書き、
+    //   お客様に向けた端末（スマホ等）がそれを読んで大きく映す。
+    // 【設計の約束】
+    //   ・あくまでレジアプリの一機能。会計の作りには一切手を入れない。
+    //   ・お客様用の端末は「読むだけ」。売上を書き込むことは絶対にしない。
+    //   ・書き込むのは売上とは別の小さな1件の書類なので、会計の同期を邪魔しない。
+    //   ・共有していない（コードが無い）時は、この機能はまるごと動かない。
+    const CD_DOC = 'display';     // events/{code}/live/display
+    let customerMode = false;     // この端末がお客様用か
+    let cdUnsub = null;           // お客様用の端末の購読
+    let cdPushTimer = null;       // 書き込みの間引き用
+    let cdLastPayload = '';       // 同じ内容を続けて書かないための控え
+    let cdLastTotal = null;       // 金額が変わった時だけ弾ませるための控え
+
+    // ---- レジ役の端末：いまの内容を共有の置き場へ書く ----
+    // 打つたびに書くと通信が増えるので、150ミリ秒だけまとめてから1回書く。
+    // （お客様の目には十分すぐに映る速さ）
+    function publishCustomerDisplay(force) {
+        if (!syncMode || !syncEventCode || !fbDb || customerMode) return;
+        if (cdPushTimer) clearTimeout(cdPushTimer);
+        cdPushTimer = setTimeout(() => {
+            cdPushTimer = null;
+            const payload = buildCustomerPayload();
+            const key = JSON.stringify(payload);
+            if (!force && key === cdLastPayload) return;   // 変わっていなければ書かない
+            cdLastPayload = key;
+            payload.at = Date.now();
+            payload.by = getDeviceId();
+            fbDb.collection('events').doc(syncEventCode).collection('live').doc(CD_DOC)
+                .set(payload)
+                .catch(e => console.warn('お客様用表示の送信に失敗しました', e));
+        }, force ? 0 : 150);
+    }
+
+    // いま画面で起きていることを、お客様に見せる形にまとめる
+    function buildCustomerPayload() {
+        const modal = document.getElementById('checkout-modal');
+        const inCheckout = modal && modal.style.display === 'flex';
+        const lines = itemLines(cart);
+        const total = cart.reduce((s, i) => s + i.price, 0);
+        const base = {
+            items: lines.map(l => ({ name: l.name, qty: l.qty, subtotal: l.subtotal })),
+            total, count: cart.length, state: cart.length ? 'cart' : 'idle',
+            cash: null, change: null, no: null
+        };
+        if (inCheckout) {
+            base.state = 'checkout';
+            // お会計画面では、予約の清算など「カートとは別の内容」を扱うことがあるので
+            // 画面に出ている合計と明細をそのまま使う
+            const shown = parseInt(document.getElementById('modal-total').innerText) || 0;
+            if (shown > 0) base.total = shown;
+            const raw = document.getElementById('cash-input').value;
+            const cash = parseInt(raw) || 0;
+            if (raw !== '') { base.cash = cash; base.change = Math.max(0, cash - base.total); }
+        }
+        return base;
+    }
+
+    // 会計が終わった瞬間だけ「ありがとうございました」を出す
+    function publishCustomerDone(record) {
+        if (!syncMode || !syncEventCode || !fbDb || customerMode) return;
+        if (cdPushTimer) { clearTimeout(cdPushTimer); cdPushTimer = null; }
+        cdLastPayload = '';
+        const payload = {
+            state: 'done', items: [], count: 0,
+            total: record ? record.total : 0,
+            cash: record && record.cash != null ? record.cash : null,
+            change: record && record.change != null ? record.change : null,
+            no: record ? record.no : null,
+            at: Date.now(), by: getDeviceId()
+        };
+        fbDb.collection('events').doc(syncEventCode).collection('live').doc(CD_DOC)
+            .set(payload).catch(e => console.warn('お客様用表示の送信に失敗しました', e));
+        // しばらくしたら待ち受けの画面に戻す
+        setTimeout(() => publishCustomerDisplay(true), 6000);
+    }
+
+    // ---- お客様用の端末：読んで映す ----
+    function enterCustomerMode(code) {
+        const c = sanitizeEventCode((code || '').trim());
+        if (!c) { playError(); alert('共有コードを入れてください。'); return; }
+        if (!window.FIREBASE_CONFIG || !syncReady) {
+            playError();
+            alert('この端末では共有機能が使えないため、お客様用の表示にできません。');
+            return;
+        }
+        customerMode = true;
+        uiPrefs.cdCode = c;
+        uiPrefs.role = 'customer';
+        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
+        applyCustomerMode();
+        showToast('お客様用の表示にしました');
+    }
+
+    function exitCustomerMode() {
+        if (!confirm('お客様用の表示をやめて、ふだんのレジの画面に戻しますか？')) return;
+        customerMode = false;
+        uiPrefs.role = 'register';
+        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
+        applyCustomerMode();
+    }
+
+    // いまの役割にあわせて、画面とデータの受け取りを切り替える
+    function applyCustomerMode() {
+        const box = document.getElementById('customer-display');
+        if (!box) return;
+        box.style.display = customerMode ? 'flex' : 'none';
+        if (cdUnsub) { try { cdUnsub(); } catch (e) {} cdUnsub = null; }
+        if (!customerMode) { renderCustomerSettings(); return; }
+        renderCustomerView(null, 'connecting');
+        startCustomerSubscription(uiPrefs.cdCode);
+        renderCustomerSettings();
+    }
+
+    // つながらない時は、あきらめずに少しずつ間隔をあけて試し直す。
+    // （立てかけたスマホが電波を拾い直した時に、ひとりでに復帰してほしい）
+    let cdRetryTimer = null, cdRetryWait = 5000;
+    function scheduleCustomerRetry() {
+        if (!customerMode || cdRetryTimer) return;
+        cdRetryTimer = setTimeout(async () => {
+            cdRetryTimer = null;
+            if (!customerMode) return;
+            if (!syncReady) {
+                try { await initFirebase(); } catch (e) { /* まだ無理なら次の番で */ }
+            }
+            if (syncReady && fbDb) { cdRetryWait = 5000; applyCustomerMode(); return; }
+            cdRetryWait = Math.min(60000, Math.round(cdRetryWait * 1.6));  // 5秒 → 8秒 → …最大1分
+            scheduleCustomerRetry();
+        }, cdRetryWait);
+    }
+
+    function startCustomerSubscription(code) {
+        if (!syncReady || !code || !fbDb) { renderCustomerView(null, 'lost'); scheduleCustomerRetry(); return; }
+        // 店名は共有元の販売会名ではなく、この端末の領収書の設定（発行者）を使う
+        const shop = document.getElementById('cd-shop');
+        if (shop) shop.textContent = shopInfo().name || '';
+        cdUnsub = fbDb.collection('events').doc(code).collection('live').doc(CD_DOC)
+            .onSnapshot(doc => {
+                renderCustomerView(doc.exists ? (doc.data() || null) : null, 'live');
+            }, err => {
+                console.warn('お客様用表示の購読でエラー', err);
+                renderCustomerView(null, 'lost');
+            });
+    }
+
+    function renderCustomerView(d, link) {
+        const idle = document.getElementById('cd-idle');
+        const order = document.getElementById('cd-order');
+        const done = document.getElementById('cd-done');
+        const linkEl = document.getElementById('cd-link');
+        const linkText = document.getElementById('cd-link-text');
+        if (!idle || !order || !done) return;
+
+        if (linkEl && linkText) {
+            linkEl.classList.toggle('live', link === 'live');
+            linkEl.classList.toggle('lost', link === 'lost');
+            linkText.textContent = link === 'live' ? 'レジとつながっています'
+                : (link === 'lost' ? 'つながっていません' : 'つないでいます…');
+        }
+
+        const state = (d && d.state) || 'idle';
+        idle.style.display = state === 'idle' ? '' : 'none';
+        order.style.display = (state === 'cart' || state === 'checkout') ? '' : 'none';
+        done.style.display = state === 'done' ? '' : 'none';
+
+        if (state === 'cart' || state === 'checkout') {
+            const items = Array.isArray(d.items) ? d.items : [];
+            document.getElementById('cd-items').innerHTML = items.map(i =>
+                `<div class="cd-item"><span class="n">${escHtml(i.name)}</span>`
+                + `<span class="q">×${i.qty}</span><span class="v">${yenStr(i.subtotal)}</span></div>`).join('');
+            document.getElementById('cd-count').textContent = d.count ? `${d.count}点` : '';
+            const totalEl = document.getElementById('cd-total');
+            totalEl.textContent = yenStr(d.total || 0);
+            // 金額が変わった時だけ弾ませる（同じ値で毎回動くとうるさい）
+            if (cdLastTotal !== d.total) {
+                totalEl.classList.remove('bump'); void totalEl.offsetWidth; totalEl.classList.add('bump');
+                cdLastTotal = d.total;
+            }
+            const pay = document.getElementById('cd-pay');
+            const showPay = state === 'checkout' && d.cash != null;
+            pay.style.display = showPay ? '' : 'none';
+            if (showPay) {
+                document.getElementById('cd-cash').textContent = yenStr(d.cash);
+                document.getElementById('cd-change').textContent = yenStr(d.change || 0);
+            }
+        } else if (state === 'done') {
+            const bits = [];
+            if (d && d.total != null) bits.push('お買い上げ ' + yenStr(d.total));
+            if (d && d.change != null && d.change > 0) bits.push('お釣り ' + yenStr(d.change));
+            document.getElementById('cd-done-s').textContent = bits.join('　／　');
+            cdLastTotal = null;
+        } else {
+            cdLastTotal = null;
+        }
+    }
+
+    // ▼ 反映のおくれを測る ▼
+    // 「なんとなく遅い」を数字にできるようにする。
+    // この端末から共有の置き場へ1回書き、その書き込みが購読で戻ってくるまでを測る
+    // （＝他の端末に届くまでとほぼ同じ時間）。
+    let syncPingUnsub = null;
+    function measureSyncLatency() {
+        const box = document.getElementById('sync-speed-box');
+        if (!box) return;
+        if (!syncMode || !syncEventCode || !fbDb) {
+            box.className = 'notice notice-warn';
+            box.innerHTML = '<svg class="ic"><use href="#ic-alert"/></svg><span>共有中だけ測れます。</span>';
+            return;
+        }
+        box.className = 'notice';
+        box.innerHTML = '<svg class="ic"><use href="#ic-clock"/></svg><span>測っています…</span>';
+        const ref = fbDb.collection('events').doc(syncEventCode).collection('live').doc('ping');
+        const token = 'p' + Date.now() + Math.random().toString(36).slice(2, 7);
+        const t0 = performance.now();
+        let done = false;
+        const finish = (ms, note) => {
+            if (done) return;
+            done = true;
+            if (syncPingUnsub) { try { syncPingUnsub(); } catch (e) {} syncPingUnsub = null; }
+            if (ms == null) {
+                box.className = 'notice notice-warn';
+                box.innerHTML = `<svg class="ic"><use href="#ic-alert"/></svg><span>${escHtml(note || '測れませんでした')}</span>`;
+                return;
+            }
+            const good = ms < 1200;
+            box.className = 'notice ' + (good ? 'notice-ok' : 'notice-warn');
+            box.innerHTML = `<svg class="ic"><use href="#ic-${good ? 'check' : 'alert'}"/></svg><span>`
+                + `書いてから戻るまで <b>${Math.round(ms)}ミリ秒</b>（${(ms / 1000).toFixed(1)}秒）。`
+                + (good ? '<br>他の端末にもこのくらいで届きます。'
+                        : '<br>電波が弱いか、通信がさえぎられている可能性があります。場所を変えるか、別の回線でお試しください。')
+                + '</span>';
+        };
+        if (syncPingUnsub) { try { syncPingUnsub(); } catch (e) {} }
+        syncPingUnsub = ref.onSnapshot(doc => {
+            const d = doc.exists ? (doc.data() || {}) : {};
+            if (d.token === token) finish(performance.now() - t0);
+        }, () => finish(null, '測れませんでした（通信のエラー）'));
+        ref.set({ token, at: Date.now(), by: getDeviceId() })
+            .catch(() => finish(null, '書き込めませんでした（通信のエラー）'));
+        setTimeout(() => finish(null, '10秒たっても戻ってきませんでした。通信がさえぎられている可能性があります。'), 10000);
+    }
+
+    // ---- 設定画面 ----
+    function renderCustomerSettings() {
+        const box = document.getElementById('cd-state');
+        if (!box) return;
+        const input = document.getElementById('cd-code-input');
+        if (input && !input.value) input.value = uiPrefs.cdCode || syncEventCode || '';
+        if (!window.FIREBASE_CONFIG) {
+            box.className = 'notice notice-warn';
+            box.innerHTML = '<svg class="ic"><use href="#ic-alert"/></svg><span>この端末では共有機能が使えないため、お客様用の表示は使えません。</span>';
+            return;
+        }
+        if (customerMode) {
+            box.className = 'notice notice-ok';
+            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>いまこの端末は<b>お客様用の表示</b>です（コード: ${escHtml(uiPrefs.cdCode || '')}）。<br>画面の左下の×から、ふだんのレジに戻せます。</span>`;
+        } else {
+            box.className = 'notice';
+            box.innerHTML = '<svg class="ic"><use href="#ic-users"/></svg><span>いまこの端末は<b>ふだんのレジ</b>です。</span>';
+        }
+    }
+
+    function startCustomerModeFromSettings() {
+        const input = document.getElementById('cd-code-input');
+        enterCustomerMode(input ? input.value : '');
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     // ▼▼▼ ヘッダーの時計と天気 ▼▼▼
     // 【方針】どちらも「あると便利」なだけの飾りなので、
     //   ・会計の流れには一切割り込ませない
@@ -3418,7 +3888,7 @@
     const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast';
     const WEATHER_TTL = 30 * 60 * 1000;   // 30分は取り直さない
 
-    let uiPrefs = { clock: true, weather: false, area: 'tokyo' };
+    let uiPrefs = { clock: true, weather: false, area: 'tokyo', role: 'register', cdCode: '' };
     let weatherNow = null;      // { code, temp, at, area }
     let weatherFetching = false;
 
@@ -3430,7 +3900,9 @@
                 uiPrefs = {
                     clock: d.clock !== false,
                     weather: !!d.weather,
-                    area: WEATHER_AREAS.some(a => a.id === d.area) ? d.area : 'tokyo'
+                    area: WEATHER_AREAS.some(a => a.id === d.area) ? d.area : 'tokyo',
+                    role: d.role === 'customer' ? 'customer' : 'register',
+                    cdCode: typeof d.cdCode === 'string' ? d.cdCode : ''
                 };
             }
             const w = localStorage.getItem(UI_PREF_KEY + '_weather');
@@ -3445,6 +3917,7 @@
         if (c) uiPrefs.clock = c.checked;
         if (w) uiPrefs.weather = w.checked;
         if (a && a.value) uiPrefs.area = a.value;
+        // role と cdCode はこの画面では触らないので、そのまま残す
         try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) { /* 保存できなくても動く */ }
         renderClockNow();
         if (uiPrefs.weather) refreshWeather(false);
@@ -3567,6 +4040,13 @@
 
     function startClock() {
         loadUiPrefs();
+        customerMode = uiPrefs.role === 'customer' && !!uiPrefs.cdCode;
+        if (customerMode) {
+            // 画面はすぐ切り替える（購読は Firebase の用意ができてから）
+            const box = document.getElementById('customer-display');
+            if (box) box.style.display = 'flex';
+            renderCustomerView(null, 'connecting');
+        }
         renderClockNow();
         // 分が変わるところに合わせて動かす（1秒ごとに描き直さない）
         setInterval(renderClockNow, 10000);
@@ -3732,7 +4212,10 @@
     function closeModal(id) {
         const el = document.getElementById(id);
         if (el) el.style.display = 'none';
-        if (id === 'checkout-modal') showNav(true);       // 会計の集中モード解除でナビ復帰
+        if (id === 'checkout-modal') {
+            showNav(true);       // 会計の集中モード解除でナビ復帰
+            publishCustomerDisplay();   // お客様の画面も、お預かりの表示をやめて明細に戻す
+        }
     }
 
     // 過去の販売会と名前がぶつからないように、後ろに (2) (3) … を付けて返す。
@@ -5506,9 +5989,10 @@
     // サブ画面の見出し（戻るボタンつきで表示される）
     const SUB_TITLES = {
         'manual': '操作マニュアル',
+        'customer': 'お客様用の表示',
         'goal': '売上目標',
         'stock': '商品・在庫の調整',
-        'sync': '複数端末で共有',
+        'sync': '複数端末で使う',
         'sync-add': '共有コードを追加',
         'receipt': '領収書の設定',
         'archive': '過去の販売会',
@@ -5632,6 +6116,7 @@
             else if (sub === 'archive') renderArchiveList();
             else if (sub === 'display') { updateFullscreenButton(); renderClockSettings(); }
             else if (sub === 'manual') renderManual();
+            else if (sub === 'customer') renderCustomerSettings();
             else if (sub === 'goal') renderSalesGoal();
             if (sub === 'sync-add' || sub === 'sync') updateSyncUi();
         }
@@ -5706,7 +6191,7 @@
             ? `${products.filter(p => p.active !== false).length}品を販売中・追加搬入や値段の変更はここ`
             : '開店してから調整できます';
         const syncSub = !window.FIREBASE_CONFIG ? 'この端末では使えません'
-            : (syncMode ? `共有中（コード: ${escHtml(syncEventCode || '')}）` : (currentSession ? 'いまは1台だけで営業中' : '開店後に開始できます'));
+            : (syncMode ? `共有中（コード: ${escHtml(syncEventCode || '')}）` : (customerMode ? 'いまお客様用の表示です' : (currentSession ? 'いまは1台だけで営業中' : '開店後に開始できます')));
         const archSub = sessionArchive.length ? `${sessionArchive.length}件の記録` : 'まだありません';
         const areaName = (WEATHER_AREAS.find(a => a.id === uiPrefs.area) || {}).name || '';
         const clockSub = ['全画面', uiPrefs.clock ? '時計' : null, uiPrefs.weather ? `天気（${areaName}）` : null]
@@ -5715,7 +6200,7 @@
             menuRow('book', '操作マニュアル', 'はじめての人向けの使い方（PDFにも出せます）', "openPanel('settings','manual')") +
             menuRow('sliders', '商品・在庫の調整', stockSub, "openPanel('settings','stock')", { disabled: !currentSession }) +
             menuRow('target', '売上目標', salesGoal > 0 ? `${yenStr(salesGoal)}` : '決めていない', "openPanel('settings','goal')") +
-            menuRow('link', '複数端末で共有', syncSub, "openPanel('settings','sync')", { disabled: !window.FIREBASE_CONFIG }) +
+            menuRow('link', '複数端末で使う', syncSub, "openPanel('settings','sync')", { disabled: !window.FIREBASE_CONFIG }) +
             menuRow('printer', '領収書の設定', `発行者「${escHtml(shopInfo().name)}」・但し書きの変更`, "openPanel('settings','receipt')") +
             menuRow('archive', '過去の販売会', archSub, "openPanel('settings','archive')") +
             menuRow('download', 'データの書き出し', 'バックアップの保存・端末間のコピー', "openPanel('settings','data')") +
@@ -5757,10 +6242,13 @@
         const box = document.getElementById('sync-state-box');
         const acts = document.getElementById('sync-actions');
         if (!box || !acts) return;
+        const speed = document.getElementById('sync-speed');
+        renderSyncRoleList();
         if (!currentSession) {
             box.className = 'notice';
             box.innerHTML = '<svg class="ic"><use href="#ic-alert"/></svg>共有は営業中だけ開始できます。まず開店してください。';
             acts.innerHTML = '';
+            if (speed) speed.style.display = 'none';
             return;
         }
         if (syncMode) {
@@ -5770,11 +6258,22 @@
             acts.innerHTML =
                 `<button class="action-btn btn-secondary" onclick="stopSyncMidSession()"><svg class="ic"><use href="#ic-x"/></svg>共有をやめてこの端末だけで続ける</button>` +
                 `<button class="action-btn btn-secondary" onclick="leaveDeviceOnly()"><svg class="ic"><use href="#ic-power"/></svg>この端末の利用を終える（他の端末は継続）</button>`;
+            if (speed) speed.style.display = '';
         } else {
             box.className = 'notice';
             box.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span>いまは<b>この端末だけ</b>で営業しています。共有コードを追加すると、他の端末と売上をリアルタイムで共有できます。<br>いまの会計・在庫はそのまま引き継がれます。</span>';
             acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-plus"/></svg>共有コードを追加する</button>`;
+            if (speed) speed.style.display = 'none';
         }
+    }
+
+    // 「この端末の役割」。ふだんのレジか、お客様に向ける金額表示か。
+    // 共有の画面の中に置いている（どちらも「複数の端末で使う」話なので、探す場所が同じになる）
+    function renderSyncRoleList() {
+        const box = document.getElementById('sync-role-list');
+        if (!box) return;
+        const sub = customerMode ? 'いまお客様用の表示です' : 'お客様に金額を見せる画面にする';
+        box.innerHTML = menuRow('users', 'お客様用の表示', sub, "openPanel('settings','customer')", { disabled: !window.FIREBASE_CONFIG });
     }
 
     function setActiveNav(section) {
@@ -7386,10 +7885,21 @@
             fbApp = firebase.initializeApp(window.FIREBASE_CONFIG);
             fbAuth = firebase.auth();
             fbDb = firebase.firestore();
+            // ▼ つながり方を速く決めさせる ▼
+            // Firestore はふだん「つなぎっぱなしの通信」で変化を受け取るが、
+            // 学校や店舗のWi-Fi、携帯会社の回線によってはその通信がさえぎられることがある。
+            // その時、指定がないと長いあいだ待ってから別のやり方に切り替えるため、
+            // 反映が数秒おくれて見える。さえぎられていることを自動で見つけて
+            // すぐ切り替えるよう、はじめから頼んでおく。
+            try {
+                fbDb.settings({ experimentalAutoDetectLongPolling: true, merge: true });
+            } catch (e) { /* 古いSDKでは指定できないが、動作には影響しない */ }
             try { await fbDb.enablePersistence({ synchronizeTabs: true }); } catch (e) { /* 複数タブ等で無効でも続行 */ }
             await fbAuth.signInAnonymously();
             syncReady = true;
             updateSyncUi();
+            // この端末がお客様用なら、レジ役が出している内容の購読だけを始める
+            if (customerMode) { applyCustomerMode(); return; }
             // すでに販売会が開いていて同期コードが保存済みなら購読を再開
             if (currentSession && syncEventCode) {
                 startSalesSubscription(syncEventCode);
@@ -7398,6 +7908,14 @@
         } catch (e) {
             console.warn('Firebase同期は利用できません（オフライン/設定不備等）。ローカル運用で続行します。', e);
             syncReady = false; syncMode = false;
+            // お客様用の端末は、つながらなくてもその役割のままにしておく。
+            // （立てかけたスマホがWi-Fiより先に起動することがあるため、
+            //   ここで勝手にレジへ戻すと、置いたはずの表示が消えてしまう）
+            // つながっていないことだけ画面に出し、あとは自動でつなぎ直しを試みる。
+            if (customerMode) {
+                renderCustomerView(null, 'lost');
+                scheduleCustomerRetry();
+            }
             updateSyncUi();
         }
     }
@@ -7517,11 +8035,29 @@
         rebuilt.forEach((h, i) => { h.no = i + 1; });
         salesHistory = rebuilt;
         recomputeStockFromSales();
-        saveData(); // ローカルにも控え（オフライン時の保険）
-        init();
-        renderRecords();
-        updateAnalytics();
-        updatePendingReminder();
+
+        // ▼ 届くたびの仕事を軽くする ▼
+        // 1件届くたびに「全データの保存」「集計のやり直し」「会計記録の描き直し」まで
+        // 全部やっていた。保存するデータは過去の販売会も含めて数百KBあるので、
+        // 混んでいる時ほど受け取りが詰まっていく。
+        // 画面にいま出ているものだけをすぐ描き直し、重いものは少し待ってまとめて行う。
+        init();                       // 商品ボタンの残数（レジ画面。いつでも必要）
+        updatePendingReminder();      // 未入力の件数（ナビのバッジ）
+        if (currentView === 'records') renderRecords();
+        scheduleSyncHousekeeping();
+        publishCustomerDisplay();     // お客様用の画面にも残数の変化を伝える
+    }
+
+    // 受け取りが続いている間はまとめ、落ち着いてから保存と集計をやり直す
+    let syncHouseTimer = null;
+    function scheduleSyncHousekeeping() {
+        if (syncHouseTimer) clearTimeout(syncHouseTimer);
+        syncHouseTimer = setTimeout(() => {
+            syncHouseTimer = null;
+            saveData();          // ローカルにも控え（オフライン時の保険）
+            updateAnalytics();
+            if (currentView === 'records') renderRecords();
+        }, 400);
     }
 
     // 同期中は在庫を「全端末の販売実績」から算出（仕入れ数 − 合計販売数）
