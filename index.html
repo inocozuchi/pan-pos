@@ -13,6 +13,25 @@
     <!-- 画面いちばん上（時刻・電波が出ている帯）の色。ヘッダーと同じ色にして、
          帯とヘッダーの境目が線のように見えないようにする。 -->
     <meta name="theme-color" content="#F2F3F7">
+    <!-- 明るい配色か、暗い配色か。読み込みの最初に決めておかないと、
+         暗い配色の端末でも一瞬だけ白い画面が光ってしまう（夜の店先ではまぶしい）。
+         本体の処理を待たず、ここで先に <html data-theme="..."> を決める。 -->
+    <script>
+    (function () {
+        var mode = 'auto';
+        try {
+            var raw = localStorage.getItem('taizanboku_pos_ui');
+            if (raw) { var d = JSON.parse(raw) || {}; if (d.theme === 'light' || d.theme === 'dark' || d.theme === 'auto') mode = d.theme; }
+        } catch (e) { /* 読めなければ端末の設定に従う */ }
+        var dark = mode === 'dark' || (mode === 'auto'
+            && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var root = document.documentElement;
+        root.setAttribute('data-theme', dark ? 'dark' : 'light');
+        root.style.colorScheme = dark ? 'dark' : 'light';
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute('content', dark ? '#0E1015' : '#F2F3F7');
+    })();
+    </script>
     <link rel="manifest" href="manifest.webmanifest">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link rel="icon" href="icons/icon-192.png">
@@ -79,6 +98,14 @@
             --muted-ink: #6B6E7A;     /* 販売しない・準備中など、控えめだが読める文字 */
             --on-face-sub: #5F6270;   /* 淡い面（商品ボタン）の上に載せる補助文字。どの面でも 5:1 以上 */
             --on-dark: #9EC5FF;       /* 黒に近い面の上で強調する数字（お釣り・総売上） */
+            /* 「面そのものの役」を持つ色。夜の配色でも意味が変わらないよう変数にしておく */
+            --display-face: #1C1D22;  /* 表示窓・主要指標の濃い面（押す場所ではないことを示す） */
+            --on-display-sub: rgba(255,255,255,.62);  /* その濃い面に載せる補助文字 */
+            --on-display-chip: rgba(255,255,255,.13); /* その濃い面に載せるつまみ */
+            --scrim: rgba(38, 34, 30, 0.32);          /* モーダルの背後 */
+            --veil: rgba(244,243,240,0.96);           /* レジ上に重ねる案内の背後 */
+            --toast-bg: rgba(28,29,34,0.88);          /* 知らせの帯 */
+            --hairline: rgba(28,29,34,.05);           /* 入力欄などの、ごく細い内側のふち */
 
             /* 角丸は 3段階＋ピルに統一（細かいパーツ=sm／箱・ボタン=md／モーダル=lg） */
             --r-sm: 9px;
@@ -89,6 +116,128 @@
             --shadow-card: 0 1px 2px rgba(28,28,30,.04), 0 6px 18px rgba(28,28,30,.05);
             --shadow-raised: 0 2px 5px rgba(28,28,30,.06), 0 12px 28px rgba(28,28,30,.07);
         }
+
+        /* ▼▼▼ 夜の配色（ダークモード）▼▼▼
+           【方針】明るい方の配色と「意味」をそろえる。色を足したり減らしたりせず、
+           同じ役割の変数を、暗い面の上で同じだけ読める値に置き換えるだけにする。
+             ・地 → 面 → へこみ の3段の明るさの順番は、明るい方と同じ向きに保つ
+             ・青1色／紅1色／カテゴリ3色（寒色）という決めごとも、そのまま
+             ・屋外・薄暗い室内のどちらでも読めるよう、明暗差は明るい方と同じ基準で実測
+               （小さい文字 4.5:1 以上／商品名 7:1 以上）
+           【なぜ真っ黒にしないか】有機ELの真っ黒は影が見えず、面の重なりが分からなくなる。
+             わずかに青みのある濃いグレーにして、影と面の段差で画面の構造を伝える。 */
+        :root[data-theme="dark"] {
+            --bg-color: #0E1015;      /* 画面の地 */
+            --surface: #1B1E26;       /* 浮いている面（カード・ヘッダー） */
+            --white: #1B1E26;         /* 「白い面」の役の変数。夜は濃い面に置き換える */
+            --header-bg: #1B1E26;
+            --line: #2E323D;
+            --line-strong: #434958;
+            /* カテゴリ3色：面（寒色の暗い3色。本文を載せて 11:1 以上） */
+            --btn-sweet: #22303F;
+            --btn-savory: #173432;
+            --btn-drink: #282746;
+            /* カテゴリ3色：帯・凡例の濃い色（暗い面の上なので、明るい方に振る） */
+            --cat-sweet-ink: #8FB4E8;
+            --cat-savory-ink: #4FC2BC;
+            --cat-drink-ink: #9B99F0;
+            /* 操作の色。塗りボタンは白文字を載せて 4.96:1 になる濃さを選ぶ */
+            --accent: #1D6FD0;
+            --accent-ink: #74B6FF;    /* 暗い面の上に置く青い文字・アイコン */
+            --accent-soft: #1E3B5E;   /* 選択中・押した時の面 */
+            --btn-neutral: #252935;
+            --text-main: #EDEFF4;
+            --text-light: #A9B0BF;   /* 淡い青の面（選ばれている項目）に載せても 5.2:1 */
+
+            --sunken: #14171E;
+            --sunken-deep: #11141A;
+            --positive: #15283E;
+            --positive-line: #2E5480;
+            --positive-ink: #7FB6F5;
+            --warn-bg: #2A3040;
+            --warn-line: #434B5C;
+            --warn-ink: #C6CDDB;
+            --warn-solid: #2A3040;
+            --danger: #C63B55;
+            --danger-bg: #331A22;
+            --danger-ink: #FF8FA2;
+            --low-ink: #FF8FA2;
+            --muted-ink: #A9B0BF;
+            --on-face-sub: #AAB1C0;
+            --on-dark: #9EC5FF;
+            /* 表示窓は、地よりさらに沈んだ面にして「押す場所ではない」感じを保つ */
+            --display-face: #05070C;
+            --on-display-sub: rgba(255,255,255,.66);
+            --on-display-chip: rgba(255,255,255,.16);
+            --scrim: rgba(0,0,0,0.58);
+            --veil: rgba(14,16,21,0.96);
+            --toast-bg: rgba(62,67,82,0.94);
+            --hairline: rgba(255,255,255,.09);
+            /* 暗い面では黒い影が沈んで見えないので、
+               「落ちる影」に加えて、面のふちにごく細い明るい線を1本だけ添える。
+               線で区切るのではなく、面のかたちを縁取るだけなので、
+               昼の配色の「線を使わない」考え方は崩れない。 */
+            --shadow-card: 0 0 0 1px rgba(255,255,255,.055), 0 1px 2px rgba(0,0,0,.45), 0 6px 18px rgba(0,0,0,.38);
+            --shadow-raised: 0 0 0 1px rgba(255,255,255,.07), 0 2px 5px rgba(0,0,0,.5), 0 12px 30px rgba(0,0,0,.45);
+        }
+
+        /* 夜の配色で、変数になっていない影・ふちを置き換える。
+           （昼の指定はそのままにして、夜だけ上書きする形にしてある） */
+        :root[data-theme="dark"] .action-btn.tenkey-btn,
+        :root[data-theme="dark"] .customer-type-group::before,
+        :root[data-theme="dark"] .product-btn,
+        :root[data-theme="dark"] .product-btn.sold-open {
+            box-shadow: 0 0 0 1px rgba(255,255,255,.07), 0 1px 3px rgba(0,0,0,.5);
+        }
+        :root[data-theme="dark"] .product-btn:active { box-shadow: 0 0 0 1px rgba(255,255,255,.05), 0 1px 2px rgba(0,0,0,.5); }
+        :root[data-theme="dark"] .product-btn.out-of-stock { box-shadow: 0 0 0 1px rgba(255,255,255,.04); }
+        @media (hover: hover) {
+            :root[data-theme="dark"] .product-btn:hover { filter: brightness(1.16); box-shadow: 0 0 0 1px rgba(255,255,255,.10), 0 4px 10px rgba(0,0,0,.5); }
+        }
+        :root[data-theme="dark"] .res-card .rc-types .rc-seg button.on,
+        :root[data-theme="dark"] .cat-pick.on {
+            box-shadow: 0 0 0 1px rgba(255,255,255,.11), 0 2px 6px rgba(0,0,0,.5);
+        }
+        :root[data-theme="dark"] #sidebar { box-shadow: 6px 0 22px rgba(0,0,0,.5); }
+        :root[data-theme="dark"] #cart-list { box-shadow: 0 -6px 18px rgba(0,0,0,.42); }
+        :root[data-theme="dark"] .modal-content { box-shadow: 0 0 0 1px rgba(255,255,255,.07), 0 24px 60px rgba(0,0,0,.6); }
+        :root[data-theme="dark"] .closed-card { box-shadow: 0 0 0 1px rgba(255,255,255,.07), 0 10px 28px rgba(0,0,0,.55); }
+        :root[data-theme="dark"] .cash-display { box-shadow: inset 0 1px 3px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05); }
+        @media (max-width: 768px) {
+            :root[data-theme="dark"] #sidebar { box-shadow: 0 -6px 20px rgba(0,0,0,.5); }
+        }
+        /* 小さい青い文字（戻る・予約の操作）は、暗い面の上では濃い青だと沈む。
+           同じ青のもう一段明るい方（--accent-ink）に置き換える。 */
+        :root[data-theme="dark"] .panel-back,
+        :root[data-theme="dark"] .res-card .rc-act,
+        :root[data-theme="dark"] .res-card .rc-act.primary { color: var(--accent-ink); }
+        /* 商品ボタンの角に出る小さな札は、夜は面の方が明るくなるので文字を暗くする
+           （「超過」の紅い札だけは、昼と同じ白抜きのままで読める） */
+        :root[data-theme="dark"] .soldout-badge { color: #14171E; }
+        :root[data-theme="dark"] .soldout-badge.warn { color: #fff; }
+        /* 選ぶ欄の「▼」は画像なので、色を夜用に差し替える */
+        :root[data-theme="dark"] select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A9B0BF' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        }
+        /* 画面の中で読む操作マニュアルも夜の色にそろえる。
+           （紙に出す方（.man-print）は白い紙に刷るので、昼の色のままにする） */
+        :root[data-theme="dark"] .man-root:not(.man-print) { color: var(--text-main); }
+        :root[data-theme="dark"] .man-root:not(.man-print) h3 { border-left-color: var(--accent-ink); }
+        :root[data-theme="dark"] .man-root:not(.man-print) h4 { color: var(--text-light); }
+        :root[data-theme="dark"] .man-root:not(.man-print) b { color: var(--accent-ink); }
+        :root[data-theme="dark"] .man-root:not(.man-print) ol.man-steps > li::before { background: var(--accent-soft); color: var(--accent-ink); }
+        :root[data-theme="dark"] .man-root:not(.man-print) .man-box { background: var(--sunken); }
+        :root[data-theme="dark"] .man-root:not(.man-print) .man-box.tip { background: var(--accent-soft); }
+        :root[data-theme="dark"] .man-root:not(.man-print) .man-box.warn { background: var(--danger-bg); }
+        :root[data-theme="dark"] .man-root:not(.man-print) .man-box.tip .man-box-h { color: var(--accent-ink); }
+        :root[data-theme="dark"] .man-root:not(.man-print) .man-box.warn .man-box-h { color: var(--danger-ink); }
+        :root[data-theme="dark"] .man-root:not(.man-print) .man-flow .fb { background: var(--sunken); }
+        :root[data-theme="dark"] .man-root:not(.man-print) .man-flow .fb small { color: var(--text-light); }
+        :root[data-theme="dark"] .man-root:not(.man-print) .man-flow .ar { color: var(--accent-ink); }
+        :root[data-theme="dark"] .man-root:not(.man-print) table.man-qa th { background: var(--sunken); color: var(--text-light); border-bottom-color: var(--line); }
+        :root[data-theme="dark"] .man-root:not(.man-print) table.man-qa td { border-bottom-color: var(--line); }
+        :root[data-theme="dark"] .man-root:not(.man-print) .man-chk { border-color: var(--line-strong); }
+        :root[data-theme="dark"] .man-root:not(.man-print) .man-fill { border-bottom-color: var(--line-strong); }
 
         /* 金額は桁が揃う等幅数字で表示する（アプリ全体で統一） */
         .num, .total-amount, .co-summary .co-val { font-variant-numeric: tabular-nums; }
@@ -502,7 +651,7 @@
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             /* iOSのシートと同じく、背景は強くぼかして手前の画面に集中させる */
-            background: rgba(38, 34, 30, 0.32);
+            background: var(--scrim);
             backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
             display: none;
             justify-content: center; align-items: center; z-index: 100;
@@ -551,7 +700,7 @@
             width: calc(100% - 30px); padding: 12px 15px; font-size: 18px;
             margin: 10px 0; border-radius: var(--r-md); border: none;
             background: var(--sunken); color: var(--text-main); outline: none;
-            box-shadow: inset 0 0 0 1px rgba(28,29,34,.05);
+            box-shadow: inset 0 0 0 1px var(--hairline);
         }
         /* 入力中は枠線ではなく、青いふちどりで示す */
         input:focus, select:focus { box-shadow: inset 0 0 0 2px var(--accent); }
@@ -561,7 +710,7 @@
             width: 100%; box-sizing: border-box; padding: 12px 38px 12px 15px; font-size: 16px;
             margin: 10px 0; border-radius: var(--r-md); border: none; font-family: inherit;
             background: var(--sunken); color: var(--text-main); outline: none; cursor: pointer;
-            box-shadow: inset 0 0 0 1px rgba(28,29,34,.05);
+            box-shadow: inset 0 0 0 1px var(--hairline);
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B6E7A' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
             background-repeat: no-repeat; background-position: right 13px center; background-size: 17px 17px;
         }
@@ -576,12 +725,12 @@
            テンキーやボタンと見間違えないよう、濃い面に白文字の「表示」として作る。
            押す場所ではないことが、色と形だけで分かるようにするのが目的。 */
         .cash-display {
-            background: var(--text-main); border-radius: var(--r-md);
+            background: var(--display-face); border-radius: var(--r-md);
             padding: 12px 16px; margin: 10px 0 0;
             box-shadow: inset 0 1px 3px rgba(0,0,0,.35);
         }
         .cash-display .cd-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-        .cash-display .cd-label { font-size: 13px; color: rgba(255,255,255,.62); font-weight: 600; flex-shrink: 0; }
+        .cash-display .cd-label { font-size: 13px; color: var(--on-display-sub); font-weight: 600; flex-shrink: 0; }
         /* 濃い面の中も線で区切らず、余白だけで「お預かり」と「お釣り」を分ける */
         .cash-display .cd-sep { height: 10px; }
         /* 入力欄は「窓の中の数字」として見せる（枠も背景も持たせない） */
@@ -598,10 +747,10 @@
         }
         .cash-display .chg-breakdown { display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: flex-end; margin-top: 8px; }
         .cash-display .chg-breakdown span {
-            background: rgba(255,255,255,.13); color: #fff; border-radius: var(--r-pill);
+            background: var(--on-display-chip); color: #fff; border-radius: var(--r-pill);
             padding: 3px 10px; font-size: 12.5px; font-weight: 700; white-space: nowrap;
         }
-        .cash-display .chg-none { font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,.62); margin-top: 6px; text-align: right; width: 100%; }
+        .cash-display .chg-none { font-size: 12.5px; font-weight: 700; color: var(--on-display-sub); margin-top: 6px; text-align: right; width: 100%; }
 
         /* お預かり金額の候補（表示窓のすぐ下・テンキーと役割を分ける） */
         .cash-suggest { display: flex; align-items: center; gap: 7px; margin-top: 9px; min-width: 0; }
@@ -928,10 +1077,10 @@
         .stat-tile .k { font-size: 11.5px; color: var(--text-light); font-weight: 600; display: block; }
         .stat-tile .v { font-size: 23px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.015em; display: block; margin-top: 1px; }
         .stat-tile .s { font-size: 11.5px; color: var(--text-light); display: block; }
-        .stat-tile.hero { grid-column: 1 / -1; background: var(--text-main); }
-        .stat-tile.hero .k { color: rgba(255,255,255,0.62); }
+        .stat-tile.hero { grid-column: 1 / -1; background: var(--display-face); }
+        .stat-tile.hero .k { color: var(--on-display-sub); }
         .stat-tile.hero .v { font-size: 34px; color: var(--on-dark); }
-        .stat-tile.hero .s { color: rgba(255,255,255,0.62); }
+        .stat-tile.hero .s { color: var(--on-display-sub); }
 
         /* 表（行列をそろえる） */
         .a-table {
@@ -1014,7 +1163,7 @@
         #toast {
             position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px));
             transform: translateX(-50%) translateY(14px) scale(0.96);
-            background: rgba(28,29,34,0.88);
+            background: var(--toast-bg);
             backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
             color: #fff; padding: 12px 22px; border-radius: var(--r-pill);
             font-weight: bold; font-size: 15px; box-shadow: 0 8px 28px rgba(0,0,0,0.26);
@@ -1065,7 +1214,7 @@
         #closed-cta {
             position: absolute; inset: 0; z-index: 20; display: none;
             align-items: center; justify-content: center; padding: 24px;
-            background: rgba(244,243,240,0.96);
+            background: var(--veil);
         }
         #closed-cta.show { display: flex; }
         .closed-card {
@@ -1304,7 +1453,7 @@
         #handoff-paste {
             width: 100%; box-sizing: border-box; height: 64px; margin: 4px 0 0; padding: 10px; font-size: 13px;
             border: none; border-radius: var(--r-md); background: var(--sunken);
-            box-shadow: inset 0 0 0 1px rgba(28,29,34,.05);
+            box-shadow: inset 0 0 0 1px var(--hairline);
             color: var(--text-main); resize: vertical; font-family: inherit;
         }
 
@@ -1363,11 +1512,47 @@
         }
         .cat-pick.on > i { opacity: 1; transform: scale(1.15); }
 
+        /* 画面の明るさ（明るく／暗く／端末に合わせる）を選ぶ並び。
+           カテゴリを選ぶ並びと同じ形にして、覚えることを増やさない */
+        .theme-pick {
+            display: flex; gap: 2px; margin: 6px 0 8px;
+            background: var(--btn-neutral); border-radius: 12px; padding: 3px;
+        }
+        .theme-opt {
+            flex: 1; min-width: 0; display: inline-flex; flex-direction: column; align-items: center; gap: 4px;
+            border: none; border-radius: 9px; background: none; cursor: pointer; font-family: inherit;
+            padding: 10px 2px; min-height: 58px; font-size: 12px; font-weight: 600; color: var(--text-light);
+            white-space: nowrap; letter-spacing: -0.01em;
+            transition: background .2s ease, color .2s ease, transform .12s cubic-bezier(.32,.72,0,1);
+        }
+        .theme-opt .ic { width: 20px; height: 20px; transition: transform .26s cubic-bezier(.32,.72,0,1); }
+        .theme-opt:active { transform: scale(0.95); }
+        .theme-opt.on {
+            background: var(--surface); color: var(--text-main); font-weight: 700;
+            box-shadow: 0 1px 3px rgba(28,29,34,.14), 0 0 0 .5px rgba(28,29,34,.04);
+        }
+        .theme-opt.on .ic { color: var(--accent-ink); transform: scale(1.1) rotate(-8deg); }
+        :root[data-theme="dark"] .theme-opt.on { box-shadow: 0 0 0 1px rgba(255,255,255,.11), 0 2px 6px rgba(0,0,0,.5); }
+        /* 配色を切り替えた瞬間だけ、画面全体に薄い幕をかけてすっと入れ替える。
+           部品ごとに色が変わる速さがばらばらだと、ちらついて見えるため。
+           （幕は0.32秒で消え、触れないので会計の邪魔にはならない） */
+        #theme-fade {
+            position: fixed; inset: 0; z-index: 900; pointer-events: none;
+            background: var(--bg-color); opacity: 0;
+        }
+        #theme-fade.run { animation: themeFade .36s ease both; }
+        @keyframes themeFade { 0% { opacity: .85; } 100% { opacity: 0; } }
+
         /* ▼▼▼ お客様用の表示（カスタマーディスプレイ）▼▼▼
            お客様は少し離れたところから、斜めに見る。だから
            ・数字はとにかく大きく、太く
            ・面は暗くして、明かりの下でも金額が浮くように
-           ・出すのは「いま買うもの・合計・お預かり・お釣り」だけ */
+           ・出すのは「いま買うもの・合計・お預かり・お釣り」だけ
+
+           【大きさの決め方】文字の大きさは変数にまとめてある。
+           画面の広さで基準を決め、「会計へ進む」が押された時だけ、
+           同じ変数を一段上げる。こうすると、どの画面でも
+           「会計に入ると数字がぐっと大きくなる」動きがそろう。 */
         #customer-display {
             position: fixed; inset: 0; z-index: 400;
             background: #14151A; color: #fff;
@@ -1375,11 +1560,17 @@
             padding: calc(14px + env(safe-area-inset-top, 0px)) 20px calc(16px + env(safe-area-inset-bottom, 0px));
             font-variant-numeric: tabular-nums;
             animation: backdropIn .3s ease both;
+            /* 面のいちばん上と下をわずかに暗くして、数字のある真ん中を浮かせる */
+            background-image: radial-gradient(120% 75% at 50% 42%, #1B1D25 0%, #14151A 62%, #0E0F13 100%);
+            --cd-total: 64px;      /* 合計の大きさ */
+            --cd-change: 44px;     /* お釣りの大きさ */
+            --cd-item: 19px;       /* 明細1行の大きさ */
+            --cd-head: 30px;       /* 「いらっしゃいませ」などの見出し */
         }
         #customer-display .cd-top {
             display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-shrink: 0;
         }
-        #customer-display .cd-shop { font-size: 17px; font-weight: 700; letter-spacing: 0.04em; color: #E8ECF5; }
+        #customer-display .cd-shop { font-size: 17px; font-weight: 700; letter-spacing: 0.04em; color: #E8ECF5; flex: 1; min-width: 0; }
         #customer-display .cd-link {
             display: inline-flex; align-items: center; gap: 6px;
             font-size: 11.5px; color: #8A90A0; letter-spacing: 0.02em;
@@ -1395,26 +1586,41 @@
             flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center;
         }
         /* 待っている間 */
-        #customer-display .cd-idle { text-align: center; }
+        #customer-display .cd-idle { text-align: center; animation: cdEnter .4s cubic-bezier(.32,.72,0,1) both; }
         #customer-display .cd-idle .ic { width: 52px; height: 52px; color: #454A5C; stroke-width: 1.4; }
-        #customer-display .cd-idle-t { font-size: 30px; font-weight: 700; margin-top: 16px; letter-spacing: 0.06em; }
+        #customer-display .cd-idle-t { font-size: var(--cd-head); font-weight: 700; margin-top: 16px; letter-spacing: 0.06em; }
         #customer-display .cd-idle-s { font-size: 14px; color: #8A90A0; margin-top: 8px; }
+        /* 待っている間は、灯りがゆっくり呼吸するように明るさだけが動く（動きすぎない） */
+        #customer-display .cd-idle .ic { animation: cdBreathe 4.5s ease-in-out infinite; }
+        @keyframes cdBreathe { 0%, 100% { opacity: .55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
 
         /* 買うものと合計 */
         /* 明細は下から積み上げ、合計をいちばん下に置く（レジの表示器と同じ並び） */
-        #customer-display .cd-order { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; }
+        #customer-display .cd-order {
+            flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end;
+            animation: cdEnter .34s cubic-bezier(.32,.72,0,1) both;
+        }
+        @keyframes cdEnter { from { opacity: 0; transform: translate3d(0,10px,0); } to { opacity: 1; transform: none; } }
         #customer-display .cd-items {
             flex: 0 1 auto; min-height: 0; overflow-y: auto; margin-bottom: 14px;
             display: flex; flex-direction: column; gap: 2px;
+            /* 明細が多い時、上端が切れているのではなく「続きがある」ことが分かるように薄く消す */
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px);
+            mask-image: linear-gradient(to bottom, transparent 0, #000 14px);
         }
         #customer-display .cd-item {
             display: flex; align-items: baseline; gap: 10px; padding: 7px 0;
-            font-size: 19px; animation: cdRowIn .26s cubic-bezier(.32,.72,0,1) both;
+            font-size: var(--cd-item); animation: cdRowIn .3s cubic-bezier(.32,.72,0,1) both;
         }
-        @keyframes cdRowIn { from { opacity: 0; transform: translate3d(0,6px,0); } to { opacity: 1; transform: none; } }
+        @keyframes cdRowIn { from { opacity: 0; transform: translate3d(0,10px,0); } to { opacity: 1; transform: none; } }
+        /* いま足されたばかりの1行は、ひと呼吸だけ明るくして「入りました」と伝える */
+        #customer-display .cd-item.fresh { animation: cdRowIn .3s cubic-bezier(.32,.72,0,1) both, cdFresh 1.1s ease-out .3s both; }
+        @keyframes cdFresh { 0% { color: #9EC5FF; } 100% { color: inherit; } }
         #customer-display .cd-item .n { flex: 1; min-width: 0; overflow-wrap: anywhere; color: #E8ECF5; }
-        #customer-display .cd-item .q { font-size: 15px; color: #9AA0B0; white-space: nowrap; }
+        #customer-display .cd-item .q { font-size: .8em; color: #9AA0B0; white-space: nowrap; }
         #customer-display .cd-item .v { font-weight: 700; white-space: nowrap; }
+        /* 合計・お預かり・お釣りのまとまり（横長の画面では、明細の右側に立つ） */
+        #customer-display .cd-sum { flex-shrink: 0; display: flex; flex-direction: column; justify-content: flex-end; }
         #customer-display .cd-total-row {
             display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
             padding-top: 14px; flex-shrink: 0;
@@ -1427,8 +1633,8 @@
         }
         #customer-display .cd-count { font-size: 13px; color: #8A90A0; font-weight: 600; letter-spacing: 0.02em; }
         #customer-display .cd-total-v {
-            font-size: 64px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;
-            color: #fff;
+            font-size: var(--cd-total); font-weight: 800; letter-spacing: -0.03em; line-height: 1.05;
+            color: #fff; white-space: nowrap; transition: color .3s ease;
         }
         #customer-display .cd-total-v.bump { animation: bump .3s cubic-bezier(.32,.72,0,1); }
 
@@ -1436,49 +1642,128 @@
         #customer-display .cd-pay {
             margin-top: 16px; padding-top: 14px; flex-shrink: 0;
             box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
-            animation: cdRowIn .3s cubic-bezier(.32,.72,0,1) both;
+            animation: cdRowIn .34s cubic-bezier(.32,.72,0,1) both;
         }
         #customer-display .cd-pay-row {
             display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
             font-size: 17px; color: #B6BDCC; padding: 4px 0;
         }
-        #customer-display .cd-pay-row b { font-size: 30px; font-weight: 800; color: #E8ECF5; }
-        #customer-display .cd-pay-row.cd-change b { font-size: 44px; color: #9EC5FF; }
+        #customer-display .cd-pay-row b { font-size: 30px; font-weight: 800; color: #E8ECF5; white-space: nowrap; }
+        #customer-display .cd-pay-row.cd-change b { font-size: var(--cd-change); color: #9EC5FF; }
+
+        /* 幅の狭い縦向き（スマートフォン）では、合計の数字に横幅をまるごと使わせる。
+           「合計」と数字を1行に並べると、会計に入って数字が大きくなった時に
+           けた数の多い金額が画面からはみ出してしまうため。 */
+        @media (max-width: 560px) {
+            /* 「ありがとうございました」が2行に折れないところまで見出しを小さくする */
+            #customer-display { --cd-head: 25px; }
+            #customer-display .cd-total-row { flex-direction: column; align-items: stretch; gap: 0; }
+            #customer-display .cd-total-k {
+                flex-direction: row; align-items: baseline; gap: 7px; font-size: 16px;
+            }
+            #customer-display .cd-total-v { text-align: right; display: block; }
+            #customer-display .cd-pay-row b { font-size: 26px; }
+        }
+
+        /* ▼ 会計へ進んだ時 ▼
+           レジで「会計へ進む」が押されたら、お客様がいちばん確かめたいのは金額。
+           そこで文字の基準そのものを一段上げ、合計を大きく育てる。 */
+        #customer-display.is-checkout { --cd-total: 86px; --cd-change: 54px; }
+        #customer-display.is-checkout .cd-total-k { color: #D3D9E6; }
+        #customer-display.is-checkout .cd-total-v { color: #fff; }
+        /* 会計に入った合図として、金額がひと回り育つ動きを1度だけ見せる。
+           （文字の大きさそのものを動かすと、途中の大きさで幅を測ってしまうので、
+             大きさは一気に変え、見た目の拡大は transform で見せる） */
+        #customer-display.is-checkout .cd-total-row { animation: cdGrow .42s cubic-bezier(.32,.72,0,1) both; }
+        @keyframes cdGrow { from { transform: translate3d(0,8px,0); opacity: .35; } to { transform: none; opacity: 1; } }
+        #customer-display.is-checkout .cd-total-v { animation: cdBigger .44s cubic-bezier(.32,.72,0,1) both; transform-origin: right center; }
+        @keyframes cdBigger { from { transform: scale(.74); } to { transform: none; } }
 
         /* 会計が終わったあと */
-        #customer-display .cd-done { text-align: center; animation: cdRowIn .34s cubic-bezier(.32,.72,0,1) both; }
-        #customer-display .cd-done .ic { width: 54px; height: 54px; color: #35C77E; stroke-width: 2.2; }
-        #customer-display .cd-done-t { font-size: 30px; font-weight: 700; margin-top: 14px; letter-spacing: 0.04em; }
+        #customer-display .cd-done { text-align: center; animation: cdEnter .4s cubic-bezier(.32,.72,0,1) both; }
+        #customer-display .cd-done .cd-done-mark {
+            width: 84px; height: 84px; border-radius: 50%; margin: 0 auto;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(53,199,126,.14);
+            animation: cdPop .5s cubic-bezier(.32,.72,0,1) both;
+        }
+        @keyframes cdPop { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        #customer-display .cd-done .ic { width: 46px; height: 46px; color: #35C77E; stroke-width: 2.6; }
+        #customer-display .cd-done-t { font-size: var(--cd-head); font-weight: 700; margin-top: 16px; letter-spacing: 0.04em; }
         #customer-display .cd-done-s { font-size: 17px; color: #9AA0B0; margin-top: 10px; }
+        /* お礼の表示が、あとどれくらい出ているかを細い線で示す（急かさない太さ） */
+        #customer-display .cd-done-bar {
+            width: 120px; height: 3px; border-radius: 2px; margin: 18px auto 0;
+            background: rgba(255,255,255,.10); overflow: hidden;
+        }
+        #customer-display .cd-done-bar > i {
+            display: block; height: 100%; width: 100%; background: #35C77E;
+            transform-origin: left center; animation: cdCountdown var(--cd-done-ms, 18000ms) linear both;
+        }
+        @keyframes cdCountdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+        /* 「動きを減らす」端末では線が減らないので、空の溝だけが残らないよう隠す
+           （お礼が出ている長さそのものは変わらない） */
+        @media (prefers-reduced-motion: reduce) {
+            #customer-display .cd-done-bar { display: none; }
+        }
 
         #customer-display .cd-exit {
-            /* 金額は右にそろえて出るので、戻すボタンは左下に置いて数字と重ならないようにする */
-            position: absolute; left: 6px; bottom: calc(6px + env(safe-area-inset-bottom, 0px));
-            width: 40px; height: 40px; border: none; border-radius: 50%;
+            /* 金額は画面の下半分いっぱいに大きく出るので、戻すボタンは上の帯に置く。
+               （以前は左下にあり、明細やお釣りの数字と重なることがあった） */
+            flex-shrink: 0; width: 34px; height: 34px; border: none; border-radius: 50%;
             background: rgba(255,255,255,.06); color: #6B7080; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
+            position: relative;
         }
+        /* 見た目の丸は小さいまま（お客様に向ける画面なので目立たせない）、
+           指で押す範囲だけを広げておく（46px角。押しにくくならないように） */
+        #customer-display .cd-exit::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
         #customer-display .cd-exit .ic { width: 17px; height: 17px; }
         #customer-display .cd-exit:active { background: rgba(255,255,255,.14); }
 
-        /* 縦が短い時（スマホを横向きに寝かせた時など）は、明細をやめて
-           お客様がいちばん見たい「合計・お預かり・お釣り」だけを大きく出す */
-        @media (max-height: 460px) {
+        /* ▼ 横向き（スマホを寝かせて立てかけた形）▼
+           【以前】縦が短いと明細を丸ごと隠していたので、
+             お客様から見ると「何を買ったか」が消えてしまっていた。
+           【いま】左に明細、右に金額の2段組にする。横幅は余っているので、
+             明細を出したまま金額も大きく置ける。 */
+        @media (max-height: 560px) and (min-aspect-ratio: 13/10) {
+            #customer-display { padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
+            #customer-display .cd-order { flex-direction: row; align-items: stretch; gap: 26px; }
+            #customer-display .cd-items {
+                flex: 1 1 0; min-width: 0; margin-bottom: 0; justify-content: center;
+            }
+            #customer-display .cd-sum { flex: 0 0 46%; max-width: 46%; justify-content: center; }
+            #customer-display .cd-total-row { box-shadow: none; padding-top: 0; }
+            #customer-display .cd-total-k { font-size: 16px; }
+            #customer-display { --cd-total: 62px; --cd-change: 40px; --cd-item: 16px; --cd-head: 26px; }
+            #customer-display.is-checkout { --cd-total: 78px; --cd-change: 50px; }
+            #customer-display .cd-pay { margin-top: 10px; padding-top: 10px; }
+            #customer-display .cd-pay-row { font-size: 15px; padding: 2px 0; }
+            #customer-display .cd-pay-row b { font-size: 24px; }
+            #customer-display .cd-idle .ic { width: 38px; height: 38px; }
+            #customer-display .cd-idle-t, #customer-display .cd-done-t { margin-top: 8px; }
+            #customer-display .cd-idle-s { margin-top: 4px; }
+            #customer-display .cd-done .cd-done-mark { width: 62px; height: 62px; }
+            #customer-display .cd-done .ic { width: 34px; height: 34px; }
+            #customer-display .cd-done-bar { margin-top: 12px; }
+        }
+        /* 縦も横もとても狭い時（古い小さな端末）は、明細より金額を優先する */
+        @media (max-height: 380px) and (max-aspect-ratio: 13/10) {
             #customer-display .cd-items { display: none; }
             #customer-display .cd-total-row { box-shadow: none; padding-top: 0; }
-            #customer-display .cd-total-v { font-size: 76px; }
-            #customer-display .cd-idle .ic { width: 38px; height: 38px; }
-            #customer-display .cd-idle-t, #customer-display .cd-done-t { font-size: 26px; margin-top: 8px; }
-            #customer-display .cd-idle-s { margin-top: 4px; }
         }
 
         /* 横向き・大きい画面では、さらに大きく */
-        @media (min-width: 700px) {
+        @media (min-width: 700px) and (min-height: 561px) {
             #customer-display { padding-left: 42px; padding-right: 42px; }
-            #customer-display .cd-total-v { font-size: 96px; }
-            #customer-display .cd-item { font-size: 23px; }
-            #customer-display .cd-pay-row.cd-change b { font-size: 60px; }
-            #customer-display .cd-idle-t, #customer-display .cd-done-t { font-size: 40px; }
+            #customer-display { --cd-total: 96px; --cd-change: 60px; --cd-item: 23px; --cd-head: 40px; }
+            #customer-display.is-checkout { --cd-total: 124px; --cd-change: 76px; }
+            #customer-display .cd-order { flex-direction: row; align-items: stretch; gap: 40px; }
+            #customer-display .cd-items { flex: 1 1 0; min-width: 0; margin-bottom: 0; justify-content: center; }
+            #customer-display .cd-sum { flex: 0 0 52%; max-width: 52%; justify-content: center; }
+            #customer-display .cd-total-row { box-shadow: none; padding-top: 0; }
+            #customer-display .cd-done .cd-done-mark { width: 104px; height: 104px; }
+            #customer-display .cd-done .ic { width: 58px; height: 58px; }
         }
 
         /* 2つのうちどちらかを選ぶ画面（ブラウザの確認ダイアログより、選択肢が読みやすい） */
@@ -1942,6 +2227,8 @@
   <symbol id="ic-trend" viewBox="0 0 24 24"><path d="M3.5 20V4"/><path d="M3.5 20h17"/><path d="M6.5 16.5l4-4.5 3.5 2.5 5-6.5"/></symbol>
   <!-- 天気：小さく出しても形が分かるよう、線の数をしぼった単純な形にしている -->
   <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.3"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></symbol>
+  <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4 8.5 8.5 0 1020 14.5z"/></symbol>
+  <symbol id="ic-device" viewBox="0 0 24 24"><path d="M7 2.5h10v19H7z"/><path d="M10.5 18.8h3"/></symbol>
   <symbol id="ic-cloud" viewBox="0 0 24 24"><path d="M7 18.5h10a4 4 0 000-8 5.6 5.6 0 00-10.7 1.6A3.3 3.3 0 007 18.5z"/></symbol>
   <symbol id="ic-rain" viewBox="0 0 24 24"><path d="M7 15h10a3.8 3.8 0 000-7.6A5.4 5.4 0 006.4 9 3.1 3.1 0 007 15z"/><path d="M8.5 18v2.5M12 18.5v3M15.5 18v2.5"/></symbol>
   <symbol id="ic-snow" viewBox="0 0 24 24"><path d="M7 14h10a3.8 3.8 0 000-7.6A5.4 5.4 0 006.4 8 3.1 3.1 0 007 14z"/><path d="M8.5 18h.01M12 20h.01M15.5 18h.01M10.2 21h.01M13.8 21h.01" stroke-linecap="round" stroke-width="2.4"/></symbol>
@@ -2032,8 +2319,8 @@
 
         <!-- ---------- 予約 ---------- -->
         <div class="panel-view" id="view-reservations">
-            <div id="reservation-sync-warning" class="notice notice-danger" style="display:none;">
-                <svg class="ic"><use href="#ic-alert"/></svg>予約はこの端末だけに保存され、他の端末とは共有されません。複数端末で運用中は、予約を受けた端末で清算してください。
+            <div id="reservation-sync-warning" class="notice" style="display:none;">
+                <svg class="ic"><use href="#ic-link"/></svg>予約は共有中のすべての端末に出ています。どの端末からでも清算・取り消しができます。
             </div>
             <div id="reservation-list" class="card-strip"></div>
         </div>
@@ -2147,6 +2434,15 @@
                     <div id="sync-speed-box" class="notice"><svg class="ic"><use href="#ic-clock"/></svg><span>「速さを測る」を押すと、この端末が書いてから戻ってくるまでの時間を測ります。</span></div>
                     <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="measureSyncLatency()"><svg class="ic"><use href="#ic-refresh"/></svg>速さを測る</button>
                 </div>
+                <!-- 何が共有され、何が端末ごとなのかを1か所にまとめて書いておく。
+                     「これは共有されているはず」という思い込みでの取り違えを防ぐため。 -->
+                <label class="field-label" style="margin-top:18px;">共有されるもの</label>
+                <div class="notice">
+                    <svg class="ic"><use href="#ic-link"/></svg>
+                    <span>会計（売上・取消）／在庫と残数／商品の追加・値段・種類・備考／販売会の名前／売上目標／予約／閉店。<br>
+                    <b>これらは全部の端末で同じになります。</b>閉店はどの端末から行っても、共有中の全端末がいっしょに閉店します。</span>
+                </div>
+                <p class="settings-hint" style="margin-top:8px;">端末ごとに持つのは、<b>領収書の発行者名・画面の明るさ・時計や天気の設定</b>だけです（お客様に配る紙や、その端末の見やすさに関わるため）。</p>
             </div>
 
             <!-- 共有コードの追加（入力画面） -->
@@ -2224,6 +2520,12 @@
             </div>
 
             <div class="sub-view" id="sub-display" style="display:none;">
+                <label class="field-label">画面の明るさ</label>
+                <div id="theme-pick" class="theme-pick"></div>
+                <p class="settings-hint">「端末に合わせる」にしておくと、iPhone・iPad の設定（ダークモード）や夜間の自動切り替えに、そのまま付いていきます。暗い屋内や夕方の販売会でも、まぶしくなりません。</p>
+                <div id="theme-state" class="notice" style="margin-top:10px;"></div>
+
+                <label class="field-label" style="margin-top:20px;">時計と天気</label>
                 <div class="sw-row">
                     <div class="sw-text"><b>時計を表示する</b><span>画面の右上に「時:分」を出します</span></div>
                     <input type="checkbox" class="ios-switch" id="opt-clock" onchange="saveUiPrefs()">
@@ -2394,6 +2696,8 @@
 
 <!-- 操作フィードバック用トースト -->
 <div id="toast"></div>
+<!-- 配色を切り替えた時だけ、いちど薄くかかる幕 -->
+<div id="theme-fade" aria-hidden="true"></div>
 
 <!-- 2つのうちどちらかを選ぶ小さな画面（販売会名の選択などに使う） -->
 <div class="modal" id="choice-modal" style="display:none;" onclick="dismissChoiceOnBackdrop(event)">
@@ -2409,6 +2713,7 @@
      会計はしない。レジ役の端末が出している内容を受け取って映すだけ。 -->
 <div id="customer-display" style="display:none;">
     <div class="cd-top">
+        <button class="cd-exit" onclick="exitCustomerMode()" aria-label="レジに戻す"><svg class="ic"><use href="#ic-x"/></svg></button>
         <span class="cd-shop" id="cd-shop">泰山木</span>
         <span class="cd-link" id="cd-link"><i></i><span id="cd-link-text">つないでいます…</span></span>
     </div>
@@ -2420,23 +2725,25 @@
         </div>
         <div class="cd-order" id="cd-order" style="display:none;">
             <div class="cd-items" id="cd-items"></div>
-            <div class="cd-total-row">
-                <span class="cd-total-k">合計<span class="cd-count" id="cd-count"></span></span>
-                <span class="cd-total-v" id="cd-total">¥0</span>
-            </div>
-            <div class="cd-pay" id="cd-pay" style="display:none;">
-                <div class="cd-pay-row"><span>お預かり</span><b id="cd-cash">¥0</b></div>
-                <div class="cd-pay-row cd-change"><span>お釣り</span><b id="cd-change">¥0</b></div>
+            <div class="cd-sum">
+                <div class="cd-total-row">
+                    <span class="cd-total-k">合計<span class="cd-count" id="cd-count"></span></span>
+                    <span class="cd-total-v" id="cd-total">¥0</span>
+                </div>
+                <div class="cd-pay" id="cd-pay" style="display:none;">
+                    <div class="cd-pay-row"><span>お預かり</span><b id="cd-cash">¥0</b></div>
+                    <div class="cd-pay-row cd-change"><span>お釣り</span><b id="cd-change">¥0</b></div>
+                </div>
             </div>
         </div>
         <div class="cd-done" id="cd-done" style="display:none;">
-            <svg class="ic"><use href="#ic-check"/></svg>
+            <div class="cd-done-mark"><svg class="ic"><use href="#ic-check"/></svg></div>
             <div class="cd-done-t">ありがとうございました</div>
             <div class="cd-done-s" id="cd-done-s"></div>
+            <div class="cd-done-bar" id="cd-done-bar"><i></i></div>
         </div>
     </div>
     <!-- 戻すところは小さく端に。お客様が触っても、確認を挟むので勝手には戻らない -->
-    <button class="cd-exit" onclick="exitCustomerMode()" aria-label="レジに戻す"><svg class="ic"><use href="#ic-x"/></svg></button>
 </div>
 
 <!-- PDF（印刷）用レポート：画面では非表示、印刷時のみ表示 -->
@@ -3124,6 +3431,7 @@
             const resIndex = reservations.findIndex(r => r.id === processingReservationId);
             itemsRecorded = reservations[resIndex].items;
             reservations.splice(resIndex, 1);
+            syncRemoveReservation(processingReservationId);   // 他の端末の一覧からも消す
             processingReservationId = null;
         } else {
             cart = [];
@@ -3176,20 +3484,29 @@
         publishCustomerDone(record);   // お客様の画面に「ありがとうございました」を出す
     }
 
+    // 予約の番号。共有していると2台が同じ瞬間に予約を受けることがあるので、
+    // 時刻だけでなく端末ごとの数も混ぜて、番号がぶつからないようにする。
+    function newReservationId() {
+        const id = getDeviceId();
+        let h = 0;
+        for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 100;
+        let n = Date.now() * 100 + h;
+        while (reservations.some(r => r.id === n)) n++;   // 手元でぶつかった時も必ずずらす
+        return n;
+    }
+
     function promptReservation() {
         if (cart.length === 0) return;
         const name = prompt('予約者のお名前を入力してください:');
         if (name) {
             const total = cart.reduce((sum, item) => sum + item.price, 0);
-            reservations.push({
-                id: Date.now(),
-                name: name,
-                items: [...cart],
-                total: total
-            });
+            const res = { id: newReservationId(), name: name, items: [...cart], total: total };
+            reservations.push(res);
+            syncPushReservation(res);   // 他の端末でも受け取れるようにする
             cart = []; 
             saveData();
             init();
+            renderReservations();
             alert(`${name} 様の予約を登録しました。設定の予約管理から清算できます。`);
         }
     }
@@ -3237,6 +3554,7 @@
             });
         }
         reservations.splice(resIndex, 1);
+        syncRemoveReservation(id);   // 他の端末の一覧からも消す
         renderReservations();
         saveData();
         init();
@@ -3486,6 +3804,10 @@
                     <li>お客様のお名前を入れます。</li>
                     <li>受け取りに来たら、下の<b>「予約」</b>を開いて<b>「受取・清算」</b>を押し、ふだんどおり会計します。</li>
                 </ol>
+                <div class="man-box tip">
+                    <div class="man-box-h">複数の端末で使っているとき</div>
+                    <p>予約は<b>共有中のすべての端末に出ます</b>。受けた端末とは別の端末でも、そのまま清算・取り消しができます。行列が2列に分かれていても、お客様を並び直させずに済みます。</p>
+                </div>
                 <div class="man-box warn">
                     <div class="man-box-h">閉店の前に</div>
                     <p>未清算の予約が残っていると閉店できません。先にすべて清算するか、取り消してください。</p>
@@ -3525,9 +3847,13 @@
                     <div class="man-box-h">通信が切れたとき</div>
                     <p>レジの画面に<b>赤い帯</b>が出ます。<b>その間も会計はそのまま続けられます</b>（この端末に貯まり、つながると自動でまとめて送られます）。つながっていないまま閉店しようとすると引き止めるので、電波の良い場所で表示が緑になってから閉店してください。</p>
                 </div>
+                <h4>共有されるもの</h4>
+                <p>会計（売上・取消）／在庫と残数／商品の追加・値段・種類・備考／販売会の名前／売上目標／予約／閉店。<b>これらは全部の端末で同じになります。</b></p>
+                <p>端末ごとに持つのは、<b>領収書の発行者名</b>と<b>画面の明るさ・時計や天気の設定</b>だけです。</p>
                 <div class="man-box warn">
                     <div class="man-box-h">共有しているときの閉店</div>
-                    <p><b>「閉店する」は共有している販売会そのものを終わらせる操作</b>です。ほかの端末がまだ会計している場合は、先に声をかけてください。自分の端末だけ先に終えたいときは、「設定 → 複数端末で使う」の<b>「この端末の利用を終える」</b>を使います。</p>
+                    <p><b>「閉店する」は共有している販売会そのものを終わらせる操作</b>です。どの端末から閉店しても、<b>共有中のすべての端末がいっしょに閉店</b>になり、それぞれの端末に同じ集計が保存されます。ほかの端末がまだ会計している場合は、先に声をかけてください。</p>
+                    <p>自分の端末だけ先に終えたいときは、「設定 → 複数端末で使う」の<b>「この端末の利用を終える」</b>を使います。</p>
                 </div>
                 <p>反映は電波の状況でおくれることがあります。おくれても、その端末だけで会計を続けられます。<b>「設定 → 複数端末で使う → 速さを測る」</b>で、いまどのくらいおくれているかを数字で確かめられます。</p>`
         },
@@ -3541,12 +3867,13 @@
                     <li><b>同じ共有コード</b>を入れて<b>「お客様用の金額表示にする」</b>を押します。<br>（同じ画面の「この端末でも会計する」を押せば、2台目のレジになります）</li>
                     <li>お客様から見える向きに立てかけます。</li>
                 </ol>
-                <p>商品を打つたびに<b>明細と合計</b>が出ます。お預かりを入れると<b>お釣り</b>も出て、会計が終わると<b>「ありがとうございました」</b>に変わります。</p>
+                <p>商品を打つたびに<b>明細と合計</b>が1行ずつ増えていきます。レジで<b>「会計へ進む」</b>を押すと合計の文字が大きくなり、お預かりを入れると<b>お釣り</b>も出ます。会計が終わると<b>「ありがとうございました」</b>に変わり、約18秒そのまま出ています（次のお客様の商品を1点打てば、すぐ次の会計の画面に変わります）。</p>
+                <p>端末を<b>横向きに寝かせても、明細はそのまま出ます</b>（左に買うもの、右に金額の2段組みになります）。</p>
                 <div class="man-box tip">
                     <div class="man-box-h">覚えておくこと</div>
                     <ul class="man-list">
                         <li>お客様用にした端末では<b>会計はできません</b>（映すだけです）。</li>
-                        <li>ふだんのレジに戻すときは、画面の<b>左下の×</b>を押します（確認が出ます）。</li>
+                        <li>ふだんのレジに戻すときは、画面の<b>左上の×</b>を押します（確認が出ます）。</li>
                         <li>電波が切れても表示のままです。つながり直すと自動でまた映ります。</li>
                     </ul>
                 </div>`
@@ -3560,7 +3887,11 @@
                     <li>確認の画面が出るので、内容を読んで<b>OK</b>を選びます。</li>
                     <li>閉店すると<b>その回の売上が自動で集計され</b>、「発表用のまとめ」が出ます。</li>
                 </ol>
-                <p>閉店した記録は<b>「設定 → 過去の販売会」</b>に自動で保存され、レジの会計データは空になります。あとから集計を見たり、PDFを出したりできます。</p>`
+                <p>閉店した記録は<b>「設定 → 過去の販売会」</b>に自動で保存され、レジの会計データは空になります。あとから集計を見たり、PDFを出したりできます。</p>
+                <div class="man-box">
+                    <div class="man-box-h">複数の端末で使っているとき</div>
+                    <p>どの端末で閉店しても、<b>共有中のすべての端末がいっしょに閉店</b>になります。ほかの端末にも「他の端末で閉店されました」と出て、同じ集計がその端末にも保存されます。1台ずつ閉店して回る必要はありません。</p>
+                </div>`
         },
         {
             id: 'report', icon: 'chart', title: '売上を見る・PDFにする', sub: '発表用のまとめと、くわしい集計',
@@ -3596,6 +3927,8 @@
                         <tr><td>商品が売り切れた</td><td>ボタンに「完売」と出ます。お客様に売り切れをお伝えください。</td></tr>
                         <tr><td>電池が少ない</td><td>会計のたびに保存されているので、電源が切れてもデータは残ります。充電してから開き直してください。</td></tr>
                         <tr><td>ほかの端末の会計が反映されない</td><td>「設定 → 複数端末で使う」で状態を確認してください。電波が戻れば自動で追いつきます。</td></tr>
+                        <tr><td>画面がまぶしい・暗くて見えない</td><td>「設定 → 画面の表示 → 画面の明るさ」で<b>明るく／暗く</b>を選べます。ふだんは<b>「端末に合わせる」</b>のままで、iPhone・iPadの設定にそのまま付いていきます。</td></tr>
+                        <tr><td>ほかの端末で閉店された</td><td>その端末も自動で閉店になり、同じ集計が保存されます。売上が消えたわけではありません（「設定 → 過去の販売会」で見られます）。</td></tr>
                         <tr><td>交代する</td><td>そのまま次の人に渡してください。共有コードを使っている場合だけ、同じコードであることを確かめます。</td></tr>
                         <tr><td>データを別の端末に移したい</td><td>「設定 → データの書き出し」で保存し、移す先の端末の開店画面の「データを取り込んで始める」で読み込みます。</td></tr>
                     </tbody>
@@ -3687,15 +4020,27 @@
     let cdLastPayload = '';       // 同じ内容を続けて書かないための控え
     let cdLastTotal = null;       // 金額が変わった時だけ弾ませるための控え
     let cdLastSeen = 0, cdWatchTimer = null;   // 最後にレジから届いた時刻の見張り
+    let cdDoneTimer = null;       // 「ありがとうございました」を出し終える時刻
+    let cdLastLines = '';         // 直前に映した明細（新しく増えた行だけ光らせるため）
 
     // ---- レジ役の端末：いまの内容を共有の置き場へ書く ----
     // 打つたびに書くと通信が増えるので、150ミリ秒だけまとめてから1回書く。
     // （お客様の目には十分すぐに映る速さ）
     function publishCustomerDisplay(force) {
         if (!syncMode || !syncEventCode || !fbDb || customerMode) return;
+        // 次のお客様の1点目を打った瞬間に、お礼の画面から会計の画面へ切り替える
+        if (cdDoneTimer && cart.length > 0) { clearTimeout(cdDoneTimer); cdDoneTimer = null; }
         if (cdPushTimer) clearTimeout(cdPushTimer);
         cdPushTimer = setTimeout(() => {
             cdPushTimer = null;
+            // 「ありがとうございました」を出している最中は、空のカートで上書きしない。
+            // 会計を記録した直後は、売上の共有が返ってきたり在庫を描き直したりで
+            // このまとめ書きが何度か走る。そのたびに待ち受けの画面へ戻ると、
+            // お客様がお礼を読む前に消えてしまう。
+            if (cdDoneTimer && cart.length === 0) {
+                const modal = document.getElementById('checkout-modal');
+                if (!modal || modal.style.display !== 'flex') return;
+            }
             const payload = buildCustomerPayload();
             const key = JSON.stringify(payload);
             if (!force && key === cdLastPayload) return;   // 変わっていなければ書かない
@@ -3733,9 +4078,17 @@
     }
 
     // 会計が終わった瞬間だけ「ありがとうございました」を出す
+    // 「ありがとうございました」を出しておく長さ。
+    // 【なぜ長くしたか】6秒では、お客様がお釣りを受け取って商品を袋に入れ、
+    //   顔を上げたころにはもう消えていた。お礼とお買い上げ金額を確かめる時間として短すぎる。
+    //   次のお客様の商品を1点でも打てば、その時点ですぐ次の会計の画面に切り替わるので、
+    //   長くしても行列が止まることはない。
+    const CD_DONE_MS = 18000;
+
     function publishCustomerDone(record) {
         if (!syncMode || !syncEventCode || !fbDb || customerMode) return;
         if (cdPushTimer) { clearTimeout(cdPushTimer); cdPushTimer = null; }
+        if (cdDoneTimer) { clearTimeout(cdDoneTimer); cdDoneTimer = null; }
         cdLastPayload = '';
         const payload = {
             state: 'done', items: [], count: 0,
@@ -3743,12 +4096,13 @@
             cash: record && record.cash != null ? record.cash : null,
             change: record && record.change != null ? record.change : null,
             no: record ? record.no : null,
+            doneMs: CD_DONE_MS,
             at: Date.now(), by: getDeviceId()
         };
         fbDb.collection('events').doc(syncEventCode).collection('live').doc(CD_DOC)
             .set(payload).catch(e => console.warn('お客様用表示の送信に失敗しました', e));
-        // しばらくしたら待ち受けの画面に戻す
-        setTimeout(() => publishCustomerDisplay(true), 6000);
+        // お礼を出し終えたら、待ち受けの画面に戻す
+        cdDoneTimer = setTimeout(() => { cdDoneTimer = null; publishCustomerDisplay(true); }, CD_DONE_MS);
     }
 
     // ---- お客様用の端末：読んで映す ----
@@ -3853,12 +4207,31 @@
         idle.style.display = state === 'idle' ? '' : 'none';
         order.style.display = (state === 'cart' || state === 'checkout') ? '' : 'none';
         done.style.display = state === 'done' ? '' : 'none';
+        // 「会計へ進む」が押されている間だけ、文字の基準を一段大きくする
+        const box = document.getElementById('customer-display');
+        if (box) box.classList.toggle('is-checkout', state === 'checkout');
 
         if (state === 'cart' || state === 'checkout') {
             const items = Array.isArray(d.items) ? d.items : [];
-            document.getElementById('cd-items').innerHTML = items.map(i =>
-                `<div class="cd-item"><span class="n">${escHtml(i.name)}</span>`
-                + `<span class="q">×${i.qty}</span><span class="v">${yenStr(i.subtotal)}</span></div>`).join('');
+            // レジで1点打たれるたび、増えた行だけがふわりと入ってくるようにする。
+            // 毎回すべて描き直すと全部の行が動いてしまい、何が増えたのか分からない。
+            const lines = items.map(i => `${i.name}${i.qty}${i.subtotal}`).join('');
+            if (lines !== cdLastLines) {
+                const prev = cdLastLines ? cdLastLines.split('') : [];
+                const seen = {};
+                prev.forEach(l => { seen[l] = (seen[l] || 0) + 1; });
+                document.getElementById('cd-items').innerHTML = items.map((i, idx) => {
+                    const key = `${i.name}${i.qty}${i.subtotal}`;
+                    let fresh = false;
+                    if (seen[key]) seen[key]--; else fresh = true;   // 前には無かった行＝いま増えた行
+                    return `<div class="cd-item${fresh ? ' fresh' : ''}"><span class="n">${escHtml(i.name)}</span>`
+                        + `<span class="q">×${i.qty}</span><span class="v">${yenStr(i.subtotal)}</span></div>`;
+                }).join('');
+                cdLastLines = lines;
+                // いちばん新しい行が見えるところまで寄せる
+                const listEl = document.getElementById('cd-items');
+                if (listEl) listEl.scrollTop = listEl.scrollHeight;
+            }
             document.getElementById('cd-count').textContent = d.count ? `${d.count}点` : '';
             const totalEl = document.getElementById('cd-total');
             totalEl.textContent = yenStr(d.total || 0);
@@ -3879,11 +4252,58 @@
             if (d && d.total != null) bits.push('お買い上げ ' + yenStr(d.total));
             if (d && d.change != null && d.change > 0) bits.push('お釣り ' + yenStr(d.change));
             document.getElementById('cd-done-s').textContent = bits.join('　／　');
+            // 残り時間の細い線を、レジ側が決めた長さで引き直す
+            const bar = document.getElementById('cd-done-bar');
+            if (bar) {
+                const ms = Number(d && d.doneMs) > 0 ? Number(d.doneMs) : CD_DONE_MS;
+                const passed = d && d.at ? Math.max(0, Date.now() - d.at) : 0;
+                const left = Math.max(0, ms - passed);
+                bar.style.setProperty('--cd-done-ms', left + 'ms');
+                const fill = bar.firstElementChild;
+                if (fill) { fill.style.animation = 'none'; void fill.offsetWidth; fill.style.animation = ''; }
+            }
             cdLastTotal = null;
+            cdLastLines = '';
         } else {
             cdLastTotal = null;
+            cdLastLines = '';
+        }
+        fitCustomerAmounts();
+    }
+
+    // 金額が画面からはみ出さないようにする。
+    // 【なぜ必要か】お客様用の表示は数字をできるだけ大きく出しているので、
+    //   「¥128,400」のようにけたが増えると、そのままでは枠から出てしまう。
+    //   出せる幅にちょうど収まるところまで、その1つの数字だけを小さくする。
+    //   （他の文字や配置はそのままなので、見た目の作りは変わらない）
+    function fitCustomerAmounts() {
+        ['cd-total', 'cd-change', 'cd-cash'].forEach(id => fitOneAmount(document.getElementById(id)));
+    }
+
+    function fitOneAmount(el) {
+        if (!el) return;
+        el.style.fontSize = '';                    // まずは配色・画面幅で決めた大きさに戻す
+        const row = el.parentElement;
+        if (!row || !row.clientWidth) return;
+        const base = parseFloat(getComputedStyle(el).fontSize);
+        if (!(base > 0)) return;
+        const rowStyle = getComputedStyle(row);
+        let used = 0;
+        if (rowStyle.flexDirection !== 'column') {
+            // 同じ行に並んでいる見出しの幅と、その間の余白を引く
+            const kids = [...row.children];
+            kids.forEach(c => { if (c !== el) used += c.getBoundingClientRect().width; });
+            const gap = parseFloat(rowStyle.columnGap || rowStyle.gap) || 0;
+            used += gap * Math.max(0, kids.length - 1);
+        }
+        const avail = row.clientWidth - used;
+        const natural = el.scrollWidth;            // 折り返さない時の、数字そのものの幅
+        if (avail > 24 && natural > avail + 1) {
+            el.style.fontSize = Math.max(20, Math.floor(base * avail / natural)) + 'px';
         }
     }
+    // 画面を回した時も測り直す（横向きにすると使える幅が変わるため）
+    window.addEventListener('resize', () => { if (customerMode) fitCustomerAmounts(); });
 
     // ▼▼▼ 2つのうちどちらかを選ぶ画面 ▼▼▼
     // ブラウザの確認ダイアログは「OK / キャンセル」しか書けず、
@@ -4127,7 +4547,87 @@
     const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast';
     const WEATHER_TTL = 30 * 60 * 1000;   // 30分は取り直さない
 
-    let uiPrefs = { clock: true, weather: false, area: 'tokyo', role: 'register', cdCode: '' };
+    // ▼▼▼ 明るい配色・暗い配色（ライト／ダークモード）▼▼▼
+    // 【なぜ必要か】販売会は明るい屋外のこともあれば、夕方の屋内や体育館のこともある。
+    //   暗い場所で白い画面を出すと、店員の目もお客様の目もくらむ。
+    // 【決め方】「端末に合わせる」を既定にする。iPhone/iPad の設定や「夜間モード」に
+    //   ひとりでに追従するので、販売中に誰かが切り替える必要がない。
+    //   手で決めたい時のために「明るく」「暗く」も選べるようにしてある。
+    // 【保存場所】端末ごとの好みなので、売上データではなく画面の設定として持つ。
+    //   （共有しても他の端末の明るさまで変わってしまい、かえって困る）
+    const THEME_COLORS = { light: '#F2F3F7', dark: '#0E1015' };
+    let themeMedia = null;
+
+    function resolvedTheme() {
+        if (uiPrefs.theme === 'dark' || uiPrefs.theme === 'light') return uiPrefs.theme;
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+        return 'light';
+    }
+
+    function applyTheme(animate) {
+        const t = resolvedTheme();
+        const root = document.documentElement;
+        if (animate) {
+            const veil = document.getElementById('theme-fade');
+            if (veil) { veil.classList.remove('run'); void veil.offsetWidth; veil.classList.add('run'); }
+        }
+        root.setAttribute('data-theme', t);
+        // ブラウザ側の部品（入力欄の中身・スクロールバー）も同じ明るさにそろえる
+        root.style.colorScheme = t;
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', THEME_COLORS[t]);
+        refreshChartInk();
+        renderThemeSettings();
+        // グラフは色を直接埋め込んで描いているので、描き直して色を合わせる。
+        // 起動時の1回目は、このあと通常の手順で描かれるので何もしない。
+        if (themeApplied) { try { updateAnalytics(); } catch (e) { /* 集計が未準備なら何もしない */ } }
+        themeApplied = true;
+    }
+    let themeApplied = false;
+
+    function setTheme(mode) {
+        const next = (mode === 'light' || mode === 'dark') ? mode : 'auto';
+        if (uiPrefs.theme === next) return;
+        uiPrefs.theme = next;
+        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) { /* 保存できなくても動く */ }
+        applyTheme(true);
+        playSound();
+        showToast(next === 'auto' ? '端末の設定に合わせます'
+            : (next === 'dark' ? '暗い配色にしました' : '明るい配色にしました'));
+    }
+
+    // 「端末に合わせる」を選んでいる間は、端末側の切り替え（夜間モードなど）にも追従する
+    function watchSystemTheme() {
+        if (!window.matchMedia) return;
+        themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+        const onChange = () => { if (uiPrefs.theme === 'auto') applyTheme(true); };
+        if (themeMedia.addEventListener) themeMedia.addEventListener('change', onChange);
+        else if (themeMedia.addListener) themeMedia.addListener(onChange);   // 古いSafari向け
+    }
+
+    function renderThemeSettings() {
+        const box = document.getElementById('theme-pick');
+        if (!box) return;
+        const opts = [
+            { id: 'auto', label: '端末に合わせる', ic: 'ic-device' },
+            { id: 'light', label: '明るく', ic: 'ic-sun' },
+            { id: 'dark', label: '暗く', ic: 'ic-moon' }
+        ];
+        box.innerHTML = opts.map(o =>
+            `<button type="button" class="theme-opt${uiPrefs.theme === o.id ? ' on' : ''}" onclick="setTheme('${o.id}')" aria-pressed="${uiPrefs.theme === o.id}">`
+            + `<svg class="ic"><use href="#${o.ic}"/></svg><span>${o.label}</span></button>`).join('');
+        const st = document.getElementById('theme-state');
+        if (st) {
+            st.className = 'notice';
+            const now = resolvedTheme() === 'dark' ? '暗い配色' : '明るい配色';
+            st.innerHTML = `<svg class="ic"><use href="#${resolvedTheme() === 'dark' ? 'ic-moon' : 'ic-sun'}"/></svg>`
+                + `<span>いまは<b>${now}</b>で表示しています。`
+                + (uiPrefs.theme === 'auto' ? '端末の設定が変わると、ひとりでに切り替わります。' : '手で決めているので、端末の設定では変わりません。')
+                + '</span>';
+        }
+    }
+
+    let uiPrefs = { clock: true, weather: false, area: 'tokyo', role: 'register', cdCode: '', theme: 'auto' };
     let weatherNow = null;      // { code, temp, at, area }
     let weatherFetching = false;
 
@@ -4141,7 +4641,8 @@
                     weather: !!d.weather,
                     area: WEATHER_AREAS.some(a => a.id === d.area) ? d.area : 'tokyo',
                     role: d.role === 'customer' ? 'customer' : 'register',
-                    cdCode: typeof d.cdCode === 'string' ? d.cdCode : ''
+                    cdCode: typeof d.cdCode === 'string' ? d.cdCode : '',
+                    theme: (d.theme === 'light' || d.theme === 'dark') ? d.theme : 'auto'
                 };
             }
             const w = localStorage.getItem(UI_PREF_KEY + '_weather');
@@ -4279,6 +4780,9 @@
 
     function startClock() {
         loadUiPrefs();
+        // 配色は、画面を組み立てる前にいちど決めておく（グラフの色もここで確定する）
+        applyTheme();
+        watchSystemTheme();
         customerMode = uiPrefs.role === 'customer' && !!uiPrefs.cdCode;
         if (customerMode) {
             // 画面はすぐ切り替える（購読は Firebase の用意ができてから）
@@ -4317,6 +4821,12 @@
         const input = document.getElementById('sales-goal-input');
         const v = Math.max(0, Math.floor(Number(input && input.value) || 0));
         salesGoal = v;
+        // 共有中は目標も全端末でそろえる（端末ごとに違う達成率が出ると読み違える）
+        if (syncMode && syncEventCode && fbDb) {
+            fbDb.collection('events').doc(syncEventCode)
+                .set({ goal: v, goalAt: Date.now(), goalBy: getDeviceId() }, { merge: true })
+                .catch(e => console.warn('売上目標の共有に失敗しました', e));
+        }
         saveData();
         logEdit(v > 0 ? `売上目標を ¥${v.toLocaleString('ja-JP')} に設定` : '売上目標をなしにした');
         playSound();
@@ -4620,9 +5130,11 @@
             }
             startSalesSubscription(code);       // 以後 salesHistory は全端末の共有結果で上書きされる
             startSessionDocSubscription(code);  // 他端末での閉店（集計終了）を検知するため
+            startReservationSubscription(code); // 予約も全端末で見えるようにする
         } else {
             stopSalesSubscription();
             stopSessionDocSubscription();
+            stopReservationSubscription();
             syncEventCode = null;
         }
 
@@ -4645,7 +5157,7 @@
             return;
         }
         let confirmMsg = syncMode
-            ? '営業を終了して売上を集計します。\n\n※これは共有販売会そのものを終了する操作です。同じコードを使っている他の端末があれば、先にそちらへ伝えてから閉店してください。\n（この端末だけ操作を終える場合は、「この端末の利用を終える」をお使いください）'
+            ? '営業を終了して売上を集計します。\n\n※これは共有販売会そのものを終了する操作です。同じコードを使っている他の端末も、いっしょに閉店になります（それぞれの端末でも同じ集計が保存されます）。\n（この端末だけ操作を終える場合は、「この端末の利用を終える」をお使いください）'
             : '営業を終了して売上を集計します。';
         confirmMsg += '\n\n集計した記録は「設定 → 過去の販売会」に自動保存され、レジの会計データは空になります。';
         // 送りきれていない会計があるまま閉店すると、その分が集計から抜けてしまう。
@@ -4658,6 +5170,23 @@
         }
         if (cart.length > 0) confirmMsg = `【！】カートに${cart.length}点の打ちかけが残っています。このまま閉店すると破棄されます。\n\n` + confirmMsg;
         if (!confirm(confirmMsg)) return;
+
+        // 同期中：共有販売会そのものを「閉店済み」にする（同じコードの使い回し事故を防ぐ）。
+        // これを見た他の端末も、同じ手順で自分の画面を閉店にする。
+        if (syncMode && syncEventCode && fbDb) {
+            fbDb.collection('events').doc(syncEventCode).set({ status: 'closed', closedAt: Date.now(), closedBy: getDeviceId() }, { merge: true })
+                .catch(e => console.warn('共有販売会の終了フラグの書き込みに失敗しました', e));
+        }
+        closeSessionLocally();
+    }
+
+    // 閉店の中身（集計・保存・片づけ・集計画面の表示）。
+    // 自分で閉店を押した時と、他の端末の閉店が届いた時の、両方から呼ぶ。
+    // 【なぜ分けたか】以前は他の端末で閉店しても知らせを出すだけで、
+    //   こちらの画面は営業中のままだった。売上は共有されているのに片方だけ営業中に見え、
+    //   そのまま会計してしまうと、どの販売会の売上なのか分からなくなる。
+    function closeSessionLocally(opts) {
+        const remote = !!(opts && opts.remote);
         updateAnalytics();
 
         // ▼▼▼ この回の記録を丸ごと「過去の販売会」として自動保存する ▼▼▼
@@ -4674,14 +5203,11 @@
         }
         // ▲▲▲ ここまで ▲▲▲
 
-        // 同期中：共有販売会そのものを「閉店済み」にする（同じコードの使い回し事故を防ぐ）
-        if (syncMode && syncEventCode && fbDb) {
-            fbDb.collection('events').doc(syncEventCode).set({ status: 'closed', closedAt: Date.now() }, { merge: true })
-                .catch(e => console.warn('共有販売会の終了フラグの書き込みに失敗しました', e));
-        }
-        stopSalesSubscription();
+        stopSalesSubscription();      // この中で在席の取り消しと syncMode の解除まで行う
         stopSessionDocSubscription();
+        stopReservationSubscription();
         syncEventCode = null;
+        const droppedCart = cart.length;
 
         const closedName = currentSession;
         currentSession = null;
@@ -4698,6 +5224,10 @@
         salesGoal = 0;   // 目標はその回のものなので、次の回に持ち越さない（開店時にまた決める）
         products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; p.note = ''; });
 
+        // 会計の途中だった場合は、開いている窓を閉じてからレジを片づける
+        const co = document.getElementById('checkout-modal');
+        if (co && co.style.display === 'flex') co.style.display = 'none';
+
         const disp = document.getElementById('session-display');
         disp.innerText = "閉店中";
         disp.style.background = '';
@@ -4705,6 +5235,7 @@
         saveData();
         init();
         renderRecords();
+        renderReservations();
 
         // 閉店直後は、いま閉じたばかりの販売会の集計をそのまま表示する
         if (closedSnapshot) {
@@ -4716,10 +5247,20 @@
             // 次回に向けた「完売と売り逃し」は、集計の一覧からいつでも開ける。
             digestKind = 'oneline';
             showAnalyticsSection('digest');
-            showToast(`「${closedName}」を集計して保存しました`);
         } else {
             updateAnalytics();
             showTab('analytics');
+        }
+
+        if (remote) {
+            // 勝手に閉店したように見えないよう、何が起きたのかをはっきり伝える。
+            // （知らせを見落としても、画面が閉店中になっているので会計は始まらない）
+            let msg = `他の端末で「${closedName}」が閉店されました。この端末も閉店にして、同じ内容で集計しました。`;
+            if (droppedCart > 0) msg += `\n\n※打ちかけだった${droppedCart}点のカートは破棄されました。`;
+            showToast('他の端末で閉店されました');
+            setTimeout(() => alert('【お知らせ】' + msg), 60);
+        } else {
+            showToast(`「${closedName}」を集計して保存しました`);
         }
     }
 
@@ -4931,6 +5472,7 @@
         // この端末の会計（remoteId を持たないもの）がまとめて送信される。
         startSalesSubscription(code);
         startSessionDocSubscription(code);
+        startReservationSubscription(code);
         if (input) input.value = '';
         const disp = document.getElementById('session-display');
         disp.innerText = `営業中: ${currentSession}`;
@@ -4947,6 +5489,7 @@
         if (!confirm('共有をやめて、この端末だけで営業を続けます。\n\n・ここまでの会計はこの端末に残ります。\n・この先の会計は他の端末には表示されません。\n・他の端末での会計も、この端末には表示されなくなります。\n\nよろしいですか？')) return;
         stopSalesSubscription();
         stopSessionDocSubscription();
+        stopReservationSubscription();
         syncEventCode = null;
         saveData();
         init();
@@ -4962,6 +5505,7 @@
         if (!confirm('この端末でのレジ操作を終えます。\n共有販売会そのものは終了せず、他の端末はそのまま続けられます。\n（この端末は次に開店するまで会計できません）\n\nよろしいですか？')) return;
         stopSalesSubscription();
         stopSessionDocSubscription();
+        stopReservationSubscription();
         syncEventCode = null;
         currentSession = null;
         const disp = document.getElementById('session-display');
@@ -6378,7 +6922,7 @@
             else if (sub === 'sync') renderSyncView();
             else if (sub === 'receipt') renderReceiptSettings();
             else if (sub === 'archive') renderArchiveList();
-            else if (sub === 'display') { updateFullscreenButton(); renderClockSettings(); }
+            else if (sub === 'display') { updateFullscreenButton(); renderThemeSettings(); renderClockSettings(); }
             else if (sub === 'manual') renderManual();
             else if (sub === 'customer') renderCustomerSettings();
             else if (sub === 'goal') renderSalesGoal();
@@ -6458,7 +7002,9 @@
             : (syncMode ? `共有中（コード: ${escHtml(syncEventCode || '')}）` : (customerMode ? 'いまお客様用の表示です' : (currentSession ? 'いまは1台だけで営業中' : '開店後に開始できます')));
         const archSub = sessionArchive.length ? `${sessionArchive.length}件の記録` : 'まだありません';
         const areaName = (WEATHER_AREAS.find(a => a.id === uiPrefs.area) || {}).name || '';
-        const clockSub = ['全画面', uiPrefs.clock ? '時計' : null, uiPrefs.weather ? `天気（${areaName}）` : null]
+        const themeSub = uiPrefs.theme === 'auto' ? '明るさは端末に合わせる'
+            : (uiPrefs.theme === 'dark' ? '暗い配色' : '明るい配色');
+        const clockSub = [themeSub, uiPrefs.clock ? '時計' : null, uiPrefs.weather ? `天気（${areaName}）` : null, '全画面']
             .filter(Boolean).join('・');
         box.innerHTML =
             menuRow('book', '操作マニュアル', 'はじめての人向けの使い方（PDFにも出せます）', "openPanel('settings','manual')") +
@@ -7710,10 +8256,30 @@
     // 【方針】2つのグラフ（時間帯別・在庫の減り方）で軸・文字・色をそろえる。
     // また、SVGを拡大縮小せず「1単位＝1px」で描くことで、会計件数が少なくて
     // グラフが小さい時でも文字だけが不自然に大きくなることを防ぐ。
-    const CHART_GRID = '#E3E5EC';     // 目盛り線（--line と同じ）
-    const CHART_INK = '#6B6E7A';      // 目盛りの文字（--text-light と同じ。屋外でも読める濃さ）
+    // グラフはSVGの中に色を直接書き込むので、配色（明るい／暗い）に合わせて
+    // 描く前に色を取り直す。値は配色の変数からそのまま読むので、画面と必ずそろう。
+    let CHART_GRID = '#E3E5EC';       // 目盛り線（--line と同じ）
+    let CHART_INK = '#6B6E7A';        // 目盛りの文字（--text-light と同じ。屋外でも読める濃さ）
+    let CHART_TEXT = '#1C1D22';       // 棒の上に置く実数（--text-main と同じ）
     const CHART_H = 226;              // 描画高さ（2つのグラフ共通）
     const CHART_FS = 11;              // 目盛りの文字サイズ（実寸px）
+    // 検証済みカテゴリカルパレット（8色）。9商品目以降は同色＋破線で識別（色＋線種の複合エンコード）。
+    const CHART_PALETTE_LIGHT = ['#2a78d6', '#1baf7a', '#eda100', '#008300', '#4a3aa7', '#e34948', '#e87ba4', '#eb6834'];
+    // 暗い配色では、同じ並び順のまま明るい方へ振った8色を使う（濃い地の上でも線が見える）
+    const CHART_PALETTE_DARK = ['#63ACFF', '#35D19B', '#F3C75A', '#5BD37A', '#A79BFF', '#FF7A78', '#FFA3C4', '#FFA765'];
+    let CHART_PALETTE = CHART_PALETTE_LIGHT;
+
+    function refreshChartInk() {
+        try {
+            const cs = getComputedStyle(document.documentElement);
+            const pick = (name, fallback) => (cs.getPropertyValue(name) || '').trim() || fallback;
+            CHART_GRID = pick('--line', '#E3E5EC');
+            CHART_INK = pick('--text-light', '#6B6E7A');
+            CHART_TEXT = pick('--text-main', '#1C1D22');
+            CHART_PALETTE = (document.documentElement.getAttribute('data-theme') === 'dark')
+                ? CHART_PALETTE_DARK : CHART_PALETTE_LIGHT;
+        } catch (e) { /* 読めなければ既定の色のまま描く */ }
+    }
 
     // 描画できる幅を測る。画面に出ていない時（display:none）は画面幅から見積もる。
     function chartWidth(box, min = 260) {
@@ -7734,8 +8300,6 @@
     }
 
     // ▼▼▼ 残在庫の推移グラフ（折れ線）▼▼▼
-    // 検証済みカテゴリカルパレット（8色）。9商品目以降は同色＋破線で識別（色＋線種の複合エンコード）。
-    const CHART_PALETTE = ['#2a78d6', '#1baf7a', '#eda100', '#008300', '#4a3aa7', '#e34948', '#e87ba4', '#eb6834'];
     let chartHighlight = null; // 凡例タップで注目する商品名
 
     // 各会計時点での商品ごとの残在庫を時系列で再構成する
@@ -7901,7 +8465,7 @@
             const h = mT + plotH - y;
             if (s.count > 0) {
                 svg += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW}" height="${h.toFixed(1)}" rx="3" fill="${CHART_PALETTE[0]}"/>`;
-                svg += `<text x="${(x + barW / 2).toFixed(1)}" y="${(y - 5).toFixed(1)}" text-anchor="middle" font-size="${CHART_FS}" font-weight="700" fill="#2E2A26">${s.count}</text>`;
+                svg += `<text x="${(x + barW / 2).toFixed(1)}" y="${(y - 5).toFixed(1)}" text-anchor="middle" font-size="${CHART_FS}" font-weight="700" fill="${CHART_TEXT}">${s.count}</text>`;
             }
             if (i % labelEvery === 0 || i === n - 1) {
                 svg += `<text x="${(x + barW / 2).toFixed(1)}" y="${H - mB + 17}" text-anchor="middle" font-size="${CHART_FS - 1}" fill="${CHART_INK}">${s.label}</text>`;
@@ -8091,6 +8655,7 @@
         const p = products.find(prod => prod.id === id);
         if (!p) return;
         p.note = value;
+        syncPushProducts();   // 備考も他の端末と同じものが見えるようにする
         saveData();
     }
 
@@ -8170,6 +8735,7 @@
             if (currentSession && syncEventCode) {
                 startSalesSubscription(syncEventCode);
                 startSessionDocSubscription(syncEventCode);
+                startReservationSubscription(syncEventCode);
             }
         } catch (e) {
             console.warn('Firebase同期は利用できません（オフライン/設定不備等）。ローカル運用で続行します。', e);
@@ -8310,12 +8876,30 @@
         fbSessionUnsub = fbDb.collection('events').doc(code).onSnapshot(doc => {
             const d = doc.data();
             // 初回の受信（この端末が今まさに開店/参加した瞬間）は通知しない。以降の変化だけ知らせる。
-            if (!firstSnapshot && d && d.status === 'closed' && syncMode) {
-                showToast('他の端末でこの販売会は閉店（集計）されました');
+            // 他の端末で閉店されたら、この端末も同じように閉店する。
+            // （知らせるだけだと、画面が営業中のまま残って会計を続けられてしまう）
+            if (!firstSnapshot && d && d.status === 'closed' && syncMode && currentSession
+                && d.closedBy !== getDeviceId()) {
+                firstSnapshot = true;                 // この後の後片づけで二重に反応しないようにする
+                closeSessionLocally({ remote: true });
+                return;
             }
             // 他の端末が商品を変更したら取り込む（自分が書いた分は取り込み直さない）
             if (!firstSnapshot && syncMode && d && Array.isArray(d.products) && d.productsUpdatedBy && d.productsUpdatedBy !== getDeviceId()) {
                 applyRemoteProducts(d.products);
+            }
+            // 売上目標も全端末でそろえる。
+            // （端末ごとに違う目標が出ていると、達成率を見た人が混乱する）
+            if (syncMode && d && d.goal != null && d.goalBy !== getDeviceId()) {
+                const g = Number(d.goal) > 0 ? Math.floor(Number(d.goal)) : 0;
+                if (g !== salesGoal) {
+                    salesGoal = g;
+                    saveData();
+                    renderSalesGoal();
+                    updateGoalState();
+                    updateAnalytics();
+                    if (!firstSnapshot) showToast(g > 0 ? `売上目標が ${yenStr(g)} にそろいました` : '売上目標がなしになりました');
+                }
             }
             // 合流の時に販売会の名前をそろえたら、他の端末の表示も合わせる。
             // （片方だけ名前が変わっていると、あとで集計を見た時にどの回か分からなくなる）
@@ -8334,11 +8918,16 @@
     }
 
     // 他端末から届いた商品構成を反映する。残数はこの端末でも販売実績から計算し直す。
+    // 名前・値段・仕入れ数だけでなく、種類（カテゴリ）と備考の違いも見る。
+    // （以前は種類だけ変えても「同じ内容」と判断して取り込まれなかった）
     function applyRemoteProducts(remoteProducts) {
-        const before = JSON.stringify(products.map(p => ({ n: p.name, p: p.price, i: p.initialStock })));
+        const key = list => JSON.stringify(list.map(p => ({
+            n: p.name, p: p.price, i: p.initialStock, t: p.type || '', o: p.note || '', a: p.active !== false
+        })));
+        const before = key(products);
         const next = JSON.parse(JSON.stringify(remoteProducts));
         next.forEach(p => { if (p.stock == null) p.stock = p.initialStock; if (p.soldOutTime === undefined) p.soldOutTime = null; });
-        const after = JSON.stringify(next.map(p => ({ n: p.name, p: p.price, i: p.initialStock })));
+        const after = key(next);
         if (before === after) return; // 中身が同じなら画面を描き直さない
         products = next;
         recomputeStockFromSales();
@@ -8351,6 +8940,69 @@
     function stopSessionDocSubscription() {
         if (fbSessionUnsub) { try { fbSessionUnsub(); } catch (e) {} fbSessionUnsub = null; }
     }
+
+    // ▼▼▼ 予約の共有 ▼▼▼
+    // 【なぜ必要か】予約だけがこの端末の中にしか無く、「受けた端末でしか清算できない」
+    //   という制約があった。行列が2列に分かれる販売会では、お客様が別の列に並んでしまい、
+    //   目の前に予約があるのに清算できない、ということが起きる。
+    //   予約1件を小さな1件の書類として置き場に置き、全端末で同じ一覧を見る形にする。
+    // 【壊れにくさ】清算・取り消しは「その1件を消す」だけなので、
+    //   2台が同時に触っても結果は同じ（どちらでも消える）。二重清算は売上側の
+    //   客No.と同じ仕組みで、消えた予約はもう一覧に出ない。
+    let fbResUnsub = null;
+
+    function reservationsCol(code) {
+        return fbDb.collection('events').doc(code).collection('reservations');
+    }
+
+    function syncPushReservation(res) {
+        if (!syncMode || !syncEventCode || !fbDb || !res) return;
+        // 中身を一度きれいに写し取る（値の無い項目が混ざっていると置き場が受け取らないため）
+        let items = [];
+        try { items = JSON.parse(JSON.stringify(res.items || [])); } catch (e) { items = []; }
+        reservationsCol(syncEventCode).doc(String(res.id)).set({
+            id: res.id, name: res.name || '', items: items, total: Number(res.total) || 0,
+            at: Date.now(), by: getDeviceId()
+        }).catch(e => console.warn('予約の共有に失敗しました', e));
+    }
+
+    function syncRemoveReservation(id) {
+        if (!syncMode || !syncEventCode || !fbDb || id == null) return;
+        reservationsCol(syncEventCode).doc(String(id)).delete()
+            .catch(e => console.warn('予約の取り消しの共有に失敗しました', e));
+    }
+
+    function startReservationSubscription(code) {
+        if (!syncReady || !code || !fbDb) return;
+        stopReservationSubscription();
+        let firstSnapshot = true;
+        fbResUnsub = reservationsCol(code).onSnapshot(snap => {
+            const rows = [];
+            snap.forEach(doc => {
+                const d = doc.data() || {};
+                if (d.id == null) return;
+                rows.push({ id: d.id, name: d.name || '', items: Array.isArray(d.items) ? d.items : [], total: Number(d.total) || 0 });
+            });
+            if (firstSnapshot) {
+                // 合流したとき、この端末がすでに持っていた予約を消してしまわない。
+                // 置き場に無いものだけを送り、両方の予約を1つの一覧にまとめる。
+                firstSnapshot = false;
+                const known = new Set(rows.map(r => String(r.id)));
+                reservations.forEach(r => { if (!known.has(String(r.id))) { rows.push(r); syncPushReservation(r); } });
+            }
+            rows.sort((a, b) => (a.id || 0) - (b.id || 0));
+            if (JSON.stringify(rows) === JSON.stringify(reservations)) return;
+            reservations = rows;
+            saveData();
+            renderReservations();
+            updateNavBadges();
+        }, err => { console.warn('予約の購読でエラー', err); });
+    }
+
+    function stopReservationSubscription() {
+        if (fbResUnsub) { try { fbResUnsub(); } catch (e) {} fbResUnsub = null; }
+    }
+    // ▲▲▲ ここまで ▲▲▲
 
     // リモート（全端末）の売上ドキュメントから salesHistory を再構築（取消は除外）
     function applyRemoteSales(docs) {
