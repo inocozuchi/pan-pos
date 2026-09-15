@@ -414,6 +414,17 @@
         }
         #pending-reminder.show { display: flex; }
 
+        /* 通信が切れている時の帯。危険の紅で、押すと共有の画面へ行ける */
+        #sync-health-bar {
+            display: none; align-items: center; justify-content: center; gap: 7px;
+            background: var(--danger-bg); color: var(--danger-ink); font-weight: 700;
+            font-size: 12.5px; text-align: center; padding: 8px 12px; cursor: pointer;
+            flex-shrink: 0; font-family: inherit; width: 100%; box-sizing: border-box; line-height: 1.4;
+            animation: riseIn .3s cubic-bezier(.32,.72,0,1) both;
+        }
+        #sync-health-bar.show { display: flex; }
+        #sync-health-bar .ic { width: 16px; height: 16px; flex-shrink: 0; stroke-width: 2.2; }
+
         /* カートの開閉ボタン：スマホ縦画面でだけ使う（タブレットでは常に一覧を出す） */
         #cart-toggle { display: none; }
 
@@ -1470,6 +1481,41 @@
             #customer-display .cd-idle-t, #customer-display .cd-done-t { font-size: 40px; }
         }
 
+        /* 2つのうちどちらかを選ぶ画面（ブラウザの確認ダイアログより、選択肢が読みやすい） */
+        #choice-modal .choice-content {
+            max-width: 420px; width: 100%; padding: 22px 22px 20px;
+            border-radius: var(--r-lg); background: var(--surface);
+            display: block; height: auto; max-height: 86dvh; overflow-y: auto;
+        }
+        #choice-modal .choice-head { font-size: 18px; font-weight: 800; margin-bottom: 8px; letter-spacing: 0.01em; }
+        #choice-modal .choice-body { font-size: 13.5px; color: var(--text-light); line-height: 1.6; margin: 0 0 16px; }
+        #choice-modal .btn-stack { display: flex; flex-direction: column; gap: 8px; }
+        #choice-modal .action-btn { width: 100%; margin-top: 0; }
+        #choice-modal .choice-note { font-size: 11.5px; font-weight: 600; opacity: .85; display: block; margin-top: 2px; }
+
+        /* 共有している端末の一覧 */
+        .dev-row {
+            display: flex; align-items: center; gap: 11px;
+            background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card);
+            padding: 11px 14px; margin-bottom: 7px; min-height: 52px;
+            animation: riseIn .3s cubic-bezier(.32,.72,0,1) both;
+        }
+        .dev-row .dev-dot {
+            width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+            background: var(--positive-ink);
+            box-shadow: 0 0 0 3px var(--positive);
+        }
+        .dev-row.off .dev-dot { background: var(--line-strong); box-shadow: 0 0 0 3px var(--btn-neutral); }
+        .dev-row .dev-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+        .dev-row .dev-name { font-size: 14.5px; font-weight: 700; overflow-wrap: anywhere; }
+        .dev-row .dev-name .dev-me {
+            font-size: 10.5px; font-weight: 700; color: var(--accent-ink); background: var(--accent-soft);
+            border-radius: var(--r-pill); padding: 2px 8px; margin-left: 7px; vertical-align: 1px;
+        }
+        .dev-row .dev-sub { font-size: 11.5px; color: var(--text-light); }
+        .dev-row.off .dev-name, .dev-row.off .dev-sub { color: var(--text-light); }
+        .dev-empty { font-size: 13px; color: var(--text-light); padding: 6px 2px; }
+
         /* 営業中に商品を足すフォーム（押すまで畳んでおく） */
         .add-card {
             background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-raised);
@@ -1949,6 +1995,8 @@
         </div>
 
         <aside id="sidebar">
+            <!-- 共有中にサーバーとつながっていない時だけ出る帯。会計は続けられることも書く -->
+            <div id="sync-health-bar" onclick="openPanel('settings','sync')"></div>
             <div id="pending-reminder" onclick="navTo('records')" style="display:none;"></div>
 
             <!-- スマホ縦画面では、カートの明細は畳んで商品ボタンの面積を優先する -->
@@ -2086,6 +2134,11 @@
             <div class="sub-view" id="sub-sync" style="display:none;">
                 <div id="sync-state-box" class="notice"></div>
                 <div id="sync-actions" class="btn-stack"></div>
+                <div id="sync-health" class="notice" style="display:none; margin-top:10px;"></div>
+                <div id="sync-devices-wrap" style="display:none;">
+                    <label class="field-label" style="margin-top:18px;">いま共有している端末</label>
+                    <div id="sync-devices"></div>
+                </div>
                 <label class="field-label" style="margin-top:18px;">この端末の役割</label>
                 <div class="menu-list" id="sync-role-list"></div>
                 <!-- 反映のおくれを実際に測る（体感ではなく数字で確かめられるように） -->
@@ -2098,10 +2151,15 @@
 
             <!-- 共有コードの追加（入力画面） -->
             <div class="sub-view" id="sub-sync-add" style="display:none;">
-                <p class="settings-hint">一緒に使う<b>全部の端末で同じ「共有コード」</b>を入れてください。いま営業中の会計・在庫・商品はそのまま引き継がれます。</p>
+                <p class="settings-hint">一緒に使う<b>全部の端末で同じ「共有コード」</b>を入れてください。コードは<b>開店前でも営業中でも</b>入れられます。いま営業中の会計・在庫・商品はそのまま引き継がれます。</p>
                 <label class="field-label">共有コード</label>
-                <input type="text" id="sync-live-code-input" placeholder="例: pansale-1101">
-                <button class="action-btn btn-checkout" style="width:100%;" onclick="startSyncMidSession()"><svg class="ic"><use href="#ic-link"/></svg>このコードで共有を始める</button>
+                <input type="text" id="sync-live-code-input" placeholder="例: pansale-1101" autocomplete="off" autocapitalize="characters">
+                <label class="field-label" style="margin-top:16px;">この端末の役割</label>
+                <div class="btn-stack">
+                    <button class="action-btn btn-checkout" style="margin-top:0;" onclick="startSyncMidSession()"><svg class="ic"><use href="#ic-register"/></svg>この端末でも会計する</button>
+                    <button class="action-btn btn-secondary" onclick="startCustomerModeFromSettings()"><svg class="ic"><use href="#ic-users"/></svg>お客様用の金額表示にする</button>
+                </div>
+                <p class="settings-hint" style="margin-top:10px;"><b>会計する</b>＝この端末でも商品を打てます（売上と在庫が全端末でひとつになります）。<br><b>お客様用</b>＝打つ内容を大きく映すだけの画面になります（会計はできません）。</p>
                 <div id="sync-status-active" class="settings-hint" style="margin-top:10px;"></div>
             </div>
 
@@ -2145,14 +2203,11 @@
                 <div id="goal-state" class="notice notice-accent" style="display:none; margin-top:12px;"></div>
             </div>
 
-            <!-- お客様用の表示（カスタマーディスプレイ） -->
+            <!-- お客様用の表示（カスタマーディスプレイ）：いまの状態と、戻し方の案内 -->
             <div class="sub-view" id="sub-customer" style="display:none;">
-                <p class="settings-hint">この端末を<b>お客様に向ける金額表示</b>にします。レジ役の端末が打っている内容が、大きな文字でそのまま映ります。<b>会計はできなくなります</b>（ふだんのレジには左下の×からいつでも戻せます）。</p>
+                <p class="settings-hint">この端末を<b>お客様に向ける金額表示</b>にすると、レジ役の端末が打っている内容が大きな文字でそのまま映ります。<b>会計はできなくなります</b>（左下の×でいつでも戻せます）。</p>
                 <div id="cd-state" class="notice"></div>
-                <label class="field-label" style="margin-top:14px;">共有コード</label>
-                <input type="text" id="cd-code-input" placeholder="レジ役の端末と同じコード" autocomplete="off" autocapitalize="characters">
-                <p class="settings-hint">レジ役の端末で使っているコードと<b>同じもの</b>を入れてください（設定 → 複数端末で使う で確認できます）。</p>
-                <button class="action-btn btn-checkout" style="width:100%; margin-top:10px;" onclick="startCustomerModeFromSettings()"><svg class="ic"><use href="#ic-users"/></svg>この端末をお客様用にする</button>
+                <div id="cd-actions" class="btn-stack" style="margin-top:12px;"></div>
                 <div class="notice" style="margin-top:14px;">
                     <svg class="ic"><use href="#ic-bulb"/></svg>
                     <span>使い方の例：タブレットで会計し、スマートフォンをお客様側に立てておく。商品を打つたびに明細と合計が出て、お預かりを入れるとお釣りも出ます。</span>
@@ -2339,6 +2394,15 @@
 
 <!-- 操作フィードバック用トースト -->
 <div id="toast"></div>
+
+<!-- 2つのうちどちらかを選ぶ小さな画面（販売会名の選択などに使う） -->
+<div class="modal" id="choice-modal" style="display:none;" onclick="dismissChoiceOnBackdrop(event)">
+    <div class="modal-content choice-content">
+        <div class="choice-head" id="choice-title"></div>
+        <p class="choice-body" id="choice-body"></p>
+        <div class="btn-stack" id="choice-actions"></div>
+    </div>
+</div>
 
 <!-- ▼▼▼ お客様用の表示（カスタマーディスプレイ）▼▼▼
      この端末を「お客様に向ける画面」にした時だけ、アプリ全体にかぶせて出す。
@@ -3449,7 +3513,18 @@
                 <h4>はじめから共有する</h4>
                 <p>開店の画面の<b>「複数端末で共有」</b>に、責任者から指定されたコードを入れて開店します。全部の端末で<b>同じコード</b>にしてください。</p>
                 <h4>途中から共有したくなった</h4>
-                <p>開店し直す必要はありません。<b>「設定 → 複数端末で使う」</b>にコードを入れて<b>「このコードで共有を始める」</b>を押すと、ここまでの会計も在庫もそのまま引き継がれます。2台目は開店の画面で同じコードを入れて開店します。</p>
+                <p>開店し直す必要はありません。<b>「設定 → 複数端末で使う」</b>にコードを入れて<b>「この端末でも会計する」</b>を押すと、ここまでの会計も在庫もそのまま引き継がれます。</p>
+                <p><b>どの端末も、開店前でも営業中でも参加できます。</b>すでに営業を始めてしまった端末どうしでも、同じコードを入れれば途中から1つにまとまります。</p>
+                <div class="man-box">
+                    <div class="man-box-h">名前の違う販売会が1つになるとき</div>
+                    <p>たとえば1台目が「午前の部」、2台目が「午後の部」で開店していた場合、合流するときに<b>どちらの名前にするかを選ぶ画面</b>が出ます。選んだ名前に、全部の端末がそろいます。</p>
+                </div>
+                <h4>つながっている端末を確かめる</h4>
+                <p><b>「設定 → 複数端末で使う」</b>の<b>「いま共有している端末」</b>に、参加している端末が並びます。会計する端末か、お客様用の表示かも分かります。通信が途切れている端末は灰色になります。</p>
+                <div class="man-box warn">
+                    <div class="man-box-h">通信が切れたとき</div>
+                    <p>レジの画面に<b>赤い帯</b>が出ます。<b>その間も会計はそのまま続けられます</b>（この端末に貯まり、つながると自動でまとめて送られます）。つながっていないまま閉店しようとすると引き止めるので、電波の良い場所で表示が緑になってから閉店してください。</p>
+                </div>
                 <div class="man-box warn">
                     <div class="man-box-h">共有しているときの閉店</div>
                     <p><b>「閉店する」は共有している販売会そのものを終わらせる操作</b>です。ほかの端末がまだ会計している場合は、先に声をかけてください。自分の端末だけ先に終えたいときは、「設定 → 複数端末で使う」の<b>「この端末の利用を終える」</b>を使います。</p>
@@ -3462,8 +3537,8 @@
                 <p>もう1台の端末を<b>お客様に向ける金額表示</b>にできます。レジ役の端末で打った内容が、そのまま大きな文字で映ります。</p>
                 <ol class="man-steps">
                     <li>レジ役の端末を<b>共有コードを入れて</b>開店しておきます（「複数の端末で同時に会計する」と同じ準備です）。</li>
-                    <li>表示に使う端末で<b>「設定 → 複数端末で使う → お客様用の表示」</b>を開きます。</li>
-                    <li><b>同じ共有コード</b>を入れて<b>「この端末をお客様用にする」</b>を押します。</li>
+                    <li>表示に使う端末で<b>「設定 → 複数端末で使う → 共有コードを入れる」</b>を開きます。</li>
+                    <li><b>同じ共有コード</b>を入れて<b>「お客様用の金額表示にする」</b>を押します。<br>（同じ画面の「この端末でも会計する」を押せば、2台目のレジになります）</li>
                     <li>お客様から見える向きに立てかけます。</li>
                 </ol>
                 <p>商品を打つたびに<b>明細と合計</b>が出ます。お預かりを入れると<b>お釣り</b>も出て、会計が終わると<b>「ありがとうございました」</b>に変わります。</p>
@@ -3611,6 +3686,7 @@
     let cdPushTimer = null;       // 書き込みの間引き用
     let cdLastPayload = '';       // 同じ内容を続けて書かないための控え
     let cdLastTotal = null;       // 金額が変わった時だけ弾ませるための控え
+    let cdLastSeen = 0, cdWatchTimer = null;   // 最後にレジから届いた時刻の見張り
 
     // ---- レジ役の端末：いまの内容を共有の置き場へ書く ----
     // 打つたびに書くと通信が増えるので、150ミリ秒だけまとめてから1回書く。
@@ -3706,7 +3782,7 @@
         if (!box) return;
         box.style.display = customerMode ? 'flex' : 'none';
         if (cdUnsub) { try { cdUnsub(); } catch (e) {} cdUnsub = null; }
-        if (!customerMode) { renderCustomerSettings(); return; }
+        if (!customerMode) { clearMyPresence(uiPrefs.cdCode); stopPresence(); renderCustomerSettings(); return; }
         renderCustomerView(null, 'connecting');
         startCustomerSubscription(uiPrefs.cdCode);
         renderCustomerSettings();
@@ -3734,13 +3810,28 @@
         // 店名は共有元の販売会名ではなく、この端末の領収書の設定（発行者）を使う
         const shop = document.getElementById('cd-shop');
         if (shop) shop.textContent = shopInfo().name || '';
+        startPresence();
         cdUnsub = fbDb.collection('events').doc(code).collection('live').doc(CD_DOC)
-            .onSnapshot(doc => {
-                renderCustomerView(doc.exists ? (doc.data() || null) : null, 'live');
+            .onSnapshot({ includeMetadataChanges: true }, doc => {
+                const d = doc.exists ? (doc.data() || null) : null;
+                cdLastSeen = Date.now();
+                // 手元の控えだけで出している間は「つながっていない」と正直に出す
+                const cached = doc.metadata && doc.metadata.fromCache;
+                renderCustomerView(d, cached ? 'lost' : 'live');
             }, err => {
                 console.warn('お客様用表示の購読でエラー', err);
                 renderCustomerView(null, 'lost');
+                scheduleCustomerRetry();
             });
+        // レジ側が止まった・電波が切れた時に、緑のままにしておかない
+        if (cdWatchTimer) clearInterval(cdWatchTimer);
+        cdWatchTimer = setInterval(() => {
+            if (!customerMode) { clearInterval(cdWatchTimer); cdWatchTimer = null; return; }
+            if (cdLastSeen && Date.now() - cdLastSeen > 90000) {
+                const linkEl = document.getElementById('cd-link');
+                if (linkEl && !linkEl.classList.contains('lost')) renderCustomerView(null, 'lost');
+            }
+        }, 15000);
     }
 
     function renderCustomerView(d, link) {
@@ -3794,6 +3885,148 @@
         }
     }
 
+    // ▼▼▼ 2つのうちどちらかを選ぶ画面 ▼▼▼
+    // ブラウザの確認ダイアログは「OK / キャンセル」しか書けず、
+    // どちらが何なのかを本文で説明するしかないので読み違えやすい。
+    // ボタンそのものに選択肢を書けるよう、画面の中のちいさな窓にする。
+    let choiceResolve = null;
+    function askChoice(title, body, options) {
+        return new Promise(resolve => {
+            choiceResolve = resolve;
+            document.getElementById('choice-title').textContent = title;
+            document.getElementById('choice-body').innerHTML = body;
+            document.getElementById('choice-actions').innerHTML = options.map((o, i) =>
+                `<button class="action-btn ${o.style || 'btn-secondary'}" onclick="answerChoice(${i})">`
+                + `${escHtml(o.label)}${o.note ? `<span class="choice-note">${escHtml(o.note)}</span>` : ''}</button>`).join('');
+            document.getElementById('choice-actions').dataset.values = JSON.stringify(options.map(o => o.value));
+            document.getElementById('choice-modal').style.display = 'flex';
+        });
+    }
+    function answerChoice(i) {
+        const box = document.getElementById('choice-actions');
+        const values = JSON.parse(box.dataset.values || '[]');
+        closeChoice(true);
+        if (choiceResolve) { const r = choiceResolve; choiceResolve = null; r(values[i]); }
+    }
+    // 窓を閉じたら必ず返事を返す。返事を待ったまま固まることがないようにする
+    function closeChoice(answered) {
+        document.getElementById('choice-modal').style.display = 'none';
+        if (!answered && choiceResolve) { const r = choiceResolve; choiceResolve = null; r(null); }
+    }
+    function dismissChoiceOnBackdrop(ev) {
+        if (ev.target !== ev.currentTarget) return;
+        closeChoice();   // 背景を押す＝やめる
+    }
+
+    // 名前の違う販売会が1つになる時、どちらの名前を使うか
+    function askSessionName(remoteName, myName, code) {
+        return askChoice(
+            '販売会の名前をそろえます',
+            `共有コード「<b>${escHtml(code)}</b>」の販売会と、この端末の販売会は<b>名前が違います</b>。`
+            + `売上はひとつにまとまります。集計や記録に残す名前を選んでください。`,
+            [
+                { label: `「${remoteName}」にそろえる`, note: '先に共有していた側の名前を使います', value: remoteName, style: 'btn-checkout' },
+                { label: `「${myName}」に変える`, note: 'この端末の名前に、全部の端末をそろえます', value: myName },
+                { label: 'やめる', note: '合流しないで、この端末だけで続けます', value: null }
+            ]
+        );
+    }
+
+    // ▼▼▼ いま共有している端末の一覧（在席の記録）▼▼▼
+    // 【なぜ必要か】2台以上で会計していると、「あの端末はちゃんとつながっているか」
+    // 「お客様用の表示は生きているか」が、手元の画面からは分からなかった。
+    // 各端末が20秒ごとに「わたしはここにいます」を1行書き、それを一覧にする。
+    const PRESENCE_EVERY = 20000;        // 何秒ごとに知らせるか
+    const PRESENCE_STALE = 70000;        // これだけ音沙汰がなければ「切れている」とみなす
+    let presenceTimer = null, presenceUnsub = null, presenceRows = [];
+
+    function myPresenceRole() {
+        if (customerMode) return 'display';
+        return 'register';
+    }
+
+    function presenceRef(code) {
+        return fbDb.collection('events').doc(code).collection('devices').doc(getDeviceId());
+    }
+
+    // 自分の在席を書く（共有中、またはお客様用として見ている間）
+    function beatPresence() {
+        const code = customerMode ? uiPrefs.cdCode : syncEventCode;
+        if (!code || !fbDb || !syncReady) return;
+        presenceRef(code).set({
+            label: deviceLabel(), role: myPresenceRole(),
+            at: Date.now(), ua: (navigator.userAgent || '').slice(0, 120)
+        }, { merge: true }).catch(e => console.warn('在席の送信に失敗しました', e));
+    }
+
+    // お客様用の端末が「音沙汰なし」と誤解しないよう、レジ側は静かな時も定期的に出し直す
+    let cdKeepAliveTimer = null;
+    function startCustomerKeepAlive() {
+        if (cdKeepAliveTimer) clearInterval(cdKeepAliveTimer);
+        cdKeepAliveTimer = setInterval(() => {
+            if (!syncMode || customerMode) return;
+            publishCustomerDisplay(true);
+        }, 45000);
+    }
+
+    function startPresence() {
+        const code = customerMode ? uiPrefs.cdCode : syncEventCode;
+        if (!code || !fbDb || !syncReady) return;
+        stopPresence();
+        beatPresence();
+        presenceTimer = setInterval(beatPresence, PRESENCE_EVERY);
+        presenceUnsub = fbDb.collection('events').doc(code).collection('devices')
+            .onSnapshot(snap => {
+                const rows = [];
+                snap.forEach(d => { const v = d.data() || {}; v.__id = d.id; rows.push(v); });
+                presenceRows = rows.sort((a, b) => (b.at || 0) - (a.at || 0));
+                renderSyncDevices();
+            }, err => console.warn('端末一覧の購読でエラー', err));
+    }
+
+    function stopPresence() {
+        if (presenceTimer) { clearInterval(presenceTimer); presenceTimer = null; }
+        if (presenceUnsub) { try { presenceUnsub(); } catch (e) {} presenceUnsub = null; }
+    }
+
+    // 共有をやめる時は、自分の行を消して一覧から消えるようにする
+    function clearMyPresence(code) {
+        const c = code || syncEventCode || uiPrefs.cdCode;
+        if (!c || !fbDb || !syncReady) return;
+        presenceRef(c).set({ at: 0, left: true }, { merge: true }).catch(() => {});
+    }
+
+    function renderSyncDevices() {
+        const wrap = document.getElementById('sync-devices-wrap');
+        const box = document.getElementById('sync-devices');
+        if (!wrap || !box) return;
+        const live = syncMode || customerMode;
+        wrap.style.display = live ? '' : 'none';
+        if (!live) return;
+        const now = Date.now();
+        const rows = presenceRows.filter(r => !r.left && r.at);
+        if (!rows.length) {
+            box.innerHTML = '<div class="dev-empty">まだ他の端末は見つかっていません。</div>';
+            return;
+        }
+        box.innerHTML = rows.map(r => {
+            const gap = Math.max(0, now - (r.at || 0));
+            const online = gap < PRESENCE_STALE;
+            const me = r.__id === getDeviceId();
+            const when = gap < 30000 ? 'たったいま'
+                : gap < 3600000 ? `${Math.round(gap / 60000)}分前`
+                : `${Math.round(gap / 3600000)}時間前`;
+            const roleLabel = r.role === 'display' ? 'お客様用の表示' : '会計する端末';
+            return `<div class="dev-row${online ? '' : ' off'}">
+                <span class="dev-dot"></span>
+                <span class="dev-main">
+                    <span class="dev-name">${escHtml(r.label || '名前なし')}${me ? '<b class="dev-me">この端末</b>' : ''}</span>
+                    <span class="dev-sub">${roleLabel}・${online ? '通信あり' : '最後の通信 ' + when}</span>
+                </span>
+            </div>`;
+        }).join('');
+    }
+
     // ▼ 反映のおくれを測る ▼
     // 「なんとなく遅い」を数字にできるようにする。
     // この端末から共有の置き場へ1回書き、その書き込みが購読で戻ってくるまでを測る
@@ -3843,26 +4076,32 @@
     // ---- 設定画面 ----
     function renderCustomerSettings() {
         const box = document.getElementById('cd-state');
+        const acts = document.getElementById('cd-actions');
         if (!box) return;
-        const input = document.getElementById('cd-code-input');
-        if (input && !input.value) input.value = uiPrefs.cdCode || syncEventCode || '';
         if (!window.FIREBASE_CONFIG) {
             box.className = 'notice notice-warn';
             box.innerHTML = '<svg class="ic"><use href="#ic-alert"/></svg><span>この端末では共有機能が使えないため、お客様用の表示は使えません。</span>';
+            if (acts) acts.innerHTML = '';
             return;
         }
         if (customerMode) {
             box.className = 'notice notice-ok';
-            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>いまこの端末は<b>お客様用の表示</b>です（コード: ${escHtml(uiPrefs.cdCode || '')}）。<br>画面の左下の×から、ふだんのレジに戻せます。</span>`;
+            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>いまこの端末は<b>お客様用の表示</b>です（コード: ${escHtml(uiPrefs.cdCode || '')}）。</span>`;
+            if (acts) acts.innerHTML = `<button class="action-btn btn-secondary" onclick="exitCustomerMode()"><svg class="ic"><use href="#ic-x"/></svg>ふだんのレジに戻す</button>`;
         } else {
             box.className = 'notice';
-            box.innerHTML = '<svg class="ic"><use href="#ic-users"/></svg><span>いまこの端末は<b>ふだんのレジ</b>です。</span>';
+            box.innerHTML = '<svg class="ic"><use href="#ic-users"/></svg><span>いまこの端末は<b>ふだんのレジ</b>です。お客様用にするには、ひとつ前の画面で<b>共有コードを入れて「お客様用の金額表示にする」</b>を押してください。</span>';
+            if (acts) acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-link"/></svg>共有コードを入れる画面へ</button>`;
         }
     }
 
     function startCustomerModeFromSettings() {
-        const input = document.getElementById('cd-code-input');
-        enterCustomerMode(input ? input.value : '');
+        // 共有コードの入力欄は1か所にまとめてある。営業中の共有も、お客様用の表示も、
+        // 同じ欄に入れたコードを使う（入れる場所が2つあると迷うため）。
+        const input = document.getElementById('sync-live-code-input');
+        let code = (input && input.value || '').trim();
+        if (!code) code = uiPrefs.cdCode || syncEventCode || '';
+        enterCustomerMode(code);
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -4409,6 +4648,14 @@
             ? '営業を終了して売上を集計します。\n\n※これは共有販売会そのものを終了する操作です。同じコードを使っている他の端末があれば、先にそちらへ伝えてから閉店してください。\n（この端末だけ操作を終える場合は、「この端末の利用を終える」をお使いください）'
             : '営業を終了して売上を集計します。';
         confirmMsg += '\n\n集計した記録は「設定 → 過去の販売会」に自動保存され、レジの会計データは空になります。';
+        // 送りきれていない会計があるまま閉店すると、その分が集計から抜けてしまう。
+        // お金の記録なので、ここは必ず立ち止まって知らせる。
+        const health = syncHealthState();
+        if (health && health.level === 'bad') {
+            confirmMsg = '【！】いまサーバーにつながっていません。\n他の端末の会計がまだ届いていない可能性があります。\n'
+                + '電波の良い場所で「設定 → 複数端末で使う」の表示が緑になってから閉店することをおすすめします。\n\n'
+                + confirmMsg;
+        }
         if (cart.length > 0) confirmMsg = `【！】カートに${cart.length}点の打ちかけが残っています。このまま閉店すると破棄されます。\n\n` + confirmMsg;
         if (!confirm(confirmMsg)) return;
         updateAnalytics();
@@ -4635,7 +4882,7 @@
         if (!remote) {
             // ── この端末が「共有の元」になる ──
             // いまの商品構成と、ここまでの会計をすべてアップロードする。
-            if (!confirm(`共有コード「${code}」で、いまの販売会「${currentSession}」の共有を始めます。\n\n・この端末の会計${salesHistory.length}件と商品構成が、共有の元になります。\n・他の端末では、開店画面で同じコードを入れて開店してもらってください。\n\nよろしいですか？`)) return;
+            if (!confirm(`共有コード「${code}」で、いまの販売会「${currentSession}」の共有を始めます。\n\n・この端末の会計${salesHistory.length}件と商品構成が、共有の元になります。\n・他の端末でも同じコードを入れてください。\n  開店前なら「開店の画面 → 複数端末で共有」、\n  すでに営業中なら「設定 → 複数端末で使う」から、どちらでも参加できます。\n\nよろしいですか？`)) return;
             try {
                 await fbDb.collection('events').doc(code).set({
                     name: currentSession, status: 'open', products: products,
@@ -4652,7 +4899,8 @@
             const sharedProducts = Array.isArray(remote.products) ? remote.products : [];
             const sharedNames = new Set(sharedProducts.map(p => p.name));
             const missing = [...new Set(salesHistory.flatMap(h => (h.items || []).map(i => i.name)))].filter(n => !sharedNames.has(n));
-            let msg = `共有コード「${code}」は、すでに「${remote.name || '無題'}」として動いています。\n\n・この端末の会計${salesHistory.length}件を、その販売会に合流させます。\n・商品と仕入れ数は共有側の内容にそろいます。`;
+            const remoteName = remote.name || '無題';
+            let msg = `共有コード「${code}」は、すでに「${remoteName}」として動いています。\n\n・この端末の会計${salesHistory.length}件を、その販売会に合流させます。\n・商品と仕入れ数は共有側の内容にそろいます。`;
             if (missing.length) msg += `\n\n【！】次の商品は共有側のリストにありません：${missing.join('、')}\n  売上には反映されますが、在庫の残数は管理されません。`;
             msg += '\n\nよろしいですか？';
             if (!confirm(msg)) return;
@@ -4660,7 +4908,23 @@
                 products = JSON.parse(JSON.stringify(sharedProducts));
                 products.forEach(p => { if (p.stock == null) p.stock = p.initialStock; if (p.soldOutTime === undefined) p.soldOutTime = null; });
             }
-            currentSession = remote.name || currentSession;
+            // ▼ 名前が違う2つの販売会が1つになる時、どちらの名前にするかを選べるようにする ▼
+            // 以前は黙って共有側の名前に上書きしていたので、
+            // この端末で付けた名前がどこへ行ったのか分からなくなっていた。
+            let joinName = remoteName;
+            const mine = (currentSession || '').trim();
+            if (mine && mine !== remoteName) {
+                const chosen = await askSessionName(remoteName, mine, code);
+                if (chosen === null) return;   // やめる
+                joinName = chosen;
+                if (joinName !== remoteName) {
+                    // 選んだ名前を共有側にも書いて、全部の端末でそろえる
+                    try {
+                        await fbDb.collection('events').doc(code).set({ name: joinName }, { merge: true });
+                    } catch (e) { console.warn('販売会名の共有に失敗しました', e); }
+                }
+            }
+            currentSession = joinName;
         }
 
         // 購読を開始する。startSalesSubscription の中で、まだ共有されていない
@@ -5993,7 +6257,7 @@
         'goal': '売上目標',
         'stock': '商品・在庫の調整',
         'sync': '複数端末で使う',
-        'sync-add': '共有コードを追加',
+        'sync-add': '共有コードを入れる',
         'receipt': '領収書の設定',
         'archive': '過去の販売会',
         'data': 'データの書き出し',
@@ -6244,6 +6508,8 @@
         if (!box || !acts) return;
         const speed = document.getElementById('sync-speed');
         renderSyncRoleList();
+        renderSyncDevices();
+        renderSyncHealth();
         if (!currentSession) {
             box.className = 'notice';
             box.innerHTML = '<svg class="ic"><use href="#ic-alert"/></svg>共有は営業中だけ開始できます。まず開店してください。';
@@ -6261,8 +6527,8 @@
             if (speed) speed.style.display = '';
         } else {
             box.className = 'notice';
-            box.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span>いまは<b>この端末だけ</b>で営業しています。共有コードを追加すると、他の端末と売上をリアルタイムで共有できます。<br>いまの会計・在庫はそのまま引き継がれます。</span>';
-            acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-plus"/></svg>共有コードを追加する</button>`;
+            box.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span>いまは<b>この端末だけ</b>で営業しています。共有コードを入れると、他の端末と売上をリアルタイムで共有できます。<br>いまの会計・在庫はそのまま引き継がれます。</span>';
+            acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-plus"/></svg>共有コードを入れる</button>`;
             if (speed) speed.style.display = 'none';
         }
     }
@@ -7945,17 +8211,81 @@
         flushLocalSalesToRemote();
         if (fbSalesUnsub) { try { fbSalesUnsub(); } catch (e) {} fbSalesUnsub = null; }
         const col = fbDb.collection('events').doc(code).collection('sales');
-        fbSalesUnsub = col.onSnapshot(snap => {
+        startPresence();
+        // includeMetadataChanges を付けると、「まだサーバーに届いていない書き込みがあるか」
+        // 「いま手元の控えだけで表示しているか」が分かる。これを使って通信の状態を出す。
+        fbSalesUnsub = col.onSnapshot({ includeMetadataChanges: true }, snap => {
             const docs = [];
             snap.forEach(d => { const v = d.data() || {}; v.__id = d.id; docs.push(v); });
+            const m = snap.metadata || {};
+            noteSyncHealth({ fromCache: !!m.fromCache, pending: !!m.hasPendingWrites, docs: docs.length });
             applyRemoteSales(docs);
         }, err => {
             console.warn('同期の購読でエラー。ローカル表示を継続します。', err);
+            noteSyncHealth({ error: true });
         });
         updateSyncUi();
     }
 
+    // ▼▼▼ 通信の調子を見張る ▼▼▼
+    // 【なぜ必要か】お金を扱うので、「送れていない会計がある」ことに
+    // 気づかないまま閉店してしまうのがいちばん困る。
+    // 電波が切れている間も会計は続けられる（Firestoreが手元に貯める）が、
+    // その状態を画面に出して、閉店前に必ず気づけるようにする。
+    const syncHealth = { online: true, pendingSince: 0, lastOk: Date.now(), error: false, docs: 0 };
+
+    function noteSyncHealth(s) {
+        if (s.error) { syncHealth.error = true; renderSyncHealth(); return; }
+        syncHealth.error = false;
+        syncHealth.docs = s.docs;
+        // 手元の控えだけで出している＝サーバーとつながっていない
+        syncHealth.online = !s.fromCache;
+        if (s.pending) { if (!syncHealth.pendingSince) syncHealth.pendingSince = Date.now(); }
+        else { syncHealth.pendingSince = 0; syncHealth.lastOk = Date.now(); }
+        renderSyncHealth();
+    }
+
+    function syncHealthState() {
+        if (!syncMode) return null;
+        if (syncHealth.error) return { level: 'bad', text: '同期でエラーが起きています。この端末だけで会計は続けられます。' };
+        const waiting = syncHealth.pendingSince ? Date.now() - syncHealth.pendingSince : 0;
+        if (!syncHealth.online || waiting > 8000) {
+            const sec = Math.round(Math.max(waiting, Date.now() - syncHealth.lastOk) / 1000);
+            return { level: 'bad', text: `サーバーにつながっていません（${sec}秒）。会計はこのまま続けられます。つながると自動でまとめて送られます。` };
+        }
+        if (waiting > 0) return { level: 'wait', text: '送信中です。' };
+        return { level: 'ok', text: 'つながっています。会計はすぐ全端末に反映されます。' };
+    }
+
+    // レジ画面の上に出す帯。つながっていない時だけ出す
+    function renderSyncHealth() {
+        const bar = document.getElementById('sync-health-bar');
+        const st = syncHealthState();
+        if (bar) {
+            const show = !!st && st.level === 'bad';
+            bar.classList.toggle('show', show);
+            if (show) bar.innerHTML = `<svg class="ic"><use href="#ic-alert"/></svg><span>${escHtml(st.text)}</span>`;
+        }
+        const box = document.getElementById('sync-health');
+        if (box) {
+            if (!st) { box.style.display = 'none'; }
+            else {
+                box.style.display = '';
+                box.className = 'notice ' + (st.level === 'ok' ? 'notice-ok' : (st.level === 'bad' ? 'notice-danger' : ''));
+                box.innerHTML = `<svg class="ic"><use href="#ic-${st.level === 'ok' ? 'check' : (st.level === 'bad' ? 'alert' : 'clock')}"/></svg><span>${escHtml(st.text)}</span>`;
+            }
+        }
+    }
+    // 送信待ちが続いている時は、秒数が伸びていくのが見えるように定期的に描き直す
+    setInterval(() => { if (syncMode) renderSyncHealth(); }, 5000);
+    // 電波が戻ったら、すぐ在席を知らせ直して一覧にも復帰させる
+    window.addEventListener('online', () => { if (syncMode || customerMode) { beatPresence(); renderSyncHealth(); } });
+    window.addEventListener('offline', () => { syncHealth.online = false; renderSyncHealth(); });
+
     function stopSalesSubscription() {
+        clearMyPresence();
+        stopPresence();
+        presenceRows = [];
         if (fbSalesUnsub) { try { fbSalesUnsub(); } catch (e) {} fbSalesUnsub = null; }
         syncMode = false;
         updateSyncUi();
@@ -7986,6 +8316,18 @@
             // 他の端末が商品を変更したら取り込む（自分が書いた分は取り込み直さない）
             if (!firstSnapshot && syncMode && d && Array.isArray(d.products) && d.productsUpdatedBy && d.productsUpdatedBy !== getDeviceId()) {
                 applyRemoteProducts(d.products);
+            }
+            // 合流の時に販売会の名前をそろえたら、他の端末の表示も合わせる。
+            // （片方だけ名前が変わっていると、あとで集計を見た時にどの回か分からなくなる）
+            if (syncMode && d && d.name && currentSession && d.name !== currentSession) {
+                const before = currentSession;
+                currentSession = d.name;
+                const disp = document.getElementById('session-display');
+                if (disp) disp.innerText = `営業中: ${currentSession}`;
+                updateSessionTabView();
+                saveData();
+                if (!firstSnapshot) showToast(`販売会の名前が「${d.name}」にそろいました`);
+                logEdit(`販売会名の統一：${before} → ${d.name}`);
             }
             firstSnapshot = false;
         }, err => { console.warn('共有販売会の状態購読でエラー', err); });
