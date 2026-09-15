@@ -2479,8 +2479,8 @@
                 <label class="field-label sec">共有されるもの</label>
                 <div class="notice">
                     <svg class="ic"><use href="#ic-link"/></svg>
-                    <span>会計（売上・取消）／在庫と残数／商品／販売会の名前／売上目標／予約。<b>全部の端末で同じになります。</b>どの端末から閉店しても、共有中の全端末がいっしょに閉店します。<br>
-                    端末ごとに持つのは、領収書の発行者名・画面の明るさ・時計や天気の設定だけです。</span>
+                    <span>会計／在庫と残数／商品／販売会の名前／売上目標／予約。<b>全部の端末で同じ</b>になり、どの端末から閉店しても<b>いっしょに閉店</b>します。<br>
+                    端末ごとなのは、領収書の発行者名・画面の明るさ・時計や天気の設定だけです。</span>
                 </div>
             </div>
 
@@ -3966,6 +3966,11 @@
                     <li><b>同じ共有コード</b>を入れて<b>「お客様用の金額表示にする」</b>を押します。<br>（同じ画面の「この端末でも会計する」を押せば、2台目のレジになります）</li>
                     <li>お客様から見える向きに立てかけます。</li>
                 </ol>
+                <div class="man-box tip">
+                    <div class="man-box-h">すでに共有している端末なら、1回で切り替わります</div>
+                    <p>その端末がもう同じ販売会で会計しているなら、<b>コードを入れ直す必要も、共有をやめる必要もありません</b>。<b>「設定 → 複数端末で使う → お客様用の表示」</b>を開いて<b>「この端末をお客様用の表示にする」</b>を押すだけです。</p>
+                    <p>戻す時も同じ画面の<b>「ふだんのレジに戻す」</b>1回で、<b>そのまま同じ販売会の続きから会計できます</b>。行列の具合に合わせて、レジを増やしたり表示に回したりを何度でも切り替えられます。</p>
+                </div>
                 <p>商品を打つたびに<b>明細と合計</b>が1行ずつ増えていきます。レジで<b>「会計へ進む」</b>を押すと合計の文字が大きくなり、お預かりを入れると<b>お釣り</b>も出ます。会計が終わると<b>「ありがとうございました」</b>に変わり、約18秒そのまま出ています（次のお客様の商品を1点打てば、すぐ次の会計の画面に変わります）。</p>
                 <p>端末を<b>横向きに寝かせても、明細はそのまま出ます</b>（左に買うもの、右に金額の2段組みになります）。</p>
                 <div class="man-box tip">
@@ -4255,11 +4260,11 @@
     // ---- お客様用の端末：読んで映す ----
     function enterCustomerMode(code) {
         const c = sanitizeEventCode((code || '').trim());
-        if (!c) { playError(); alert('共有コードを入れてください。\nレジ役の端末と同じ文字にします。'); return; }
+        if (!c) { playError(); alert('共有コードを入れてください。\nレジ役の端末と同じ文字にします。'); return false; }
         if (!window.FIREBASE_CONFIG || !syncReady) {
             playError();
             alert('共有サーバーにつながっていないため、お客様用の表示にできません。\n通信状況をご確認のうえ、少し待ってからもう一度お試しください。');
-            return;
+            return false;
         }
         customerMode = true;
         uiPrefs.cdCode = c;
@@ -4267,14 +4272,118 @@
         try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
         applyCustomerMode();
         showToast('お客様用の表示にしました');
+        return true;
     }
 
-    function exitCustomerMode() {
-        if (!confirm('お客様用の表示をやめて、ふだんのレジの画面に戻しますか？')) return;
+    async function exitCustomerMode(opts) {
+        const quiet = !!(opts && opts.quiet);
+        if (!quiet && !confirm('お客様用の表示をやめて、ふだんのレジの画面に戻しますか？')) return;
+        const code = knownShareCode();
         customerMode = false;
         uiPrefs.role = 'register';
         try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
         applyCustomerMode();
+        // もう一度コードを入れ直させない。
+        // ・さっきまでこの端末が入っていた販売会なら、そのまま受け取りを再開する
+        // ・まだ入っていないなら、映していたコードだけで合流する
+        if (!code) { renderSyncRoleList(); return; }
+        if (syncEventCode === code && currentSession) {
+            // さっきまでこの端末が会計していた販売会。そのまま続きから会計できる。
+            if (resumeRegisterSync()) { showToast('ふだんのレジに戻しました'); renderSyncRoleList(); return; }
+        }
+        // 映すだけだった端末は、この端末の売上データを作り替えることになるので、
+        // 黙って入らずに「合流する」の一押しを見せるところまでにする。
+        // （コードはもう入っているので、押すだけで済む）
+        const inp = document.getElementById('sync-live-code-input');
+        if (inp) inp.value = code;
+        openPanel('settings', 'sync-add');
+        peekEventCode('live');
+        showToast('レジに戻しました（合流するなら下のボタンを押してください）');
+        renderSyncRoleList();
+    }
+
+    // ▼▼▼ この端末の役割を、その場で切り替える ▼▼▼
+    // 【なぜ必要か】以前は「お客様用にする」ために、いちど共有をやめる（または
+    //   この端末の利用を終える）必要があり、そのあとコードを入れ直していた。
+    //   同じ販売会にいるのだから、映すか打つかを選び直すだけで済むはずのこと。
+    function knownShareCode() {
+        return sanitizeEventCode(syncEventCode || uiPrefs.cdCode || '');
+    }
+
+    // レジとしての受け取りだけを止める（コードと「回」は覚えたまま）
+    function pauseRegisterSync() {
+        stopCustomerKeepAlive();
+        stopDisplayOwnerWatch();
+        cdSeenDisplays = {};
+        if (fbSalesUnsub) { try { fbSalesUnsub(); } catch (e) {} fbSalesUnsub = null; }
+        stopSessionDocSubscription();
+        stopReservationSubscription();
+        syncMode = false;
+        updateSyncUi();
+    }
+
+    function resumeRegisterSync() {
+        if (!syncEventCode || !syncReady || !fbDb) return false;
+        startSalesSubscription(syncEventCode);
+        // 映していたあいだに他の端末が閉店していることがある。
+        // その時は、受け取りが追いついてから、この端末も同じように閉店する。
+        startSessionDocSubscription(syncEventCode, { closeIfClosed: true });
+        startReservationSubscription(syncEventCode);
+        return true;
+    }
+
+    // コードだけで、動いている販売会に入る（開店の操作をしないで済む道）
+    async function joinByCodeOnly(code, doneMsg) {
+        const c = sanitizeEventCode(code || '');
+        if (!c || !syncReady || !fbDb) { openPanel('settings', 'sync-add'); return false; }
+        let d = null;
+        try {
+            const snap = await fbDb.collection('events').doc(c).get();
+            d = snap.exists ? (snap.data() || {}) : null;
+        } catch (e) { d = null; }
+        const live = d && d.status !== 'closed' && Array.isArray(d.products) && d.products.length > 0;
+        if (!live) {
+            // まだ誰も開いていない（または閉店済み）なら、商品と仕入れ数が要るので開店の準備へ
+            const openInput = document.getElementById('sync-event-code-input');
+            if (openInput) openInput.value = c;
+            showToast('開店の準備から始めます');
+            openPanel('session', 'open-sync');
+            peekEventCode('open');
+            return false;
+        }
+        // 調べた結果をそのまま下調べに入れておく（同じことを二度聞かない）
+        openSyncPeek = { code: c, state: 'open', name: d.name || '無題' };
+        const openInput = document.getElementById('sync-event-code-input');
+        if (openInput) openInput.value = c;
+        const nameInput = document.getElementById('session-name-input');
+        if (nameInput && !nameInput.value) nameInput.value = defaultSessionName();
+        await startSession();
+        if (doneMsg) showToast(doneMsg);
+        return true;
+    }
+
+    // 役割の切り替え本体（'register' / 'customer'）
+    async function switchDeviceRole(role) {
+        if (!window.FIREBASE_CONFIG) { playError(); alert('この端末では共有機能が使えないため、役割は変えられません。'); return; }
+        if (role === 'customer') {
+            if (customerMode) return;
+            const code = knownShareCode();
+            if (!code) {
+                showToast('先に共有コードを入れてください');
+                openPanel('settings', 'sync-add');
+                return;
+            }
+            if (!syncReady) { playError(); alert('共有サーバーにつながっていないため、お客様用の表示にできません。\n通信状況をご確認のうえ、少し待ってからもう一度お試しください。'); return; }
+            if (cart.length > 0 && !confirm('いま打ちかけの商品があります。\nお客様用の表示にすると、この端末では会計できなくなります。\n\n打ちかけの内容を取り消して切り替えますか？')) return;
+            cart = [];
+            const wasSyncing = syncMode;
+            pauseRegisterSync();
+            if (!enterCustomerMode(code) && wasSyncing) resumeRegisterSync();   // だめだった時は元に戻す
+            renderSyncRoleList();
+            return;
+        }
+        if (!customerMode) return;
+        await exitCustomerMode({ quiet: true });
     }
 
     // いまの役割にあわせて、画面とデータの受け取りを切り替える
@@ -4284,10 +4393,11 @@
         box.style.display = customerMode ? 'flex' : 'none';
         applySurfaceColors();    // 画面の端までの色も、役割に合わせて切り替える
         if (cdUnsub) { try { cdUnsub(); } catch (e) {} cdUnsub = null; }
-        if (!customerMode) { clearMyPresence(uiPrefs.cdCode); stopPresence(); renderCustomerSettings(); return; }
+        if (!customerMode) { clearMyPresence(uiPrefs.cdCode); stopPresence(); renderCustomerSettings(); renderSyncRoleList(); return; }
         renderCustomerView(null, 'connecting');
         startCustomerSubscription(uiPrefs.cdCode);
         renderCustomerSettings();
+        renderSyncRoleList();
     }
 
     // つながらない時は、あきらめずに少しずつ間隔をあけて試し直す。
@@ -4743,11 +4853,20 @@
         }
         if (customerMode) {
             box.className = 'notice notice-ok';
-            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>いまこの端末は<b>お客様用の表示</b>です（コード: ${escHtml(uiPrefs.cdCode || '')}）。</span>`;
-            if (acts) acts.innerHTML = `<button class="action-btn btn-secondary" onclick="exitCustomerMode()"><svg class="ic"><use href="#ic-x"/></svg>ふだんのレジに戻す</button>`;
+            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>いまこの端末は<b>お客様用の表示</b>です（コード: ${escHtml(uiPrefs.cdCode || '')}）。<br>レジに戻すと、そのまま同じ販売会で会計できます。</span>`;
+            if (acts) acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="switchDeviceRole('register')"><svg class="ic"><use href="#ic-register"/></svg>ふだんのレジに戻す</button>`;
+            return;
+        }
+        // レジのまま。すでにコードが分かっているなら、入れ直さずにそのまま切り替えられる。
+        const code = knownShareCode();
+        box.className = 'notice';
+        if (code) {
+            box.innerHTML = `<svg class="ic"><use href="#ic-users"/></svg><span>いまこの端末は<b>ふだんのレジ</b>です。<br>共有コード<b>「${escHtml(code)}」</b>のまま、お客様用の表示に切り替えられます（<b>コードの入れ直しも、共有をやめる必要もありません</b>）。<br>戻す時もこの画面から1回で戻せます。</span>`;
+            if (acts) acts.innerHTML =
+                `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="switchDeviceRole('customer')"><svg class="ic"><use href="#ic-users"/></svg>この端末をお客様用の表示にする</button>` +
+                `<button class="action-btn btn-secondary" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-link"/></svg>別の共有コードを入れる</button>`;
         } else {
-            box.className = 'notice';
-            box.innerHTML = '<svg class="ic"><use href="#ic-users"/></svg><span>いまこの端末は<b>ふだんのレジ</b>です。お客様用にするには、ひとつ前の画面で<b>共有コードを入れて「お客様用の金額表示にする」</b>を押してください。</span>';
+            box.innerHTML = '<svg class="ic"><use href="#ic-users"/></svg><span>いまこの端末は<b>ふだんのレジ</b>です。お客様用にするには、レジ役の端末が使っている<b>共有コード</b>を入れてください。</span>';
             if (acts) acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-link"/></svg>共有コードを入れる画面へ</button>`;
         }
     }
@@ -4765,7 +4884,11 @@
             alert(`共有コード「${code}」は閉店済みです。\nレジ役の端末がいま使っているコードを入れてください。`);
             return;
         }
-        enterCustomerMode(code);
+        // この端末がレジとして共有していたなら、その受け取りは止めてから映す役へ回る
+        const wasSyncing = syncMode;
+        if (wasSyncing) { cart = []; pauseRegisterSync(); }
+        if (!enterCustomerMode(code) && wasSyncing) resumeRegisterSync();
+        renderSyncRoleList();
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -7597,11 +7720,22 @@
 
     // 「この端末の役割」。ふだんのレジか、お客様に向ける金額表示か。
     // 共有の画面の中に置いている（どちらも「複数の端末で使う」話なので、探す場所が同じになる）
+    // 「この端末の役割」。ふだんのレジか、お客様に向ける金額表示か。
+    // どちらの役割からでも、その場で選び直せる（コードを入れ直さない）。
     function renderSyncRoleList() {
         const box = document.getElementById('sync-role-list');
         if (!box) return;
-        const sub = customerMode ? 'いまお客様用の表示です' : 'お客様に金額を見せる画面にする';
-        box.innerHTML = menuRow('users', 'お客様用の表示', sub, "openPanel('settings','customer')", { disabled: !window.FIREBASE_CONFIG });
+        const off = !window.FIREBASE_CONFIG;
+        const code = knownShareCode();
+        box.innerHTML =
+            menuRow('register', 'ふだんのレジ',
+                customerMode ? 'この端末でも商品を打つ' : '◯ いまこの役割です',
+                customerMode ? "switchDeviceRole('register')" : "openPanel('settings','customer')",
+                { disabled: off }) +
+            menuRow('users', 'お客様用の表示',
+                customerMode ? '◯ いまこの役割です' : (code ? `コード「${escHtml(code)}」で金額を映す` : '先に共有コードを入れてください'),
+                "openPanel('settings','customer')",
+                { disabled: off });
     }
 
     function setActiveNav(section) {
@@ -9457,12 +9591,21 @@
     // 共有販売会(events/{code})自体の状態を購読し、
     //  ・他端末による「閉店」を検知する（強制終了はしない）
     //  ・他端末での商品の追加・価格変更・追加搬入を取り込む
-    function startSessionDocSubscription(code) {
+    function startSessionDocSubscription(code, opts) {
         if (!syncReady || !code || !fbDb) return;
+        // closeIfClosed … 役割を切り替えて戻ってきた時など、
+        //   「もう閉店していた」ことに最初の受信で気づく必要がある場合に立てる
+        const closeIfClosed = !!(opts && opts.closeIfClosed);
         if (fbSessionUnsub) { try { fbSessionUnsub(); } catch (e) {} fbSessionUnsub = null; }
         let firstSnapshot = true;
         fbSessionUnsub = fbDb.collection('events').doc(code).onSnapshot(doc => {
             const d = doc.data();
+            if (firstSnapshot && closeIfClosed && d && d.status === 'closed' && syncMode && currentSession) {
+                firstSnapshot = false;
+                // 会計の受け取りが届くのを少し待ってから閉じる（集計を欠けさせないため）
+                setTimeout(() => { if (currentSession) closeSessionLocally({ remote: true }); }, 1500);
+                return;
+            }
             // 初回の受信（この端末が今まさに開店/参加した瞬間）は通知しない。以降の変化だけ知らせる。
             // 他の端末で閉店されたら、この端末も同じように閉店する。
             // （知らせるだけだと、画面が営業中のまま残って会計を続けられてしまう）
