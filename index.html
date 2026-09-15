@@ -117,7 +117,10 @@
             --toast-bg: rgba(28,29,34,0.88);          /* 知らせの帯 */
             --hairline: rgba(28,29,34,.05);           /* 入力欄などの、ごく細い内側のふち */
 
-            /* 角丸は 3段階＋ピルに統一（細かいパーツ=sm／箱・ボタン=md／モーダル=lg） */
+            /* 角丸は 3段階＋ピルに統一する。
+           sm=細かいパーツ（札・入力の小窓）／md=カードとボタン（画面の中の箱はすべてこれ）／
+           lg=画面に重ねて出す窓（モーダル）だけ。カードに lg を使わないことで、
+           「重なって出てきたもの」と「画面の中に並んでいるもの」が形で見分けられる。 */
             --r-sm: 9px;
             --r-md: 13px;
             --r-lg: 20px;
@@ -471,9 +474,11 @@
         }
 
         /* 過去の販売会（閉店時に自動保存されたもの）の一覧 */
+        /* 他のカード（端末の一覧・予約・集計のタイル）と同じ作りにそろえる。
+           枠線ではなく、面と影で1枚ずつ浮かせる。 */
         .arc-card {
-            border: 1px solid var(--line); border-radius: var(--r-md); padding: 10px 12px;
-            margin-bottom: 8px; background: var(--surface);
+            border: none; border-radius: var(--r-md); padding: 11px 13px;
+            margin-bottom: 8px; background: var(--surface); box-shadow: var(--shadow-card);
         }
         .arc-card .arc-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
         .arc-card .arc-name { font-weight: bold; font-size: 14px; overflow-wrap: anywhere; }
@@ -823,7 +828,7 @@
         /* 1件の会計＝1枚の白いカード。地の色と同じだと境目が分からなかったので、
            白い面＋やわらかい影で「ここからここまでが1会計」が一目で分かるようにする。 */
         .res-card {
-            background: var(--surface); border-radius: var(--r-lg); padding: 14px 16px;
+            background: var(--surface); border-radius: var(--r-md); padding: 14px 16px;
             margin-bottom: 12px; display: flex; flex-direction: column; gap: 9px;
             box-shadow: var(--shadow-card);
         }
@@ -1079,7 +1084,7 @@
         /* 仕入れ数設定：横長デバイスでは商品をカード横並び＋横スクロール */
         .setup-list { background:none; border:none; padding:0; margin-bottom:15px; max-height:none; }
         .setup-card {
-            background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-card);
+            background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card);
             padding: 12px 14px; margin-bottom: 10px;
         }
         .setup-add-btn { width:100%; margin-top:10px; }
@@ -1386,7 +1391,7 @@
         .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         @media (min-width: 769px) { .menu-grid { grid-template-columns: repeat(3, 1fr); } }
         .menu-card {
-            background: var(--surface); border: none; border-radius: var(--r-lg);
+            background: var(--surface); border: none; border-radius: var(--r-md);
             padding: 16px 10px; cursor: pointer; font-family: inherit; color: var(--text-main);
             display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
             box-shadow: var(--shadow-card);
@@ -1478,7 +1483,13 @@
             transform-origin: top left; will-change: transform;
         }
 
-        .field-label { display: block; font-size: 13px; font-weight: bold; color: var(--text-main); margin-bottom: 2px; }
+        /* 画面の中の小見出し。余白は2種類だけに決めておく。
+           ・ふつう（同じまとまりの中で続く見出し）… 上に12px
+           ・.sec（新しいまとまりが始まる見出し）… 上に20px
+           あちこちで別々の数字を書くと、画面ごとに間のあき方が変わって落ち着かないため。 */
+        .field-label { display: block; font-size: 13px; font-weight: bold; color: var(--text-main); margin: 12px 0 2px; }
+        .field-label:first-child { margin-top: 0; }
+        .field-label.sec { margin-top: 20px; }
         .chart-box { background: var(--white); border: none; box-shadow: var(--shadow-card); border-radius: var(--r-md); padding: 12px 10px; margin-bottom: 10px; overflow-x: auto; text-align: center; }
         #handoff-paste {
             width: 100%; box-sizing: border-box; height: 64px; margin: 4px 0 0; padding: 10px; font-size: 13px;
@@ -2439,7 +2450,7 @@
                             <input type="number" id="la-cost" inputmode="numeric" placeholder="—" min="0" step="1">
                         </div>
                     </div>
-                    <label class="field-label" style="margin-top:10px;">種類（レジのボタンの色）</label>
+                    <label class="field-label">種類（レジのボタンの色）</label>
                     <div id="la-type"></div>
                     <div class="btn-stack" style="margin-top:12px;">
                         <button class="action-btn btn-checkout" style="margin-top:0;" onclick="addLiveProduct()"><svg class="ic"><use href="#ic-check"/></svg>この内容で追加する</button>
@@ -2454,23 +2465,23 @@
                 <div id="sync-actions" class="btn-stack"></div>
                 <div id="sync-health" class="notice" style="display:none; margin-top:10px;"></div>
                 <div id="sync-devices-wrap" style="display:none;">
-                    <label class="field-label" style="margin-top:18px;">いま共有している端末</label>
+                    <label class="field-label sec">いま共有している端末</label>
                     <div id="sync-devices"></div>
-                    <label class="field-label" style="margin-top:14px;">この端末の名前（任意）</label>
+                    <label class="field-label">この端末の名前（任意）</label>
                     <input type="text" id="device-name-input" maxlength="20" placeholder="例: レジ1／お客様用" autocomplete="off" oninput="saveDeviceName()">
                     <p class="settings-hint">一覧で見分けるための名前です。この端末にだけ保存され、売上には影響しません。</p>
                 </div>
-                <label class="field-label" style="margin-top:18px;">この端末の役割</label>
+                <label class="field-label sec">この端末の役割</label>
                 <div class="menu-list" id="sync-role-list"></div>
                 <!-- 反映のおくれを実際に測る（体感ではなく数字で確かめられるように） -->
                 <div id="sync-speed" style="display:none;">
-                    <label class="field-label" style="margin-top:18px;">反映の速さ</label>
+                    <label class="field-label sec">反映の速さ</label>
                     <div id="sync-speed-box" class="notice"><svg class="ic"><use href="#ic-clock"/></svg><span>「速さを測る」を押すと、この端末が書いてから戻ってくるまでの時間を測ります。</span></div>
                     <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="measureSyncLatency()"><svg class="ic"><use href="#ic-refresh"/></svg>速さを測る</button>
                 </div>
                 <!-- 何が共有され、何が端末ごとなのかを1か所にまとめて書いておく。
                      「これは共有されているはず」という思い込みでの取り違えを防ぐため。 -->
-                <label class="field-label" style="margin-top:18px;">共有されるもの</label>
+                <label class="field-label sec">共有されるもの</label>
                 <div class="notice">
                     <svg class="ic"><use href="#ic-link"/></svg>
                     <span>会計（売上・取消）／在庫と残数／商品の追加・値段・種類・備考／販売会の名前／売上目標／予約／閉店。<br>
@@ -2484,7 +2495,7 @@
                 <p class="settings-hint">一緒に使う<b>全部の端末で同じ「共有コード」</b>を入れてください。コードは<b>開店前でも営業中でも</b>入れられます。いま営業中の会計・在庫・商品はそのまま引き継がれます。</p>
                 <label class="field-label">共有コード</label>
                 <input type="text" id="sync-live-code-input" placeholder="例: pansale-1101" autocomplete="off" autocapitalize="characters">
-                <label class="field-label" style="margin-top:16px;">この端末の役割</label>
+                <label class="field-label sec">この端末の役割</label>
                 <div class="btn-stack">
                     <button class="action-btn btn-checkout" style="margin-top:0;" onclick="startSyncMidSession()"><svg class="ic"><use href="#ic-register"/></svg>この端末でも会計する</button>
                     <button class="action-btn btn-secondary" onclick="startCustomerModeFromSettings()"><svg class="ic"><use href="#ic-users"/></svg>お客様用の金額表示にする</button>
@@ -2498,10 +2509,10 @@
                 <p class="settings-hint">お客様にお渡しする<b>領収書</b>に印字される内容です。この端末にだけ保存されます。</p>
                 <label class="field-label">発行者（団体名・店名）</label>
                 <input type="text" id="shop-name-input" placeholder="例: 泰山木">
-                <label class="field-label" style="margin-top:12px;">但し書き</label>
+                <label class="field-label">但し書き</label>
                 <input type="text" id="shop-note-input" placeholder="例: パン・焼菓子代">
                 <p class="settings-hint" style="margin-top:2px;">領収書には「但し　◯◯　として」と印字されます。</p>
-                <label class="field-label" style="margin-top:12px;">連絡先・所在地（任意）</label>
+                <label class="field-label">連絡先・所在地（任意）</label>
                 <input type="text" id="shop-contact-input" placeholder="空欄なら印字しません">
                 <button class="action-btn btn-checkout" style="width:100%; margin-top:14px;" onclick="saveShopInfo()"><svg class="ic"><use href="#ic-check"/></svg>この内容で保存する</button>
                 <div class="a-head" style="margin-top:18px;">印字される見本</div>
@@ -2559,7 +2570,7 @@
                 <p class="settings-hint">「端末に合わせる」にしておくと、iPhone・iPad の設定（ダークモード）や夜間の自動切り替えに、そのまま付いていきます。暗い屋内や夕方の販売会でも、まぶしくなりません。</p>
                 <div id="theme-state" class="notice" style="margin-top:10px;"></div>
 
-                <label class="field-label" style="margin-top:20px;">時計と天気</label>
+                <label class="field-label sec">時計と天気</label>
                 <div class="sw-row">
                     <div class="sw-text"><b>時計を表示する</b><span>画面の右上に「時:分」を出します</span></div>
                     <input type="checkbox" class="ios-switch" id="opt-clock" onchange="saveUiPrefs()">
@@ -2568,13 +2579,13 @@
                     <div class="sw-text"><b>天気を表示する</b><span>時計のとなりに、いまの天気と気温を出します</span></div>
                     <input type="checkbox" class="ios-switch" id="opt-weather" onchange="saveUiPrefs()">
                 </div>
-                <label class="field-label" style="margin-top:14px;">天気を見る地域</label>
+                <label class="field-label">天気を見る地域</label>
                 <select id="opt-area" onchange="saveUiPrefs()"></select>
                 <p class="settings-hint">天気は30分ごとに取り直します。通信できないときは何も出しません（会計には影響しません）。</p>
                 <div id="weather-state" class="notice" style="margin-top:10px;"></div>
                 <button class="action-btn btn-secondary" style="width:100%; margin-top:10px;" onclick="refreshWeather(true)"><svg class="ic"><use href="#ic-refresh"/></svg>天気をいますぐ取り直す</button>
 
-                <label class="field-label" style="margin-top:20px;">全画面表示</label>
+                <label class="field-label sec">全画面表示</label>
                 <button id="btn-fullscreen" class="action-btn btn-secondary" style="width:100%; display:none;" onclick="toggleFullscreen()"><svg class="ic"><use href="#ic-expand"/></svg>今すぐ全画面表示にする</button>
                 <p class="settings-hint" style="margin-top:10px;">ホーム画面に追加したアイコンから起動すると、アドレスバーや戻るボタンのない全画面で使えます。</p>
             </div>
@@ -2630,7 +2641,7 @@
                 <div class="notice notice-danger"><svg class="ic"><use href="#ic-alert"/></svg>いまこの端末にあるデータは上書きされます。</div>
                 <button class="action-btn btn-danger" style="width:100%;" onclick="document.getElementById('import-file').click()"><svg class="ic"><use href="#ic-upload"/></svg>バックアップファイルから復元</button>
                 <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importBackup(event)">
-                <label class="field-label" style="margin-top:14px;">別の端末でコピーしたデータ</label>
+                <label class="field-label">別の端末でコピーしたデータ</label>
                 <textarea id="handoff-paste" placeholder="コピーしたデータをここに貼り付け"></textarea>
                 <button class="action-btn btn-danger" style="width:100%; margin-top:8px;" onclick="importHandoffData()"><svg class="ic"><use href="#ic-upload"/></svg>貼り付けたデータを取り込む</button>
             </div>
@@ -3068,7 +3079,7 @@
         if (!confirm(`客No.${rec.no || ''} の会計を取り消します。\n［${summary}］ 合計¥${rec.total}\n※販売した商品は在庫に戻ります。よろしいですか？`)) return;
         if (syncMode) {
             // 同期中：Firestoreで取消フラグを立てる（全端末に反映）。在庫は購読の再計算で戻る。
-            syncUpdateSale(rec.remoteId, { voided: true, voidedAt: Date.now() });
+            syncUpdateSale(rec.remoteId, { voided: true, voidedAt: Date.now() }, rec.remoteCode);
             voidCount++;
             playSound(660, 0.08);
             showToast('取り消しました（全端末に反映）');
@@ -3633,22 +3644,22 @@
                         <input class="ios-switch" type="checkbox" ${p.active === false ? '' : 'checked'} onchange="updateTempProduct(${p.id}, 'active', this.checked)">
                     </label>
                     <div style="display:flex; gap:5px; align-items:center;">
-                        <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
+                        <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
                         <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
                     </div>
                     ${catPicker(p.type, `updateTempProduct(${p.id}, 'type', '%T%')`)}
                     <div style="display:flex; gap:5px; margin-top:5px;">
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">価格</div>
-                            <input type="number" value="${p.price}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="価格" onchange="updateTempProduct(${p.id}, 'price', this.value)">
+                            <input type="number" value="${p.price}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="価格" onchange="updateTempProduct(${p.id}, 'price', this.value)">
                         </div>
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">仕入れ数</div>
-                            <input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">
+                            <input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">
                         </div>
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">原価（任意）</div>
-                            <input type="number" value="${p.cost != null ? p.cost : ''}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="—" onchange="updateTempProduct(${p.id}, 'cost', this.value)">
+                            <input type="number" value="${p.cost != null ? p.cost : ''}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="—" onchange="updateTempProduct(${p.id}, 'cost', this.value)">
                         </div>
                     </div>
                     ${hint}
@@ -3971,7 +3982,7 @@
                     <tbody>
                         <tr><td>画面が固まった・反応しない</td><td>ブラウザを<b>再読み込み</b>してください。営業中の記録と在庫は保存されているので消えません。開店からやり直す必要もありません。</td></tr>
                         <tr><td>お預かりが足りないと出る</td><td>会計はまだ成立していません。正しい金額を入れ直してからボタンを押してください。</td></tr>
-                        <tr><td>まちがえて「完了・記録」を押した</td><td>「会計記録」からその会計を<b>取り消し</b>てください。売った商品は在庫にもどります。</td></tr>
+                        <tr><td>まちがえて「完了・記録」を押した</td><td>「会計記録」からその会計を<b>取り消し</b>てください。売った商品は在庫にもどります。取り消した<b>客No.は欠番</b>になり、あとの会計の番号はずれません（お渡し済みの領収書と食い違わないようにするためです）。</td></tr>
                         <tr><td>商品が売り切れた</td><td>ボタンに「完売」と出ます。お客様に売り切れをお伝えください。</td></tr>
                         <tr><td>電池が少ない</td><td>会計のたびに保存されているので、電源が切れてもデータは残ります。充電してから開き直してください。</td></tr>
                         <tr><td>ほかの端末の会計が反映されない</td><td>「設定 → 複数端末で使う」で状態を確認してください。電波が戻れば自動で追いつきます。</td></tr>
@@ -8240,11 +8251,11 @@
             }
             const total = items.reduce((s, i) => s + i.price, 0);
             if (items.length === 0) {
-                syncUpdateSale(rec.remoteId, { voided: true, voidedAt: Date.now() });
+                syncUpdateSale(rec.remoteId, { voided: true, voidedAt: Date.now() }, rec.remoteCode);
                 editingRecordIdx = null;
                 showToast('全品目が無くなったため会計を削除しました');
             } else {
-                syncUpdateSale(rec.remoteId, { items, total, edited: true });
+                syncUpdateSale(rec.remoteId, { items, total, edited: true }, rec.remoteCode);
             }
             logEdit(`会計修正 客No.${rec.no || '-'}：${name} ${delta < 0 ? '−1' : '＋1'}`);
             playSound(660, 0.06);
@@ -8288,7 +8299,7 @@
         if (syncMode) {
             if (type && type !== '不明') lastCustomerType = type;
             recordTypeEditIdx = null;
-            syncUpdateSale(rec.remoteId, { customerType: type, pendingType: false, typeEditedLater: true });
+            syncUpdateSale(rec.remoteId, { customerType: type, pendingType: false, typeEditedLater: true }, rec.remoteCode);
             logEdit(`属性入力 客No.${rec.no || '-'}：${type}`);
             playSound();
             return;
@@ -8708,7 +8719,7 @@
             const noteVal = escHtml(p.note || '');
             const inactive = p.active === false;
             rows.push(`
-                <div style="margin-bottom:10px; padding:8px; border-radius:var(--r-sm); border:1px solid var(--line); background:${oversold ? 'var(--danger-bg)' : 'var(--white)'}; ${inactive ? 'opacity:0.55;' : ''}">
+                <div style="margin-bottom:8px; padding:11px 13px; border-radius:var(--r-md); border:none; box-shadow:var(--shadow-card); background:${oversold ? 'var(--danger-bg)' : 'var(--surface)'}; ${inactive ? 'opacity:0.55;' : ''}">
                     <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
                         <span style="flex:1; font-size:14px; font-weight:bold; overflow-wrap:anywhere;">${escHtml(p.name)}${oversold ? ' <b style="color:var(--danger); font-size:12px;">販売&gt;仕入</b>' : ''}${inactive ? ' <span style="font-size:11px; color:var(--text-light); font-weight:normal;">(この回は販売しない)</span>' : ''}</span>
                         <span style="font-size:13px; color:var(--text-light);">残り</span>
@@ -8716,14 +8727,14 @@
                     </div>
                     <div class="ls-row" style="display:flex; gap:8px; align-items:center;">
                         <label style="font-size:12px; color:var(--text-light);">価格</label>
-                        <input type="number" value="${p.price}" class="num ls-price" style="width:78px; padding:6px; text-align:right; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLivePrice(${p.id}, this.value)">
+                        <input type="number" value="${p.price}" class="num ls-price" style="width:78px; padding:6px; text-align:right; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLivePrice(${p.id}, this.value)">
                         <label style="font-size:12px; color:var(--text-light); margin-left:2px;">仕入れ数</label>
                         <button class="step-btn minus" onclick="adjustLiveInitialStock(${p.id}, -1)">−</button>
-                        <input type="number" value="${p.initialStock}" class="num ls-stock" style="width:62px; padding:6px; text-align:center; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLiveInitialStock(${p.id}, this.value)">
+                        <input type="number" value="${p.initialStock}" class="num ls-stock" style="width:62px; padding:6px; text-align:center; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLiveInitialStock(${p.id}, this.value)">
                         <button class="step-btn plus" onclick="adjustLiveInitialStock(${p.id}, 1)">＋</button>
                     </div>
                     ${catPicker(p.type, `setLiveType(${p.id}, '%T%')`)}
-                    ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:6px; padding:6px; font-size:12px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken);" onchange="setProductNote(${p.id}, this.value)">` : ''}
+                    ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:6px; padding:6px; font-size:12px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" onchange="setProductNote(${p.id}, this.value)">` : ''}
                 </div>
             `);
         });
@@ -8959,7 +8970,10 @@
     // remoteId の無いものだけを送れば重複しない。
     function flushLocalSalesToRemote() {
         if (!syncReady || !syncEventCode || !fbDb) return;
-        const pending = salesHistory.filter(h => !h.remoteId && !h.syncPushed);
+        // ・まだ一度も共有していない記録
+        // ・別の共有販売会から持ってきた記録（コードを変えた時に置き去りにしない）
+        const pending = salesHistory.filter(h =>
+            (!h.remoteId || h.remoteCode !== syncEventCode) && !h.syncPushed);
         pending.forEach(h => { h.syncPushed = true; syncPushSale(h); });
         if (pending.length) {
             showToast(`同期を再開しました（この端末の会計${pending.length}件を共有）`);
@@ -9001,14 +9015,18 @@
     // 気づかないまま閉店してしまうのがいちばん困る。
     // 電波が切れている間も会計は続けられる（Firestoreが手元に貯める）が、
     // その状態を画面に出して、閉店前に必ず気づけるようにする。
-    const syncHealth = { online: true, pendingSince: 0, lastOk: Date.now(), error: false, docs: 0 };
+    const syncHealth = { online: true, offlineSince: 0, pendingSince: 0, lastOk: Date.now(), error: false, docs: 0 };
+    const SYNC_BAD_AFTER = 3000;   // これだけ続いてから「つながっていません」と出す
 
     function noteSyncHealth(s) {
         if (s.error) { syncHealth.error = true; renderSyncHealth(); return; }
         syncHealth.error = false;
         syncHealth.docs = s.docs;
-        // 手元の控えだけで出している＝サーバーとつながっていない
+        // 手元の控えだけで出している＝サーバーとつながっていない。
+        // ただし起動直後は必ず一度そうなるので、少し様子を見てから赤く出す。
         syncHealth.online = !s.fromCache;
+        if (syncHealth.online) syncHealth.offlineSince = 0;
+        else if (!syncHealth.offlineSince) syncHealth.offlineSince = Date.now();
         if (s.pending) { if (!syncHealth.pendingSince) syncHealth.pendingSince = Date.now(); }
         else { syncHealth.pendingSince = 0; syncHealth.lastOk = Date.now(); }
         renderSyncHealth();
@@ -9018,7 +9036,8 @@
         if (!syncMode) return null;
         if (syncHealth.error) return { level: 'bad', text: '同期でエラーが起きています。この端末だけで会計は続けられます。' };
         const waiting = syncHealth.pendingSince ? Date.now() - syncHealth.pendingSince : 0;
-        if (!syncHealth.online || waiting > 8000) {
+        const offFor = syncHealth.offlineSince ? Date.now() - syncHealth.offlineSince : 0;
+        if (offFor > SYNC_BAD_AFTER || waiting > 8000) {
             const sec = Math.round(Math.max(waiting, Date.now() - syncHealth.lastOk) / 1000);
             return { level: 'bad', text: `サーバーにつながっていません（${sec}秒）。会計はこのまま続けられます。つながると自動でまとめて送られます。` };
         }
@@ -9049,7 +9068,12 @@
     setInterval(() => { if (syncMode) renderSyncHealth(); }, 5000);
     // 電波が戻ったら、すぐ在席を知らせ直して一覧にも復帰させる
     window.addEventListener('online', () => { if (syncMode || customerMode) { wakeSync('電波が戻った'); } });
-    window.addEventListener('offline', () => { syncHealth.online = false; renderSyncHealth(); });
+    window.addEventListener('offline', () => {
+        syncHealth.online = false;
+        // 端末が「圏外」と言っているので、様子見はせずすぐ知らせる
+        syncHealth.offlineSince = Date.now() - SYNC_BAD_AFTER - 1;
+        renderSyncHealth();
+    });
 
     // ▼▼▼ 画面が戻ってきた時に、必ず追いつかせる ▼▼▼
     // 【なぜ必要か】iPhone・iPad は、画面を消したり他のアプリに切り替えたりすると
@@ -9233,6 +9257,21 @@
                 reservations.forEach(r => { if (!known.has(String(r.id))) { rows.push(r); syncPushReservation(r); } });
             }
             rows.sort((a, b) => (a.id || 0) - (b.id || 0));
+            // いま清算しようとしている予約が、他の端末で先に清算・取り消しされていたら、
+            // この端末の会計をその場で中止する。
+            // 【なぜ】そのまま「完了・記録」を押せてしまうと、同じ予約を2回記録した
+            // ことになり、売上が二重に立つ。お金の記録なので必ず止める。
+            if (processingReservationId !== null && !rows.some(r => r.id === processingReservationId)) {
+                const modal = document.getElementById('checkout-modal');
+                if (modal && modal.style.display === 'flex') {
+                    processingReservationId = null;
+                    closeModal('checkout-modal');
+                    playError();
+                    alert('【！】この予約は、ほかの端末で先に清算（または取り消し）されました。\n二重に記録しないよう、この会計は中止しました。\n\n「会計記録」でその1件が入っているかご確認ください。');
+                } else {
+                    processingReservationId = null;
+                }
+            }
             if (JSON.stringify(rows) === JSON.stringify(reservations)) return;
             reservations = rows;
             saveData();
@@ -9248,8 +9287,30 @@
 
     // リモート（全端末）の売上ドキュメントから salesHistory を再構築（取消は除外）
     function applyRemoteSales(docs) {
-        const rebuilt = docs
+        // 客No.は「全端末を時刻順に統合した通し番号」で採番する。
+        // 【取消の扱い】取り消した会計もいったん番号を数えてから外す。
+        //   こうしないと、途中の1件を取り消した時に、それ以降の客No.が
+        //   すべて1つずつずれてしまい、お渡し済みの領収書と食い違う。
+        //   取り消した番号は欠番として空けておく（1台だけで使う時と同じ）。
+        const ordered = docs
+            .map(d => ({ d, t: new Date(d.createdAt || Date.now()).getTime() }))
+            .sort((a, b) => a.t - b.t);
+        const noOf = new Map();
+        ordered.forEach((x, i) => { noOf.set(x.d.__id, i + 1); });
+        // 同じ会計が二重に入らないようにする（送信し直しなどで書類が2つできた時の保険）。
+        // 【取り消した分は見ない】取り消した会計の番号は、あとで新しい会計に
+        //   もう一度使われることがある。取り消した分まで見比べてしまうと、
+        //   新しい会計のほうが「二重」と判定されて消えてしまう。
+        const seen = new Set();
+        const rebuilt = ordered.map(x => x.d)
             .filter(d => !d.voided)
+            .filter(d => {
+                const key = d.localId;
+                if (!key) return true;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            })
             .map(d => ({
                 localNo: d.no, // 送信端末内での連番（参考値。端末をまたぐと重複しうるため表示には使わない）
                 deviceLabel: d.deviceLabel || '',
@@ -9263,12 +9324,10 @@
                 cash: (d.cash != null) ? d.cash : null,
                 change: (d.change != null) ? d.change : null,
                 remoteId: d.__id,
+                remoteCode: syncEventCode,   // どの共有販売会から来た記録か
                 localId: d.localId
-            }))
-            .sort((a, b) => a.time - b.time);
-        // 客No.は「全端末を時刻順に統合した通し番号」で採番し直す（重複しない）。
-        // 端末ごとの連番(localNo)は複数端末では必ず重複するため表示に使わない。
-        rebuilt.forEach((h, i) => { h.no = i + 1; });
+            }));
+        rebuilt.forEach(h => { h.no = noOf.get(h.remoteId) || 0; });
         salesHistory = rebuilt;
         recomputeStockFromSales();
 
@@ -9300,11 +9359,24 @@
     function recomputeStockFromSales() {
         if (!syncMode) return;
         const sold = {};
-        salesHistory.forEach(h => (h.items || []).forEach(i => { sold[i.name] = (sold[i.name] || 0) + 1; }));
+        // 完売した時刻は「いま」ではなく、在庫が0になったその会計の時刻にする。
+        // 【なぜ】あとから参加した端末や、再読み込みした端末で計算し直すと、
+        //   すべての完売時刻が「いま」になってしまい、時間帯の集計が実態とずれる。
+        const soldOutAt = {};
+        const need = {};
+        products.forEach(p => { need[p.name] = p.initialStock || 0; });
+        [...salesHistory].sort((a, b) => a.time - b.time).forEach(h => {
+            (h.items || []).forEach(i => {
+                sold[i.name] = (sold[i.name] || 0) + 1;
+                if (need[i.name] > 0 && sold[i.name] === need[i.name] && !soldOutAt[i.name]) {
+                    soldOutAt[i.name] = (h.time instanceof Date ? h.time : new Date(h.time)).toISOString();
+                }
+            });
+        });
         products.forEach(p => {
             const initial = p.initialStock || 0;
             p.stock = initial - (sold[p.name] || 0);
-            if (p.stock <= 0 && initial > 0) { if (!p.soldOutTime) p.soldOutTime = new Date().toISOString(); }
+            if (p.stock <= 0 && initial > 0) p.soldOutTime = soldOutAt[p.name] || p.soldOutTime || new Date().toISOString();
             else p.soldOutTime = null;
         });
     }
@@ -9316,7 +9388,9 @@
             no: record.no,
             deviceId: getDeviceId(),
             deviceLabel: deviceLabel(),
-            localId: getDeviceId() + ':' + record.no,
+            // 会計1件を見分けるための印。取り消したあとに同じ客No.が
+            // もう一度使われてもぶつからないよう、時刻も混ぜておく。
+            localId: getDeviceId() + ':' + record.no + ':' + ((record.time instanceof Date && !isNaN(record.time)) ? record.time.getTime() : Date.now()),
             // 後から送る（同期再開時の救済）場合でも、実際に会計した時刻を保つ。
             // 時間帯別の集計と客No.の並び順が実態とずれないようにするため。
             createdAt: (record.time instanceof Date && !isNaN(record.time)) ? record.time.getTime() : Date.now(),
@@ -9347,9 +9421,10 @@
             });
     }
 
-    function syncUpdateSale(remoteId, changes) {
-        if (!remoteId) return;
-        fbDb.collection('events').doc(syncEventCode).collection('sales').doc(remoteId).update(changes)
+    function syncUpdateSale(remoteId, changes, code) {
+        const c = code || syncEventCode;
+        if (!remoteId || !c || !fbDb) return;
+        fbDb.collection('events').doc(c).collection('sales').doc(remoteId).update(changes)
             .catch(e => { console.warn('売上の更新同期に失敗', e); });
     }
 
