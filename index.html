@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>泰山木POS</title>
-    <!-- viewport-fit=cover：ノッチやホームバーのある機種で、画面の端まで色が届くようにする。
-         これが無いと、上下左右に地の色とは違う帯が残ってしまう。 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    <!-- 【viewport-fit=cover は使わない】
+         ホーム画面から起動した時、この端末は「時刻やホームバーの帯を避けた範囲」を
+         画面として渡してくれる。cover を付けると画面の端まで描くようになるが、
+         端末によっては高さの計算が食い違い、ヘッダーが時刻と重なったり、
+         下に何も無い帯が残ったりする。実機でその崩れが出たため使わない。
+         お客様用の表示で帯が目立つ問題は、帯そのものの色（theme-color）と
+         いちばん外側の地の色を暗くすることで解いている。 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <!-- ホーム画面に追加した時、ブラウザの戻る/アドレスバー等を出さずフルスクリーンで起動する設定
          （iPad/iPhone: 共有 → ホーム画面に追加／Android: メニュー → ホーム画面に追加、またはアプリをインストール） -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -420,10 +425,7 @@
                1本の線が引かれているように見えてしまうので、
                ヘッダーは色を持たず、地の色をそのまま使う。 */
             background: transparent;
-            /* 画面の端まで色を描く設定（viewport-fit=cover）にしているので、
-               iPhoneの時刻・電波が出ている帯のぶんだけ、上に余白を足す。
-               足さないと、見出しやボタンが時刻の下にもぐってしまう。 */
-            padding: calc(12px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right)) 12px max(20px, env(safe-area-inset-left));
+            padding: 12px max(20px, env(safe-area-inset-right)) 12px max(20px, env(safe-area-inset-left));
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -491,11 +493,6 @@
         #app-container {
             display: flex;
             min-width: 0;
-            /* 画面の端まで描く設定にしているので、横向きにした時の
-               ノッチ側にボタンや文字がもぐらないよう、左右に安全領域を空ける */
-            padding-left: env(safe-area-inset-left, 0px);
-            padding-right: env(safe-area-inset-right, 0px);
-            box-sizing: border-box;
             flex-direction: row-reverse; /* 商品ボタンを右、カート（小計）を左に配置（右利き向け） */
             flex: 1;
             overflow: hidden;
@@ -1315,10 +1312,7 @@
         .panel-head::before { content: ''; width: 0; }
         .panel-head.no-back h2 { margin-left: 2px; }
 
-        .panel-body {
-            flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
-            padding: 14px max(16px, env(safe-area-inset-right, 0px)) 20px max(16px, env(safe-area-inset-left, 0px));
-        }
+        .panel-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 16px 20px; }
         .panel-view { display: none; }
         .panel-view.active { display: block; }
         .sub-view { display: block; }
@@ -1362,7 +1356,7 @@
             .menu-row > .ic:first-child { width: 20px; height: 20px; }
             .menu-row .mr-title { font-size: 14.5px; }
             .menu-row .mr-sub { font-size: 11.5px; margin-top: 2px; }
-            .panel-body { padding: 12px max(14px, env(safe-area-inset-right, 0px)) 16px max(14px, env(safe-area-inset-left, 0px)); }
+            .panel-body { padding: 12px 14px 16px; }
             .panel-head { padding: 2px 12px 8px; min-height: 42px; }
             .panel-head h2 { font-size: 22px; }
             /* 在庫調整の1行（価格・仕入れ数）が折り返さないよう、狭い画面では詰める */
@@ -1577,11 +1571,13 @@
         /* 配色を切り替えた瞬間だけ、画面全体に薄い幕をかけてすっと入れ替える。
            部品ごとに色が変わる速さがばらばらだと、ちらついて見えるため。
            （幕は0.32秒で消え、触れないので会計の邪魔にはならない） */
+        /* ふだんは画面に置かない。置きっぱなしにすると、画面全体を覆う板が
+           いつも1枚あることになり、古い端末では描き直しが重くなる。 */
         #theme-fade {
             position: fixed; inset: 0; z-index: 900; pointer-events: none;
-            background: var(--bg-color); opacity: 0;
+            background: var(--bg-color); opacity: 0; display: none;
         }
-        #theme-fade.run { animation: themeFade .36s ease both; }
+        #theme-fade.run { display: block; animation: themeFade .36s ease both; }
         @keyframes themeFade { 0% { opacity: .85; } 100% { opacity: 0; } }
 
         /* ▼▼▼ お客様用の表示（カスタマーディスプレイ）▼▼▼
@@ -1598,8 +1594,7 @@
             position: fixed; inset: 0; z-index: 400;
             background: #14151A; color: #fff;
             display: flex; flex-direction: column;
-            padding: calc(14px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px))
-                     calc(16px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+            padding: calc(14px + env(safe-area-inset-top, 0px)) 20px calc(16px + env(safe-area-inset-bottom, 0px));
             font-variant-numeric: tabular-nums;
             animation: backdropIn .3s ease both;
             /* 面のいちばん上と下をわずかに暗くして、数字のある真ん中を浮かせる */
@@ -1797,7 +1792,7 @@
 
         /* 横向き・大きい画面では、さらに大きく */
         @media (min-width: 700px) and (min-height: 561px) {
-            #customer-display { padding-left: max(42px, env(safe-area-inset-left, 0px)); padding-right: max(42px, env(safe-area-inset-right, 0px)); }
+            #customer-display { padding-left: 42px; padding-right: 42px; }
             #customer-display { --cd-total: 96px; --cd-change: 60px; --cd-item: 23px; --cd-head: 40px; }
             #customer-display.is-checkout { --cd-total: 124px; --cd-change: 76px; }
             #customer-display .cd-order { flex-direction: row; align-items: stretch; gap: 40px; }
@@ -4578,6 +4573,8 @@
     }
 
     function renderSyncDevices() {
+        // 共有の画面を開いていない時は、一覧を組み直さない（開いた時に作る）
+        if (!(currentView === 'settings' && currentSub === 'sync')) return;
         const nameInput = document.getElementById('device-name-input');
         if (nameInput && document.activeElement !== nameInput) nameInput.value = uiPrefs.deviceName || '';
         const wrap = document.getElementById('sync-devices-wrap');
@@ -4773,7 +4770,11 @@
         const root = document.documentElement;
         if (animate) {
             const veil = document.getElementById('theme-fade');
-            if (veil) { veil.classList.remove('run'); void veil.offsetWidth; veil.classList.add('run'); }
+            if (veil) {
+                veil.classList.remove('run'); void veil.offsetWidth; veil.classList.add('run');
+                clearTimeout(themeFadeTimer);
+                themeFadeTimer = setTimeout(() => veil.classList.remove('run'), 500);
+            }
         }
         root.setAttribute('data-theme', t);
         // ブラウザ側の部品（入力欄の中身・スクロールバー）も同じ明るさにそろえる
@@ -4787,6 +4788,7 @@
         themeApplied = true;
     }
     let themeApplied = false;
+    let themeFadeTimer = null;
 
     function setTheme(mode) {
         const next = (mode === 'light' || mode === 'dark') ? mode : 'auto';
@@ -9055,7 +9057,10 @@
             if (show) bar.innerHTML = `<svg class="ic"><use href="#ic-alert"/></svg><span>${escHtml(st.text)}</span>`;
         }
         const box = document.getElementById('sync-health');
-        if (box) {
+        // 設定の共有画面を開いていない時は、そこの知らせを作り直さない
+        // （5秒ごとに見えない場所を組み直すのは、そのぶん端末を働かせるだけ）
+        const boxVisible = box && currentView === 'settings' && currentSub === 'sync';
+        if (box && boxVisible) {
             if (!st) { box.style.display = 'none'; }
             else {
                 box.style.display = '';
@@ -9090,8 +9095,15 @@
         if (now - lastWakeAt < 2000) return;
         lastWakeAt = now;
         if (customerMode) {
-            // お客様用：読み直して、切れていたらつなぎ直す
             beatPresence();
+            // 【つなぎ直すのは、本当に切れている時だけ】
+            // つなぎ直すと、いったん「つないでいます…」の待ち受けに戻る。
+            // 画面を触るたびにそれをやると、お客様の目の前で金額が一瞬消えてしまう。
+            // ちゃんと受け取れているなら、そのままにしておく。
+            const link = document.getElementById('cd-link');
+            const alive = cdUnsub && link && link.classList.contains('live')
+                && cdLastSeen && (Date.now() - cdLastSeen) < 90000;
+            if (alive) return;
             if (syncReady && fbDb && uiPrefs.cdCode) applyCustomerMode();
             else scheduleCustomerRetry();
             return;
