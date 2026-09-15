@@ -1327,6 +1327,48 @@
         .ios-switch:checked::after { transform: translateX(18px); }
         .ios-switch:active::after { width: 25px; }
         .setup-card label:has(.ios-switch) { justify-content: space-between; }
+        /* ▼ 商品の種類（レジのボタンの色分け）を選ぶセグメント ▼
+           何色になるかが分かるよう、それぞれの左に実際の色の点を置く。 */
+        .cat-picker {
+            display: flex; gap: 2px; margin-top: 6px;
+            background: var(--btn-neutral); border-radius: 10px; padding: 2px;
+        }
+        .cat-pick {
+            flex: 1; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+            border: none; border-radius: 8px; background: none; cursor: pointer; font-family: inherit;
+            padding: 8px 2px; min-height: 34px; font-size: 12.5px; font-weight: 600; color: var(--text-light);
+            white-space: nowrap; letter-spacing: -0.01em;
+            transition: background .18s ease, color .18s ease, transform .12s ease;
+        }
+        .cat-pick > i {
+            width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+            background: var(--pick-ink); opacity: .45;
+            transition: opacity .18s ease, transform .18s cubic-bezier(.32,.72,0,1);
+        }
+        .cat-pick:active { transform: scale(0.95); }
+        .cat-pick.on {
+            background: var(--surface); color: var(--text-main); font-weight: 700;
+            box-shadow: 0 1px 3px rgba(28,29,34,.14), 0 0 0 .5px rgba(28,29,34,.04);
+        }
+        .cat-pick.on > i { opacity: 1; transform: scale(1.15); }
+
+        /* 営業中に商品を足すフォーム（押すまで畳んでおく） */
+        .add-card {
+            background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-raised);
+            padding: 14px 16px; margin-top: 10px;
+            animation: riseIn .32s cubic-bezier(.32,.72,0,1) both;
+        }
+        .add-card .add-head {
+            display: flex; align-items: center; gap: 7px;
+            font-size: 15px; font-weight: 700; color: var(--accent-ink); margin-bottom: 10px;
+        }
+        .add-card .add-head .ic { width: 18px; height: 18px; stroke-width: 2.4; }
+        .add-card input[type="text"], .add-card input[type="number"] {
+            width: 100%; box-sizing: border-box; margin: 4px 0 0; font-size: 16px; padding: 10px 12px;
+        }
+        .add-card .add-row { display: flex; gap: 8px; margin-top: 10px; }
+        .add-card .add-row > div { flex: 1; min-width: 0; }
+
         /* スイッチ1つぶんの行（説明つき） */
         .sw-row {
             display: flex; align-items: center; gap: 14px;
@@ -1381,6 +1423,24 @@
         .product-btn, .action-btn, .menu-row, .nav-item, .type-btn, .tenkey-btn, .rc-act, .cs-btn {
             transition-timing-function: cubic-bezier(.32, .72, 0, 1);
         }
+
+        /* ▼ 在庫が「残りわずか」になった商品の数字を、静かに息づかせる ▼
+           音や色を足さずに気づけるようにする。動きは弱く、遅く。 */
+        @keyframes lowPulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+        .product-btn .stock.is-low { animation: lowPulse 2.4s ease-in-out infinite; }
+
+        /* ▼ 商品を追加・削除した時の、開店前リストの動き ▼ */
+        .setup-card { animation: riseIn .3s cubic-bezier(.32,.72,0,1) both; }
+
+        /* ▼ 種類を選び直した時、左の色帯がすっと塗り替わる ▼ */
+        .setup-card { transition: border-left-color .25s ease; }
+
+        /* ▼ お預かりのテンキーは、押した瞬間に沈んですぐ戻る ▼ */
+        .tenkey-btn:active { transform: scale(0.94); }
+
+        /* ▼ 「開店する／閉店する」ボタンは、状態が変わった時に一度だけ知らせる ▼ */
+        @keyframes hdrSwap { 0% { transform: scale(.9); opacity: .4; } 60% { transform: scale(1.04); } 100% { transform: scale(1); opacity: 1; } }
+        .hdr-btn.swapped { animation: hdrSwap .34s cubic-bezier(.32,.72,0,1); }
 
         /* ▼ レジ以外の画面の動き ▼
            会計の速さに関係しない画面（集計・記録・設定）では、
@@ -1875,7 +1935,33 @@
             <div class="sub-view" id="sub-stock" style="display:none;">
                 <p class="settings-hint" id="stock-hint"></p>
                 <div id="live-stock-list"></div>
-                <button class="action-btn btn-positive" style="width:100%; margin-top:10px;" onclick="addLiveProduct()"><svg class="ic"><use href="#ic-plus"/></svg>販売する商品を追加する</button>
+                <!-- 営業中に商品を足すところ。押すまでは畳んでおき、一覧のじゃまをしない -->
+                <button class="action-btn btn-positive" id="live-add-open" style="width:100%; margin-top:10px;" onclick="toggleLiveAdd(true)"><svg class="ic"><use href="#ic-plus"/></svg>販売する商品を追加する</button>
+                <div class="add-card" id="live-add-form" style="display:none;">
+                    <div class="add-head"><svg class="ic"><use href="#ic-plus"/></svg>販売する商品を追加</div>
+                    <label class="field-label">商品名</label>
+                    <input type="text" id="la-name" placeholder="例: 塩バターパン" autocomplete="off">
+                    <div class="add-row">
+                        <div>
+                            <label class="field-label">価格（円）</label>
+                            <input type="number" id="la-price" inputmode="numeric" placeholder="150" min="0" step="10">
+                        </div>
+                        <div>
+                            <label class="field-label">仕入れ数</label>
+                            <input type="number" id="la-stock" inputmode="numeric" placeholder="10" min="0" step="1">
+                        </div>
+                        <div>
+                            <label class="field-label">原価（任意）</label>
+                            <input type="number" id="la-cost" inputmode="numeric" placeholder="—" min="0" step="1">
+                        </div>
+                    </div>
+                    <label class="field-label" style="margin-top:10px;">種類（レジのボタンの色）</label>
+                    <div id="la-type"></div>
+                    <div class="btn-stack" style="margin-top:12px;">
+                        <button class="action-btn btn-checkout" style="margin-top:0;" onclick="addLiveProduct()"><svg class="ic"><use href="#ic-check"/></svg>この内容で追加する</button>
+                        <button class="action-btn btn-secondary" onclick="toggleLiveAdd(false)"><svg class="ic"><use href="#ic-x"/></svg>やめる</button>
+                    </div>
+                </div>
             </div>
 
             <!-- 複数端末の共有 -->
@@ -2333,7 +2419,7 @@
                 ${badge}
                 <span class="pname">${p.name}</span>
                 <span class="price">¥${p.price}</span>
-                <span class="stock" style="${stockStyle}">${stockText}</span>
+                <span class="stock${lowStock && !oversold ? ' is-low' : ''}" style="${stockStyle}">${stockText}</span>
             `;
             btn.onclick = () => addToCart(p);
             grid.appendChild(btn);
@@ -2496,6 +2582,22 @@
         if (type === 'savory') return 'var(--cat-savory-ink)';
         if (type === 'drink') return 'var(--cat-drink-ink)';
         return 'var(--cat-sweet-ink)';
+    }
+
+    // 商品の「種類」（レジのボタンの色分け）を選ぶセグメント。
+    // 開店前の商品リストでも、営業中の在庫調整でも同じ形で使う。
+    // onclickTemplate の %T% のところに、選ばれた種類（sweet/savory/drink）が入る。
+    const CAT_TYPES = [
+        { id: 'sweet', label: 'パン' },
+        { id: 'savory', label: 'クッキー' },
+        { id: 'drink', label: 'ドリンク' }
+    ];
+    function catPicker(type, onclickTemplate) {
+        const cur = CAT_TYPES.some(c => c.id === type) ? type : 'sweet';
+        return `<div class="cat-picker" role="group" aria-label="商品の種類">
+            ${CAT_TYPES.map(c => `<button type="button" class="cat-pick${c.id === cur ? ' on' : ''}" style="--pick-ink:${catInk(c.id)};"
+                onclick="${onclickTemplate.replace('%T%', c.id)}"><i></i>${c.label}</button>`).join('')}
+        </div>`;
     }
 
     function updateCartDisplay() {
@@ -2913,7 +3015,7 @@
                 + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:var(--btn-neutral); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="ic"><use href="#ic-undo"/></svg>商品リストを「${escHtml(ACTIVE_EVENT_SET.label)}」の既定に戻す</button>`;
         }
 
-        list.innerHTML = '';
+        const cards = [];
         tempSetupProducts.forEach(p => {
             let hint = '';
             if (latest && latest.map[p.name]) {
@@ -2921,7 +3023,7 @@
                 const arrow = r.recommended > r.initial ? '▲' : (r.recommended < r.initial ? '▼' : '＝');
                 hint = `<div style="font-size:11px; color:var(--text-light); margin-top:6px;">前回 仕入${r.initial}/販売${r.sold}${r.soldOut ? '(完売)' : ''} → 参考 <b style="color:var(--accent);">${r.recommended}</b> ${arrow}</div>`;
             }
-            list.innerHTML += `
+            cards.push(`
                 <div class="setup-card" style="border-left:5px solid ${catInk(p.type)}; ${p.active === false ? 'opacity:0.5;' : ''}">
                     <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-light); margin-bottom:4px; cursor:pointer;">
                         <span>この回で販売する</span>
@@ -2931,6 +3033,7 @@
                         <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
                         <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
                     </div>
+                    ${catPicker(p.type, `updateTempProduct(${p.id}, 'type', '%T%')`)}
                     <div style="display:flex; gap:5px; margin-top:5px;">
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">価格</div>
@@ -2947,10 +3050,10 @@
                     </div>
                     ${hint}
                 </div>
-            `;
+            `);
         });
-
-        list.innerHTML += `<button class="setup-add-btn btn-positive" onclick="addTempProduct()" style="padding:10px; border:none; border-radius:var(--r-sm); font-weight:bold; cursor:pointer; color:var(--text-main); font-family:inherit;">＋ 追加</button>`;
+        cards.push(`<button class="setup-add-btn btn-positive" onclick="addTempProduct()" style="padding:10px; border:none; border-radius:var(--r-sm); font-weight:bold; cursor:pointer; color:var(--text-main); font-family:inherit;">＋ 追加</button>`);
+        list.innerHTML = cards.join('');
     }
 
     function updateTempProduct(id, field, value) {
@@ -2959,6 +3062,7 @@
             if (field === 'name') p.name = value;
             if (field === 'price' || field === 'initialStock') p[field] = parseInt(value) || 0;
             if (field === 'cost') { const n = parseInt(value); p.cost = (value === '' || isNaN(n)) ? null : n; }
+            if (field === 'type') { p.type = value; renderInventorySetup(); }   // 左の色帯も塗り替える
             if (field === 'active') { p.active = value; renderInventorySetup(); }
         }
     }
@@ -3150,7 +3254,8 @@
                 <ul class="man-list">
                     <li><b>追加で搬入した</b>…「仕入れ数」を増やすだけ。残りの数は自動で計算し直されます。</li>
                     <li><b>値段を変えたい</b>…その場で価格を書き替えられます。</li>
-                    <li><b>商品を足したい</b>…いちばん下の「販売する商品を追加する」から足せます。</li>
+                    <li><b>商品を足したい</b>…いちばん下の<b>「販売する商品を追加する」</b>を押すと、名前・価格・仕入れ数・種類を入れる欄が出ます。入れて「この内容で追加する」を押すと、すぐレジのボタンに並びます。</li>
+                    <li><b>種類（ボタンの色）を変えたい</b>…各商品の<b>パン／クッキー／ドリンク</b>から選び直せます。開店前の「商品と仕入れ数」でも同じように選べます。</li>
                 </ul>
                 <div class="man-box">
                     <div class="man-box-h">売り切れたら</div>
@@ -3198,7 +3303,11 @@
                     <li><b>販売会ごとの推移</b>…回を重ねるほど、前回からの伸びが見えます。</li>
                 </ul>
                 <h4>書き出し</h4>
-                <p><b>「書き出し（PDF・CSV）」</b>から、全項目のレポート（PDF）、商品別CSV（精算用）、会計明細CSV、全データJSON を保存できます。</p>`
+                <p><b>「書き出し（PDF・CSV）」</b>から、全項目のレポート（PDF）、商品別CSV（精算用）、会計明細CSV、全データJSON を保存できます。</p>
+                <div class="man-box">
+                    <div class="man-box-h">印刷の画面からレジにもどるには</div>
+                    <p>PDFにする時は別の画面が開きます。保存し終えたら、その画面のいちばん上の<b>「✕ 閉じて戻る」</b>を押すとレジにもどれます。印刷の画面を閉じてしまっても、となりの<b>「印刷・PDF保存」</b>でもう一度開けます。</p>
+                </div>`
         },
         {
             id: 'qa', icon: 'bulb', title: 'こんな時どうする？', sub: '困ったときの早見表',
@@ -3718,6 +3827,23 @@
             });
             if (warnings.length > 0) {
                 if (!confirm('【仕入れ数の確認】数え間違い・入力ミスがないかご確認ください:\n\n' + warnings.join('\n') + '\n\nこのまま開店してよろしいですか？')) return;
+            }
+
+            // 同じ名前の商品が2つ以上あると、レジに見分けのつかないボタンが並び、
+            // 集計でも1つにまとめられてしまう。開店前に必ず気づけるようにする。
+            const seen = {}, dupes = [];
+            tempSetupProducts.forEach(p => {
+                if (p.active === false) return;
+                const nm = String(p.name || '').trim();
+                if (!nm) return;
+                seen[nm] = (seen[nm] || 0) + 1;
+                if (seen[nm] === 2) dupes.push(nm);
+            });
+            if (dupes.length > 0) {
+                playError();
+                alert('同じ名前の商品が複数あります。\n\n' + dupes.map(n => '・' + n).join('\n')
+                    + '\n\nレジのボタンが見分けられず、集計もひとつにまとまってしまいます。\n「商品と仕入れ数」で名前を変えるか、片方の「この回で販売する」を切ってください。');
+                return;
             }
         }
 
@@ -5551,7 +5677,14 @@
         const icon = document.getElementById('header-session-icon');
         if (!btn || !label || !icon) return;
         const open = !!currentSession;
-        label.textContent = open ? '閉店する' : '開店する';
+        const next = open ? '閉店する' : '開店する';
+        // 開店・閉店で見た目が入れ替わった時だけ、一度だけ動かして気づけるようにする
+        if (label.textContent && label.textContent !== next) {
+            btn.classList.remove('swapped');
+            void btn.offsetWidth;
+            btn.classList.add('swapped');
+        }
+        label.textContent = next;
         icon.setAttribute('href', open ? '#ic-power' : '#ic-store');
         btn.classList.toggle('is-close', open);
     }
@@ -6085,14 +6218,51 @@
             '<style>' + css + '</style>' +
             '<style>@page{size:A4;margin:15mm;} html,body{margin:0;background:#fff;} ' +
             'body{padding:16px;} @media print{body{padding:0;}} ' +
+            /* ▼ レジに戻るための帯 ▼
+               ホーム画面から起動していると、この画面にはブラウザの「戻る」も
+               タブも出ない。戻る手立てが無いと閉じ込められてしまうので、
+               いちばん上に貼り付いたままの「閉じる」を必ず置く。 */
+            '.rw-bar{position:sticky; top:0; z-index:9; display:flex; align-items:center; gap:10px;' +
+            ' background:#F2F3F7; margin:-16px -16px 14px; padding:12px 16px;' +
+            ' padding-top:calc(12px + env(safe-area-inset-top, 0px));}' +
+            '.rw-close{appearance:none; -webkit-appearance:none; border:none; cursor:pointer;' +
+            ' font-family:inherit; font-size:15px; font-weight:700; color:#fff; background:#0A6CE0;' +
+            ' border-radius:999px; padding:11px 20px; min-height:44px; flex-shrink:0;' +
+            ' box-shadow:0 3px 10px rgba(10,108,224,.26);}' +
+            '.rw-close:active{transform:scale(.96);}' +
+            '.rw-print{appearance:none; -webkit-appearance:none; border:none; cursor:pointer;' +
+            ' font-family:inherit; font-size:15px; font-weight:700; color:#0A5FC4; background:#fff;' +
+            ' border-radius:999px; padding:11px 20px; min-height:44px; flex-shrink:0;}' +
+            '.rw-hint{font-size:12px; color:#6B6E7A; line-height:1.45; flex:1; min-width:0;}' +
+            /* 幅の狭い端末では、2つのボタンがきちんと並ぶよう説明を畳む */
+            '@media (max-width:460px){.rw-hint{display:none;} .rw-close,.rw-print{flex:1; padding:11px 8px; text-align:center;}}' +
             '.report-note{background:#EAF1FD; color:#1C1D22; font-size:12.5px; padding:11px 14px; border-radius:8px; margin-bottom:16px;} ' +
             /* グラフの軸の説明は、画面と同じく左右に分けて置く（くっついて読めなくなるのを防ぐ） */
             '.chart-cap{display:flex; justify-content:space-between; gap:10px; font-size:9px; color:#6B6E7A; margin:0 2px 5px; letter-spacing:0.03em;} ' +
-            '@media print{.report-note{display:none;}}</style>' +
+            '@media print{.report-note,.rw-bar{display:none;}}</style>' +
             '</head><body>' +
-            '<div class="report-note">印刷ダイアログが自動で開きます。閉じてしまった場合はこのページで印刷（またはブラウザの共有）から「PDFとして保存 / ファイルに保存」を選べます。</div>' +
+            '<div class="rw-bar">' +
+            '<button class="rw-close" id="rw-close" type="button">✕ 閉じて戻る</button>' +
+            '<button class="rw-print" id="rw-print" type="button">印刷・PDF保存</button>' +
+            '<span class="rw-hint" id="rw-hint">印刷の画面が自動で開きます</span>' +
+            '</div>' +
+            '<div class="report-note">印刷ダイアログを閉じてしまった場合は「印刷・PDF保存」を押すと、もう一度開けます。保存し終えたら「✕ 閉じて戻る」でレジにもどれます。</div>' +
             inner +
-            '<' + 'script>window.onload=function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},400);};<' + '/script>' +
+            '<' + 'script>(function(){' +
+            'var c=document.getElementById("rw-close"),p=document.getElementById("rw-print"),h=document.getElementById("rw-hint");' +
+            'p.onclick=function(){try{window.print();}catch(e){}};' +
+            'c.onclick=function(){' +
+            '  try{window.close();}catch(e){}' +
+            // close() を断られる場合がある。その時は元のページへ戻すか、やり方を伝える
+            '  setTimeout(function(){ if(!window.closed){' +
+            '    try{ if(window.opener && !window.opener.closed){ window.opener.focus(); } }catch(e2){}' +
+            '    if(history.length>1){ history.back(); return; }' +
+            '    h.textContent="この画面は自動で閉じられません。ブラウザのタブを閉じるか、前の画面に戻ってください。";' +
+            '    h.style.color="#B3263C"; h.style.fontWeight="700";' +
+            '  }},350);' +
+            '};' +
+            'window.onload=function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},400);};' +
+            '})();<' + '/script>' +
             '</body></html>'
         );
         win.document.close();
@@ -6990,17 +7160,28 @@
             const h = document.getElementById('stock-hint');
             if (h) h.textContent = '開店後、当日の商品と在庫をここで調整できます。';
             list.innerHTML = '';
+            // 閉店中は商品を足せないので、入口も追加フォームも隠しておく
+            const openBtn = document.getElementById('live-add-open');
+            const form = document.getElementById('live-add-form');
+            if (openBtn) openBtn.style.display = 'none';
+            if (form) form.style.display = 'none';
             return;
         }
+        const openBtn = document.getElementById('live-add-open');
+        const form = document.getElementById('live-add-form');
+        // 追加フォームが開いたままなら、入口のボタンは出さない（二重に見えてしまう）
+        const adding = form && form.style.display === 'block';
+        if (openBtn) openBtn.style.display = adding ? 'none' : '';
         const hint = document.getElementById('stock-hint');
         if (hint) hint.textContent = '追加で搬入したら「仕入れ数」を増やしてください。残数と消化率は自動で計算し直されます。'
             + (syncMode ? '変更は共有中の全端末に反映されます。' : '');
-        list.innerHTML = '';
+        // まとめて1回で入れる（1行ずつ足すと、そのたびに全体を組み直して入力中のカーソルが外れる）
+        const rows = [];
         products.forEach(p => {
             const oversold = p.stock < 0; // 販売数>仕入数（過少入力の可能性）
             const noteVal = escHtml(p.note || '');
             const inactive = p.active === false;
-            list.innerHTML += `
+            rows.push(`
                 <div style="margin-bottom:10px; padding:8px; border-radius:var(--r-sm); border:1px solid var(--line); background:${oversold ? 'var(--danger-bg)' : 'var(--white)'}; ${inactive ? 'opacity:0.55;' : ''}">
                     <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
                         <span style="flex:1; font-size:14px; font-weight:bold; overflow-wrap:anywhere;">${escHtml(p.name)}${oversold ? ' <b style="color:var(--danger); font-size:12px;">販売&gt;仕入</b>' : ''}${inactive ? ' <span style="font-size:11px; color:var(--text-light); font-weight:normal;">(この回は販売しない)</span>' : ''}</span>
@@ -7015,10 +7196,12 @@
                         <input type="number" value="${p.initialStock}" class="num ls-stock" style="width:62px; padding:6px; text-align:center; font-size:14px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLiveInitialStock(${p.id}, this.value)">
                         <button class="step-btn plus" onclick="adjustLiveInitialStock(${p.id}, 1)">＋</button>
                     </div>
+                    ${catPicker(p.type, `setLiveType(${p.id}, '%T%')`)}
                     ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:6px; padding:6px; font-size:12px; border:none; box-shadow:inset 0 0 0 1px rgba(28,29,34,.07); border-radius:var(--r-sm); background:var(--sunken);" onchange="setProductNote(${p.id}, this.value)">` : ''}
                 </div>
-            `;
+            `);
         });
+        list.innerHTML = rows.join('');
     }
 
     // 仕入れ数を変えた分だけ残数も動かす（同期中は共有の販売実績から再計算されるので触らない）
@@ -7066,29 +7249,76 @@
     }
 
     // 営業の途中で商品を追加する（急きょ別の品を出すことになった時など）
+    // 営業中に足す商品の「種類」。フォームを閉じるまで覚えておく
+    let liveAddType = 'sweet';
+
+    // 追加フォームの開け閉め。
+    // 以前は prompt を4回続けて出していたが、iOS では見た目がアプリから浮くうえ、
+    // 途中でキャンセルすると何も残らず入れ直しになっていた。
+    // 画面の中のフォームにして、種類も他の入力と同じ形で選べるようにした。
+    function toggleLiveAdd(show) {
+        const form = document.getElementById('live-add-form');
+        const btn = document.getElementById('live-add-open');
+        if (!form || !btn) return;
+        if (show && !currentSession) { playError(); alert('開店してから追加してください。'); return; }
+        form.style.display = show ? 'block' : 'none';
+        btn.style.display = show ? 'none' : '';
+        if (show) {
+            liveAddType = 'sweet';
+            ['la-name', 'la-price', 'la-stock', 'la-cost'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            renderLiveAddType();
+            const n = document.getElementById('la-name');
+            if (n) n.focus();
+            form.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+    }
+
+    function setLiveAddType(t) { liveAddType = t; renderLiveAddType(); }
+    function renderLiveAddType() {
+        const box = document.getElementById('la-type');
+        if (box) box.innerHTML = catPicker(liveAddType, "setLiveAddType('%T%')");
+    }
+
     function addLiveProduct() {
-        if (!currentSession) { alert('開店してから追加してください。'); return; }
-        const name = (prompt('追加する商品の名前を入力してください') || '').trim();
-        if (!name) return;
-        if (products.some(p => p.name === name)) { alert('同じ名前の商品がすでにあります。'); return; }
-        const priceRaw = prompt(`「${name}」の価格（円）を入力してください`, '100');
-        const price = parseInt(priceRaw);
-        if (isNaN(price) || price < 0) { alert('価格が正しくありません。'); return; }
-        const stockRaw = prompt(`「${name}」の仕入れ数（用意した個数）を入力してください`, '10');
-        const initialStock = parseInt(stockRaw);
-        if (isNaN(initialStock) || initialStock < 0) { alert('仕入れ数が正しくありません。'); return; }
-        const typeRaw = (prompt('色分けの種類を選んでください（1:パン / 2:クッキー / 3:ドリンク）', '1') || '').trim();
-        const type = typeRaw === '3' ? 'drink' : (typeRaw === '2' ? 'savory' : 'sweet');
+        if (!currentSession) { playError(); alert('開店してから追加してください。'); return; }
+        const nameEl = document.getElementById('la-name');
+        if (!nameEl) return;   // フォームが出ていない時に呼ばれても何もしない
+        const name = (nameEl.value || '').trim();
+        if (!name) { playError(); alert('商品名を入れてください。'); return; }
+        if (products.some(p => p.name === name)) { playError(); alert('同じ名前の商品がすでにあります。'); return; }
+        const price = parseInt(document.getElementById('la-price').value, 10);
+        if (isNaN(price) || price < 0) { playError(); alert('価格を数字で入れてください。'); return; }
+        const initialStock = parseInt(document.getElementById('la-stock').value, 10);
+        if (isNaN(initialStock) || initialStock < 0) { playError(); alert('仕入れ数を数字で入れてください。'); return; }
+        const costRaw = document.getElementById('la-cost').value;
+        const costNum = parseInt(costRaw, 10);
+        const cost = (costRaw === '' || isNaN(costNum) || costNum < 0) ? null : costNum;
+        const type = CAT_TYPES.some(c => c.id === liveAddType) ? liveAddType : 'sweet';
 
         const newId = products.reduce((m, p) => Math.max(m, p.id || 0), 0) + 1;
-        products.push({ id: newId, name, price, type, initialStock, stock: initialStock, cost: null, soldOutTime: null, active: true, note: '' });
-        logEdit(`商品追加：${name}（¥${price} / 仕入れ${initialStock}個）`);
+        products.push({ id: newId, name, price, type, initialStock, stock: initialStock, cost, soldOutTime: null, active: true, note: '' });
+        logEdit(`商品追加：${name}（¥${price} / 仕入れ${initialStock}個 / ${(CAT_TYPES.find(c => c.id === type) || {}).label}）`);
         if (syncMode) recomputeStockFromSales();
         syncPushProducts();
         saveData();
         init();
+        toggleLiveAdd(false);
         renderLiveStock();
+        playSound();
         showToast(`「${name}」を追加しました`);
+    }
+
+    // 営業中に商品の種類（色分け）を変える
+    function setLiveType(id, type) {
+        const p = products.find(prod => prod.id === id);
+        if (!p || !CAT_TYPES.some(c => c.id === type)) return;
+        if (p.type === type) return;
+        p.type = type;
+        logEdit(`種類を変更：${p.name} → ${(CAT_TYPES.find(c => c.id === type) || {}).label}`);
+        syncPushProducts();
+        saveData();
+        init();
+        renderLiveStock();
     }
 
     // 商品の備考（途中補充・数え直し等）を記録する
