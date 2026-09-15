@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>泰山木POS</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <!-- viewport-fit=cover：ノッチやホームバーのある機種で、画面の端まで色が届くようにする。
+         これが無いと、上下左右に地の色とは違う帯が残ってしまう。 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <!-- ホーム画面に追加した時、ブラウザの戻る/アドレスバー等を出さずフルスクリーンで起動する設定
          （iPad/iPhone: 共有 → ホーム画面に追加／Android: メニュー → ホーム画面に追加、またはアプリをインストール） -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -28,8 +30,16 @@
         var root = document.documentElement;
         root.setAttribute('data-theme', dark ? 'dark' : 'light');
         root.style.colorScheme = dark ? 'dark' : 'light';
+        // お客様用の表示にしてある端末は、起動した瞬間から暗いままにする
+        // （一瞬でも白く光ると、お客様に向けている画面ではとても目立つ）
+        var isCustomer = false;
+        try {
+            var r2 = localStorage.getItem('taizanboku_pos_ui');
+            if (r2) { var d2 = JSON.parse(r2) || {}; isCustomer = d2.role === 'customer' && !!d2.cdCode; }
+        } catch (e) {}
+        if (isCustomer) { root.classList.add('is-customer'); root.style.colorScheme = 'dark'; }
         var m = document.querySelector('meta[name="theme-color"]');
-        if (m) m.setAttribute('content', dark ? '#0E1015' : '#F2F3F7');
+        if (m) m.setAttribute('content', isCustomer ? '#0E0F13' : (dark ? '#0E1015' : '#F2F3F7'));
     })();
     </script>
     <link rel="manifest" href="manifest.webmanifest">
@@ -239,6 +249,11 @@
         :root[data-theme="dark"] .man-root:not(.man-print) .man-chk { border-color: var(--line-strong); }
         :root[data-theme="dark"] .man-root:not(.man-print) .man-fill { border-bottom-color: var(--line-strong); }
 
+        /* お客様用の表示にしている間は、いちばん外側（ノッチやホームバーのまわり）まで
+           表示と同じ暗さにする。ここが明るいままだと、画面の上下左右に帯が残る。 */
+        :root.is-customer { --page-edge: #0E0F13; }
+        :root.is-customer body { background-color: #0E0F13; }
+
         /* 金額は桁が揃う等幅数字で表示する（アプリ全体で統一） */
         .num, .total-amount, .co-summary .co-val { font-variant-numeric: tabular-nums; }
 
@@ -251,6 +266,10 @@
             position: fixed;
             width: 100%;
             overscroll-behavior: none;
+            /* いちばん外側にも地の色を置く。ノッチやホームバーのまわりに
+               白い帯が残らないよう、画面の端まで同じ色にする。
+               お客様用の表示にしている間は、この色を暗い方へ差し替える。 */
+            background-color: var(--page-edge, var(--bg-color));
         }
 
        body {
@@ -398,7 +417,10 @@
                1本の線が引かれているように見えてしまうので、
                ヘッダーは色を持たず、地の色をそのまま使う。 */
             background: transparent;
-            padding: 12px max(20px, env(safe-area-inset-right)) 12px max(20px, env(safe-area-inset-left));
+            /* 画面の端まで色を描く設定（viewport-fit=cover）にしているので、
+               iPhoneの時刻・電波が出ている帯のぶんだけ、上に余白を足す。
+               足さないと、見出しやボタンが時刻の下にもぐってしまう。 */
+            padding: calc(12px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right)) 12px max(20px, env(safe-area-inset-left));
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -464,6 +486,11 @@
         #app-container {
             display: flex;
             min-width: 0;
+            /* 画面の端まで描く設定にしているので、横向きにした時の
+               ノッチ側にボタンや文字がもぐらないよう、左右に安全領域を空ける */
+            padding-left: env(safe-area-inset-left, 0px);
+            padding-right: env(safe-area-inset-right, 0px);
+            box-sizing: border-box;
             flex-direction: row-reverse; /* 商品ボタンを右、カート（小計）を左に配置（右利き向け） */
             flex: 1;
             overflow: hidden;
@@ -1283,7 +1310,10 @@
         .panel-head::before { content: ''; width: 0; }
         .panel-head.no-back h2 { margin-left: 2px; }
 
-        .panel-body { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 14px 16px 20px; }
+        .panel-body {
+            flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+            padding: 14px max(16px, env(safe-area-inset-right, 0px)) 20px max(16px, env(safe-area-inset-left, 0px));
+        }
         .panel-view { display: none; }
         .panel-view.active { display: block; }
         .sub-view { display: block; }
@@ -1327,7 +1357,7 @@
             .menu-row > .ic:first-child { width: 20px; height: 20px; }
             .menu-row .mr-title { font-size: 14.5px; }
             .menu-row .mr-sub { font-size: 11.5px; margin-top: 2px; }
-            .panel-body { padding: 12px 14px 16px; }
+            .panel-body { padding: 12px max(14px, env(safe-area-inset-right, 0px)) 16px max(14px, env(safe-area-inset-left, 0px)); }
             .panel-head { padding: 2px 12px 8px; min-height: 42px; }
             .panel-head h2 { font-size: 22px; }
             /* 在庫調整の1行（価格・仕入れ数）が折り返さないよう、狭い画面では詰める */
@@ -1557,7 +1587,8 @@
             position: fixed; inset: 0; z-index: 400;
             background: #14151A; color: #fff;
             display: flex; flex-direction: column;
-            padding: calc(14px + env(safe-area-inset-top, 0px)) 20px calc(16px + env(safe-area-inset-bottom, 0px));
+            padding: calc(14px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px))
+                     calc(16px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
             font-variant-numeric: tabular-nums;
             animation: backdropIn .3s ease both;
             /* 面のいちばん上と下をわずかに暗くして、数字のある真ん中を浮かせる */
@@ -1755,7 +1786,7 @@
 
         /* 横向き・大きい画面では、さらに大きく */
         @media (min-width: 700px) and (min-height: 561px) {
-            #customer-display { padding-left: 42px; padding-right: 42px; }
+            #customer-display { padding-left: max(42px, env(safe-area-inset-left, 0px)); padding-right: max(42px, env(safe-area-inset-right, 0px)); }
             #customer-display { --cd-total: 96px; --cd-change: 60px; --cd-item: 23px; --cd-head: 40px; }
             #customer-display.is-checkout { --cd-total: 124px; --cd-change: 76px; }
             #customer-display .cd-order { flex-direction: row; align-items: stretch; gap: 40px; }
@@ -2425,6 +2456,9 @@
                 <div id="sync-devices-wrap" style="display:none;">
                     <label class="field-label" style="margin-top:18px;">いま共有している端末</label>
                     <div id="sync-devices"></div>
+                    <label class="field-label" style="margin-top:14px;">この端末の名前（任意）</label>
+                    <input type="text" id="device-name-input" maxlength="20" placeholder="例: レジ1／お客様用" autocomplete="off" oninput="saveDeviceName()">
+                    <p class="settings-hint">一覧で見分けるための名前です。この端末にだけ保存され、売上には影響しません。</p>
                 </div>
                 <label class="field-label" style="margin-top:18px;">この端末の役割</label>
                 <div class="menu-list" id="sync-role-list"></div>
@@ -2907,6 +2941,13 @@
         return deviceId;
     }
     function deviceLabel() { const id = getDeviceId(); return id.slice(1, 3).toUpperCase(); } // 端末の短いラベル（客No.に併記）
+    // 共有の一覧で見分けるための名前（任意）。付けていなければ短いラベルで代用する。
+    // 【なぜ要るか】短いラベルは端末IDから作った2文字なので、
+    // 「FR」「EV」のように並んでも、どれがどの端末なのか人には分からない。
+    function deviceDisplayName() {
+        const n = (uiPrefs && uiPrefs.deviceName || '').trim();
+        return n || '';
+    }
 
     // 画面に文字列を差し込む時の共通エスケープ（販売会名など、利用者が入力した文字を扱う箇所で使う）
     function escHtml(s) {
@@ -3843,6 +3884,11 @@
                 </div>
                 <h4>つながっている端末を確かめる</h4>
                 <p><b>「設定 → 複数端末で使う」</b>の<b>「いま共有している端末」</b>に、参加している端末が並びます。会計する端末か、お客様用の表示かも分かります。通信が途切れている端末は灰色になります。</p>
+                <div class="man-box tip">
+                    <div class="man-box-h">端末に名前を付けておくと分かりやすい</div>
+                    <p>同じ一覧の下にある<b>「この端末の名前」</b>に、<b>「レジ1」「お客様用」</b>のように入れておくと、どれがどの端末かひと目で分かります。名前はその端末にだけ保存され、売上には影響しません。</p>
+                </div>
+                <p>画面を消したり他のアプリに切り替えたりすると、端末は通信を止めます。<b>画面に戻ればひとりでに追いつく</b>ので、そのまま使って大丈夫です。</p>
                 <div class="man-box warn">
                     <div class="man-box-h">通信が切れたとき</div>
                     <p>レジの画面に<b>赤い帯</b>が出ます。<b>その間も会計はそのまま続けられます</b>（この端末に貯まり、つながると自動でまとめて送られます）。つながっていないまま閉店しようとすると引き止めるので、電波の良い場所で表示が緑になってから閉店してください。</p>
@@ -3875,6 +3921,8 @@
                         <li>お客様用にした端末では<b>会計はできません</b>（映すだけです）。</li>
                         <li>ふだんのレジに戻すときは、画面の<b>左上の×</b>を押します（確認が出ます）。</li>
                         <li>電波が切れても表示のままです。つながり直すと自動でまた映ります。</li>
+                        <li>画面が消えていた・他のアプリを使っていた場合も、<b>戻れば自動で追いつきます</b>。</li>
+                        <li>レジが2台あるときは、<b>いま打っている方</b>の内容が映ります。</li>
                     </ul>
                 </div>`
         },
@@ -4014,6 +4062,9 @@
     //   ・書き込むのは売上とは別の小さな1件の書類なので、会計の同期を邪魔しない。
     //   ・共有していない（コードが無い）時は、この機能はまるごと動かない。
     const CD_DOC = 'display';     // events/{code}/live/display
+    const CD_KEEPALIVE_MS = 30000;   // レジが静かな時に、いまの内容を出し直す間隔
+    let cdLastSent = 0;              // 最後に送れた時刻
+    let cdRetrySend = null;          // 送信に失敗した時の、出し直しの予約
     let customerMode = false;     // この端末がお客様用か
     let cdUnsub = null;           // お客様用の端末の購読
     let cdPushTimer = null;       // 書き込みの間引き用
@@ -4022,6 +4073,39 @@
     let cdLastSeen = 0, cdWatchTimer = null;   // 最後にレジから届いた時刻の見張り
     let cdDoneTimer = null;       // 「ありがとうございました」を出し終える時刻
     let cdLastLines = '';         // 直前に映した明細（新しく増えた行だけ光らせるため）
+
+    // ▼ いま「お客様用の表示」に出ている内容の持ち主を見張る ▼
+    // 【なぜ必要か】レジが2台ある時、片方が会計している最中に、
+    // もう片方の「静かな時の出し直し」が空っぽの内容で上書きしてしまうと、
+    // お客様の目の前で金額が消える。いま誰が出しているのかを見ておき、
+    // 自分が打っていない時は、他のレジが出している内容を消さない。
+    let cdDocNow = null;          // { by, at, state }
+    let cdOwnerUnsub = null;
+    function startDisplayOwnerWatch(code) {
+        stopDisplayOwnerWatch();
+        if (!syncReady || !code || !fbDb || customerMode) return;
+        cdOwnerUnsub = fbDb.collection('events').doc(code).collection('live').doc(CD_DOC)
+            .onSnapshot(doc => {
+                const d = doc.exists ? (doc.data() || null) : null;
+                cdDocNow = d ? { by: d.by, at: Number(d.at) || 0, state: d.state || 'idle' } : null;
+            }, err => console.warn('お客様用表示の見張りでエラー', err));
+    }
+    function stopDisplayOwnerWatch() {
+        if (cdOwnerUnsub) { try { cdOwnerUnsub(); } catch (e) {} cdOwnerUnsub = null; }
+        cdDocNow = null;
+    }
+
+    // いま自分が「打っている最中」か（＝表示を出す権利がある側か）
+    function iAmDisplayOwner() {
+        if (cart.length > 0) return true;
+        const modal = document.getElementById('checkout-modal');
+        if (modal && modal.style.display === 'flex') return true;
+        if (!cdDocNow || !cdDocNow.by) return true;             // まだ誰も出していない
+        if (cdDocNow.by === getDeviceId()) return true;         // いま出しているのは自分
+        if (cdDocNow.state === 'idle') return true;             // 他のレジも待ち受け中なら遠慮しない
+        // 他のレジが会計中。1分以上その端末から音沙汰がなければ、引き取る
+        return (Date.now() - cdDocNow.at) > 60000;
+    }
 
     // ---- レジ役の端末：いまの内容を共有の置き場へ書く ----
     // 打つたびに書くと通信が増えるので、150ミリ秒だけまとめてから1回書く。
@@ -4041,6 +4125,8 @@
                 const modal = document.getElementById('checkout-modal');
                 if (!modal || modal.style.display !== 'flex') return;
             }
+            // レジが2台以上ある時、他のレジが会計中なら、その表示を消さない
+            if (!iAmDisplayOwner()) return;
             const payload = buildCustomerPayload();
             const key = JSON.stringify(payload);
             if (!force && key === cdLastPayload) return;   // 変わっていなければ書かない
@@ -4049,7 +4135,15 @@
             payload.by = getDeviceId();
             fbDb.collection('events').doc(syncEventCode).collection('live').doc(CD_DOC)
                 .set(payload)
-                .catch(e => console.warn('お客様用表示の送信に失敗しました', e));
+                .then(() => { cdLastSent = Date.now(); })
+                .catch(e => {
+                    // 黙って諦めない。次に同じ内容でも送り直せるよう控えを捨て、一度だけ出し直す。
+                    console.warn('お客様用表示の送信に失敗しました', e);
+                    cdLastPayload = '';
+                    if (!cdRetrySend) {
+                        cdRetrySend = setTimeout(() => { cdRetrySend = null; publishCustomerDisplay(true); }, 1500);
+                    }
+                });
         }, force ? 0 : 150);
     }
 
@@ -4108,10 +4202,10 @@
     // ---- お客様用の端末：読んで映す ----
     function enterCustomerMode(code) {
         const c = sanitizeEventCode((code || '').trim());
-        if (!c) { playError(); alert('共有コードを入れてください。'); return; }
+        if (!c) { playError(); alert('共有コードを入れてください。\nレジ役の端末と同じ文字にします。'); return; }
         if (!window.FIREBASE_CONFIG || !syncReady) {
             playError();
-            alert('この端末では共有機能が使えないため、お客様用の表示にできません。');
+            alert('共有サーバーにつながっていないため、お客様用の表示にできません。\n通信状況をご確認のうえ、少し待ってからもう一度お試しください。');
             return;
         }
         customerMode = true;
@@ -4135,6 +4229,7 @@
         const box = document.getElementById('customer-display');
         if (!box) return;
         box.style.display = customerMode ? 'flex' : 'none';
+        applySurfaceColors();    // 画面の端までの色も、役割に合わせて切り替える
         if (cdUnsub) { try { cdUnsub(); } catch (e) {} cdUnsub = null; }
         if (!customerMode) { clearMyPresence(uiPrefs.cdCode); stopPresence(); renderCustomerSettings(); return; }
         renderCustomerView(null, 'connecting');
@@ -4374,19 +4469,48 @@
         const code = customerMode ? uiPrefs.cdCode : syncEventCode;
         if (!code || !fbDb || !syncReady) return;
         presenceRef(code).set({
-            label: deviceLabel(), role: myPresenceRole(),
+            label: deviceLabel(), name: deviceDisplayName(), role: myPresenceRole(),
+            // 【重要】left を必ず false に戻す。
+            // 以前は「抜けました」の印（left: true）を書いたあと、
+            // 入り直しても印が残ったままで、一覧にずっと出てこなかった。
+            // 同じコードで試しに入り直すだけで起きるので、ここで必ず消す。
+            left: false,
             at: Date.now(), ua: (navigator.userAgent || '').slice(0, 120)
-        }, { merge: true }).catch(e => console.warn('在席の送信に失敗しました', e));
+        }, { merge: true })
+            .catch(e => console.warn('在席の送信に失敗しました', e));
     }
 
-    // お客様用の端末が「音沙汰なし」と誤解しないよう、レジ側は静かな時も定期的に出し直す
+    // お客様用の端末が「音沙汰なし」と誤解しないよう、レジ役は静かな時も定期的に出し直す。
+    // 【なぜ要るか】置き場は「変わった時だけ」知らせるので、レジが静かだと
+    // お客様用の端末には何も届かない。届かない時間が続くと、
+    // 本当に切れているのか、ただ暇なだけなのかが区別できなくなる。
     let cdKeepAliveTimer = null;
     function startCustomerKeepAlive() {
-        if (cdKeepAliveTimer) clearInterval(cdKeepAliveTimer);
+        stopCustomerKeepAlive();
+        if (customerMode) return;      // お客様用の端末は読むだけなので出さない
         cdKeepAliveTimer = setInterval(() => {
-            if (!syncMode || customerMode) return;
+            if (!syncMode || customerMode) { stopCustomerKeepAlive(); return; }
+            if (Date.now() - cdLastSent < CD_KEEPALIVE_MS - 2000) return;  // 直前に送れていれば出し直さない
             publishCustomerDisplay(true);
-        }, 45000);
+        }, CD_KEEPALIVE_MS);
+    }
+    function stopCustomerKeepAlive() {
+        if (cdKeepAliveTimer) { clearInterval(cdKeepAliveTimer); cdKeepAliveTimer = null; }
+    }
+
+    // 一覧に「お客様用の表示」が現れた／戻ってきたことに気づいたら、いまの内容を出し直す
+    let cdSeenDisplays = {};
+    function noteDisplayDevices(rows) {
+        if (customerMode || !syncMode) return;
+        let wake = false;
+        (rows || []).forEach(r => {
+            if (r.role !== 'display' || r.__id === getDeviceId()) return;
+            const at = Number(r.at) || 0;
+            if (at <= 0 || r.left) { delete cdSeenDisplays[r.__id]; return; }
+            if (!cdSeenDisplays[r.__id]) wake = true;      // はじめて見つけた／戻ってきた
+            cdSeenDisplays[r.__id] = at;
+        });
+        if (wake) publishCustomerDisplay(true);
     }
 
     function startPresence() {
@@ -4401,6 +4525,9 @@
                 snap.forEach(d => { const v = d.data() || {}; v.__id = d.id; rows.push(v); });
                 presenceRows = rows.sort((a, b) => (b.at || 0) - (a.at || 0));
                 renderSyncDevices();
+                // お客様用の端末が新しく現れた／戻ってきたら、いまの内容をすぐ出し直す。
+                // （立てかけたスマホを起こし直した時に、待たずに映るようにするため）
+                noteDisplayDevices(rows);
             }, err => console.warn('端末一覧の購読でエラー', err));
     }
 
@@ -4409,14 +4536,39 @@
         if (presenceUnsub) { try { presenceUnsub(); } catch (e) {} presenceUnsub = null; }
     }
 
-    // 共有をやめる時は、自分の行を消して一覧から消えるようにする
+    // 共有をやめる時は、自分の行そのものを消す。
+    // 印だけ付けて残すと、入り直した時に印が消えず一覧に出てこなくなるため、
+    // 「行を消す」を基本にして、消せなかった時だけ印で代用する。
     function clearMyPresence(code) {
-        const c = code || syncEventCode || uiPrefs.cdCode;
+        const c = code || (customerMode ? uiPrefs.cdCode : syncEventCode);
         if (!c || !fbDb || !syncReady) return;
-        presenceRef(c).set({ at: 0, left: true }, { merge: true }).catch(() => {});
+        const ref = presenceRef(c);
+        try {
+            ref.delete().catch(() => { ref.set({ at: 0, left: true }, { merge: true }).catch(() => {}); });
+        } catch (e) {
+            ref.set({ at: 0, left: true }, { merge: true }).catch(() => {});
+        }
+    }
+
+    let deviceNameTimer = null;
+    function saveDeviceName() {
+        const el = document.getElementById('device-name-input');
+        if (!el) return;
+        uiPrefs.deviceName = (el.value || '').slice(0, 20);
+        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) { /* 保存できなくても動く */ }
+        // 1文字ごとに送ると通信が増えるので、打ち終わってから0.6秒だけ待って1回送る
+        if (deviceNameTimer) clearTimeout(deviceNameTimer);
+        deviceNameTimer = setTimeout(() => {
+            deviceNameTimer = null;
+            beatPresence();      // 付けた名前を、他の端末の一覧にも反映する
+            if (currentView === 'settings' && currentSub === 'sync') renderSyncView();
+            else renderSyncDevices();
+        }, 600);
     }
 
     function renderSyncDevices() {
+        const nameInput = document.getElementById('device-name-input');
+        if (nameInput && document.activeElement !== nameInput) nameInput.value = uiPrefs.deviceName || '';
         const wrap = document.getElementById('sync-devices-wrap');
         const box = document.getElementById('sync-devices');
         if (!wrap || !box) return;
@@ -4424,10 +4576,19 @@
         wrap.style.display = live ? '' : 'none';
         if (!live) return;
         const now = Date.now();
-        const rows = presenceRows.filter(r => !r.left && r.at);
-        if (!rows.length) {
-            box.innerHTML = '<div class="dev-empty">まだ他の端末は見つかっていません。</div>';
-            return;
+        // ・抜けた印が付いていて、しかも知らせが止まっている行は出さない
+        // ・半日以上前の行は、前の日の同じコードの残りものなので出さない
+        const rows = presenceRows.filter(r => {
+            const at = Number(r.at) || 0;
+            if (at <= 0) return false;
+            if (now - at > 12 * 3600000) return false;
+            if (r.left && now - at > PRESENCE_STALE) return false;
+            return true;
+        });
+        // この端末は必ず一覧に出す。知らせがまだ往復していない間も
+        // 「自分すら出てこない」という不安な見え方にならないようにする。
+        if (!rows.some(r => r.__id === getDeviceId())) {
+            rows.unshift({ __id: getDeviceId(), name: deviceDisplayName(), label: deviceLabel(), role: myPresenceRole(), at: now });
         }
         box.innerHTML = rows.map(r => {
             const gap = Math.max(0, now - (r.at || 0));
@@ -4437,14 +4598,35 @@
                 : gap < 3600000 ? `${Math.round(gap / 60000)}分前`
                 : `${Math.round(gap / 3600000)}時間前`;
             const roleLabel = r.role === 'display' ? 'お客様用の表示' : '会計する端末';
+            // 名前を付けていれば名前を、付けていなければ役割そのものを見出しにする。
+            // （端末IDから作った2文字だけでは、どれがどの端末か人には分からないため）
+            const named = (r.name && String(r.name).trim()) || '';
+            const title = named || roleLabel;
+            const bits = [];
+            if (named) bits.push(roleLabel);
+            bits.push(online ? '通信あり' : '最後の通信 ' + when);
+            if (r.label) bits.push(`会計記録の記号 ${escHtml(r.label)}`);
             return `<div class="dev-row${online ? '' : ' off'}">
                 <span class="dev-dot"></span>
                 <span class="dev-main">
-                    <span class="dev-name">${escHtml(r.label || '名前なし')}${me ? '<b class="dev-me">この端末</b>' : ''}</span>
-                    <span class="dev-sub">${roleLabel}・${online ? '通信あり' : '最後の通信 ' + when}</span>
+                    <span class="dev-name">${escHtml(title)}${me ? '<b class="dev-me">この端末</b>' : ''}</span>
+                    <span class="dev-sub">${bits.join('・')}</span>
                 </span>
             </div>`;
         }).join('');
+        if (rows.length === 1) {
+            box.innerHTML += '<div class="dev-empty">ほかの端末はまだ参加していません。同じ共有コードを入れると、ここに出ます。</div>';
+        }
+        // お客様用の端末がいる時は、最後にいつ内容を送れたかも出す。
+        // 「映っていない気がする」時に、送れているのかどうかを目で確かめられるようにする。
+        const hasDisplay = rows.some(r => r.role === 'display' && r.__id !== getDeviceId());
+        if (hasDisplay && !customerMode) {
+            const gap = cdLastSent ? Math.max(0, now - cdLastSent) : -1;
+            const text = gap < 0 ? 'まだ一度も送れていません'
+                : gap < 45000 ? 'たったいま送りました'
+                : `最後に送れたのは ${Math.round(gap / 60000)}分前です`;
+            box.innerHTML += `<div class="dev-empty">お客様用の表示へ：${text}</div>`;
+        }
     }
 
     // ▼ 反映のおくれを測る ▼
@@ -4457,7 +4639,7 @@
         if (!box) return;
         if (!syncMode || !syncEventCode || !fbDb) {
             box.className = 'notice notice-warn';
-            box.innerHTML = '<svg class="ic"><use href="#ic-alert"/></svg><span>共有中だけ測れます。</span>';
+            box.innerHTML = '<svg class="ic"><use href="#ic-alert"/></svg><span>共有しているときだけ測れます。先に共有コードを入れてください。</span>';
             return;
         }
         box.className = 'notice';
@@ -4564,6 +4746,17 @@
         return 'light';
     }
 
+    // 画面のいちばん外側（ノッチ・ホームバーのまわり）と、
+    // ブラウザの帯の色を、いまの配色と役割に合わせる
+    const CD_EDGE_COLOR = '#0E0F13';
+    function applySurfaceColors() {
+        const root = document.documentElement;
+        root.classList.toggle('is-customer', !!customerMode);
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (!meta) return;
+        meta.setAttribute('content', customerMode ? CD_EDGE_COLOR : THEME_COLORS[resolvedTheme()]);
+    }
+
     function applyTheme(animate) {
         const t = resolvedTheme();
         const root = document.documentElement;
@@ -4574,8 +4767,7 @@
         root.setAttribute('data-theme', t);
         // ブラウザ側の部品（入力欄の中身・スクロールバー）も同じ明るさにそろえる
         root.style.colorScheme = t;
-        const meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute('content', THEME_COLORS[t]);
+        applySurfaceColors();
         refreshChartInk();
         renderThemeSettings();
         // グラフは色を直接埋め込んで描いているので、描き直して色を合わせる。
@@ -4627,7 +4819,7 @@
         }
     }
 
-    let uiPrefs = { clock: true, weather: false, area: 'tokyo', role: 'register', cdCode: '', theme: 'auto' };
+    let uiPrefs = { clock: true, weather: false, area: 'tokyo', role: 'register', cdCode: '', theme: 'auto', deviceName: '' };
     let weatherNow = null;      // { code, temp, at, area }
     let weatherFetching = false;
 
@@ -4642,7 +4834,8 @@
                     area: WEATHER_AREAS.some(a => a.id === d.area) ? d.area : 'tokyo',
                     role: d.role === 'customer' ? 'customer' : 'register',
                     cdCode: typeof d.cdCode === 'string' ? d.cdCode : '',
-                    theme: (d.theme === 'light' || d.theme === 'dark') ? d.theme : 'auto'
+                    theme: (d.theme === 'light' || d.theme === 'dark') ? d.theme : 'auto',
+                    deviceName: typeof d.deviceName === 'string' ? d.deviceName.slice(0, 20) : ''
                 };
             }
             const w = localStorage.getItem(UI_PREF_KEY + '_weather');
@@ -4784,6 +4977,7 @@
         applyTheme();
         watchSystemTheme();
         customerMode = uiPrefs.role === 'customer' && !!uiPrefs.cdCode;
+        applySurfaceColors();   // 役割が決まったので、画面の端までの色もそろえる
         if (customerMode) {
             // 画面はすぐ切り替える（購読は Firebase の用意ができてから）
             const box = document.getElementById('customer-display');
@@ -5397,8 +5591,11 @@
     // 開店をやり直す必要はなく、この端末のここまでの会計も在庫もそのまま引き継がれる。
     async function startSyncMidSession() {
         if (!currentSession) { alert('営業中のみ使えます。'); return; }
-        if (syncMode) { alert('すでに共有中です。'); return; }
-        if (!window.FIREBASE_CONFIG) { alert('この端末では共有機能が設定されていません。'); return; }
+        if (syncMode) {
+            alert('この端末は、すでに共有しています。\n\n別のコードに入れ直す場合は、「設定 → 複数端末で使う」で\n「共有をやめてこの端末だけで続ける」を押してから、もう一度お試しください。');
+            return;
+        }
+        if (!window.FIREBASE_CONFIG) { alert('この端末では共有機能の準備ができていません。\n（準備した方に「複数端末の設定」を確認してもらってください）'); return; }
         if (!syncReady) { alert('同期サーバーに接続できていません。通信状況をご確認のうえ、少し待ってからもう一度お試しください。'); return; }
 
         const input = document.getElementById('sync-live-code-input');
@@ -7066,7 +7263,7 @@
         if (syncMode) {
             box.className = 'notice notice-ok';
             // 共有コードは他の端末に伝える値なので、ここだけは長押しでコピーできるようにする
-            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>共有中です。<br>共有コード：<b class="selectable">${escHtml(syncEventCode || '')}</b><br>この端末の表示名：${deviceLabel()}</span>`;
+            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>共有中です。<br>共有コード：<b class="selectable">${escHtml(syncEventCode || '')}</b><br>この端末：${escHtml(deviceDisplayName() || '名前なし')}（会計記録の記号 ${deviceLabel()}）</span>`;
             acts.innerHTML =
                 `<button class="action-btn btn-secondary" onclick="stopSyncMidSession()"><svg class="ic"><use href="#ic-x"/></svg>共有をやめてこの端末だけで続ける</button>` +
                 `<button class="action-btn btn-secondary" onclick="leaveDeviceOnly()"><svg class="ic"><use href="#ic-power"/></svg>この端末の利用を終える（他の端末は継続）</button>`;
@@ -8771,6 +8968,9 @@
 
     function startSalesSubscription(code) {
         if (!syncReady || !code) return;
+        // 別のコードへ移る時は、前のコードの一覧から自分を消してから始める
+        // （消さないと、前の販売会の一覧にこの端末がいつまでも残る）
+        if (syncEventCode && syncEventCode !== code) clearMyPresence(syncEventCode);
         syncEventCode = code;
         syncMode = true;
         // 購読を始める前に、未送信のローカル会計を送っておく（消失の防止）
@@ -8778,6 +8978,9 @@
         if (fbSalesUnsub) { try { fbSalesUnsub(); } catch (e) {} fbSalesUnsub = null; }
         const col = fbDb.collection('events').doc(code).collection('sales');
         startPresence();
+        startCustomerKeepAlive();       // 静かな時もお客様用の端末へ出し直す
+        startDisplayOwnerWatch(code);   // いま誰が表示を出しているかを見ておく
+        publishCustomerDisplay(true);   // 参加した時点の内容を、すぐ一度映す
         // includeMetadataChanges を付けると、「まだサーバーに届いていない書き込みがあるか」
         // 「いま手元の控えだけで表示しているか」が分かる。これを使って通信の状態を出す。
         fbSalesUnsub = col.onSnapshot({ includeMetadataChanges: true }, snap => {
@@ -8845,12 +9048,51 @@
     // 送信待ちが続いている時は、秒数が伸びていくのが見えるように定期的に描き直す
     setInterval(() => { if (syncMode) renderSyncHealth(); }, 5000);
     // 電波が戻ったら、すぐ在席を知らせ直して一覧にも復帰させる
-    window.addEventListener('online', () => { if (syncMode || customerMode) { beatPresence(); renderSyncHealth(); } });
+    window.addEventListener('online', () => { if (syncMode || customerMode) { wakeSync('電波が戻った'); } });
     window.addEventListener('offline', () => { syncHealth.online = false; renderSyncHealth(); });
+
+    // ▼▼▼ 画面が戻ってきた時に、必ず追いつかせる ▼▼▼
+    // 【なぜ必要か】iPhone・iPad は、画面を消したり他のアプリに切り替えたりすると
+    // タイマーも通信も止める。戻ってきた時に何もしないと、
+    //   ・レジ側：お客様用の表示が止まったままに見える
+    //   ・お客様用：「つながっていません」のまま戻らない
+    //   ・端末一覧：抜けた端末として灰色のまま
+    // ということが起きる。戻ってきたら、その場で全部やり直す。
+    let lastWakeAt = 0;
+    function wakeSync(why) {
+        // 「画面が戻った」の合図は、機種によって同時に3つ届くことがある。
+        // つなぎ直しは重い処理なので、2秒に1回までにしておく。
+        const now = Date.now();
+        if (now - lastWakeAt < 2000) return;
+        lastWakeAt = now;
+        if (customerMode) {
+            // お客様用：読み直して、切れていたらつなぎ直す
+            beatPresence();
+            if (syncReady && fbDb && uiPrefs.cdCode) applyCustomerMode();
+            else scheduleCustomerRetry();
+            return;
+        }
+        if (!syncMode) return;
+        beatPresence();
+        cdSeenDisplays = {};              // 次の一覧で、お客様用の端末を見つけ直す
+        publishCustomerDisplay(true);     // いまの内容をすぐ出し直す
+        startCustomerKeepAlive();         // 止まっていた出し直しを動かし直す
+        renderSyncHealth();
+        if (currentView === 'settings' && currentSub === 'sync') renderSyncView();
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') wakeSync('画面が戻った');
+    });
+    window.addEventListener('pageshow', () => { if (syncMode || customerMode) wakeSync('画面が戻った'); });
+    window.addEventListener('focus', () => { if (syncMode || customerMode) wakeSync('画面が戻った'); });
 
     function stopSalesSubscription() {
         clearMyPresence();
         stopPresence();
+        stopCustomerKeepAlive();
+        stopDisplayOwnerWatch();
+        cdSeenDisplays = {};
         presenceRows = [];
         if (fbSalesUnsub) { try { fbSalesUnsub(); } catch (e) {} fbSalesUnsub = null; }
         syncMode = false;
@@ -9115,7 +9357,7 @@
     function updateSyncUi() {
         let msg;
         if (!window.FIREBASE_CONFIG) msg = '';
-        else if (syncMode) msg = `共有中：コード「<b>${escHtml(syncEventCode || '')}</b>」／この端末 ${deviceLabel()}`;
+        else if (syncMode) msg = `共有中：コード「<b>${escHtml(syncEventCode || '')}</b>」／この端末 ${escHtml(deviceDisplayName() || deviceLabel())}`;
         else if (syncReady) msg = '共有サーバーに接続できています（コードを入れると開始できます）';
         else msg = '共有サーバーに接続中…（つながらない場合はこの端末のみで動作します）';
         ['sync-status', 'sync-status-active'].forEach(id => {
