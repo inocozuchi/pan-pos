@@ -2487,6 +2487,11 @@
             <!-- 共有コードの追加（入力画面） -->
             <div class="sub-view" id="sub-sync-add" style="display:none;">
                 <p class="settings-hint">一緒に使う<b>全部の端末で同じ「共有コード」</b>を入れてください。コードは<b>開店前でも営業中でも</b>入れられます。いま営業中の会計・在庫・商品はそのまま引き継がれます。</p>
+                <div id="live-live-wrap" style="display:none;">
+                    <label class="field-label">いま開いている販売会</label>
+                    <div class="menu-list" id="live-live-list"></div>
+                    <p class="settings-hint" style="margin-top:4px;">押すだけで合流します（コードを入れなくてもかまいません）。</p>
+                </div>
                 <label class="field-label">共有コード</label>
                 <input type="text" id="sync-live-code-input" placeholder="例: pansale-1101" autocomplete="off" autocapitalize="characters" oninput="peekEventCode('live')" onkeydown="if(event.key==='Enter'){event.preventDefault();startSyncMidSession();}">
                 <!-- 開店の準備の画面と同じ下調べを出す。どちらの画面から入れても、
@@ -2606,6 +2611,15 @@
                         <div id="reopen-desc" style="font-weight:normal; margin-top:2px;"></div>
                         <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="reopenLastSession()"><svg class="ic"><use href="#ic-undo"/></svg>直前の販売会を再開する</button>
                     </div>
+                </div>
+                <!-- いま他の端末で開いている販売会を、自動で探して出す。
+                     コードを打たなくても、押すだけで合流できるようにするため。
+                     見つからない時は何も出さない（ふだんの開店の邪魔をしない）。 -->
+                <div id="open-live-wrap" style="display:none;">
+                    <label class="field-label" style="margin-top:0;">いま開いている販売会</label>
+                    <div class="menu-list" id="open-live-list"></div>
+                    <p class="settings-hint" style="margin-top:4px;">押すだけで合流します（コードを入れなくてもかまいません）。</p>
+                    <label class="field-label">新しく開店する</label>
                 </div>
                 <div class="menu-list" id="open-menu-list"></div>
                 <button class="action-btn btn-checkout" id="open-primary-btn" style="width:100%; margin-top:14px;" onclick="startSession()"><svg class="ic"><use href="#ic-store"/></svg>この内容で開店する</button>
@@ -3817,7 +3831,7 @@
                     <li>画面の右上の<b>「開店する」</b>を押します。</li>
                     <li><b>「販売会の名前」</b>を確認します（例：11月1日 パン販売）。あとで集計を見分けるための名前です。直したら<b>「この名前にする」</b>を押すと前の画面に戻ります。</li>
                     <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。入れ終えたら<b>「この商品と仕入れ数にする」</b>を押します。</li>
-                    <li>複数の端末で同時に会計する場合だけ、<b>「複数端末で共有」</b>に責任者から指定された共有コードを入れて<b>「このコードで共有する」</b>を押します。前の回と同じコードで構いません。1台だけなら空欄のままで構いません。</li>
+                    <li>複数の端末で同時に会計する場合だけ、<b>「複数端末で共有」</b>に責任者から指定された共有コードを入れて<b>「このコードで共有する」</b>を押します。前の回と同じコードで構いません。1台だけなら空欄のままで構いません。<br>※他の端末がもう開いているなら、この画面の上に出る<b>「いま開いている販売会」</b>を押すだけで合流できます（2〜5は不要です）。</li>
                     <li>いちばん下の<b>「この内容で開店する」</b>を押して完了です。</li>
                 </ol>
                 <div class="man-box">
@@ -3914,6 +3928,11 @@
             id: 'sync', icon: 'link', title: '複数の端末で同時に会計する', sub: '2台以上でさばくとき',
             body: `
                 <p>同じ<b>共有コード</b>を入れた端末どうしで、売上も在庫も自動でひとつにまとまります。</p>
+                <div class="man-box tip">
+                    <div class="man-box-h">いちばん簡単なのは、一覧から押すだけ</div>
+                    <p>他の端末がもう開いていれば、<b>開店の準備</b>の画面のいちばん上に<b>「いま開いている販売会」</b>が出ます。<b>その行を押すだけで合流できます</b>（コードを打つ必要はありません）。営業中でも、<b>設定 →「複数端末で使う」→「共有コードを入れる」</b>に同じ一覧が出ます。</p>
+                    <p>一覧に出るのは<b>1日以内に開いた販売会</b>だけです。出てこない時や、別の場所の販売会に入る時は、下のとおりコードを入れてください。</p>
+                </div>
                 <div class="man-box tip">
                     <div class="man-box-h">覚えることは、これだけ</div>
                     <p><b>全部の端末で、同じ共有コードを入れる。</b>それだけです。<b>開店前でも、営業中でも、まだ開店していない端末でも</b>、入れる場所は次の2つのどちらかで、どちらも同じように動きます。</p>
@@ -7363,10 +7382,10 @@
             else if (sub === 'customer') renderCustomerSettings();
             else if (sub === 'goal') renderSalesGoal();
             if (sub === 'sync-add' || sub === 'sync') updateSyncUi();
-            if (sub === 'sync-add') peekEventCode('live');
+            if (sub === 'sync-add') { peekEventCode('live'); loadOpenEvents(); }
         }
         else if (view === 'session') {
-            if (!sub) renderOpenMenu();
+            if (!sub) { renderOpenMenu(); loadOpenEvents(); }
             else if (sub === 'open-stock') renderInventorySetup();
             else if (sub === 'open-sync') { updateSyncUi(); peekEventCode('open'); }
             else if (sub === 'open-name') updateSessionTabView();
@@ -7514,6 +7533,77 @@
             }
             renderCodePeek();
         }, 500);
+    }
+
+    // ▼▼▼ いま開いている販売会を、自動で探す ▼▼▼
+    // 【なぜ必要か】合流するだけなのに、毎回コードを打ち直すのは手間だし打ち間違える。
+    //   置き場に「開いている」と書いてある販売会はその場で分かるので、
+    //   一覧にして押すだけで入れるようにする。
+    // 【出す範囲】1日以内に開いたもの・商品が入っているものだけ。
+    //   閉め忘れて何日も開いたままの古いものを、合流先として勧めない。
+    const OPEN_EVENT_MAX_AGE = 24 * 3600000;
+    let openEventRows = [];
+    let openEventsAt = 0;
+    let openEventsBusy = false;
+
+    async function loadOpenEvents(force) {
+        if (!window.FIREBASE_CONFIG || !syncReady || !fbDb) { openEventRows = []; renderOpenEventLists(); return; }
+        if (openEventsBusy) return;
+        if (!force && Date.now() - openEventsAt < 15000) { renderOpenEventLists(); return; }
+        openEventsBusy = true;
+        try {
+            const snap = await fbDb.collection('events').where('status', '==', 'open').get();
+            const cut = Date.now() - OPEN_EVENT_MAX_AGE;
+            const rows = [];
+            snap.forEach(d => {
+                const v = d.data() || {};
+                const at = Number(v.openedAt) || 0;
+                if (at < cut) return;                                        // 古いものは勧めない
+                if (!Array.isArray(v.products) || !v.products.length) return; // 中身が無いものは入れない
+                rows.push({ code: d.id, name: v.name || '無題', at });
+            });
+            rows.sort((a, b) => b.at - a.at);
+            openEventRows = rows.slice(0, 5);
+        } catch (e) {
+            // 権限や通信の都合で一覧を取れないことがある。その時は黙って出さない
+            // （コードを打って入る道は、これまでどおり使える）。
+            console.warn('開いている販売会の一覧を取れませんでした', e);
+            openEventRows = [];
+        }
+        openEventsAt = Date.now();
+        openEventsBusy = false;
+        renderOpenEventLists();
+    }
+
+    function renderOpenEventLists() {
+        const rows = openEventRows.filter(r => !(syncMode && r.code === syncEventCode));
+        const html = rows.map(r => {
+            const d = new Date(r.at);
+            const when = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} 開店`;
+            return menuRow('link', r.name, `コード: ${escHtml(r.code)}・${when}`,
+                `joinOpenEvent('${escHtml(r.code).replace(/'/g, "\\'")}')`);
+        }).join('');
+        [['open-live-wrap', 'open-live-list'], ['live-live-wrap', 'live-live-list']].forEach(([w, l]) => {
+            const wrap = document.getElementById(w), list = document.getElementById(l);
+            if (!wrap || !list) return;
+            wrap.style.display = rows.length ? '' : 'none';
+            list.innerHTML = html;
+        });
+    }
+
+    // 一覧の1行を押した時。コードは入れずに、そのまま合流する。
+    async function joinOpenEvent(code) {
+        const c = sanitizeEventCode(code || '');
+        if (!c) return;
+        playSound();
+        if (currentSession) {
+            // 営業中：この端末の会計ごと、その販売会に合流する
+            const inp = document.getElementById('sync-live-code-input');
+            if (inp) inp.value = c;
+            await startSyncMidSession();
+            return;
+        }
+        await joinByCodeOnly(c);
     }
 
     // いま入っているコードで何が起きるかを、1か所で決める。
@@ -7680,6 +7770,7 @@
                 : '') +
             menuRow('target', '売上目標（任意）', salesGoal > 0 ? yenStr(salesGoal) : '決めない', "openPanel('settings','goal')") +
             menuRow('upload', 'データを取り込んで始める', '前回の続き・別の端末から引き継ぐ', "openPanel('session','open-import')");
+        renderOpenEventLists();
         updateOpenPrimaryButton();
         updateReopenRow();
     }
