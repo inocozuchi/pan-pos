@@ -2479,21 +2479,23 @@
                 <label class="field-label sec">共有されるもの</label>
                 <div class="notice">
                     <svg class="ic"><use href="#ic-link"/></svg>
-                    <span>会計（売上・取消）／在庫と残数／商品の追加・値段・種類・備考／販売会の名前／売上目標／予約／閉店。<br>
-                    <b>これらは全部の端末で同じになります。</b>閉店はどの端末から行っても、共有中の全端末がいっしょに閉店します。</span>
+                    <span>会計／在庫と残数／商品／販売会の名前／売上目標／予約。<b>全部の端末で同じ</b>になり、どの端末から閉店しても<b>いっしょに閉店</b>します。<br>
+                    端末ごとなのは、領収書の発行者名・画面の明るさ・時計や天気の設定だけです。</span>
                 </div>
-                <p class="settings-hint" style="margin-top:8px;">端末ごとに持つのは、<b>領収書の発行者名・画面の明るさ・時計や天気の設定</b>だけです（お客様に配る紙や、その端末の見やすさに関わるため）。</p>
             </div>
 
             <!-- 共有コードの追加（入力画面） -->
             <div class="sub-view" id="sub-sync-add" style="display:none;">
                 <p class="settings-hint">一緒に使う<b>全部の端末で同じ「共有コード」</b>を入れてください。コードは<b>開店前でも営業中でも</b>入れられます。いま営業中の会計・在庫・商品はそのまま引き継がれます。</p>
                 <label class="field-label">共有コード</label>
-                <input type="text" id="sync-live-code-input" placeholder="例: pansale-1101" autocomplete="off" autocapitalize="characters">
+                <input type="text" id="sync-live-code-input" placeholder="例: pansale-1101" autocomplete="off" autocapitalize="characters" oninput="peekEventCode('live')" onkeydown="if(event.key==='Enter'){event.preventDefault();startSyncMidSession();}">
+                <!-- 開店の準備の画面と同じ下調べを出す。どちらの画面から入れても、
+                     「新しく始める／合流する／もう一度使う」の言い方をそろえる。 -->
+                <div id="live-sync-peek" class="notice" style="margin-top:10px; display:none;"></div>
                 <label class="field-label sec">この端末の役割</label>
                 <div class="btn-stack">
-                    <button class="action-btn btn-checkout" style="margin-top:0;" onclick="startSyncMidSession()"><svg class="ic"><use href="#ic-register"/></svg>この端末でも会計する</button>
-                    <button class="action-btn btn-secondary" onclick="startCustomerModeFromSettings()"><svg class="ic"><use href="#ic-users"/></svg>お客様用の金額表示にする</button>
+                    <button class="action-btn btn-checkout" id="live-sync-ok" style="margin-top:0;" onclick="startSyncMidSession()"><svg class="ic"><use href="#ic-register"/></svg>この端末でも会計する</button>
+                    <button class="action-btn btn-secondary" id="live-sync-cd" onclick="startCustomerModeFromSettings()"><svg class="ic"><use href="#ic-users"/></svg>お客様用の金額表示にする</button>
                 </div>
                 <p class="settings-hint" style="margin-top:10px;"><b>会計する</b>＝この端末でも商品を打てます（売上と在庫が全端末でひとつになります）。<br><b>お客様用</b>＝打つ内容を大きく映すだけの画面になります（会計はできません）。</p>
                 <div id="sync-status-active" class="settings-hint" style="margin-top:10px;"></div>
@@ -2606,29 +2608,38 @@
                     </div>
                 </div>
                 <div class="menu-list" id="open-menu-list"></div>
-                <button class="action-btn btn-checkout" style="width:100%; margin-top:14px;" onclick="startSession()"><svg class="ic"><use href="#ic-store"/></svg>この内容で開店する</button>
+                <button class="action-btn btn-checkout" id="open-primary-btn" style="width:100%; margin-top:14px;" onclick="startSession()"><svg class="ic"><use href="#ic-store"/></svg>この内容で開店する</button>
             </div>
 
             <!-- 販売会の名前 -->
             <div class="sub-view" id="sub-open-name" style="display:none;">
                 <div id="event-banner" class="notice"></div>
                 <label class="field-label">販売会の名前</label>
-                <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売">
+                <input type="text" id="session-name-input" placeholder="例: 11月1日 パン販売" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmSessionName();}">
                 <p class="settings-hint">あとから集計を見分けるための名前です。日付を入れておくと分かりやすくなります。</p>
+                <button class="action-btn btn-checkout" style="width:100%; margin-top:12px;" onclick="confirmSessionName()"><svg class="ic"><use href="#ic-check"/></svg>この名前にする</button>
             </div>
 
             <!-- 商品と仕入れ数 -->
             <div class="sub-view" id="sub-open-stock" style="display:none;">
                 <div id="inventory-apply"></div>
                 <div id="inventory-setup-list" class="setup-list"></div>
+                <!-- 直したそばから控えているので、この一押しは「決めて戻る」だけ。
+                     何も押さずに戻っても同じだが、決め終わりが分かる場所が要る。 -->
+                <button class="action-btn btn-checkout" style="width:100%; margin-top:12px;" onclick="confirmOpenStock()"><svg class="ic"><use href="#ic-check"/></svg>この商品と仕入れ数にする</button>
             </div>
 
             <!-- 開店時の共有コード -->
             <div class="sub-view" id="sub-open-sync" style="display:none;">
                 <p class="settings-hint">一緒に使う<b>全部の端末で同じ「共有コード」</b>を入れると、売上をリアルタイムで共有します。<br>1台だけで使うなら<b>空欄のままでOK</b>です（あとから設定画面で共有を始めることもできます）。</p>
                 <label class="field-label">共有コード（任意）</label>
-                <input type="text" id="sync-event-code-input" placeholder="例: pansale-1101">
-                <div id="sync-status" class="settings-hint"></div>
+                <input type="text" id="sync-event-code-input" placeholder="例: pansale-1101" oninput="peekEventCode('open')" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmOpenSyncCode();}">
+                <!-- 入れたコードが「すでに開店中の販売会」かどうかを、その場で調べて出す。
+                     新しく開店するのか、動いている販売会に参加するのかは
+                     まったく違う行いなので、押す前に分かるようにする。 -->
+                <div id="open-sync-peek" class="notice" style="margin-top:10px; display:none;"></div>
+                <button class="action-btn btn-checkout" id="open-sync-ok" style="width:100%; margin-top:12px;" onclick="confirmOpenSyncCode()"><svg class="ic"><use href="#ic-check"/></svg>このコードを使う</button>
+                <div id="sync-status" class="settings-hint" style="margin-top:10px;"></div>
             </div>
 
             <!-- データを取り込んで始める -->
@@ -2935,6 +2946,26 @@
     let syncReady = false;      // Firebase初期化＋匿名ログイン完了
     let syncMode = false;       // 現在この販売会で同期中か（イベントコード購読中）
     let syncEventCode = null;   // 共有する販売会コード
+    // ▼ 同じコードを次の回でもう一度使えるようにするための「回」の印 ▼
+    // 【なぜ必要か】以前は閉店済みのコードを入れると、前の回の会計と混ざるのを避けるため
+    //   黙って別のコード（テスト-1758…）を作って開店していた。打った本人は「テスト」で
+    //   開いたつもりなので、他の端末が「テスト」を入れても永久に出会えなかった。
+    //   コードは打ったとおりに使い、置き場の中で回を分けて数えることで混ざらないようにする。
+    // syncRoundId … これから送る会計に押す印
+    // syncRounds  … 「この回のもの」として受け取ってよい印の一覧
+    //   （2台が同時に同じコードで作った時、どちらの印も受け取れるように一覧で持つ）
+    let syncRoundId = '';
+    let syncRounds = new Set();
+    function newRoundId() { return getDeviceId() + '-' + Date.now(); }
+    function acceptRound(id) {
+        const r = id || '';
+        syncRoundId = r;
+        syncRounds.add(r);
+    }
+    function resetRounds() { syncRoundId = ''; syncRounds = new Set(); }
+    // まだ「回」が分からないうちは、消さずにそのまま見せる。
+    // （読み込み直した直後などに、いったん会計が空になってしまうのを防ぐ）
+    function inCurrentRound(r) { return syncRounds.size === 0 || syncRounds.has(r || ''); }
     let fbApp = null, fbDb = null, fbAuth = null, fbSalesUnsub = null, fbSessionUnsub = null;
     let deviceId = null;        // 端末識別子（客No.の重複判定・自分の書き込み識別用）
     function getDeviceId() {
@@ -3784,11 +3815,15 @@
             body: `
                 <ol class="man-steps">
                     <li>画面の右上の<b>「開店する」</b>を押します。</li>
-                    <li><b>「販売会の名前」</b>を確認します（例：11月1日 パン販売）。あとで集計を見分けるための名前です。すでに入っていればそのままで大丈夫です。</li>
-                    <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。</li>
-                    <li>複数の端末で同時に会計する場合だけ、<b>「複数端末で共有」</b>に責任者から指定された共有コードを入れます。1台だけなら空欄のままで構いません。</li>
+                    <li><b>「販売会の名前」</b>を確認します（例：11月1日 パン販売）。あとで集計を見分けるための名前です。直したら<b>「この名前にする」</b>を押すと前の画面に戻ります。</li>
+                    <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。入れ終えたら<b>「この商品と仕入れ数にする」</b>を押します。</li>
+                    <li>複数の端末で同時に会計する場合だけ、<b>「複数端末で共有」</b>に責任者から指定された共有コードを入れて<b>「このコードで共有する」</b>を押します。1台だけなら空欄のままで構いません。</li>
                     <li>いちばん下の<b>「この内容で開店する」</b>を押して完了です。</li>
                 </ol>
+                <div class="man-box">
+                    <div class="man-box-h">どの画面も、下のボタンで決まります</div>
+                    <p>名前・商品・共有コードのどの画面にも、いちばん下に<b>決めるためのボタン</b>があります。押すと前の画面に戻り、決めた内容がその場に出ます。左上の<b>「戻る」</b>でも同じように残りますが、迷ったときは下のボタンを押してください。</p>
+                </div>
                 <div class="man-box">
                     <div class="man-box-h">名前が前と同じだったとき</div>
                     <p>過去の記録に同じ名前があると、自動で<b>「文化祭 (2)」</b>のように番号が付きます。あとで集計を見るときに、どの回のものか分からなくなるのを防ぐためです。</p>
@@ -3879,11 +3914,23 @@
             id: 'sync', icon: 'link', title: '複数の端末で同時に会計する', sub: '2台以上でさばくとき',
             body: `
                 <p>同じ<b>共有コード</b>を入れた端末どうしで、売上も在庫も自動でひとつにまとまります。</p>
-                <h4>はじめから共有する</h4>
-                <p>開店の画面の<b>「複数端末で共有」</b>に、責任者から指定されたコードを入れて開店します。全部の端末で<b>同じコード</b>にしてください。</p>
+                <div class="man-box tip">
+                    <div class="man-box-h">覚えることは、これだけ</div>
+                    <p><b>全部の端末で、同じ共有コードを入れる。</b>それだけです。<b>開店前でも、営業中でも、まだ開店していない端末でも</b>、入れる場所は次の2つのどちらかで、どちらも同じように動きます。</p>
+                    <p>・開店前 … <b>開店の準備 →「複数端末で共有」</b><br>・それ以外 … <b>設定 →「複数端末で使う」→「共有コードを入れる」</b></p>
+                    <p>コードを入れると<b>その場でそのコードを調べて、これから何が起きるかを画面に出します</b>。ボタンの文字もそれに合わせて変わるので、押す前に分かります。</p>
+                </div>
+                <h4>コードを入れると出るもの</h4>
+                <p><b>「このコードで新しく開店します」</b>… まだ誰も使っていないコードです。この端末が共有の元になります。</p>
+                <p><b>「このコードは『◯◯』として開店中です」</b>… もう他の端末が使っています。ボタンは<b>「『◯◯』に参加する（合流する）」</b>に変わり、<b>これを押すだけで合流できます</b>。商品と仕入れ数は先に開いている側のものになります。</p>
+                <p><b>「このコードは『◯◯』で閉店済みです」</b>… 前に使ったコードです。ボタンは<b>「このコードをもう一度使う」</b>に変わります。<b>同じコードをそのまま次の回でも使えます</b>。前回の会計が混ざることはありません。</p>
+                <div class="man-box warn">
+                    <div class="man-box-h">コードは、打ったとおりに使われます</div>
+                    <p>アプリが勝手にコードを変えることはありません。<b>「テスト」と入れたら、必ず「テスト」で共有されます。</b>他の端末は「テスト」と入れれば必ず合流できます。</p>
+                </div>
                 <h4>途中から共有したくなった</h4>
                 <p>開店し直す必要はありません。<b>「設定 → 複数端末で使う」</b>にコードを入れて<b>「この端末でも会計する」</b>を押すと、ここまでの会計も在庫もそのまま引き継がれます。</p>
-                <p><b>どの端末も、開店前でも営業中でも参加できます。</b>すでに営業を始めてしまった端末どうしでも、同じコードを入れれば途中から1つにまとまります。</p>
+                <p><b>どの端末も、開店前でも営業中でも参加できます。</b>すでに営業を始めてしまった端末どうしでも、同じコードを入れれば途中から1つにまとまります。まだ開店していない端末なら、コードを入れるだけでそのまま合流します（開店の操作はいりません）。</p>
                 <div class="man-box">
                     <div class="man-box-h">名前の違う販売会が1つになるとき</div>
                     <p>たとえば1台目が「午前の部」、2台目が「午後の部」で開店していた場合、合流するときに<b>どちらの名前にするかを選ぶ画面</b>が出ます。選んだ名前に、全部の端末がそろいます。</p>
@@ -3919,6 +3966,11 @@
                     <li><b>同じ共有コード</b>を入れて<b>「お客様用の金額表示にする」</b>を押します。<br>（同じ画面の「この端末でも会計する」を押せば、2台目のレジになります）</li>
                     <li>お客様から見える向きに立てかけます。</li>
                 </ol>
+                <div class="man-box tip">
+                    <div class="man-box-h">すでに共有している端末なら、1回で切り替わります</div>
+                    <p>その端末がもう同じ販売会で会計しているなら、<b>コードを入れ直す必要も、共有をやめる必要もありません</b>。<b>「設定 → 複数端末で使う → お客様用の表示」</b>を開いて<b>「この端末をお客様用の表示にする」</b>を押すだけです。</p>
+                    <p>戻す時も同じ画面の<b>「ふだんのレジに戻す」</b>1回で、<b>そのまま同じ販売会の続きから会計できます</b>。行列の具合に合わせて、レジを増やしたり表示に回したりを何度でも切り替えられます。</p>
+                </div>
                 <p>商品を打つたびに<b>明細と合計</b>が1行ずつ増えていきます。レジで<b>「会計へ進む」</b>を押すと合計の文字が大きくなり、お預かりを入れると<b>お釣り</b>も出ます。会計が終わると<b>「ありがとうございました」</b>に変わり、約18秒そのまま出ています（次のお客様の商品を1点打てば、すぐ次の会計の画面に変わります）。</p>
                 <p>端末を<b>横向きに寝かせても、明細はそのまま出ます</b>（左に買うもの、右に金額の2段組みになります）。</p>
                 <div class="man-box tip">
@@ -4208,11 +4260,11 @@
     // ---- お客様用の端末：読んで映す ----
     function enterCustomerMode(code) {
         const c = sanitizeEventCode((code || '').trim());
-        if (!c) { playError(); alert('共有コードを入れてください。\nレジ役の端末と同じ文字にします。'); return; }
+        if (!c) { playError(); alert('共有コードを入れてください。\nレジ役の端末と同じ文字にします。'); return false; }
         if (!window.FIREBASE_CONFIG || !syncReady) {
             playError();
             alert('共有サーバーにつながっていないため、お客様用の表示にできません。\n通信状況をご確認のうえ、少し待ってからもう一度お試しください。');
-            return;
+            return false;
         }
         customerMode = true;
         uiPrefs.cdCode = c;
@@ -4220,14 +4272,118 @@
         try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
         applyCustomerMode();
         showToast('お客様用の表示にしました');
+        return true;
     }
 
-    function exitCustomerMode() {
-        if (!confirm('お客様用の表示をやめて、ふだんのレジの画面に戻しますか？')) return;
+    async function exitCustomerMode(opts) {
+        const quiet = !!(opts && opts.quiet);
+        if (!quiet && !confirm('お客様用の表示をやめて、ふだんのレジの画面に戻しますか？')) return;
+        const code = knownShareCode();
         customerMode = false;
         uiPrefs.role = 'register';
         try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
         applyCustomerMode();
+        // もう一度コードを入れ直させない。
+        // ・さっきまでこの端末が入っていた販売会なら、そのまま受け取りを再開する
+        // ・まだ入っていないなら、映していたコードだけで合流する
+        if (!code) { renderSyncRoleList(); return; }
+        if (syncEventCode === code && currentSession) {
+            // さっきまでこの端末が会計していた販売会。そのまま続きから会計できる。
+            if (resumeRegisterSync()) { showToast('ふだんのレジに戻しました'); renderSyncRoleList(); return; }
+        }
+        // 映すだけだった端末は、この端末の売上データを作り替えることになるので、
+        // 黙って入らずに「合流する」の一押しを見せるところまでにする。
+        // （コードはもう入っているので、押すだけで済む）
+        const inp = document.getElementById('sync-live-code-input');
+        if (inp) inp.value = code;
+        openPanel('settings', 'sync-add');
+        peekEventCode('live');
+        showToast('レジに戻しました（合流するなら下のボタンを押してください）');
+        renderSyncRoleList();
+    }
+
+    // ▼▼▼ この端末の役割を、その場で切り替える ▼▼▼
+    // 【なぜ必要か】以前は「お客様用にする」ために、いちど共有をやめる（または
+    //   この端末の利用を終える）必要があり、そのあとコードを入れ直していた。
+    //   同じ販売会にいるのだから、映すか打つかを選び直すだけで済むはずのこと。
+    function knownShareCode() {
+        return sanitizeEventCode(syncEventCode || uiPrefs.cdCode || '');
+    }
+
+    // レジとしての受け取りだけを止める（コードと「回」は覚えたまま）
+    function pauseRegisterSync() {
+        stopCustomerKeepAlive();
+        stopDisplayOwnerWatch();
+        cdSeenDisplays = {};
+        if (fbSalesUnsub) { try { fbSalesUnsub(); } catch (e) {} fbSalesUnsub = null; }
+        stopSessionDocSubscription();
+        stopReservationSubscription();
+        syncMode = false;
+        updateSyncUi();
+    }
+
+    function resumeRegisterSync() {
+        if (!syncEventCode || !syncReady || !fbDb) return false;
+        startSalesSubscription(syncEventCode);
+        // 映していたあいだに他の端末が閉店していることがある。
+        // その時は、受け取りが追いついてから、この端末も同じように閉店する。
+        startSessionDocSubscription(syncEventCode, { closeIfClosed: true });
+        startReservationSubscription(syncEventCode);
+        return true;
+    }
+
+    // コードだけで、動いている販売会に入る（開店の操作をしないで済む道）
+    async function joinByCodeOnly(code, doneMsg) {
+        const c = sanitizeEventCode(code || '');
+        if (!c || !syncReady || !fbDb) { openPanel('settings', 'sync-add'); return false; }
+        let d = null;
+        try {
+            const snap = await fbDb.collection('events').doc(c).get();
+            d = snap.exists ? (snap.data() || {}) : null;
+        } catch (e) { d = null; }
+        const live = d && d.status !== 'closed' && Array.isArray(d.products) && d.products.length > 0;
+        if (!live) {
+            // まだ誰も開いていない（または閉店済み）なら、商品と仕入れ数が要るので開店の準備へ
+            const openInput = document.getElementById('sync-event-code-input');
+            if (openInput) openInput.value = c;
+            showToast('開店の準備から始めます');
+            openPanel('session', 'open-sync');
+            peekEventCode('open');
+            return false;
+        }
+        // 調べた結果をそのまま下調べに入れておく（同じことを二度聞かない）
+        openSyncPeek = { code: c, state: 'open', name: d.name || '無題' };
+        const openInput = document.getElementById('sync-event-code-input');
+        if (openInput) openInput.value = c;
+        const nameInput = document.getElementById('session-name-input');
+        if (nameInput && !nameInput.value) nameInput.value = defaultSessionName();
+        await startSession();
+        if (doneMsg) showToast(doneMsg);
+        return true;
+    }
+
+    // 役割の切り替え本体（'register' / 'customer'）
+    async function switchDeviceRole(role) {
+        if (!window.FIREBASE_CONFIG) { playError(); alert('この端末では共有機能が使えないため、役割は変えられません。'); return; }
+        if (role === 'customer') {
+            if (customerMode) return;
+            const code = knownShareCode();
+            if (!code) {
+                showToast('先に共有コードを入れてください');
+                openPanel('settings', 'sync-add');
+                return;
+            }
+            if (!syncReady) { playError(); alert('共有サーバーにつながっていないため、お客様用の表示にできません。\n通信状況をご確認のうえ、少し待ってからもう一度お試しください。'); return; }
+            if (cart.length > 0 && !confirm('いま打ちかけの商品があります。\nお客様用の表示にすると、この端末では会計できなくなります。\n\n打ちかけの内容を取り消して切り替えますか？')) return;
+            cart = [];
+            const wasSyncing = syncMode;
+            pauseRegisterSync();
+            if (!enterCustomerMode(code) && wasSyncing) resumeRegisterSync();   // だめだった時は元に戻す
+            renderSyncRoleList();
+            return;
+        }
+        if (!customerMode) return;
+        await exitCustomerMode({ quiet: true });
     }
 
     // いまの役割にあわせて、画面とデータの受け取りを切り替える
@@ -4237,10 +4393,11 @@
         box.style.display = customerMode ? 'flex' : 'none';
         applySurfaceColors();    // 画面の端までの色も、役割に合わせて切り替える
         if (cdUnsub) { try { cdUnsub(); } catch (e) {} cdUnsub = null; }
-        if (!customerMode) { clearMyPresence(uiPrefs.cdCode); stopPresence(); renderCustomerSettings(); return; }
+        if (!customerMode) { clearMyPresence(uiPrefs.cdCode); stopPresence(); renderCustomerSettings(); renderSyncRoleList(); return; }
         renderCustomerView(null, 'connecting');
         startCustomerSubscription(uiPrefs.cdCode);
         renderCustomerSettings();
+        renderSyncRoleList();
     }
 
     // つながらない時は、あきらめずに少しずつ間隔をあけて試し直す。
@@ -4696,11 +4853,20 @@
         }
         if (customerMode) {
             box.className = 'notice notice-ok';
-            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>いまこの端末は<b>お客様用の表示</b>です（コード: ${escHtml(uiPrefs.cdCode || '')}）。</span>`;
-            if (acts) acts.innerHTML = `<button class="action-btn btn-secondary" onclick="exitCustomerMode()"><svg class="ic"><use href="#ic-x"/></svg>ふだんのレジに戻す</button>`;
+            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>いまこの端末は<b>お客様用の表示</b>です（コード: ${escHtml(uiPrefs.cdCode || '')}）。<br>レジに戻すと、そのまま同じ販売会で会計できます。</span>`;
+            if (acts) acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="switchDeviceRole('register')"><svg class="ic"><use href="#ic-register"/></svg>ふだんのレジに戻す</button>`;
+            return;
+        }
+        // レジのまま。すでにコードが分かっているなら、入れ直さずにそのまま切り替えられる。
+        const code = knownShareCode();
+        box.className = 'notice';
+        if (code) {
+            box.innerHTML = `<svg class="ic"><use href="#ic-users"/></svg><span>いまこの端末は<b>ふだんのレジ</b>です。<br>共有コード<b>「${escHtml(code)}」</b>のまま、お客様用の表示に切り替えられます（<b>コードの入れ直しも、共有をやめる必要もありません</b>）。<br>戻す時もこの画面から1回で戻せます。</span>`;
+            if (acts) acts.innerHTML =
+                `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="switchDeviceRole('customer')"><svg class="ic"><use href="#ic-users"/></svg>この端末をお客様用の表示にする</button>` +
+                `<button class="action-btn btn-secondary" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-link"/></svg>別の共有コードを入れる</button>`;
         } else {
-            box.className = 'notice';
-            box.innerHTML = '<svg class="ic"><use href="#ic-users"/></svg><span>いまこの端末は<b>ふだんのレジ</b>です。お客様用にするには、ひとつ前の画面で<b>共有コードを入れて「お客様用の金額表示にする」</b>を押してください。</span>';
+            box.innerHTML = '<svg class="ic"><use href="#ic-users"/></svg><span>いまこの端末は<b>ふだんのレジ</b>です。お客様用にするには、レジ役の端末が使っている<b>共有コード</b>を入れてください。</span>';
             if (acts) acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-link"/></svg>共有コードを入れる画面へ</button>`;
         }
     }
@@ -4709,9 +4875,20 @@
         // 共有コードの入力欄は1か所にまとめてある。営業中の共有も、お客様用の表示も、
         // 同じ欄に入れたコードを使う（入れる場所が2つあると迷うため）。
         const input = document.getElementById('sync-live-code-input');
-        let code = (input && input.value || '').trim();
+        let code = sanitizeEventCode((input && input.value || '').trim());
         if (!code) code = uiPrefs.cdCode || syncEventCode || '';
-        enterCustomerMode(code);
+        // 閉店済みのコードを映しても、ずっと待ち受けのままになってしまう。
+        // 下調べで分かっている時は、先に知らせて止める。
+        if (code && openSyncPeek.code === code && openSyncPeek.state === 'closed') {
+            playError();
+            alert(`共有コード「${code}」は閉店済みです。\nレジ役の端末がいま使っているコードを入れてください。`);
+            return;
+        }
+        // この端末がレジとして共有していたなら、その受け取りは止めてから映す役へ回る
+        const wasSyncing = syncMode;
+        if (wasSyncing) { cart = []; pauseRegisterSync(); }
+        if (!enterCustomerMode(code) && wasSyncing) resumeRegisterSync();
+        renderSyncRoleList();
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -5128,6 +5305,7 @@
         if (!confirm(`「${a.name}」を閉店前の状態に戻して再開します。\n会計${a.customerCount}件・売上¥${a.totalRev.toLocaleString()} がレジに戻ります。\n\nよろしいですか？`)) return;
         applyData(JSON.parse(JSON.stringify(a.snapshot)));
         currentSession = a.name;
+        reportViewSnapshot = null;   // 閉店済みの集計を見ている状態を解く（再開後は今回の数字）
         sessionArchive.pop(); // 閉店そのものを取り消すので、保存された記録も戻す
         // 共有コードは引き継がない（共有側は既に「閉店済み」になっているため）。
         // もう一度共有したい場合は、営業中の画面から新しいコードで開始してもらう。
@@ -5202,7 +5380,7 @@
         const codeInput = document.getElementById('sync-event-code-input');
         const typedCode = sanitizeEventCode((codeInput && codeInput.value || '').trim());
         const useSync = !!(syncReady && window.FIREBASE_CONFIG && typedCode);
-        let code = null, joinedProducts = null, sharedName = name, isJoining = false;
+        let code = null, joinedProducts = null, sharedName = name, isJoining = false, joinRound = '';
         if (useSync) {
             code = typedCode;
             try {
@@ -5210,15 +5388,23 @@
                 if (snap.exists) {
                     const data = snap.data() || {};
                     if (data.status === 'closed') {
-                        const makeNew = confirm(
-                            `共有コード「${code}」の販売会（${data.name || '無題'}）は既に閉店（集計）済みです。\n` +
-                            `続けて同じコードを使うと、前回の集計と混ざるおそれがあります。\n\n` +
-                            `[OK] 新しいコードを自動で作って開店する\n[キャンセル] 中止する（コードを直してから再度お試しください）`
+                        // 【変更】以前はここで黙って「テスト-1758…」のような別のコードを
+                        // 作って開店していた。打った本人は「テスト」で開いたつもりなので、
+                        // 他の端末が「テスト」を入れても出会えなかった。
+                        // 打ったコードのまま、新しい回として開き直す。
+                        const told = openSyncPeek.code === code && openSyncPeek.state === 'closed';
+                        const again = told || confirm(
+                            `共有コード「${code}」は「${data.name || '無題'}」で閉店済みです。\n\n` +
+                            `[OK] このコードをもう一度使って、新しい販売会として開店する\n` +
+                            `　　（前回の会計はこの販売会には入りません）\n` +
+                            `[キャンセル] 中止する（別のコードにする）`
                         );
-                        if (!makeNew) return;
-                        code = sanitizeEventCode(code + '-' + Date.now());
+                        if (!again) return;
                     } else if (Array.isArray(data.products) && data.products.length > 0) {
-                        const ok = confirm(
+                        // 共有コードの画面で「『◯◯』に参加する」と書かれたボタンを押して来た時は、
+                        // 何が起きるかをその画面で読んだうえで選んでいるので、重ねて聞かない。
+                        const alreadyTold = openSyncPeek.code === code && openSyncPeek.state === 'open';
+                        const ok = alreadyTold || confirm(
                             `共有コード「${code}」は既に「${data.name || '無題'}」として開店中です。\n` +
                             `この端末から参加しますか？\n` +
                             `※商品リストは共有中の内容を使用します。この画面で設定した商品名・価格・仕入れ数は使われません。`
@@ -5227,6 +5413,7 @@
                         joinedProducts = data.products;
                         sharedName = data.name || name;
                         isJoining = true;
+                        joinRound = data.roundId || '';   // 動いている回に合わせる
                     } else {
                         alert('共有データの形式が正しくないため参加できません。別のコードをお試しください。');
                         return;
@@ -5306,6 +5493,10 @@
         }
 
         currentSession = sharedName;
+        // 閉店した直後は「いま閉じた販売会の集計」を見せる状態のまま残っている。
+        // そのまま次の開店に進むと、集計やPDFの書き出しが前回の記録を指したままになる。
+        // 開店したら、見るのは必ず今回の販売会。
+        reportViewSnapshot = null;
         salesHistory = [];
         reservations = [];
         cart = [];
@@ -5324,16 +5515,23 @@
         }
 
         if (useSync) {
+            resetRounds();
             if (!isJoining) {
-                // 新規作成：この端末が共有元になり、商品構成をFirestoreへ書き込む
+                // 新規作成（閉店済みコードの開き直しも含む）：この端末が共有元になる。
+                // 新しい「回」の印を押しておくと、同じコードに残っている前の回の会計は
+                // この販売会には入ってこない。
+                acceptRound(newRoundId());
                 try {
                     await fbDb.collection('events').doc(code).set({
                         name: sharedName, status: 'open', products: products,
+                        roundId: syncRoundId,
                         openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
                     });
                 } catch (e) {
                     console.warn('共有販売会の作成に失敗しました。この端末だけで開店します。', e);
                 }
+            } else {
+                acceptRound(joinRound);
             }
             startSalesSubscription(code);       // 以後 salesHistory は全端末の共有結果で上書きされる
             startSessionDocSubscription(code);  // 他端末での閉店（集計終了）を検知するため
@@ -5603,7 +5801,27 @@
     // 「1台で開店したが、混んできたので応援の端末を足したい」という運用のための機能。
     // 開店をやり直す必要はなく、この端末のここまでの会計も在庫もそのまま引き継がれる。
     async function startSyncMidSession() {
-        if (!currentSession) { alert('営業中のみ使えます。'); return; }
+        // まだ開店していない端末からでも、ここから入れるようにする。
+        // 以前は「営業中のみ使えます」で行き止まりになり、開店の画面へ回るしかなかった。
+        if (!currentSession) {
+            const c0 = sanitizeEventCode((document.getElementById('sync-live-code-input') || {}).value || '');
+            const openThere = c0 && openSyncPeek.code === c0 && openSyncPeek.state === 'open';
+            const openInput = document.getElementById('sync-event-code-input');
+            if (openInput) openInput.value = c0;
+            if (openThere) {
+                // 動いている販売会に、この端末がそのまま合流する
+                const nameInput = document.getElementById('session-name-input');
+                if (nameInput && !nameInput.value) nameInput.value = defaultSessionName();
+                await startSession();
+                return;
+            }
+            // 新しく始める時は、商品と仕入れ数も決める必要があるので開店の準備へ送る
+            playSound();
+            showToast('開店の準備から始めます');
+            openPanel('session', 'open-sync');
+            peekEventCode('open');
+            return;
+        }
         if (syncMode) {
             alert('この端末は、すでに共有しています。\n\n別のコードに入れ直す場合は、「設定 → 複数端末で使う」で\n「共有をやめてこの端末だけで続ける」を押してから、もう一度お試しください。');
             return;
@@ -5624,19 +5842,24 @@
             return;
         }
         const remote = snap && snap.exists ? (snap.data() || {}) : null;
+        // 閉店済みのコードも、そのまま使えるようにする（前の回とは中で分けて数える）。
+        // 以前はここで断っていたが、開店の画面では黙って別のコードを作っていたので、
+        // 画面によって結果が違い、しかもどちらも打った本人の意図と食い違っていた。
+        const reopening = !!(remote && remote.status === 'closed');
+        resetRounds();
 
-        if (remote && remote.status === 'closed') {
-            alert(`共有コード「${code}」は閉店済みの販売会で使われています。\n前回の集計と混ざってしまうため、別のコードを入力してください。`);
-            return;
-        }
-
-        if (!remote) {
+        if (!remote || reopening) {
             // ── この端末が「共有の元」になる ──
             // いまの商品構成と、ここまでの会計をすべてアップロードする。
-            if (!confirm(`共有コード「${code}」で、いまの販売会「${currentSession}」の共有を始めます。\n\n・この端末の会計${salesHistory.length}件と商品構成が、共有の元になります。\n・他の端末でも同じコードを入れてください。\n  開店前なら「開店の画面 → 複数端末で共有」、\n  すでに営業中なら「設定 → 複数端末で使う」から、どちらでも参加できます。\n\nよろしいですか？`)) return;
+            const head = reopening
+                ? `共有コード「${code}」は「${remote.name || '無題'}」で閉店済みです。\nこのコードをもう一度使い、いまの販売会「${currentSession}」を共有します。\n\n・前回の会計は、この販売会には入りません。`
+                : `共有コード「${code}」で、いまの販売会「${currentSession}」の共有を始めます。`;
+            if (!confirm(`${head}\n\n・この端末の会計${salesHistory.length}件と商品構成が、共有の元になります。\n・他の端末でも同じコードを入れてください。\n  開店前なら「開店の画面 → 複数端末で共有」、\n  すでに営業中なら「設定 → 複数端末で使う」から、どちらでも参加できます。\n\nよろしいですか？`)) return;
+            acceptRound(newRoundId());
             try {
                 await fbDb.collection('events').doc(code).set({
                     name: currentSession, status: 'open', products: products,
+                    roundId: syncRoundId,
                     openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
                 });
             } catch (e) {
@@ -5645,6 +5868,7 @@
                 return;
             }
         } else {
+            acceptRound(remote.roundId || '');
             // ── すでに動いている共有販売会に、この端末が合流する ──
             // 商品構成は共有側にそろえる（同じ在庫を2台で数えているため、共有側が正）。
             const sharedProducts = Array.isArray(remote.products) ? remote.products : [];
@@ -7137,11 +7361,12 @@
             else if (sub === 'customer') renderCustomerSettings();
             else if (sub === 'goal') renderSalesGoal();
             if (sub === 'sync-add' || sub === 'sync') updateSyncUi();
+            if (sub === 'sync-add') peekEventCode('live');
         }
         else if (view === 'session') {
             if (!sub) renderOpenMenu();
             else if (sub === 'open-stock') renderInventorySetup();
-            else if (sub === 'open-sync') updateSyncUi();
+            else if (sub === 'open-sync') { updateSyncUi(); peekEventCode('open'); }
             else if (sub === 'open-name') updateSessionTabView();
         }
         else if (view === 'analytics') {
@@ -7236,6 +7461,198 @@
         tempSetupProducts = JSON.parse(JSON.stringify(products));
     }
 
+    // ▼▼▼ 共有コードの下調べ ▼▼▼
+    // 【なぜ必要か】「新しく共有を始める」「すでに開いている販売会に合流する」
+    // 「閉店済みのコードをもう一度使う」は、まったく違う行いなのに、
+    // 押すまで、あるいは押したあとの確認まで、どれになるのか分からなかった。
+    // コードを入れた時点で調べておき、出す文と、ボタンの文字そのものを変えて先に知らせる。
+    //
+    // 【いちばん大事な決まり】打ったコードは、そのまま使う。
+    //   以前は閉店済みのコードを入れると、黙って「テスト-1758…」のような
+    //   別のコードを作って開店していた。打った本人は「テスト」で開いたつもりなので、
+    //   他の端末が「テスト」を入れても永久に出会えない、という事故が起きていた。
+    //   閉店済みでも同じコードで開き直せるようにし、名前を書き換えるのはやめた。
+    let openSyncPeek = { code: '', state: 'none', name: '' };   // none/checking/new/open/closed/unknown
+    let openSyncPeekTimer = null;
+    let peekWhere = 'open';                                      // open＝開店の準備 / live＝営業中
+    const PEEK_INPUT = { open: 'sync-event-code-input', live: 'sync-live-code-input' };
+
+    function peekInputValue() {
+        const el = document.getElementById(PEEK_INPUT[peekWhere]);
+        return sanitizeEventCode((el && el.value || '').trim());
+    }
+
+    function renderCodePeek() {
+        renderOpenSyncPeek();
+        renderLiveSyncPeek();
+        if (peekWhere === 'open') renderOpenMenu();
+    }
+
+    function peekEventCode(where) {
+        if (where) peekWhere = where;
+        const code = peekInputValue();
+        if (code !== openSyncPeek.code) openSyncPeek = { code, state: code ? 'checking' : 'none', name: '' };
+        renderCodePeek();
+        if (openSyncPeekTimer) clearTimeout(openSyncPeekTimer);
+        if (!code) return;
+        if (!syncReady || !fbDb) { openSyncPeek.state = 'unknown'; renderCodePeek(); return; }
+        // 打っている途中で何度も問い合わせないよう、手が止まってから調べる
+        openSyncPeekTimer = setTimeout(async () => {
+            openSyncPeekTimer = null;
+            try {
+                const snap = await fbDb.collection('events').doc(code).get();
+                if (openSyncPeek.code !== code) return;   // 調べている間に書き換えられた
+                if (!snap.exists) openSyncPeek = { code, state: 'new', name: '' };
+                else {
+                    const d = snap.data() || {};
+                    openSyncPeek = { code, state: d.status === 'closed' ? 'closed' : 'open', name: d.name || '無題' };
+                }
+            } catch (e) {
+                if (openSyncPeek.code === code) openSyncPeek.state = 'unknown';
+            }
+            renderCodePeek();
+        }, 500);
+    }
+
+    // いま入っているコードで何が起きるかを、1か所で決める。
+    // 開店の準備の画面と、営業中の画面で、言うことが食い違わないようにするため。
+    function peekPlan(live) {
+        const p = openSyncPeek;
+        const nm = escHtml(p.name || '無題');
+        if (!p.code) {
+            return live
+                ? { kind: 'none', btn: '共有コードを入れてください', disabled: true }
+                : { kind: 'none', btn: '1台だけで使う', secondary: true };
+        }
+        if (p.state === 'checking') {
+            return { kind: 'checking', cls: '', icon: 'clock',
+                note: 'このコードが使われていないか調べています…',
+                btn: live ? 'この端末でも会計する' : 'このコードを使う' };
+        }
+        if (p.state === 'open') {
+            return { kind: 'open', cls: 'notice-ok', icon: 'link', name: p.name,
+                note: `このコードは<b>「${nm}」として開店中</b>です。<br>`
+                    + (live ? 'この端末の会計もその販売会に合わせ、売上・在庫・商品がひとつになります。'
+                            : '参加すると、売上・在庫・商品がその販売会とひとつになります。<br>この画面で決めた商品と仕入れ数は使われません。'),
+                btn: live ? `「${nm}」に合流する` : `「${nm}」に参加する`, icoBtn: 'link' };
+        }
+        if (p.state === 'closed') {
+            // 【変更】以前はここで止めていた（開店時は黙って別のコードを作っていた）。
+            // 同じコードを次の回でも使うのがふつうなので、そのまま開き直せるようにする。
+            // 前の回の会計が混ざらないよう、中では「回」を分けて数えている。
+            return { kind: 'closed', cls: 'notice-warn', icon: 'alert', name: p.name,
+                note: `このコードは<b>「${nm}」で閉店済み</b>です。<br>`
+                    + 'もう一度使うと、<b>新しい販売会として</b>始めます（前回の会計は混ざりません）。<br>'
+                    + '他の端末も、同じコードを入れ直してください。',
+                btn: 'このコードをもう一度使う', icoBtn: 'refresh' };
+        }
+        if (p.state === 'unknown') {
+            return { kind: 'unknown', cls: 'notice-warn', icon: 'alert',
+                note: 'いま通信できないため、このコードが使われているか確かめられませんでした。<br>電波の良い場所で開き直すか、このまま進むこともできます。',
+                btn: live ? 'この端末でも会計する' : 'このコードを使う' };
+        }
+        return { kind: 'new', cls: '', icon: 'plus',
+            note: live
+                ? 'このコードで<b>新しく共有を始めます</b>。<br>いまの会計・在庫・商品が共有の元になります。<br>一緒に使う端末にも、同じコードを入れてください。'
+                : 'このコードで<b>新しく開店</b>します。<br>一緒に使う端末にも、同じコードを入れてください。',
+            btn: live ? 'このコードで共有を始める' : 'このコードで共有する' };
+    }
+
+    // 下調べの札とボタンを、決めたとおりに書き換える
+    function paintPeek(boxId, btnId, live) {
+        const box = document.getElementById(boxId);
+        const btn = document.getElementById(btnId);
+        if (!box || !btn) return null;
+        const plan = peekPlan(live);
+        if (!plan.note) box.style.display = 'none';
+        else {
+            box.style.display = '';
+            box.className = 'notice ' + (plan.cls || '');
+            box.innerHTML = `<svg class="ic"><use href="#ic-${plan.icon}"/></svg><span>${plan.note}</span>`;
+        }
+        btn.disabled = !!plan.disabled;
+        btn.className = 'action-btn ' + ((plan.secondary || plan.disabled) ? 'btn-secondary' : 'btn-checkout');
+        btn.innerHTML = `<svg class="ic"><use href="#ic-${plan.icoBtn || 'check'}"/></svg>${plan.btn}`;
+        return plan;
+    }
+
+    function renderOpenSyncPeek() {
+        paintPeek('open-sync-peek', 'open-sync-ok', false);
+    }
+
+    // 営業中の「共有コードを入れる」画面も、開店の準備とまったく同じ言い方にする。
+    // 画面が違うだけで言うことが変わると、どちらが正しいのか分からなくなるため。
+    function renderLiveSyncPeek() {
+        const plan = paintPeek('live-sync-peek', 'live-sync-ok', true);
+        if (!plan) return;
+        const cd = document.getElementById('live-sync-cd');
+        if (cd) cd.disabled = !openSyncPeek.code;
+    }
+
+    function confirmOpenStock() {
+        const active = tempSetupProducts.filter(p => p.active !== false);
+        const total = active.reduce((s, p) => s + (p.initialStock || 0), 0);
+        playSound();
+        renderOpenMenu();
+        showToast(`${active.length}品・合計${total}個にしました`);
+        panelBack();
+    }
+
+    // 「この名前にする」「このコードを使う／参加する」を押した時
+    function confirmSessionName() {
+        const el = document.getElementById('session-name-input');
+        const v = (el && el.value || '').trim();
+        if (!v) { playError(); alert('販売会の名前を入れてください。'); return; }
+        el.value = v;
+        playSound();
+        renderOpenMenu();
+        showToast(`販売会の名前を「${v}」にしました`);
+        panelBack();
+    }
+
+    function confirmOpenSyncCode() {
+        const el = document.getElementById('sync-event-code-input');
+        const raw = (el && el.value || '').trim();
+        const code = sanitizeEventCode(raw);
+        if (el) el.value = code;
+        playSound();
+        renderOpenMenu();
+        // すでに開いている販売会だと分かっている時は、この画面のボタンが
+        // そのまま「合流する」ボタンになる。開店の準備へ戻って、もう一度
+        // 大きいボタンを押し直させない（＝合流だけを独立した一手にする）。
+        if (code && openSyncPeek.code === code && openSyncPeek.state === 'open') {
+            startSession();
+            return;
+        }
+        showToast(!code ? '1台だけで使います' : `共有コードを「${code}」にしました`);
+        panelBack();
+    }
+
+    // 開店の準備の1行に出す、共有コードの様子
+    function syncCodeSubLabel(code) {
+        if (!code) return '使わない（1台で営業）';
+        const p = openSyncPeek;
+        if (p.code === sanitizeEventCode(code)) {
+            if (p.state === 'open') return `「${escHtml(p.name)}」に参加します`;
+            if (p.state === 'closed') return `コード: ${escHtml(code)}（もう一度使う）`;
+            if (p.state === 'new') return `コード: ${escHtml(code)}（新しく開店）`;
+        }
+        return `コード: ${escHtml(code)}`;
+    }
+
+    // いちばん下の大きいボタンは、これから起きることをそのまま書く。
+    // 「新しく開店する」のか「動いている販売会に参加する」のかを、押す前に見せる。
+    function updateOpenPrimaryButton() {
+        const btn = document.getElementById('open-primary-btn');
+        if (!btn) return;
+        const el = document.getElementById('sync-event-code-input');
+        const code = sanitizeEventCode((el && el.value || '').trim());
+        const joining = code && openSyncPeek.code === code && openSyncPeek.state === 'open';
+        btn.innerHTML = joining
+            ? `<svg class="ic"><use href="#ic-link"/></svg>「${escHtml(openSyncPeek.name)}」に参加する`
+            : '<svg class="ic"><use href="#ic-store"/></svg>この内容で開店する';
+    }
+
     function renderOpenMenu() {
         const box = document.getElementById('open-menu-list');
         if (!box) return;
@@ -7246,14 +7663,22 @@
         const totalStock = active.reduce((sum, p) => sum + (p.initialStock || 0), 0);
         const codeInput = document.getElementById('sync-event-code-input');
         const code = (codeInput && codeInput.value || '').trim();
+        // すでに開いている販売会に合流する時は、名前も商品も向こうのものを使う。
+        // ここで決めた中身は使われないので、そのことを行ごとに書いておく。
+        const joining = !!code && openSyncPeek.code === sanitizeEventCode(code) && openSyncPeek.state === 'open';
         box.innerHTML =
-            menuRow('tag', '販売会の名前', escHtml(nameInput ? nameInput.value : ''), "openPanel('session','open-name')") +
-            menuRow('box', '商品と仕入れ数', `${active.length}品・合計${totalStock}個`, "openPanel('session','open-stock')") +
+            menuRow('tag', '販売会の名前',
+                joining ? `「${escHtml(openSyncPeek.name)}」になります` : escHtml(nameInput ? nameInput.value : ''),
+                "openPanel('session','open-name')") +
+            menuRow('box', '商品と仕入れ数',
+                joining ? '参加先の商品を使います' : `${active.length}品・合計${totalStock}個`,
+                "openPanel('session','open-stock')") +
             (window.FIREBASE_CONFIG
-                ? menuRow('link', '複数端末で共有', code ? `コード: ${escHtml(code)}` : '使わない（1台で営業）', "openPanel('session','open-sync')")
+                ? menuRow('link', '複数端末で共有', syncCodeSubLabel(code), "openPanel('session','open-sync')")
                 : '') +
             menuRow('target', '売上目標（任意）', salesGoal > 0 ? yenStr(salesGoal) : '決めない', "openPanel('settings','goal')") +
             menuRow('upload', 'データを取り込んで始める', '前回の続き・別の端末から引き継ぐ', "openPanel('session','open-import')");
+        updateOpenPrimaryButton();
         updateReopenRow();
     }
 
@@ -7267,9 +7692,13 @@
         renderSyncDevices();
         renderSyncHealth();
         if (!currentSession) {
+            // 開店前でも行き止まりにしない。
+            // ・他の端末がもう開いている → コードを入れればそのまま合流できる
+            // ・まだ誰も開いていない → 開店の準備へ送る
             box.className = 'notice';
-            box.innerHTML = '<svg class="ic"><use href="#ic-alert"/></svg>共有は営業中だけ開始できます。まず開店してください。';
-            acts.innerHTML = '';
+            box.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span>まだ開店していません。他の端末がもう開いているなら、<b>共有コードを入れるだけ</b>で合流できます。</span>';
+            acts.innerHTML =
+                `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-link"/></svg>共有コードを入れて合流する</button>`;
             if (speed) speed.style.display = 'none';
             return;
         }
@@ -7291,11 +7720,22 @@
 
     // 「この端末の役割」。ふだんのレジか、お客様に向ける金額表示か。
     // 共有の画面の中に置いている（どちらも「複数の端末で使う」話なので、探す場所が同じになる）
+    // 「この端末の役割」。ふだんのレジか、お客様に向ける金額表示か。
+    // どちらの役割からでも、その場で選び直せる（コードを入れ直さない）。
     function renderSyncRoleList() {
         const box = document.getElementById('sync-role-list');
         if (!box) return;
-        const sub = customerMode ? 'いまお客様用の表示です' : 'お客様に金額を見せる画面にする';
-        box.innerHTML = menuRow('users', 'お客様用の表示', sub, "openPanel('settings','customer')", { disabled: !window.FIREBASE_CONFIG });
+        const off = !window.FIREBASE_CONFIG;
+        const code = knownShareCode();
+        box.innerHTML =
+            menuRow('register', 'ふだんのレジ',
+                customerMode ? 'この端末でも商品を打つ' : '◯ いまこの役割です',
+                customerMode ? "switchDeviceRole('register')" : "openPanel('settings','customer')",
+                { disabled: off }) +
+            menuRow('users', 'お客様用の表示',
+                customerMode ? '◯ いまこの役割です' : (code ? `コード「${escHtml(code)}」で金額を映す` : '先に共有コードを入れてください'),
+                "openPanel('settings','customer')",
+                { disabled: off });
     }
 
     function setActiveNav(section) {
@@ -7892,7 +8332,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, salesGoal };
+        return { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -7910,6 +8350,9 @@
         comparisonBaseline = data.comparisonBaseline || null;
         lastCustomerType = data.lastCustomerType || null;
         syncEventCode = data.syncEventCode || null;
+        // 読み込み直しても「いまの回」を見失わないよう、印もいっしょに戻す
+        syncRoundId = data.syncRoundId || '';
+        syncRounds = new Set(Array.isArray(data.syncRounds) ? data.syncRounds : (syncEventCode ? [syncRoundId] : []));
         salesGoal = Number(data.salesGoal) > 0 ? Number(data.salesGoal) : 0;
         return true;
     }
@@ -9132,6 +9575,7 @@
         presenceRows = [];
         if (fbSalesUnsub) { try { fbSalesUnsub(); } catch (e) {} fbSalesUnsub = null; }
         syncMode = false;
+        resetRounds();
         updateSyncUi();
     }
 
@@ -9147,12 +9591,21 @@
     // 共有販売会(events/{code})自体の状態を購読し、
     //  ・他端末による「閉店」を検知する（強制終了はしない）
     //  ・他端末での商品の追加・価格変更・追加搬入を取り込む
-    function startSessionDocSubscription(code) {
+    function startSessionDocSubscription(code, opts) {
         if (!syncReady || !code || !fbDb) return;
+        // closeIfClosed … 役割を切り替えて戻ってきた時など、
+        //   「もう閉店していた」ことに最初の受信で気づく必要がある場合に立てる
+        const closeIfClosed = !!(opts && opts.closeIfClosed);
         if (fbSessionUnsub) { try { fbSessionUnsub(); } catch (e) {} fbSessionUnsub = null; }
         let firstSnapshot = true;
         fbSessionUnsub = fbDb.collection('events').doc(code).onSnapshot(doc => {
             const d = doc.data();
+            if (firstSnapshot && closeIfClosed && d && d.status === 'closed' && syncMode && currentSession) {
+                firstSnapshot = false;
+                // 会計の受け取りが届くのを少し待ってから閉じる（集計を欠けさせないため）
+                setTimeout(() => { if (currentSession) closeSessionLocally({ remote: true }); }, 1500);
+                return;
+            }
             // 初回の受信（この端末が今まさに開店/参加した瞬間）は通知しない。以降の変化だけ知らせる。
             // 他の端末で閉店されたら、この端末も同じように閉店する。
             // （知らせるだけだと、画面が営業中のまま残って会計を続けられてしまう）
@@ -9161,6 +9614,12 @@
                 firstSnapshot = true;                 // この後の後片づけで二重に反応しないようにする
                 closeSessionLocally({ remote: true });
                 return;
+            }
+            // 2台がほぼ同時に同じコードで共有を始めると、置き場に残る「回」の印は
+            // あとから書いたほうになる。負けたほうの会計が消えてしまわないよう、
+            // 見かけた印は両方とも「この回のもの」として受け取る。
+            if (syncMode && d && d.roundId != null && !syncRounds.has(d.roundId)) {
+                acceptRound(d.roundId);
             }
             // 他の端末が商品を変更したら取り込む（自分が書いた分は取り込み直さない）
             if (!firstSnapshot && syncMode && d && Array.isArray(d.products) && d.productsUpdatedBy && d.productsUpdatedBy !== getDeviceId()) {
@@ -9240,6 +9699,7 @@
         try { items = JSON.parse(JSON.stringify(res.items || [])); } catch (e) { items = []; }
         reservationsCol(syncEventCode).doc(String(res.id)).set({
             id: res.id, name: res.name || '', items: items, total: Number(res.total) || 0,
+            roundId: syncRoundId,
             at: Date.now(), by: getDeviceId()
         }).catch(e => console.warn('予約の共有に失敗しました', e));
     }
@@ -9259,6 +9719,7 @@
             snap.forEach(doc => {
                 const d = doc.data() || {};
                 if (d.id == null) return;
+                if (!inCurrentRound(d.roundId)) return;   // 前の回に残っている予約は見ない
                 rows.push({ id: d.id, name: d.name || '', items: Array.isArray(d.items) ? d.items : [], total: Number(d.total) || 0 });
             });
             if (firstSnapshot) {
@@ -9298,7 +9759,21 @@
     // ▲▲▲ ここまで ▲▲▲
 
     // リモート（全端末）の売上ドキュメントから salesHistory を再構築（取消は除外）
-    function applyRemoteSales(docs) {
+    function applyRemoteSales(allDocs) {
+        // 同じコードを次の回でもう一度使うことがあるので、
+        // 「いまの回」の会計だけを見る。古い版が書いた印なしの分は、
+        // 印なしを受け取ると決めている時（＝古い版が作った販売会）だけ入れる。
+        const docs = (allDocs || []).filter(d => inCurrentRound(d.roundId));
+        // 2台がほぼ同時に同じコードで始めて印が2つに割れた時は、
+        // この端末が送った分の印を、いま全体でそろっている印に押し直す。
+        // （そうしないと、もう一方の端末からはこちらの会計が見えないままになる）
+        if (syncMode && syncRoundId) {
+            (allDocs || []).forEach(d => {
+                if (d.deviceId === getDeviceId() && (d.roundId || '') !== syncRoundId && inCurrentRound(d.roundId)) {
+                    syncUpdateSale(d.__id, { roundId: syncRoundId }, syncEventCode);
+                }
+            });
+        }
         // 客No.は「全端末を時刻順に統合した通し番号」で採番する。
         // 【取消の扱い】取り消した会計もいったん番号を数えてから外す。
         //   こうしないと、途中の1件を取り消した時に、それ以降の客No.が
@@ -9403,6 +9878,7 @@
             // 会計1件を見分けるための印。取り消したあとに同じ客No.が
             // もう一度使われてもぶつからないよう、時刻も混ぜておく。
             localId: getDeviceId() + ':' + record.no + ':' + ((record.time instanceof Date && !isNaN(record.time)) ? record.time.getTime() : Date.now()),
+            roundId: syncRoundId,   // 同じコードを使い回した時に、前の回と混ざらないようにする印
             // 後から送る（同期再開時の救済）場合でも、実際に会計した時刻を保つ。
             // 時間帯別の集計と客No.の並び順が実態とずれないようにするため。
             createdAt: (record.time instanceof Date && !isNaN(record.time)) ? record.time.getTime() : Date.now(),
