@@ -1481,7 +1481,8 @@
            ・ふつう（同じまとまりの中で続く見出し）… 上に12px
            ・.sec（新しいまとまりが始まる見出し）… 上に20px
            あちこちで別々の数字を書くと、画面ごとに間のあき方が変わって落ち着かないため。 */
-        .field-label { display: block; font-size: 13px; font-weight: bold; color: var(--text-main); margin: 12px 0 2px; }
+        /* iOS の設定画面のように、見出しは控えめに。読むものはカードの中身。 */
+        .field-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-light); letter-spacing: .01em; margin: 12px 0 4px; }
         .field-label:first-child { margin-top: 0; }
         .field-label.sec { margin-top: 20px; }
         .chart-box { background: var(--white); border: none; box-shadow: var(--shadow-card); border-radius: var(--r-md); padding: 12px 10px; margin-bottom: 10px; overflow-x: auto; text-align: center; }
@@ -1828,6 +1829,8 @@
             box-shadow: 0 0 0 3px var(--positive);
         }
         .dev-row.off .dev-dot { background: var(--line-strong); box-shadow: 0 0 0 3px var(--btn-neutral); }
+        .dev-row .dev-ic { width: 17px; height: 17px; color: var(--text-light); flex: none; }
+        .dev-row.off .dev-ic { opacity: .55; }
         .dev-row .dev-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
         .dev-row .dev-name { font-size: 14.5px; font-weight: 700; overflow-wrap: anywhere; }
         .dev-row .dev-name .dev-me {
@@ -2000,6 +2003,12 @@
         .man-item:nth-child(3), .dg-pick:nth-child(3) { animation-delay: .06s; }
         .man-item:nth-child(4), .dg-pick:nth-child(4) { animation-delay: .09s; }
         .man-item:nth-child(n+5) { animation-delay: .12s; }
+
+        /* ▼ 左端からなぞって戻る（iOS と同じ手つき）▼
+           指についてくる間はアニメーションを止め、影で「上に乗っている紙」に見せる。 */
+        #page-panel.swiping { animation: none !important; transition: none; will-change: transform; }
+        #page-panel.swiping, #page-panel.swipe-settle { box-shadow: -14px 0 30px rgba(0, 0, 0, .18); }
+        #page-panel.swipe-settle { transition: transform .22s cubic-bezier(.32, .72, 0, 1); animation: none !important; }
 
         /* 画面の切り替えは、少し大きめに動かして前後関係を強く見せる（レジ以外） */
         #page-panel.anim-forward { animation: panelFromRight .4s cubic-bezier(.32, .72, 0, 1) both; }
@@ -2479,14 +2488,19 @@
                 <label class="field-label sec">共有されるもの</label>
                 <div class="notice">
                     <svg class="ic"><use href="#ic-link"/></svg>
-                    <span>会計／在庫と残数／商品／販売会の名前／売上目標／予約。<b>全部の端末で同じ</b>になり、どの端末から閉店しても<b>いっしょに閉店</b>します。<br>
-                    端末ごとなのは、領収書の発行者名・画面の明るさ・時計や天気の設定だけです。</span>
+                    <span>会計・在庫・商品・販売会の名前・売上目標・予約が<b>全部の端末で同じ</b>に。どこから閉じても<b>いっしょに閉店</b>します。<br>
+                    端末ごとなのは、領収書の発行者名と画面まわりの設定だけ。</span>
                 </div>
             </div>
 
             <!-- 共有コードの追加（入力画面） -->
             <div class="sub-view" id="sub-sync-add" style="display:none;">
-                <p class="settings-hint">一緒に使う<b>全部の端末で同じ「共有コード」</b>を入れてください。コードは<b>開店前でも営業中でも</b>入れられます。いま営業中の会計・在庫・商品はそのまま引き継がれます。</p>
+                <p class="settings-hint">全部の端末で<b>同じコード</b>を入れてください。開店前でも営業中でも入れられます。</p>
+                <div id="live-live-wrap" style="display:none;">
+                    <label class="field-label">いま開いている販売会</label>
+                    <div class="menu-list" id="live-live-list"></div>
+                    <p class="settings-hint" style="margin-top:4px;">押すだけで合流します（コードを入れなくてもかまいません）。</p>
+                </div>
                 <label class="field-label">共有コード</label>
                 <input type="text" id="sync-live-code-input" placeholder="例: pansale-1101" autocomplete="off" autocapitalize="characters" oninput="peekEventCode('live')" onkeydown="if(event.key==='Enter'){event.preventDefault();startSyncMidSession();}">
                 <!-- 開店の準備の画面と同じ下調べを出す。どちらの画面から入れても、
@@ -2497,7 +2511,7 @@
                     <button class="action-btn btn-checkout" id="live-sync-ok" style="margin-top:0;" onclick="startSyncMidSession()"><svg class="ic"><use href="#ic-register"/></svg>この端末でも会計する</button>
                     <button class="action-btn btn-secondary" id="live-sync-cd" onclick="startCustomerModeFromSettings()"><svg class="ic"><use href="#ic-users"/></svg>お客様用の金額表示にする</button>
                 </div>
-                <p class="settings-hint" style="margin-top:10px;"><b>会計する</b>＝この端末でも商品を打てます（売上と在庫が全端末でひとつになります）。<br><b>お客様用</b>＝打つ内容を大きく映すだけの画面になります（会計はできません）。</p>
+                <p class="settings-hint" style="margin-top:10px;">お客様用にすると、この端末では<b>会計できません</b>（映すだけ）。</p>
                 <div id="sync-status-active" class="settings-hint" style="margin-top:10px;"></div>
             </div>
 
@@ -2524,7 +2538,7 @@
 
             <!-- データの書き出し -->
             <div class="sub-view" id="sub-data" style="display:none;">
-                <p class="settings-hint">データはこの端末の中だけに保存されています。別の端末へ移す時や、念のための控えを取る時に使います。<br>（取り込み・復元は「開店する」の画面にあります）</p>
+                <p class="settings-hint">この端末の中だけにあるデータを、控えとして取り出します。<br>取り込み・復元は「開店する」から。</p>
                 <div class="btn-stack">
                     <button class="action-btn btn-secondary" onclick="exportBackup()"><svg class="ic"><use href="#ic-download"/></svg>バックアップファイルを保存</button>
                     <button class="action-btn btn-secondary" onclick="copyHandoffData()"><svg class="ic"><use href="#ic-copy"/></svg>この端末のデータをコピー</button>
@@ -2536,20 +2550,17 @@
             <div class="sub-view" id="sub-goal" style="display:none;">
                 <label class="field-label">この回の売上目標（円）</label>
                 <input type="number" id="sales-goal-input" inputmode="numeric" placeholder="例: 50000" min="0" step="1000">
-                <p class="settings-hint">決めておくと、売上集計の「売上の積み上がり」に達成率と、グラフに目標の線が出ます。空欄か0にすると目標なしになります。</p>
+                <p class="settings-hint">売上集計に達成率と、グラフの目標線が出ます。空欄か0で目標なし。</p>
                 <button class="action-btn btn-checkout" style="width:100%; margin-top:12px;" onclick="saveSalesGoal()"><svg class="ic"><use href="#ic-check"/></svg>この目標で保存する</button>
                 <div id="goal-state" class="notice notice-accent" style="display:none; margin-top:12px;"></div>
             </div>
 
             <!-- お客様用の表示（カスタマーディスプレイ）：いまの状態と、戻し方の案内 -->
             <div class="sub-view" id="sub-customer" style="display:none;">
-                <p class="settings-hint">この端末を<b>お客様に向ける金額表示</b>にすると、レジ役の端末が打っている内容が大きな文字でそのまま映ります。<b>会計はできなくなります</b>（左下の×でいつでも戻せます）。</p>
+                <p class="settings-hint">レジが打っている内容を、大きな文字でそのまま映します。<b>会計はできません</b>（左下の×で戻せます）。</p>
                 <div id="cd-state" class="notice"></div>
                 <div id="cd-actions" class="btn-stack" style="margin-top:12px;"></div>
-                <div class="notice" style="margin-top:14px;">
-                    <svg class="ic"><use href="#ic-bulb"/></svg>
-                    <span>使い方の例：タブレットで会計し、スマートフォンをお客様側に立てておく。商品を打つたびに明細と合計が出て、お預かりを入れるとお釣りも出ます。</span>
-                </div>
+
             </div>
 
             <!-- 操作マニュアル（アプリの中で読める。紙やPDFにも出せる） -->
@@ -2564,7 +2575,7 @@
             <div class="sub-view" id="sub-display" style="display:none;">
                 <label class="field-label">画面の明るさ</label>
                 <div id="theme-pick" class="theme-pick"></div>
-                <p class="settings-hint">「端末に合わせる」にしておくと、iPhone・iPad の設定（ダークモード）や夜間の自動切り替えに、そのまま付いていきます。暗い屋内や夕方の販売会でも、まぶしくなりません。</p>
+                <p class="settings-hint">「端末に合わせる」なら、iPhone・iPad の設定（ダークモード・夜間の切り替え）に付いていきます。</p>
                 <div id="theme-state" class="notice" style="margin-top:10px;"></div>
 
                 <label class="field-label sec">時計と天気</label>
@@ -2578,13 +2589,13 @@
                 </div>
                 <label class="field-label">天気を見る地域</label>
                 <select id="opt-area" onchange="saveUiPrefs()"></select>
-                <p class="settings-hint">天気は30分ごとに取り直します。通信できないときは何も出しません（会計には影響しません）。</p>
+                <p class="settings-hint">天気は30分ごとに取り直します。通信できない時は出しません。</p>
                 <div id="weather-state" class="notice" style="margin-top:10px;"></div>
                 <button class="action-btn btn-secondary" style="width:100%; margin-top:10px;" onclick="refreshWeather(true)"><svg class="ic"><use href="#ic-refresh"/></svg>天気をいますぐ取り直す</button>
 
                 <label class="field-label sec">全画面表示</label>
                 <button id="btn-fullscreen" class="action-btn btn-secondary" style="width:100%; display:none;" onclick="toggleFullscreen()"><svg class="ic"><use href="#ic-expand"/></svg>今すぐ全画面表示にする</button>
-                <p class="settings-hint" style="margin-top:10px;">ホーム画面に追加したアイコンから起動すると、アドレスバーや戻るボタンのない全画面で使えます。</p>
+                <p class="settings-hint" style="margin-top:10px;">ホーム画面のアイコンから起動すると、全画面で使えます。</p>
             </div>
 
             <!-- データの初期化 -->
@@ -2592,7 +2603,7 @@
                 <div class="notice notice-danger">
                     <svg class="ic"><use href="#ic-alert"/></svg>画面がおかしい・データが壊れたなど、どうしても直らない時だけ使う機能です。
                 </div>
-                <p class="settings-hint">この端末の売上履歴・過去の販売会・設定をすべて削除して、まっさらな状態に戻します。<b>先に「データの書き出し」で控えを取ってください。</b></p>
+                <p class="settings-hint">この端末の売上・過去の販売会・設定を<b>すべて消します</b>。<b>先に「データの書き出し」で控えを。</b></p>
                 <button class="action-btn btn-danger-solid" style="width:100%;" onclick="factoryResetApp()"><svg class="ic"><use href="#ic-trash"/></svg>この端末のデータを初期化する</button>
             </div>
         </div>
@@ -2606,6 +2617,15 @@
                         <div id="reopen-desc" style="font-weight:normal; margin-top:2px;"></div>
                         <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="reopenLastSession()"><svg class="ic"><use href="#ic-undo"/></svg>直前の販売会を再開する</button>
                     </div>
+                </div>
+                <!-- いま他の端末で開いている販売会を、自動で探して出す。
+                     コードを打たなくても、押すだけで合流できるようにするため。
+                     見つからない時は何も出さない（ふだんの開店の邪魔をしない）。 -->
+                <div id="open-live-wrap" style="display:none;">
+                    <label class="field-label" style="margin-top:0;">いま開いている販売会</label>
+                    <div class="menu-list" id="open-live-list"></div>
+                    <p class="settings-hint" style="margin-top:4px;">押すだけで合流します（コードを入れなくてもかまいません）。</p>
+                    <label class="field-label">新しく開店する</label>
                 </div>
                 <div class="menu-list" id="open-menu-list"></div>
                 <button class="action-btn btn-checkout" id="open-primary-btn" style="width:100%; margin-top:14px;" onclick="startSession()"><svg class="ic"><use href="#ic-store"/></svg>この内容で開店する</button>
@@ -2631,7 +2651,7 @@
 
             <!-- 開店時の共有コード -->
             <div class="sub-view" id="sub-open-sync" style="display:none;">
-                <p class="settings-hint">一緒に使う<b>全部の端末で同じ「共有コード」</b>を入れると、売上をリアルタイムで共有します。<br>1台だけで使うなら<b>空欄のままでOK</b>です（あとから設定画面で共有を始めることもできます）。</p>
+                <p class="settings-hint">全部の端末で<b>同じコード</b>を入れると、売上をリアルタイムで共有します。1台だけなら<b>空欄のまま</b>で。</p>
                 <label class="field-label">共有コード（任意）</label>
                 <input type="text" id="sync-event-code-input" placeholder="例: pansale-1101" oninput="peekEventCode('open')" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmOpenSyncCode();}">
                 <!-- 入れたコードが「すでに開店中の販売会」かどうかを、その場で調べて出す。
@@ -3612,8 +3632,8 @@
                     ${res.items.map(i => i.name).join(', ')}
                 </div>
                 <div class="res-actions">
-                    <button class="action-btn btn-danger" style="flex:1; padding:8px; font-size:14px;" onclick="cancelReservation(${res.id})">キャンセル</button>
-                    <button class="action-btn btn-checkout" style="flex:1; padding:8px; font-size:14px; margin-top:0;" onclick="showRegister(); openCheckout(${res.id})">受取・清算</button>
+                    <button class="action-btn btn-danger" style="flex:1; padding:8px; font-size:14px;" onclick="cancelReservation(${res.id})"><svg class="ic"><use href="#ic-x"/></svg>キャンセル</button>
+                    <button class="action-btn btn-checkout" style="flex:1; padding:8px; font-size:14px; margin-top:0;" onclick="showRegister(); openCheckout(${res.id})"><svg class="ic"><use href="#ic-register"/></svg>受取・清算</button>
                 </div>
             `;
             list.appendChild(div);
@@ -3817,12 +3837,13 @@
                     <li>画面の右上の<b>「開店する」</b>を押します。</li>
                     <li><b>「販売会の名前」</b>を確認します（例：11月1日 パン販売）。あとで集計を見分けるための名前です。直したら<b>「この名前にする」</b>を押すと前の画面に戻ります。</li>
                     <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。入れ終えたら<b>「この商品と仕入れ数にする」</b>を押します。</li>
-                    <li>複数の端末で同時に会計する場合だけ、<b>「複数端末で共有」</b>に責任者から指定された共有コードを入れて<b>「このコードで共有する」</b>を押します。1台だけなら空欄のままで構いません。</li>
+                    <li>複数の端末で同時に会計する場合だけ、<b>「複数端末で共有」</b>に責任者から指定された共有コードを入れて<b>「このコードで共有する」</b>を押します。前の回と同じコードで構いません。1台だけなら空欄のままで構いません。<br>※他の端末がもう開いているなら、この画面の上に出る<b>「いま開いている販売会」</b>を押すだけで合流できます（2〜5は不要です）。</li>
                     <li>いちばん下の<b>「この内容で開店する」</b>を押して完了です。</li>
                 </ol>
                 <div class="man-box">
                     <div class="man-box-h">どの画面も、下のボタンで決まります</div>
                     <p>名前・商品・共有コードのどの画面にも、いちばん下に<b>決めるためのボタン</b>があります。押すと前の画面に戻り、決めた内容がその場に出ます。左上の<b>「戻る」</b>でも同じように残りますが、迷ったときは下のボタンを押してください。</p>
+                    <p><b>画面の左端から右へなぞっても、前の画面に戻れます</b>（iPhone・iPad と同じ手つきです）。</p>
                 </div>
                 <div class="man-box">
                     <div class="man-box-h">名前が前と同じだったとき</div>
@@ -3915,6 +3936,11 @@
             body: `
                 <p>同じ<b>共有コード</b>を入れた端末どうしで、売上も在庫も自動でひとつにまとまります。</p>
                 <div class="man-box tip">
+                    <div class="man-box-h">いちばん簡単なのは、一覧から押すだけ</div>
+                    <p>他の端末がもう開いていれば、<b>開店の準備</b>の画面のいちばん上に<b>「いま開いている販売会」</b>が出ます。<b>その行を押すだけで合流できます</b>（コードを打つ必要はありません）。営業中でも、<b>設定 →「複数端末で使う」→「共有コードを入れる」</b>に同じ一覧が出ます。</p>
+                    <p>一覧に出るのは<b>1日以内に開いた販売会</b>だけです。出てこない時や、別の場所の販売会に入る時は、下のとおりコードを入れてください。</p>
+                </div>
+                <div class="man-box tip">
                     <div class="man-box-h">覚えることは、これだけ</div>
                     <p><b>全部の端末で、同じ共有コードを入れる。</b>それだけです。<b>開店前でも、営業中でも、まだ開店していない端末でも</b>、入れる場所は次の2つのどちらかで、どちらも同じように動きます。</p>
                     <p>・開店前 … <b>開店の準備 →「複数端末で共有」</b><br>・それ以外 … <b>設定 →「複数端末で使う」→「共有コードを入れる」</b></p>
@@ -3923,10 +3949,11 @@
                 <h4>コードを入れると出るもの</h4>
                 <p><b>「このコードで新しく開店します」</b>… まだ誰も使っていないコードです。この端末が共有の元になります。</p>
                 <p><b>「このコードは『◯◯』として開店中です」</b>… もう他の端末が使っています。ボタンは<b>「『◯◯』に参加する（合流する）」</b>に変わり、<b>これを押すだけで合流できます</b>。商品と仕入れ数は先に開いている側のものになります。</p>
-                <p><b>「このコードは『◯◯』で閉店済みです」</b>… 前に使ったコードです。ボタンは<b>「このコードをもう一度使う」</b>に変わります。<b>同じコードをそのまま次の回でも使えます</b>。前回の会計が混ざることはありません。</p>
-                <div class="man-box warn">
-                    <div class="man-box-h">コードは、打ったとおりに使われます</div>
-                    <p>アプリが勝手にコードを変えることはありません。<b>「テスト」と入れたら、必ず「テスト」で共有されます。</b>他の端末は「テスト」と入れれば必ず合流できます。</p>
+                <p><b>「このコードは前に『◯◯』で使いました」</b>… 前の販売会で使ったコードです。<b>そのまま使えます。</b>新しい販売会として始まり、前回の会計が混ざることはありません。</p>
+                <div class="man-box tip">
+                    <div class="man-box-h">同じコードを毎回使ってかまいません</div>
+                    <p>共有コードは<b>「どの端末どうしがつながるか」を決めるための合言葉</b>で、売上の記録には残りません。ですから<b>毎回同じコードを使っても差し支えありません</b>（覚えやすいので、むしろそのほうが楽です）。</p>
+                    <p>アプリが勝手にコードを変えることもありません。<b>「テスト」と入れたら、必ず「テスト」で共有されます。</b>他の端末は「テスト」と入れれば必ず合流できます。</p>
                 </div>
                 <h4>途中から共有したくなった</h4>
                 <p>開店し直す必要はありません。<b>「設定 → 複数端末で使う」</b>にコードを入れて<b>「この端末でも会計する」</b>を押すと、ここまでの会計も在庫もそのまま引き継がれます。</p>
@@ -4422,6 +4449,10 @@
         // 店名は共有元の販売会名ではなく、この端末の領収書の設定（発行者）を使う
         const shop = document.getElementById('cd-shop');
         if (shop) shop.textContent = shopInfo().name || '';
+        // 映す端末も、いまの「回」を知っておく（端末の一覧で前の回と区別するため）
+        fbDb.collection('events').doc(code).get()
+            .then(snap => { if (snap.exists) { acceptRound((snap.data() || {}).roundId || ''); beatPresence(); } })
+            .catch(() => {});
         startPresence();
         cdUnsub = fbDb.collection('events').doc(code).collection('live').doc(CD_DOC)
             .onSnapshot({ includeMetadataChanges: true }, doc => {
@@ -4633,6 +4664,7 @@
         if (!code || !fbDb || !syncReady) return;
         presenceRef(code).set({
             label: deviceLabel(), name: deviceDisplayName(), role: myPresenceRole(),
+            roundId: syncRoundId,   // 同じコードを使い回した時、前の回の端末を出さない
             // 【重要】left を必ず false に戻す。
             // 以前は「抜けました」の印（left: true）を書いたあと、
             // 入り直しても印が残ったままで、一覧にずっと出てこなかった。
@@ -4746,6 +4778,9 @@
         const rows = presenceRows.filter(r => {
             const at = Number(r.at) || 0;
             if (at <= 0) return false;
+            // はっきり別の回の印が付いている行だけ外す。
+            // 印の無い行（映す端末が回を知る前に書いた分など）は消さない。
+            if (r.roundId && !inCurrentRound(r.roundId)) return false;
             if (now - at > 12 * 3600000) return false;
             if (r.left && now - at > PRESENCE_STALE) return false;
             return true;
@@ -4771,8 +4806,10 @@
             if (named) bits.push(roleLabel);
             bits.push(online ? '通信あり' : '最後の通信 ' + when);
             if (r.label) bits.push(`会計記録の記号 ${escHtml(r.label)}`);
+            const roleIcon = r.role === 'display' ? 'ic-users' : 'ic-register';
             return `<div class="dev-row${online ? '' : ' off'}">
                 <span class="dev-dot"></span>
+                <svg class="ic dev-ic"><use href="#${roleIcon}"/></svg>
                 <span class="dev-main">
                     <span class="dev-name">${escHtml(title)}${me ? '<b class="dev-me">この端末</b>' : ''}</span>
                     <span class="dev-sub">${bits.join('・')}</span>
@@ -5391,15 +5428,8 @@
                         // 【変更】以前はここで黙って「テスト-1758…」のような別のコードを
                         // 作って開店していた。打った本人は「テスト」で開いたつもりなので、
                         // 他の端末が「テスト」を入れても出会えなかった。
-                        // 打ったコードのまま、新しい回として開き直す。
-                        const told = openSyncPeek.code === code && openSyncPeek.state === 'closed';
-                        const again = told || confirm(
-                            `共有コード「${code}」は「${data.name || '無題'}」で閉店済みです。\n\n` +
-                            `[OK] このコードをもう一度使って、新しい販売会として開店する\n` +
-                            `　　（前回の会計はこの販売会には入りません）\n` +
-                            `[キャンセル] 中止する（別のコードにする）`
-                        );
-                        if (!again) return;
+                        // いまは打ったコードのまま、新しい回として開き直す。
+                        // 前の回とは中で分けて数えるので、確認を挟まずそのまま進める。
                     } else if (Array.isArray(data.products) && data.products.length > 0) {
                         // 共有コードの画面で「『◯◯』に参加する」と書かれたボタンを押して来た時は、
                         // 何が起きるかをその画面で読んだうえで選んでいるので、重ねて聞かない。
@@ -5852,7 +5882,7 @@
             // ── この端末が「共有の元」になる ──
             // いまの商品構成と、ここまでの会計をすべてアップロードする。
             const head = reopening
-                ? `共有コード「${code}」は「${remote.name || '無題'}」で閉店済みです。\nこのコードをもう一度使い、いまの販売会「${currentSession}」を共有します。\n\n・前回の会計は、この販売会には入りません。`
+                ? `共有コード「${code}」で、いまの販売会「${currentSession}」の共有を始めます。\n（このコードは前にも使いましたが、前回の会計は入りません）`
                 : `共有コード「${code}」で、いまの販売会「${currentSession}」の共有を始めます。`;
             if (!confirm(`${head}\n\n・この端末の会計${salesHistory.length}件と商品構成が、共有の元になります。\n・他の端末でも同じコードを入れてください。\n  開店前なら「開店の画面 → 複数端末で共有」、\n  すでに営業中なら「設定 → 複数端末で使う」から、どちらでも参加できます。\n\nよろしいですか？`)) return;
             acceptRound(newRoundId());
@@ -7340,6 +7370,88 @@
         if (active && !was) animateIn(el);
     }
 
+    // ▼▼▼ 左端からなぞって戻る ▼▼▼
+    // 【なぜ必要か】iPhone や iPad では「左端から右へなぞると前の画面に戻る」が
+    //   体にしみついている。上の「戻る」を狙って押さなくても帰れるようにする。
+    // 【気をつけたこと】
+    //   ・レジの会計を邪魔しない（お客様用の表示や、会計の窓が開いている間は効かない）
+    //   ・横にスクロールする一覧（商品の並びなど）の上では、なぞりを横取りしない
+    //   ・縦に動かし始めた指は、そのまま縦スクロールに渡す
+    const SWIPE_EDGE = 26;        // 左端から何ピクセルまでを「端」とみなすか
+    const SWIPE_TAKE = 0.28;      // 画面幅のこれだけ動かしたら戻る
+    let swipe = null;
+
+    function swipeBlocked(target) {
+        if (customerMode) return true;
+        if (navStack.length <= 1) return true;
+        const modal = document.getElementById('checkout-modal');
+        if (modal && modal.style.display === 'flex') return true;
+        const choice = document.getElementById('choice-modal');
+        if (choice && choice.style.display === 'flex') return true;
+        // 横にスクロールする入れ物の上から始まったなぞりは、その入れ物のもの。
+        // 【注意】縦スクロールする箱は overflow-x も auto と計算されるので、
+        //   「実際に横へはみ出しているか」まで見ないと、本文全体が対象になってしまう。
+        let n = target;
+        while (n && n.nodeType === 1 && n !== document.body) {
+            const ox = getComputedStyle(n).overflowX;
+            if ((ox === 'auto' || ox === 'scroll') && n.scrollWidth > n.clientWidth + 2) return true;
+            n = n.parentElement;
+        }
+        return false;
+    }
+
+    function swipeEnd(commit) {
+        const panel = document.getElementById('page-panel');
+        if (!panel) { swipe = null; return; }
+        panel.classList.remove('swiping');
+        panel.classList.add('swipe-settle');
+        panel.style.transform = commit ? 'translate3d(100%,0,0)' : '';
+        const done = () => {
+            panel.classList.remove('swipe-settle');
+            panel.style.transform = '';
+            if (commit) { navDir = 'back'; panelBack(); }
+        };
+        setTimeout(done, commit ? 210 : 220);
+        swipe = null;
+    }
+
+    function initEdgeSwipe() {
+        const panel = document.getElementById('page-panel');
+        if (!panel) return;
+        panel.addEventListener('touchstart', e => {
+            if (e.touches.length !== 1) return;
+            const t = e.touches[0];
+            if (t.clientX > SWIPE_EDGE) return;
+            if (swipeBlocked(e.target)) return;
+            swipe = { x: t.clientX, y: t.clientY, on: false };
+        }, { passive: true });
+
+        panel.addEventListener('touchmove', e => {
+            if (!swipe || e.touches.length !== 1) return;
+            const t = e.touches[0];
+            const dx = t.clientX - swipe.x, dy = t.clientY - swipe.y;
+            if (!swipe.on) {
+                if (Math.abs(dy) > Math.abs(dx)) { swipe = null; return; }  // 縦に動かした指は渡す
+                if (dx < 10) return;
+                swipe.on = true;
+                panel.classList.add('swiping');
+            }
+            if (e.cancelable) e.preventDefault();
+            panel.style.transform = `translate3d(${Math.max(0, dx)}px,0,0)`;
+        }, { passive: false });
+
+        const finish = e => {
+            if (!swipe) return;
+            if (!swipe.on) { swipe = null; return; }
+            const t = (e.changedTouches && e.changedTouches[0]) || null;
+            const dx = t ? t.clientX - swipe.x : 0;
+            swipeEnd(dx > window.innerWidth * SWIPE_TAKE);
+        };
+        panel.addEventListener('touchend', finish, { passive: true });
+        panel.addEventListener('touchcancel', finish, { passive: true });
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     function animateIn(el) {
         el.classList.remove('anim-forward', 'anim-back');
         void el.offsetWidth;                      // アニメーションをやり直させる
@@ -7361,10 +7473,10 @@
             else if (sub === 'customer') renderCustomerSettings();
             else if (sub === 'goal') renderSalesGoal();
             if (sub === 'sync-add' || sub === 'sync') updateSyncUi();
-            if (sub === 'sync-add') peekEventCode('live');
+            if (sub === 'sync-add') { peekEventCode('live'); loadOpenEvents(); }
         }
         else if (view === 'session') {
-            if (!sub) renderOpenMenu();
+            if (!sub) { renderOpenMenu(); loadOpenEvents(); }
             else if (sub === 'open-stock') renderInventorySetup();
             else if (sub === 'open-sync') { updateSyncUi(); peekEventCode('open'); }
             else if (sub === 'open-name') updateSessionTabView();
@@ -7514,6 +7626,77 @@
         }, 500);
     }
 
+    // ▼▼▼ いま開いている販売会を、自動で探す ▼▼▼
+    // 【なぜ必要か】合流するだけなのに、毎回コードを打ち直すのは手間だし打ち間違える。
+    //   置き場に「開いている」と書いてある販売会はその場で分かるので、
+    //   一覧にして押すだけで入れるようにする。
+    // 【出す範囲】1日以内に開いたもの・商品が入っているものだけ。
+    //   閉め忘れて何日も開いたままの古いものを、合流先として勧めない。
+    const OPEN_EVENT_MAX_AGE = 24 * 3600000;
+    let openEventRows = [];
+    let openEventsAt = 0;
+    let openEventsBusy = false;
+
+    async function loadOpenEvents(force) {
+        if (!window.FIREBASE_CONFIG || !syncReady || !fbDb) { openEventRows = []; renderOpenEventLists(); return; }
+        if (openEventsBusy) return;
+        if (!force && Date.now() - openEventsAt < 15000) { renderOpenEventLists(); return; }
+        openEventsBusy = true;
+        try {
+            const snap = await fbDb.collection('events').where('status', '==', 'open').get();
+            const cut = Date.now() - OPEN_EVENT_MAX_AGE;
+            const rows = [];
+            snap.forEach(d => {
+                const v = d.data() || {};
+                const at = Number(v.openedAt) || 0;
+                if (at < cut) return;                                        // 古いものは勧めない
+                if (!Array.isArray(v.products) || !v.products.length) return; // 中身が無いものは入れない
+                rows.push({ code: d.id, name: v.name || '無題', at });
+            });
+            rows.sort((a, b) => b.at - a.at);
+            openEventRows = rows.slice(0, 5);
+        } catch (e) {
+            // 権限や通信の都合で一覧を取れないことがある。その時は黙って出さない
+            // （コードを打って入る道は、これまでどおり使える）。
+            console.warn('開いている販売会の一覧を取れませんでした', e);
+            openEventRows = [];
+        }
+        openEventsAt = Date.now();
+        openEventsBusy = false;
+        renderOpenEventLists();
+    }
+
+    function renderOpenEventLists() {
+        const rows = openEventRows.filter(r => !(syncMode && r.code === syncEventCode));
+        const html = rows.map(r => {
+            const d = new Date(r.at);
+            const when = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} 開店`;
+            return menuRow('link', r.name, `コード: ${escHtml(r.code)}・${when}`,
+                `joinOpenEvent('${escHtml(r.code).replace(/'/g, "\\'")}')`);
+        }).join('');
+        [['open-live-wrap', 'open-live-list'], ['live-live-wrap', 'live-live-list']].forEach(([w, l]) => {
+            const wrap = document.getElementById(w), list = document.getElementById(l);
+            if (!wrap || !list) return;
+            wrap.style.display = rows.length ? '' : 'none';
+            list.innerHTML = html;
+        });
+    }
+
+    // 一覧の1行を押した時。コードは入れずに、そのまま合流する。
+    async function joinOpenEvent(code) {
+        const c = sanitizeEventCode(code || '');
+        if (!c) return;
+        playSound();
+        if (currentSession) {
+            // 営業中：この端末の会計ごと、その販売会に合流する
+            const inp = document.getElementById('sync-live-code-input');
+            if (inp) inp.value = c;
+            await startSyncMidSession();
+            return;
+        }
+        await joinByCodeOnly(c);
+    }
+
     // いま入っているコードで何が起きるかを、1か所で決める。
     // 開店の準備の画面と、営業中の画面で、言うことが食い違わないようにするため。
     function peekPlan(live) {
@@ -7537,14 +7720,14 @@
                 btn: live ? `「${nm}」に合流する` : `「${nm}」に参加する`, icoBtn: 'link' };
         }
         if (p.state === 'closed') {
-            // 【変更】以前はここで止めていた（開店時は黙って別のコードを作っていた）。
-            // 同じコードを次の回でも使うのがふつうなので、そのまま開き直せるようにする。
-            // 前の回の会計が混ざらないよう、中では「回」を分けて数えている。
-            return { kind: 'closed', cls: 'notice-warn', icon: 'alert', name: p.name,
-                note: `このコードは<b>「${nm}」で閉店済み</b>です。<br>`
-                    + 'もう一度使うと、<b>新しい販売会として</b>始めます（前回の会計は混ざりません）。<br>'
-                    + '他の端末も、同じコードを入れ直してください。',
-                btn: 'このコードをもう一度使う', icoBtn: 'refresh' };
+            // 【方針】共有コードは「いまどの端末どうしがつながるか」を決めるだけの合言葉で、
+            //   売上の記録には残らない。前の回の会計は中で「回」を分けて数えているので、
+            //   同じコードを使い回しても混ざらない。
+            //   だから注意（⚠）ではなく、ふつうに使える案内として出す。
+            return { kind: 'closed', cls: '', icon: 'refresh', name: p.name,
+                note: `このコードは前に<b>「${nm}」</b>で使いました。<b>そのまま使えます。</b><br>`
+                    + '新しい販売会として始まり、前回の会計は混ざりません。',
+                btn: live ? 'このコードで共有を始める' : 'このコードで共有する' };
         }
         if (p.state === 'unknown') {
             return { kind: 'unknown', cls: 'notice-warn', icon: 'alert',
@@ -7634,7 +7817,7 @@
         const p = openSyncPeek;
         if (p.code === sanitizeEventCode(code)) {
             if (p.state === 'open') return `「${escHtml(p.name)}」に参加します`;
-            if (p.state === 'closed') return `コード: ${escHtml(code)}（もう一度使う）`;
+            if (p.state === 'closed') return `コード: ${escHtml(code)}（前にも使ったコード）`;
             if (p.state === 'new') return `コード: ${escHtml(code)}（新しく開店）`;
         }
         return `コード: ${escHtml(code)}`;
@@ -7678,6 +7861,7 @@
                 : '') +
             menuRow('target', '売上目標（任意）', salesGoal > 0 ? yenStr(salesGoal) : '決めない', "openPanel('settings','goal')") +
             menuRow('upload', 'データを取り込んで始める', '前回の続き・別の端末から引き継ぐ', "openPanel('session','open-import')");
+        renderOpenEventLists();
         updateOpenPrimaryButton();
         updateReopenRow();
     }
@@ -7712,7 +7896,7 @@
             if (speed) speed.style.display = '';
         } else {
             box.className = 'notice';
-            box.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span>いまは<b>この端末だけ</b>で営業しています。共有コードを入れると、他の端末と売上をリアルタイムで共有できます。<br>いまの会計・在庫はそのまま引き継がれます。</span>';
+            box.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span><b>この端末だけ</b>で営業中です。コードを入れると、いまの会計・在庫のまま共有できます。</span>';
             acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-plus"/></svg>共有コードを入れる</button>`;
             if (speed) speed.style.display = 'none';
         }
@@ -9939,6 +10123,7 @@
     showRegister();
     updateSessionTabView();
     renderAnalyticsMenu();
+    initEdgeSwipe();       // 左端からなぞって戻れるようにする
     initFirebase();
 
     init();
