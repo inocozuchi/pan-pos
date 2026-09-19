@@ -725,12 +725,20 @@
         }
         .co-summary .co-row.co-grand .co-val { font-size: 30px; font-weight: 800; letter-spacing: 0.01em; }
 
-        input[type="number"], input[type="text"] {
+        input[type="number"], input[type="text"], input[type="search"] {
             width: calc(100% - 30px); padding: 12px 15px; font-size: 18px;
             margin: 10px 0; border-radius: var(--r-md); border: none;
             background: var(--sunken); color: var(--text-main); outline: none;
             box-shadow: inset 0 0 0 1px var(--hairline);
         }
+        /* 会計記録をさがす欄。iOS の検索欄に近い、控えめな見た目にする。 */
+        #records-search {
+            width: 100%; box-sizing: border-box; margin: 2px 0 0;
+            padding: 10px 14px; font-size: 16px; border-radius: var(--r-md);
+            -webkit-appearance: none; appearance: none;
+        }
+        #records-search::-webkit-search-cancel-button { -webkit-appearance: none; }
+
         /* 入力中は枠線ではなく、青いふちどりで示す */
         input:focus, select:focus { box-shadow: inset 0 0 0 2px var(--accent); }
         /* 選ぶ欄も入力欄と同じ面・同じ角丸にそろえる（右端に下向きの印だけ足す） */
@@ -2374,6 +2382,12 @@
         <!-- ---------- 会計記録 ---------- -->
         <div class="panel-view" id="view-records">
             <div id="records-notice" style="display:none;"></div>
+            <!-- 件数が増えてくると、目で追うのは無理になる。
+                 客No.・商品名・金額のどれでも引けるようにしておく。 -->
+            <div id="records-search-wrap" style="display:none;">
+                <input type="search" id="records-search" placeholder="客No.・商品名・金額でさがす" autocomplete="off" oninput="onRecordsSearch()">
+                <p class="settings-hint" id="records-search-hint" style="margin:4px 0 8px;"></p>
+            </div>
             <div id="records-list" class="card-strip"></div>
         </div>
 
@@ -3011,6 +3025,13 @@
         return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    // onclick="なにか('ここ')" の中に文字を埋める時の逃がし方。
+    // まずJSの文字列として（円記号と引用符）、そのあとHTMLの属性として逃がす。
+    // 商品名は利用者が自由に付けられるので、記号が入っても壊れないようにする。
+    function escArg(s) {
+        return escHtml(String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
+    }
+
     // 操作ログを1件追加する
     function logEdit(msg) {
         operationLog.push({ time: new Date().toISOString(), msg });
@@ -3061,7 +3082,7 @@
             const stockText = oversold ? `在庫:0（超過${-p.stock}）` : `在庫:${p.stock}${lowStock ? ' 残少' : ''}`;
             btn.innerHTML = `
                 ${badge}
-                <span class="pname">${p.name}</span>
+                <span class="pname">${escHtml(p.name)}</span>
                 <span class="price">¥${p.price}</span>
                 <span class="stock${lowStock && !oversold ? ' is-low' : ''}" style="${stockStyle}">${stockText}</span>
             `;
@@ -3075,6 +3096,10 @@
     }
 
     const LOW_STOCK_ALERT = 3; // この残数に到達したら「残りわずか」を通知
+    // 打ち間違い（桁の多打ち）の歯止め。パン1個の値段と、その日の仕入れ数として
+    // ありえない大きさは受け付けない。上限にかかった時は、その場で知らせる。
+    const MAX_PRICE = 100000;      // 1個の値段
+    const MAX_STOCK = 10000;       // 1品の仕入れ数
     function addToCart(p) {
         if (!p) return;
         if (!currentSession) { playError(); alert('設定から先に開店してください'); return; }
@@ -3263,13 +3288,13 @@
 
         for (const [name, data] of Object.entries(counts)) {
             const subtotal = data.price * data.count;
-            const safeName = name.replace(/'/g, "\\'");
+            const safeName = escArg(name);
             list.innerHTML += `
                 <div class="cart-item" style="border-left:6px solid ${catInk(data.type)}; padding-left:8px;">
                     <span style="display:flex; align-items:center; gap:6px; min-width:0;">
                         <button class="step-btn minus" onclick="removeOneFromCart('${safeName}')">−</button>
                         <button class="step-btn plus" onclick="addOneToCart('${safeName}')">＋</button>
-                        <span>${name} × <b>${data.count}</b></span>
+                        <span>${escHtml(name)} × <b>${data.count}</b></span>
                     </span>
                     <span class="num" style="font-weight:bold;">¥${subtotal}</span>
                 </div>
@@ -3328,7 +3353,7 @@
             const subtotal = data.price * data.count;
             html += `
                 <li class="receipt-item" style="border-left:5px solid ${catInk(data.type)}; padding-left:8px;">
-                    <span>${name} <span style="color:var(--text-light);font-size:13px;">(@¥${data.price}×${data.count})</span></span>
+                    <span>${escHtml(name)} <span style="color:var(--text-light);font-size:13px;">(@¥${data.price}×${data.count})</span></span>
                     <span class="num" style="font-weight:bold;">¥${subtotal}</span>
                 </li>`;
         }
@@ -3629,7 +3654,7 @@
                     <span style="font-weight:bold;">合計: ¥${res.total}</span>
                 </div>
                 <div style="font-size:13px; color:var(--text-light);">
-                    ${res.items.map(i => i.name).join(', ')}
+                    ${res.items.map(i => escHtml(i.name)).join('、')}
                 </div>
                 <div class="res-actions">
                     <button class="action-btn btn-danger" style="flex:1; padding:8px; font-size:14px;" onclick="cancelReservation(${res.id})"><svg class="ic"><use href="#ic-x"/></svg>キャンセル</button>
@@ -3690,7 +3715,7 @@
                         <input class="ios-switch" type="checkbox" ${p.active === false ? '' : 'checked'} onchange="updateTempProduct(${p.id}, 'active', this.checked)">
                     </label>
                     <div style="display:flex; gap:5px; align-items:center;">
-                        <input type="text" value="${p.name}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
+                        <input type="text" value="${escHtml(p.name)}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
                         <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
                     </div>
                     ${catPicker(p.type, `updateTempProduct(${p.id}, 'type', '%T%')`)}
@@ -3720,7 +3745,8 @@
         const p = tempSetupProducts.find(prod => prod.id === id);
         if (p) {
             if (field === 'name') p.name = value;
-            if (field === 'price' || field === 'initialStock') p[field] = parseInt(value) || 0;
+            if (field === 'price') p.price = Math.min(MAX_PRICE, Math.max(0, parseInt(value) || 0));
+            if (field === 'initialStock') p.initialStock = Math.min(MAX_STOCK, Math.max(0, parseInt(value) || 0));
             if (field === 'cost') { const n = parseInt(value); p.cost = (value === '' || isNaN(n)) ? null : n; }
             if (field === 'type') { p.type = value; renderInventorySetup(); }   // 左の色帯も塗り替える
             if (field === 'active') { p.active = value; renderInventorySetup(); }
@@ -3897,6 +3923,11 @@
                 <div class="man-box">
                     <div class="man-box-h">未入力をまとめて片づける</div>
                     <p>未入力があると、画面の上に知らせが出ます。<b>「未入力だけ表示」</b>を押すと、まだのものだけが並ぶので順に押していけます。</p>
+                </div>
+                <div class="man-box tip">
+                    <div class="man-box-h">件数が増えたら、さがす</div>
+                    <p>会計が12件を超えると、上に<b>さがす欄</b>が出ます。<b>客No.・商品名・金額</b>のどれでも引けます（「あんぱん 学生」のように空白で区切ると、両方に当てはまるものだけ出ます）。</p>
+                    <p>カードは<b>新しい順に60件ずつ</b>出ます。古いものを見たい時は、いちばん下の<b>「もっと見る」</b>を押してください。何百件になっても画面が重くならないようにしています。</p>
                 </div>`
         },
         {
@@ -7461,7 +7492,7 @@
     // 画面を開いた時に中身を作り直す
     function refreshView(view, sub) {
         if (view === 'reservations') renderReservations();
-        else if (view === 'records') renderRecords();
+        else if (view === 'records') { resetRecordsView(); renderRecords(); }
         else if (view === 'settings') {
             if (!sub) renderSettingsMenu();
             else if (sub === 'stock') renderLiveStock();
@@ -8776,11 +8807,43 @@
             <button class="rn-btn${recordsPendingOnly ? ' on' : ''}" onclick="toggleRecordsPendingOnly()">${recordsPendingOnly ? 'すべて表示' : '未入力だけ表示'}</button>`;
     }
 
+    // ▼▼▼ 会計記録をさがす ▼▼▼
+    // 客No.・商品名・金額のどれでも、打った文字が入っていれば出す。
+    // 件数が少ないうちは箱ごと出さない（ふだんの画面を増やさないため）。
+    const RECORDS_SEARCH_FROM = 12;   // これ以上たまったら、さがす箱を出す
+    let recordsQuery = '';
+    function onRecordsSearch() {
+        const el = document.getElementById('records-search');
+        recordsQuery = (el && el.value || '').trim();
+        resetRecordsPaging();
+        renderRecords();
+    }
+    function recordMatches(h, q) {
+        if (!q) return true;
+        const hay = [
+            '客No.' + (h.no || ''), String(h.no || ''),
+            String(h.total || ''), '¥' + String(h.total || ''),
+            h.customerType || '', h.deviceLabel || '',
+            ...(h.items || []).map(i => i.name || '')
+        ].join(' ').toLowerCase();
+        return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
+    }
+    function updateRecordsSearchBox(total, hit) {
+        const wrap = document.getElementById('records-search-wrap');
+        const hint = document.getElementById('records-search-hint');
+        if (!wrap) return;
+        const show = salesHistory.length >= RECORDS_SEARCH_FROM || !!recordsQuery;
+        wrap.style.display = show ? '' : 'none';
+        if (!show) return;
+        if (hint) hint.textContent = recordsQuery ? `${hit}件 / 全${total}件` : `全${total}件`;
+    }
+
     function renderRecords() {
         const list = document.getElementById('records-list');
         if (!list) return;
         renderRecordsNotice(salesHistory.filter(h => h.pendingType).length);
         if (salesHistory.length === 0) {
+            updateRecordsSearchBox(0, 0);
             list.innerHTML = '<p style="color:var(--text-light); text-align:center; margin-top:20px;">まだ会計済のデータはありません。</p>';
             return;
         }
@@ -8790,23 +8853,40 @@
         const pendingCount = salesHistory.filter(h => h.pendingType).length;
         if (recordsPendingOnly && pendingCount === 0) recordsPendingOnly = false;
         if (recordsPendingOnly) rows = rows.filter(r => r.h.pendingType);
+        const allCount = rows.length;
+        if (recordsQuery) rows = rows.filter(r => recordMatches(r.h, recordsQuery));
+        updateRecordsSearchBox(allCount, rows.length);
+        if (recordsQuery && rows.length === 0) {
+            list.innerHTML = '<p style="color:var(--text-light); text-align:center; margin-top:20px;">見つかりませんでした。</p>';
+            return;
+        }
         const TYPES = ['学生', '教員', '職員', 'その他', '不明'];
 
-        list.innerHTML = rows.map(({ h, idx }) => {
+        // ▼ 何百件にもなった時に、画面が固まらないようにする ▼
+        // 【なぜ必要か】1件が30個ほどの部品でできているので、500件あると
+        //   18,000個を並べることになり、この画面を出たり入ったりするだけで
+        //   1秒以上ひっかかる。混んでいる時ほど遅くなるのは困る。
+        //   新しいほうから少しずつ出し、続きは「もっと見る」で足していく。
+        const total = rows.length;
+        const shown = Math.min(recordsShown, total);
+        const rest = total - shown;
+        const view = rows.slice(0, shown);
+
+        list.innerHTML = view.map(({ h, idx }) => {
             const t = new Date(h.time);
             const dtStr = `${t.getFullYear()}/${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')} ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
             const editing = editingRecordIdx === idx;
             const lines = itemLines(h.items).map(l => {
-                const sn = l.name.replace(/'/g, "\\'");
+                const sn = escArg(l.name);
                 return editing
                     ? `<div style="display:flex; align-items:center; gap:6px; padding:3px 0; font-size:13px;">
                         <button class="step-btn minus" onclick="adjustRecordItem(${idx}, '${sn}', -1)" style="width:26px; height:26px; font-size:14px;">−</button>
                         <button class="step-btn plus" onclick="adjustRecordItem(${idx}, '${sn}', 1)" style="width:26px; height:26px; font-size:14px;">＋</button>
-                        <span style="flex:1;">${l.name} ×<b>${l.qty}</b></span>
+                        <span style="flex:1;">${escHtml(l.name)} ×<b>${l.qty}</b></span>
                         <span style="font-weight:bold;">¥${l.subtotal}</span>
                     </div>`
                     : `<div style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
-                        <span>${l.name} <span style="color:var(--text-light);">×${l.qty} (@¥${l.price})</span></span>
+                        <span>${escHtml(l.name)} <span style="color:var(--text-light);">×${l.qty} (@¥${l.price})</span></span>
                         <span style="font-weight:bold;">¥${l.subtotal}</span>
                     </div>`;
             }).join('');
@@ -8854,6 +8934,27 @@
                     ${actions}
                 </div>`;
         }).join('');
+
+        if (rest > 0) {
+            list.innerHTML += `<button class="action-btn btn-secondary" style="width:100%; margin-top:10px;" onclick="showMoreRecords()">`
+                + `<svg class="ic"><use href="#ic-down"/></svg>もっと見る（残り${rest}件）</button>`;
+        }
+    }
+
+    // 会計記録を一度に出す件数。画面を離れると元に戻す（次に来た時は軽い状態から）。
+    const RECORDS_PAGE = 60;
+    let recordsShown = RECORDS_PAGE;
+    function showMoreRecords() {
+        recordsShown += RECORDS_PAGE;
+        playSound();
+        renderRecords();
+    }
+    function resetRecordsPaging() { recordsShown = RECORDS_PAGE; }
+    function resetRecordsView() {
+        recordsShown = RECORDS_PAGE;
+        recordsQuery = '';
+        const el = document.getElementById('records-search');
+        if (el) el.value = '';
     }
 
     // 会計済の品目・点数を修正（在庫・客数・売上に反映）
@@ -9028,6 +9129,14 @@
                <div class="pay"><span>お釣り</span><span>${yen(h.change || 0)}</span></div>` : '';
 
         const win = window.open('', '_blank');
+        // ポップアップが止められていると、別の窓が開けずに null が返る。
+        // そのまま書き込むと落ちてしまうので、開けなかったことを知らせて終わる。
+        // （お金のやり取りの最中なので、黙って何も起きないのがいちばん困る）
+        if (!win) {
+            playError();
+            alert('領収書の窓を開けませんでした。\nブラウザの「ポップアップブロック」を解除してから、もう一度お試しください。');
+            return;
+        }
         win.document.write(`
             <html><head><meta charset="utf-8"><title>領収書 No.${esc(h.no || '')}</title>
             <style>
@@ -9219,7 +9328,7 @@
                     ? `<svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="${color}" stroke-width="3" stroke-dasharray="5 3"/></svg>`
                     : `<svg width="22" height="8"><line x1="0" y1="4" x2="22" y2="4" stroke="${color}" stroke-width="3"/></svg>`;
                 const active = chartHighlight === s.name;
-                return `<span onclick="toggleChartHighlight('${s.name.replace(/'/g, "\\'")}')" style="display:inline-flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; padding:2px 6px; border-radius:var(--r-sm); background:${active ? 'var(--accent-soft)' : 'transparent'}; color:var(--text-main); font-weight:${active ? 'bold' : 'normal'};">${dashLine}${s.name}（残${s.final}）</span>`;
+                return `<span onclick="toggleChartHighlight('${escArg(s.name)}')" style="display:inline-flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; padding:2px 6px; border-radius:var(--r-sm); background:${active ? 'var(--accent-soft)' : 'transparent'}; color:var(--text-main); font-weight:${active ? 'bold' : 'normal'};">${dashLine}${escHtml(s.name)}（残${s.final}）</span>`;
             }).join('');
         }
     }
@@ -9387,6 +9496,13 @@
     }
 
     function adjustLiveInitialStock(id, delta) {
+        {
+            const q = products.find(prod => prod.id === id);
+            if (q && (q.initialStock || 0) + delta > MAX_STOCK) {
+                playError(); showToast(`仕入れ数は${MAX_STOCK.toLocaleString()}個までです`);
+                return;
+            }
+        }
         const p = products.find(prod => prod.id === id);
         if (!p) return;
         applyInitialStockChange(p, Math.max(0, (p.initialStock || 0) + delta));
@@ -9404,7 +9520,12 @@
         const p = products.find(prod => prod.id === id);
         if (!p) return;
         const n = parseInt(value);
-        if (isNaN(n) || n < 0) { renderLiveStock(); return; }
+        // 桁を1つ多く打ってしまった時の歯止め。パンの1個の値段としてありえない額は入れない。
+        if (isNaN(n) || n < 0 || n > MAX_PRICE) {
+            if (!isNaN(n) && n > MAX_PRICE) { playError(); showToast(`価格は${MAX_PRICE.toLocaleString()}円までです`); }
+            renderLiveStock();
+            return;
+        }
         if (n === p.price) return;
         logEdit(`価格変更：${p.name} ¥${p.price} → ¥${n}`);
         p.price = n;
@@ -9454,8 +9575,10 @@
         if (products.some(p => p.name === name)) { playError(); alert('同じ名前の商品がすでにあります。'); return; }
         const price = parseInt(document.getElementById('la-price').value, 10);
         if (isNaN(price) || price < 0) { playError(); alert('価格を数字で入れてください。'); return; }
+        if (price > MAX_PRICE) { playError(); alert(`価格は${MAX_PRICE.toLocaleString()}円までです。桁が多くありませんか？`); return; }
         const initialStock = parseInt(document.getElementById('la-stock').value, 10);
         if (isNaN(initialStock) || initialStock < 0) { playError(); alert('仕入れ数を数字で入れてください。'); return; }
+        if (initialStock > MAX_STOCK) { playError(); alert(`仕入れ数は${MAX_STOCK.toLocaleString()}個までです。桁が多くありませんか？`); return; }
         const costRaw = document.getElementById('la-cost').value;
         const costNum = parseInt(costRaw, 10);
         const cost = (costRaw === '' || isNaN(costNum) || costNum < 0) ? null : costNum;
