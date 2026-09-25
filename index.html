@@ -793,10 +793,13 @@
         .cash-suggest { display: flex; align-items: center; gap: 7px; margin-top: 9px; min-width: 0; }
         .cash-suggest .cs-label { font-size: 11.5px; color: var(--text-light); font-weight: 600; flex-shrink: 0; }
         .cash-suggest .cs-btn {
-            flex: 1; min-width: 0; padding: 9px 4px; font-size: 15.5px; font-weight: 700; margin: 0;
+            flex: 1; min-width: 0; padding: 7px 4px; font-size: 15.5px; font-weight: 700; margin: 0;
             background: var(--white); color: var(--text-main);
             box-shadow: inset 0 0 0 1px var(--line-strong), 0 1px 2px rgba(28,28,30,.04);
+            display: flex; flex-direction: column; align-items: center; gap: 1px; line-height: 1.15;
         }
+        /* お釣りの額を小さく添える。どれを押すかを金額だけで選べるように。 */
+        .cash-suggest .cs-chg { font-size: 10.5px; font-weight: 600; color: var(--text-light); }
 
         /* 客属性（任意）：お金の流れを邪魔しないよう、枠を持たせず控えめに置く */
         .co-type { margin-top: 12px; }
@@ -3393,16 +3396,53 @@
     }
 
     // ▼▼▼ スマート預かり金：合計額から「出されやすい金額」を提案（会計速度アップ）▼▼▼
-    function suggestCashAmounts(total) {
+    // 【出し方の型】お客様の出し方は、だいたい次の3つに分かれる。
+    //   ① 小銭で端数を足す        780円 → 800円（お釣り20円）
+    //   ② 出しやすいお金を1枚出す  780円 → 1000円（お釣り220円）
+    //   ③ 端数を先に足して、お釣りをきりのいい額にする
+    //                             780円 → 1080円（お釣り300円）
+    //                             780円 →  880円（お釣りちょうど100円）
+    // ③ は財布の小銭を減らすための出し方で、実際とても多い。
+    // 以前は①②しか出していなかったので、③を必ず候補に入れる。
+    //
+    // 【並べ方】押しやすさより「出される見込みの高さ」を先にする。
+    //   見込みの順に選んでから、画面には金額の小さい順に並べる
+    //   （並びが毎回変わると、指が覚えられないため）。
+    function suggestCashAmounts(total, slots) {
         if (!total || total <= 0) return [];
-        const opts = new Set();
-        opts.add(Math.ceil(total / 100) * 100);   // 次の100円
-        opts.add(Math.ceil(total / 500) * 500);   // 次の500円
-        opts.add(Math.ceil(total / 1000) * 1000); // 次の1000円
-        [1000, 2000, 5000].forEach(v => opts.add(v)); // よく出される紙幣
-        // 画面が狭い端末では候補を減らす（「ちょうど」を含めて4つ。詰め込むと文字が折り返して押しにくい）
-        const max = window.innerWidth < 420 ? 3 : 4;
-        return [...opts].filter(v => v > total).sort((a, b) => a - b).slice(0, max);
+        const f = total % 100;                        // 100円未満の端数（780 → 80）
+        const next100 = Math.ceil(total / 100) * 100;
+        const next500 = Math.ceil(total / 500) * 500;
+        const next1000 = Math.ceil(total / 1000) * 1000;
+        // 「お金1枚で出す」時にいちばん近いほう（500円玉か、千円札か）
+        const near = Math.min(next500, next1000);
+        const far = Math.max(next500, next1000);
+
+        const order = [
+            next100,                    // ① 端数を小銭で足す
+            near,                       // ② 出しやすいお金1枚
+            f > 0 ? next1000 + f : 0,   // ③ お札に端数を足す（780 → 1080・お釣り300円）
+            f > 0 ? next100 + f : 0,    // ③ お釣りがちょうど100円（780 → 880）
+            far,
+            f > 0 ? next500 + f : 0,
+            2000, 5000, 10000,
+            // ちょうど1万円のような「区切りの額」でも候補が空にならないよう、
+            // 必ず合計より大きくなる刻みも用意しておく
+            Math.floor(total / 1000) * 1000 + 1000,
+            Math.floor(total / 5000) * 5000 + 5000,
+            Math.floor(total / 10000) * 10000 + 10000
+        ];
+
+        // 【枠の数】③を必ず出したいので、いちばん狭い端末でも4つ出す。
+        const picked = [];
+        const max = slots || (window.innerWidth >= 768 ? 5 : 4);
+        for (const v of order) {
+            if (!v || v <= total) continue;
+            if (picked.includes(v)) continue;
+            picked.push(v);
+            if (picked.length >= max) break;
+        }
+        return picked.sort((a, b) => a - b);
     }
 
     // お預かり金額の候補。「ちょうど」は会計ボタン側（＝押せば完了する）に集約したので、
@@ -3411,7 +3451,8 @@
         const box = document.getElementById('cash-suggestions');
         if (!box) return;
         box.innerHTML = suggestCashAmounts(total).map(v =>
-            `<button class="action-btn num cs-btn" onclick="setCash(${v})">¥${v.toLocaleString('ja-JP')}</button>`).join('');
+            `<button class="action-btn num cs-btn" onclick="setCash(${v})">¥${v.toLocaleString('ja-JP')}`
+            + `<span class="cs-chg">釣 ¥${(v - total).toLocaleString('ja-JP')}</span></button>`).join('');
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -3889,7 +3930,7 @@
                 <ol class="man-steps">
                     <li>お客様が選んだ商品を、<b>商品ボタン</b>から必要な数だけ押します（同じ商品を2個なら2回）。</li>
                     <li><b>「会計へ進む」</b>（青い大きなボタン）を押します。</li>
-                    <li>お預かりした金額を、<b>テンキー</b>か<b>候補ボタン</b>（¥500・¥1,000 など）で入れます。</li>
+                    <li>お預かりした金額を、<b>テンキー</b>か<b>候補ボタン</b>で入れます。候補にはお釣りの額も小さく出ています。</li>
                     <li>黒い表示窓に<b>お釣りと、その内訳</b>（例：100円×3）が出るので、その通りにお釣りを渡します。</li>
                     <li>いちばん下の<b>「完了・記録」</b>を押して会計終了です。</li>
                 </ol>
@@ -3901,6 +3942,20 @@
                         <li>お預かりが足りないときはボタンが押せなくなり、<b>あといくら足りないか</b>が出ます。</li>
                         <li>上のすりガラスの部分を押すと、商品一覧にもどれます。</li>
                     </ul>
+                </div>
+                <div class="man-box tip">
+                    <div class="man-box-h">候補ボタンは「出され方」の順に並びます</div>
+                    <p>合計が<b>740円</b>のとき、候補はこう出ます。</p>
+                    <table class="man-qa">
+                        <thead><tr><th>候補</th><th>どんな出し方か</th></tr></thead>
+                        <tbody>
+                            <tr><td><b>¥800</b>（釣 ¥60）</td><td>小銭で端数を足す。お釣りがいちばん少なくなります。</td></tr>
+                            <tr><td><b>¥840</b>（釣 ¥100）</td><td>端数を足して、<b>お釣りをちょうど100円</b>にする出し方。</td></tr>
+                            <tr><td><b>¥1,000</b>（釣 ¥260）</td><td>お札を1枚そのまま出す。</td></tr>
+                            <tr><td><b>¥1,040</b>（釣 ¥300）</td><td>お札に端数を足して、<b>お釣りをきりのいい額</b>にする出し方。</td></tr>
+                        </tbody>
+                    </table>
+                    <p>お客様が<b>「40円あります」</b>と小銭を先に出したときは、<b>¥1,040</b> を押せばそのまま合います。探して打ち込む必要はありません。</p>
                 </div>
                 <div class="man-box warn">
                     <div class="man-box-h">打ち間違えたとき（会計を確定する前）</div>
