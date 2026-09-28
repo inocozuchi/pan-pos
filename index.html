@@ -616,6 +616,9 @@
         }
         .cart-item > span:first-child { min-width: 0; }
         .cart-item > span:first-child > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+        /* セット割の行（カート・お会計・レシート・お客様の画面で同じ色） */
+        .disc-line { color: var(--positive-ink); font-weight: bold; }
+        .disc-line .ic { width: 15px; height: 15px; vertical-align: -2px; margin-right: 4px; }
 
         footer {
             min-width: 0;
@@ -1668,6 +1671,8 @@
         #customer-display .cd-item .n { flex: 1; min-width: 0; overflow-wrap: anywhere; color: #E8ECF5; }
         #customer-display .cd-item .q { font-size: .8em; color: #9AA0B0; white-space: nowrap; }
         #customer-display .cd-item .v { font-weight: 700; white-space: nowrap; }
+        #customer-display .cd-item.cd-disc .n,
+        #customer-display .cd-item.cd-disc .v { color: #9EC5FF; }
         /* 合計・お預かり・お釣りのまとまり（横長の画面では、明細の右側に立つ） */
         #customer-display .cd-sum { flex-shrink: 0; display: flex; flex-direction: column; justify-content: flex-end; }
         #customer-display .cd-total-row {
@@ -2565,6 +2570,12 @@
             <!-- 画面表示 -->
             <!-- 売上目標（任意）。開店時にも設定でき、あとから変えられる -->
             <div class="sub-view" id="sub-goal" style="display:none;">
+                <!-- セット割：ドリンク＋クッキーを同じ会計で買うと10円引き（1会計10円まで） -->
+                <div class="sw-row">
+                    <div class="sw-text"><b>セット割</b><span>コーヒー＋クッキーで10円引き</span></div>
+                    <input type="checkbox" class="ios-switch" id="opt-set-discount" onchange="toggleSetDiscount(this.checked)">
+                </div>
+                <div id="set-discount-state" class="notice" style="margin:8px 0 18px;"></div>
                 <label class="field-label">この回の売上目標（円）</label>
                 <input type="number" id="sales-goal-input" inputmode="numeric" placeholder="例: 50000" min="0" step="1000">
                 <p class="settings-hint">売上集計に達成率と、グラフの目標線が出ます。空欄か0で目標なし。</p>
@@ -2972,10 +2983,21 @@
     let comparisonBaseline = null; // 今回の販売会と比較する「前回の実績」（開店時に確定）
     let lastCustomerType = null;   // 直前に選ばれた客属性（保存データの互換のため保持）
     let salesGoal = 0;             // その回の売上目標（円）。0 なら決めていない
+    // ▼ セット割 ▼
+    // ドリンク（コーヒー）とクッキーを同じ会計で買うと10円引き。
+    // 【上限】1会計につき10円まで。2セット買っても10円（1会計1回きり）。
+    // 【オンオフ】設定の「売上目標・セット割」から切り替える。共有中は全端末でそろえる。
+    // 割引の決まりは setDiscountFor() の1か所にだけ書く。
+    // 会計・カート・予約・会計記録の修正・お客様用の表示は、みなここを通す。
+    const SET_DISCOUNT = { amount: 10, label: 'セット割', needs: ['drink', 'savory'] };
+    let setDiscountOn = true;
     // 会計の二重記録を防ぐための通し番号。お会計画面を開くたびに +1 され、
     // 記録が成立した番号は checkoutRecordedToken に控えて、同じ番号では二度と記録しない。
     let checkoutOpenToken = 0;
     let checkoutRecordedToken = -1;
+    // いま開いているお会計画面のセット割（開いた時に決め、記録にそのまま残す）
+    let checkoutDiscount = 0;
+    let checkoutSetDiscOn = false;
 
     // ▼ 複数端末リアルタイム同期（Cloud Firestore）用の状態 ▼
     // syncMode が true の間だけ、salesHistory は Firestore（events/{code}/sales）を正とする。
@@ -3304,6 +3326,17 @@
             `;
         }
 
+        // セット割（ドリンク＋クッキー）。何円引いたかを明細の最後に1行で見せる
+        const disc = setDiscountFor(cart);
+        if (disc > 0) {
+            total -= disc;
+            list.innerHTML += `
+                <div class="cart-item disc-line" id="cart-disc" style="border-left:6px solid transparent; padding-left:8px;">
+                    <span><svg class="ic"><use href="#ic-tag"/></svg>${SET_DISCOUNT.label}</span>
+                    <span class="num">−¥${disc}</span>
+                </div>`;
+        }
+
         if(cart.length === 0) {
             // 空のときは「直前と同じ内容をもう一度」を出す（同じ注文が続くときの時短）
             const last = currentSession ? lastOrderSummary() : null;
@@ -3344,7 +3377,7 @@
         setCartSheet(!sb.classList.contains('cart-open'));
     }
 
-    function generateReceiptHTML(items) {
+    function generateReceiptHTML(items, discount) {
         const counts = {};
         items.forEach(item => {
             if(!counts[item.name]) counts[item.name] = { count: 0, price: item.price, type: item.type };
@@ -3360,17 +3393,28 @@
                     <span class="num" style="font-weight:bold;">¥${subtotal}</span>
                 </li>`;
         }
+        if (discount > 0) {
+            html += `
+                <li class="receipt-item disc-line" id="checkout-disc" style="border-left:5px solid transparent; padding-left:8px;">
+                    <span><svg class="ic"><use href="#ic-tag"/></svg>${SET_DISCOUNT.label}</span>
+                    <span class="num">−¥${discount}</span>
+                </li>`;
+        }
         return html;
     }
 
     function openCheckout(reservationId = null) {
         let itemsToProcess = cart;
         processingReservationId = reservationId;
+        // セット割をするかどうか。ふだんはいまの設定、予約は予約した時の設定に従う
+        // （予約の時に伝えた金額と、受け取りの時の金額が食い違わないように）
+        let discOn = setDiscountOn;
 
         if (reservationId !== null) {
             const res = reservations.find(r => r.id === reservationId);
             if (!res) { processingReservationId = null; return; } // 予約が既に清算/取消済みなら何もしない
             itemsToProcess = res.items;
+            if (typeof res.setDisc === 'boolean') discOn = res.setDisc;
         } else if (cart.length === 0) {
             playError(); // 空のカートで「会計へ進む」を押した時のフィードバック
             return;
@@ -3380,8 +3424,11 @@
         // 「同じ番号での記録は1回だけ」に制限するので、どんな経路でも二重記録が起きない。
         checkoutOpenToken++;
 
-        const total = itemsToProcess.reduce((sum, item) => sum + item.price, 0);
-        document.getElementById('checkout-receipt').innerHTML = generateReceiptHTML(itemsToProcess);
+        // 割引はこの画面を開いた時に1回だけ決め、記録まで同じ値を使う
+        checkoutDiscount = setDiscountFor(itemsToProcess, discOn);
+        checkoutSetDiscOn = discOn;
+        const total = Math.max(0, itemsGross(itemsToProcess) - checkoutDiscount);
+        document.getElementById('checkout-receipt').innerHTML = generateReceiptHTML(itemsToProcess, checkoutDiscount);
         document.getElementById('modal-total').innerText = total;
         document.getElementById('modal-count').innerText = itemsToProcess.length;
         document.getElementById('cash-input').value = '';
@@ -3618,6 +3665,9 @@
             time: new Date(),
             items: [...itemsRecorded],
             total: total,
+            // セット割：引いた額と、その会計でセット割をしていたか（あとで明細を直した時に使う）
+            discount: checkoutDiscount,
+            setDisc: checkoutSetDiscOn,
             customerType: selectedType,
             pendingType: pending,
             cash: cash,
@@ -3663,8 +3713,9 @@
         if (cart.length === 0) return;
         const name = prompt('予約者のお名前を入力してください:');
         if (name) {
-            const total = cart.reduce((sum, item) => sum + item.price, 0);
-            const res = { id: newReservationId(), name: name, items: [...cart], total: total };
+            // 予約した時のセット割を覚えておき、受け取りの会計でも同じ金額にする
+            const total = itemsNet(cart);
+            const res = { id: newReservationId(), name: name, items: [...cart], total: total, setDisc: setDiscountOn };
             reservations.push(res);
             syncPushReservation(res);   // 他の端末でも受け取れるようにする
             cart = []; 
@@ -3957,6 +4008,16 @@
                     </table>
                     <p>お客様が<b>「40円あります」</b>と小銭を先に出したときは、<b>¥1,040</b> を押せばそのまま合います。探して打ち込む必要はありません。</p>
                 </div>
+                <div class="man-box tip">
+                    <div class="man-box-h">セット割（コーヒー＋クッキーで10円引き）</div>
+                    <p><b>コーヒー</b>と<b>クッキー</b>を同じ会計で買うと、<b>自動で10円引き</b>になります。カートとお会計の明細に<b>「セット割 −¥10」</b>の行が出て、合計はもう引いた後の額です。何もしなくて大丈夫です。</p>
+                    <ul class="man-list">
+                        <li><b>2セット以上買っても、1会計10円まで</b>です（コーヒー2杯＋クッキー2枚でも10円引き）。</li>
+                        <li>パンがいっしょに入っていても、コーヒーとクッキーがあれば割引になります。</li>
+                        <li>やめる時・また始める時は<b>「設定 → セット割・売上目標」</b>のスイッチで切り替えます。共有中は全部の端末がいっしょに切り替わります。</li>
+                        <li>予約は、<b>予約を受けた時の金額</b>のまま清算されます。</li>
+                    </ul>
+                </div>
                 <div class="man-box warn">
                     <div class="man-box-h">打ち間違えたとき（会計を確定する前）</div>
                     <p>最後の1つだけ取り消す＝<b>「1つ戻す」</b>。全部やり直す＝カートの一覧にある<b>「カートを全部取消す」</b>。どちらも自由にやり直せます。</p>
@@ -4060,7 +4121,7 @@
                     <p>レジの画面に<b>赤い帯</b>が出ます。<b>その間も会計はそのまま続けられます</b>（この端末に貯まり、つながると自動でまとめて送られます）。つながっていないまま閉店しようとすると引き止めるので、電波の良い場所で表示が緑になってから閉店してください。</p>
                 </div>
                 <h4>共有されるもの</h4>
-                <p>会計（売上・取消）／在庫と残数／商品の追加・値段・種類・備考／販売会の名前／売上目標／予約／閉店。<b>これらは全部の端末で同じになります。</b></p>
+                <p>会計（売上・取消）／在庫と残数／商品の追加・値段・種類・備考／販売会の名前／売上目標／セット割のオン・オフ／予約／閉店。<b>これらは全部の端末で同じになります。</b></p>
                 <p>端末ごとに持つのは、<b>領収書の発行者名</b>と<b>画面の明るさ・時計や天気の設定</b>だけです。</p>
                 <div class="man-box warn">
                     <div class="man-box-h">共有しているときの閉店</div>
@@ -4120,15 +4181,16 @@
                 <p>結果を発表するときに使う、<b>要点だけの1枚</b>です。「売上ハイライト」「売れ筋ベスト10」「時間帯の動き」「客層とカテゴリ」の4種類から選べ、画面に出ている見本がそのままPDFになります。1枚だけでも、4種類まとめてでも保存できます。</p>
                 <h4>くわしい集計</h4>
                 <ul class="man-list">
-                    <li><b>売上の概要</b>…総売上・来店人数・客単価など。売上目標を決めていれば達成率も出ます。</li>
+                    <li><b>売上の概要</b>…総売上・来店人数・客単価など。売上目標を決めていれば達成率も出ます。セット割で引いた額と件数もここに出ます（総売上は引いた後の、実際に受け取った額です）。</li>
                     <li><b>商品別の売れ行き</b>…どれがどれだけ売れたか、仕入れのうち何％はけたか、売れ残りはいくらか。</li>
                     <li><b>時間帯別の客数／売上の積み上がり</b>…いつ混んだか、開店からどう積み上がったか。</li>
                     <li><b>買い方の傾向</b>…1人が何点買ったか、どの価格帯が売れたか、何と何が一緒に買われたか。</li>
+                    <li><b>一緒には買われにくい組み合わせ</b>（「買い方の傾向」の下）…似た商品（同じ分類）なのに、同じ会計にほとんど入らない2品です。お客様が<b>どちらか一方で満足している</b>見込みがあるので、値段や味が近いなら、次回はどちらかを減らす（売れ数の少ない方を削る）候補になります。完売した後の会計は数えません。<b>「傾向あり」は件数が少なめ</b>なので、次の回でも同じ結果になるかを見てから決めてください。</li>
                     <li><b>客層・カテゴリ別／完売と売り逃し／次回の仕入れ数の目安</b>…次回の準備に使えます。</li>
                     <li><b>販売会ごとの推移</b>…回を重ねるほど、前回からの伸びが見えます。</li>
                 </ul>
                 <h4>書き出し</h4>
-                <p><b>「書き出し（PDF・CSV）」</b>から、全項目のレポート（PDF）、商品別CSV（精算用）、会計明細CSV、全データJSON を保存できます。</p>
+                <p><b>「書き出し（PDF・CSV）」</b>から、全項目のレポート（PDF）、商品別CSV（精算用）、会計明細CSV、全データJSON を保存できます。商品別CSVの売上は定価で数えているので、セット割があった回は<b>「合計」の下に割引の行と「総売上（割引後）」の行</b>が付きます。レジのお金と合わせるのは「総売上（割引後）」です。</p>
                 <div class="man-box">
                     <div class="man-box-h">印刷の画面からレジにもどるには</div>
                     <p>PDFにする時は別の画面が開きます。保存し終えたら、その画面のいちばん上の<b>「✕ 閉じて戻る」</b>を押すとレジにもどれます。印刷の画面を閉じてしまっても、となりの<b>「印刷・PDF保存」</b>でもう一度開けます。</p>
@@ -4143,6 +4205,7 @@
                         <tr><td>画面が固まった・反応しない</td><td>ブラウザを<b>再読み込み</b>してください。営業中の記録と在庫は保存されているので消えません。開店からやり直す必要もありません。</td></tr>
                         <tr><td>お預かりが足りないと出る</td><td>会計はまだ成立していません。正しい金額を入れ直してからボタンを押してください。</td></tr>
                         <tr><td>まちがえて「完了・記録」を押した</td><td>「会計記録」からその会計を<b>取り消し</b>てください。売った商品は在庫にもどります。取り消した<b>客No.は欠番</b>になり、あとの会計の番号はずれません（お渡し済みの領収書と食い違わないようにするためです）。</td></tr>
+                        <tr><td>セット割を付けたくない・付かない</td><td>「設定 → セット割・売上目標」のスイッチを確かめてください。オンの時は、<b>コーヒーとクッキーが同じ会計に入っていれば</b>自動で10円引きになります。記録してしまった会計は「会計記録」の<b>修正</b>で品目を直すと、割引も付け直されます。</td></tr>
                         <tr><td>商品が売り切れた</td><td>ボタンに「完売」と出ます。お客様に売り切れをお伝えください。</td></tr>
                         <tr><td>電池が少ない</td><td>会計のたびに保存されているので、電源が切れてもデータは残ります。充電してから開き直してください。</td></tr>
                         <tr><td>ほかの端末の会計が反映されない</td><td>「設定 → 複数端末で使う」で状態を確認してください。電波が戻れば自動で追いつきます。</td></tr>
@@ -4322,17 +4385,22 @@
     function buildCustomerPayload() {
         const modal = document.getElementById('checkout-modal');
         const inCheckout = modal && modal.style.display === 'flex';
-        const lines = itemLines(cart);
-        const total = cart.reduce((s, i) => s + i.price, 0);
+        // お会計画面で予約を清算している時は、カートではなくその予約の中身を見せる
+        const res = (inCheckout && processingReservationId !== null)
+            ? reservations.find(r => r.id === processingReservationId) : null;
+        const src = res ? res.items : cart;
+        const lines = itemLines(src);
+        const discount = inCheckout ? checkoutDiscount : setDiscountFor(cart);
+        const total = Math.max(0, itemsGross(src) - discount);
         const base = {
             items: lines.map(l => ({ name: l.name, qty: l.qty, subtotal: l.subtotal })),
-            total, count: cart.length, state: cart.length ? 'cart' : 'idle',
+            total, count: src.length, state: src.length ? 'cart' : 'idle',
+            discount,
             cash: null, change: null, no: null
         };
         if (inCheckout) {
             base.state = 'checkout';
-            // お会計画面では、予約の清算など「カートとは別の内容」を扱うことがあるので
-            // 画面に出ている合計と明細をそのまま使う
+            // お会計画面では、画面に出ている合計をそのまま使う（お客様と店の金額を必ずそろえる）
             const shown = parseInt(document.getElementById('modal-total').innerText) || 0;
             if (shown > 0) base.total = shown;
             const raw = document.getElementById('cash-input').value;
@@ -4587,7 +4655,10 @@
         if (box) box.classList.toggle('is-checkout', state === 'checkout');
 
         if (state === 'cart' || state === 'checkout') {
-            const items = Array.isArray(d.items) ? d.items : [];
+            const plain = Array.isArray(d.items) ? d.items : [];
+            // セット割は明細の最後に1行足す（お客様にも、何円引いたかが見えるように）
+            const disc = Number(d.discount) || 0;
+            const items = disc > 0 ? plain.concat([{ name: SET_DISCOUNT.label, qty: '', subtotal: -disc, disc: true }]) : plain;
             // レジで1点打たれるたび、増えた行だけがふわりと入ってくるようにする。
             // 毎回すべて描き直すと全部の行が動いてしまい、何が増えたのか分からない。
             const lines = items.map(i => `${i.name}${i.qty}${i.subtotal}`).join('');
@@ -4599,6 +4670,8 @@
                     const key = `${i.name}${i.qty}${i.subtotal}`;
                     let fresh = false;
                     if (seen[key]) seen[key]--; else fresh = true;   // 前には無かった行＝いま増えた行
+                    if (i.disc) return `<div class="cd-item cd-disc${fresh ? ' fresh' : ''}"><span class="n">${escHtml(i.name)}</span>`
+                        + `<span class="v">−${yenStr(-i.subtotal)}</span></div>`;
                     return `<div class="cd-item${fresh ? ' fresh' : ''}"><span class="n">${escHtml(i.name)}</span>`
                         + `<span class="q">×${i.qty}</span><span class="v">${yenStr(i.subtotal)}</span></div>`;
                 }).join('');
@@ -5305,12 +5378,59 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
+    // ▼▼▼ セット割の計算（ここ1か所だけ）▼▼▼
+    // items … 商品の並び（カート・予約・会計記録の明細。それぞれ type を持つ）
+    // on    … 割引をするか。省くといまの設定に従う（会計記録の修正では、その会計をした時の設定を渡す）
+    function setDiscountFor(items, on) {
+        const enabled = (on === undefined) ? setDiscountOn : !!on;
+        if (!enabled || !Array.isArray(items) || !items.length) return 0;
+        // 0円の商品（準備中の枠など）ではセットにしない
+        const has = t => items.some(i => i && i.type === t && (Number(i.price) || 0) > 0);
+        return SET_DISCOUNT.needs.every(has) ? SET_DISCOUNT.amount : 0;
+    }
+    function itemsGross(items) { return (items || []).reduce((s, i) => s + (Number(i.price) || 0), 0); }
+    // 割引した後の、お客様が払う額
+    function itemsNet(items, on) { return Math.max(0, itemsGross(items) - setDiscountFor(items, on)); }
+
+    // 設定の画面で切り替えた時
+    function toggleSetDiscount(on) {
+        setDiscountOn = !!on;
+        // 共有中は、全部の端末で同じ値段になるようにそろえる
+        // （同じカゴなのに端末によって10円違う、ということが起きないように）
+        if (syncMode && syncEventCode && fbDb) {
+            fbDb.collection('events').doc(syncEventCode)
+                .set({ setDiscount: setDiscountOn, setDiscountAt: Date.now(), setDiscountBy: getDeviceId() }, { merge: true })
+                .catch(e => console.warn('セット割の設定の共有に失敗しました', e));
+        }
+        saveData();
+        logEdit(setDiscountOn ? 'セット割をオンにした' : 'セット割をオフにした');
+        playSound();
+        showToast(setDiscountOn ? `セット割をオンにしました（コーヒー＋クッキーで${SET_DISCOUNT.amount}円引き）` : 'セット割をオフにしました');
+        renderSetDiscountState();
+        init();                         // カートの合計も、その場で付け直す
+        renderOpenMenu();
+        renderSettingsMenu();
+    }
+
+    function renderSetDiscountState() {
+        const sw = document.getElementById('opt-set-discount');
+        if (sw) sw.checked = setDiscountOn;
+        const box = document.getElementById('set-discount-state');
+        if (!box) return;
+        box.className = 'notice' + (setDiscountOn ? ' notice-ok' : '');
+        box.innerHTML = setDiscountOn
+            ? `<svg class="ic"><use href="#ic-check"/></svg><span><b>ドリンク（コーヒー）</b>と<b>クッキー</b>を同じ会計で買うと <b>${SET_DISCOUNT.amount}円引き</b>。2セット以上でも1会計${SET_DISCOUNT.amount}円までです。</span>`
+            : `<svg class="ic"><use href="#ic-x"/></svg><span>いまはセット割をしていません。</span>`;
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     // ▼ 売上目標 ▼
     // 決めるかどうかは自由。決めておくと、集計に達成率と、積み上がりグラフに目標の線が出る。
     function renderSalesGoal() {
         const input = document.getElementById('sales-goal-input');
         if (input) input.value = salesGoal > 0 ? salesGoal : '';
         updateGoalState();
+        renderSetDiscountState();
     }
 
     function updateGoalState() {
@@ -5641,6 +5761,7 @@
                     await fbDb.collection('events').doc(code).set({
                         name: sharedName, status: 'open', products: products,
                         roundId: syncRoundId,
+                        setDiscount: setDiscountOn, setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                         openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
                     });
                 } catch (e) {
@@ -5976,6 +6097,7 @@
                 await fbDb.collection('events').doc(code).set({
                     name: currentSession, status: 'open', products: products,
                     roundId: syncRoundId,
+                    setDiscount: setDiscountOn, setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                     openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
                 });
             } catch (e) {
@@ -6208,6 +6330,7 @@
         </div>`;
 
         const rows = [];
+        if (s.discountTotal > 0) rows.push(['セット割引', `−${yenStr(s.discountTotal)}<span class="sub">${s.discountCount}件</span>`]);
         if (s.cashKnown > 0) rows.push(['お預かり合計', yenStr(s.cashTotal)], ['お釣り合計', yenStr(s.changeTotal)]);
         if (s.voidCount > 0) rows.push(['会計の取り消し', `${s.voidCount}件`]);
         if (s.itemEdited > 0) rows.push(['品目の事後修正', `${s.itemEdited}件`]);
@@ -6224,6 +6347,7 @@
                 <tr><td class="nm">粗利</td><td class="num nm">${yenStr(R.profit.profit)}<span class="sub">粗利率 ${R.profit.margin}%</span></td></tr>
             </tbody></table>`;
             if (R.profit.partial) h += `<p class="a-note">※原価を入力した商品だけの集計です（未入力：${escHtml(R.profit.uncovered.join('、'))}）。</p>`;
+            if (R.profit.discShare > 0) h += `<p class="a-note">※売上はセット割の値引き（${yenStr(R.profit.discShare)}）を引いた額です。</p>`;
         }
 
         const c = R.comparison;
@@ -6445,6 +6569,26 @@
                 <td class="num">${p.count}回</td><td class="num">${p.conf}%</td></tr>`).join('') + `</tbody></table>
         <p class="a-note">割合が高い組み合わせは、並べて置いたりセットにしたりすると効きやすい組み合わせです。</p>`
             : '<div class="a-empty">2種類以上を同時に買われた会計がありませんでした。</div>';
+
+        // 併売分析の逆：似た商品なのに一緒には買われない＝どちらか一方が選ばれている
+        const sb = R.substitutes;
+        h += `<div class="a-head">一緒には買われにくい組み合わせ</div>`;
+        if (!sb.ready) {
+            h += `<div class="a-empty">2種類以上を買った会計が${sb.need}件を超えると判定します（いま${sb.baskets}件）。</div>`;
+        } else if (!sb.pairs.length) {
+            h += `<div class="a-empty">はっきり「どちらか一方」になっている組み合わせは見つかりませんでした。</div>`;
+        } else {
+            h += `<table class="a-table">
+            <thead><tr><th>同じ分類の2品</th><th class="num">一緒</th><th class="num">偶然なら</th></tr></thead>
+            <tbody>` + sb.pairs.map(p => {
+                const tags = substituteTags(p);
+                return `<tr><td class="nm">${escHtml(p.a)} と ${escHtml(p.b)}`
+                    + `<span class="sub">${p.strong ? 'はっきり' : '傾向あり'}${tags.length ? '・' + tags.join('・') : ''}`
+                    + `・売れ数 ${p.na}：${p.nb}${p.cut ? `・${escHtml(p.cut)}まで` : ''}</span></td>`
+                    + `<td class="num">${p.together}回</td><td class="num">約${p.expected}回</td></tr>`;
+            }).join('') + `</tbody></table>
+        <p class="a-note">2種類以上を買った会計の中で、偶然なら一緒に入るはずの回数より<b>少ない</b>2品です。お客様がどちらか一方で満足している見込みがあり、値段や味が近いなら、次回はどちらかを減らす（売れ数の少ない方を削る）候補になります。<br>完売した後の会計は数えていません（「○時まで」）。「傾向あり」は件数が少なめなので、次の販売会でも出るかを見てから決めてください。</p>`;
+        }
         return h;
     }
 
@@ -7197,6 +7341,95 @@
         return { dist, pairs, multiPct: Math.round(multi / cust * 100), multi };
     }
 
+    // ▼▼▼ 併売分析の逆：「一緒には買われにくい」組み合わせ ▼▼▼
+    // 【ねらい】似た商品（同じ分類）の2つが、同じ会計にほとんど入らないなら、
+    //   お客様は「どちらか一方」で満足している（＝取り替えのきく商品）と考えられる。
+    //   次回どちらかを減らしても売上が落ちにくい候補として見せる。
+    // 【数え方】
+    //   ・2種類以上を買った会計だけを見る（1点だけの方は、そもそも一緒に買えない）
+    //   ・どちらかが完売した後の会計は数えない（売り切れて選べなかっただけ、を除く）
+    //   ・「偶然なら何回くらい一緒に入るか」を、会計ごとの点数を踏まえて見積もり、
+    //     実際の回数がそれよりはっきり少ない組み合わせだけを出す（ポアソン分布で判定）
+    const SUB_MIN_BASKETS = 15;   // 2種類以上の会計がこれ未満なら判定しない
+    const SUB_MIN_EACH = 3;       // それぞれ、この回数以上は買われていること
+    const SUB_P_SHOW = 0.10;      // 偶然でこれ以下しか起きない少なさなら出す
+    const SUB_P_STRONG = 0.02;    // ここまで少なければ「はっきり」
+    function poissonCdf(k, lam) {
+        let term = Math.exp(-lam), sum = term;
+        for (let i = 1; i <= k; i++) { term *= lam / i; sum += term; }
+        return Math.min(1, sum);
+    }
+    function buildSubstitutes(sorted) {
+        const baskets = [];
+        const typeOf = {}, priceOf = {};
+        sorted.forEach(h => {
+            const its = (h.items || []).filter(i => i && (Number(i.price) || 0) > 0);
+            its.forEach(i => { if (i.type) typeOf[i.name] = i.type; priceOf[i.name] = Number(i.price) || 0; });
+            const names = [...new Set(its.map(i => i.name))];
+            if (names.length >= 2) baskets.push({ t: new Date(h.time).getTime(), names });
+        });
+        const out = { ready: baskets.length >= SUB_MIN_BASKETS, baskets: baskets.length, need: SUB_MIN_BASKETS, pairs: [] };
+        if (!out.ready) return out;
+
+        const soldOutAt = name => {
+            const p = products.find(x => x.name === name);
+            if (!p || !p.soldOutTime || p.stock > 0) return Infinity;
+            const t = new Date(p.soldOutTime).getTime();
+            return isNaN(t) ? Infinity : t;
+        };
+        const hm = t => { const x = new Date(t); return `${x.getHours()}:${String(x.getMinutes()).padStart(2, '0')}`; };
+        const byType = {};
+        Object.keys(typeOf).forEach(n => { (byType[typeOf[n]] = byType[typeOf[n]] || []).push(n); });
+
+        Object.entries(byType).forEach(([type, names]) => {
+            for (let i = 0; i < names.length; i++) for (let j = i + 1; j < names.length; j++) {
+                const a = names[i], b = names[j];
+                const cut = Math.min(soldOutAt(a), soldOutAt(b));
+                const win = baskets.filter(bk => bk.t <= cut);
+                if (win.length < SUB_MIN_BASKETS) continue;
+                let slots = 0, na = 0, nb = 0, nab = 0;
+                win.forEach(bk => {
+                    slots += bk.names.length;
+                    const ha = bk.names.includes(a), hb = bk.names.includes(b);
+                    if (ha) na++; if (hb) nb++; if (ha && hb) nab++;
+                });
+                if (na < SUB_MIN_EACH || nb < SUB_MIN_EACH) continue;
+                // 偶然なら：Aの入った会計の「残りの枠」に、Bがどれくらいの確率で入るか
+                const expFrom = (nx, ny, has) => {
+                    const share = ny / Math.max(1, slots - nx);
+                    return win.reduce((s, bk) => s + (bk.names.includes(has) ? 1 - Math.pow(1 - Math.min(1, share), bk.names.length - 1) : 0), 0);
+                };
+                const expected = (expFrom(na, nb, a) + expFrom(nb, na, b)) / 2;
+                if (!(expected > 0) || nab >= expected * 0.5) continue;
+                const pv = poissonCdf(nab, expected);
+                if (pv > SUB_P_SHOW) continue;
+                const [hi, lo] = na >= nb ? [a, b] : [b, a];
+                const ta = estimateTaste(a, type), tb = estimateTaste(b, type);
+                out.pairs.push({
+                    a: hi, b: lo, type,
+                    na: Math.max(na, nb), nb: Math.min(na, nb),
+                    together: nab, expected: Math.round(expected * 10) / 10,
+                    p: pv, strong: pv <= SUB_P_STRONG,
+                    samePrice: Math.abs((priceOf[a] || 0) - (priceOf[b] || 0)) <= 30,
+                    taste: (ta === tb && ta !== '不明') ? ta : '',
+                    cut: isFinite(cut) ? hm(cut) : '',
+                    weaker: lo, baskets: win.length
+                });
+            }
+        });
+        out.pairs.sort((x, y) => x.p - y.p || y.expected - x.expected);
+        out.pairs = out.pairs.slice(0, 6);
+        return out;
+    }
+    // 画面とPDFで同じ言い方にする「なぜ似ているか」の札
+    function substituteTags(p) {
+        const t = [];
+        if (p.samePrice) t.push('値段が近い');
+        if (p.taste && p.taste !== 'ドリンク') t.push(p.taste);
+        return t;
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     // 価格帯別の売上。どの値段の商品が全体を支えたかを見る
     function buildPriceBands(itemCounts, itemRev) {
         const bands = {};
@@ -7296,13 +7529,23 @@
         if (Object.keys(costMap).length === 0) return null;
         let revCovered = 0, cogs = 0, coveredUnits = 0, uncoveredUnits = 0;
         const uncovered = new Set();
-        salesHistory.forEach(h => h.items.forEach(i => {
-            if (costMap[i.name] != null) { cogs += costMap[i.name]; revCovered += i.price; coveredUnits++; }
-            else { uncoveredUnits++; uncovered.add(i.name); }
-        }));
+        let discShare = 0;   // セット割のうち、原価を入れた商品にかかる分
+        salesHistory.forEach(h => {
+            let gross = 0, covered = 0;
+            h.items.forEach(i => {
+                gross += i.price;
+                if (costMap[i.name] != null) { cogs += costMap[i.name]; revCovered += i.price; covered += i.price; coveredUnits++; }
+                else { uncoveredUnits++; uncovered.add(i.name); }
+            });
+            // 割引は、その会計の中で金額の割合に応じて商品に割り振る
+            const d = Number(h.discount) || 0;
+            if (d > 0 && gross > 0) discShare += d * covered / gross;
+        });
+        discShare = Math.round(discShare);
+        revCovered -= discShare;
         const profit = revCovered - cogs;
         return {
-            cogs, revCovered, profit,
+            cogs, revCovered, profit, discShare,
             margin: revCovered > 0 ? Math.round(profit / revCovered * 100) : 0,
             coveredUnits, uncoveredUnits,
             uncovered: [...uncovered],
@@ -7348,7 +7591,7 @@
     const SUB_TITLES = {
         'manual': '操作マニュアル',
         'customer': 'お客様用の表示',
-        'goal': '売上目標',
+        'goal': 'セット割・売上目標',
         'stock': '商品・在庫の調整',
         'sync': '複数端末で使う',
         'sync-add': '共有コードを入れる',
@@ -7642,7 +7885,7 @@
         box.innerHTML =
             menuRow('book', '操作マニュアル', 'はじめての人向けの使い方（PDFにも出せます）', "openPanel('settings','manual')") +
             menuRow('sliders', '商品・在庫の調整', stockSub, "openPanel('settings','stock')", { disabled: !currentSession }) +
-            menuRow('target', '売上目標', salesGoal > 0 ? `${yenStr(salesGoal)}` : '決めていない', "openPanel('settings','goal')") +
+            menuRow('target', 'セット割・売上目標', `セット割${setDiscountOn ? 'オン' : 'オフ'}・目標${salesGoal > 0 ? ' ' + yenStr(salesGoal) : 'なし'}`, "openPanel('settings','goal')") +
             menuRow('link', '複数端末で使う', syncSub, "openPanel('settings','sync')", { disabled: !window.FIREBASE_CONFIG }) +
             menuRow('printer', '領収書の設定', `発行者「${escHtml(shopInfo().name)}」・但し書きの変更`, "openPanel('settings','receipt')") +
             menuRow('archive', '過去の販売会', archSub, "openPanel('settings','archive')") +
@@ -7945,7 +8188,7 @@
             (window.FIREBASE_CONFIG
                 ? menuRow('link', '複数端末で共有', syncCodeSubLabel(code), "openPanel('session','open-sync')")
                 : '') +
-            menuRow('target', '売上目標（任意）', salesGoal > 0 ? yenStr(salesGoal) : '決めない', "openPanel('settings','goal')") +
+            menuRow('target', 'セット割・売上目標', `セット割${setDiscountOn ? 'オン' : 'オフ'}・目標${salesGoal > 0 ? ' ' + yenStr(salesGoal) : 'なし（任意）'}`, "openPanel('settings','goal')") +
             menuRow('upload', 'データを取り込んで始める', '前回の続き・別の端末から引き継ぐ', "openPanel('session','open-import')");
         renderOpenEventLists();
         updateOpenPrimaryButton();
@@ -8048,9 +8291,10 @@
     // データ整合性チェック（取消・部分修正が売上/在庫に矛盾なく反映されているか）
     function checkIntegrity() {
         const issues = [];
-        let itemSum = 0, totalSum = 0;
-        salesHistory.forEach(h => { totalSum += h.total; h.items.forEach(i => { itemSum += i.price; }); });
-        if (itemSum !== totalSum) issues.push(`金額不一致：品目合計 ¥${itemSum} ≠ 取引合計 ¥${totalSum}`);
+        let itemSum = 0, totalSum = 0, discSum = 0;
+        salesHistory.forEach(h => { totalSum += h.total; discSum += Number(h.discount) || 0; h.items.forEach(i => { itemSum += i.price; }); });
+        // 品目の合計からセット割で引いた分を除くと、取引の合計にぴったり一致するはず
+        if (itemSum - discSum !== totalSum) issues.push(`金額不一致：品目合計 ¥${itemSum}${discSum ? ` − セット割 ¥${discSum}` : ''} ≠ 取引合計 ¥${totalSum}`);
         const orphans = new Set();
         salesHistory.forEach(h => h.items.forEach(i => { if (!products.find(p => p.id === i.id)) orphans.add(i.name); }));
         if (orphans.size) issues.push(`商品マスタに無い品目：${[...orphans].join('、')}`);
@@ -8062,6 +8306,11 @@
         const sorted = [...salesHistory].sort((a, b) => new Date(a.time) - new Date(b.time));
         const sessionStart = new Date(sorted[0].time);
         const totalRev = sorted.reduce((s, h) => s + h.total, 0);
+        // セット割で引いた額。商品別・分類別の売上は定価で数えるので、
+        // それらの合計（grossRev）から割引を引くと総売上（totalRev）になる。
+        const discountTotal = sorted.reduce((s, h) => s + (Number(h.discount) || 0), 0);
+        const discountCount = sorted.filter(h => (Number(h.discount) || 0) > 0).length;
+        const grossRev = totalRev + discountTotal;
 
         const itemCounts = {}, itemRev = {}, categoryRev = { sweet: 0, savory: 0, drink: 0 };
         const catNames = { sweet: 'パン類', savory: 'クッキー類', drink: 'ドリンク' };
@@ -8105,7 +8354,7 @@
         // ABC分析（売上降順・累積比率）
         const abc = []; let cum = 0;
         Object.entries(itemRev).sort((a, b) => b[1] - a[1]).forEach(([name, rev]) => {
-            cum += rev; const cp = cum / totalRev * 100;
+            cum += rev; const cp = grossRev > 0 ? cum / grossRev * 100 : 0;
             const rank = cp <= 70 ? 'A' : (cp <= 90 ? 'B' : 'C');
             const prod = products.find(p => p.name === name);
             const initial = prod ? prod.initialStock : 0;
@@ -8146,7 +8395,7 @@
             });
 
         const types = Object.entries(custTypes).filter(([, d]) => d.count > 0).map(([type, d]) => ({ type, count: d.count, avg: Math.floor(d.rev / d.count) }));
-        const categories = Object.keys(categoryRev).filter(c => categoryRev[c] > 0).map(c => ({ name: catNames[c], rev: categoryRev[c], pct: totalRev > 0 ? Math.round(categoryRev[c] / totalRev * 100) : 0 }));
+        const categories = Object.keys(categoryRev).filter(c => categoryRev[c] > 0).map(c => ({ name: catNames[c], rev: categoryRev[c], pct: grossRev > 0 ? Math.round(categoryRev[c] / grossRev * 100) : 0 }));
         const copairs = Object.entries(coPurchase).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([pair, count]) => ({ pair, count }));
 
         const typeEditedLater = sorted.filter(h => h.typeEditedLater).length;
@@ -8158,11 +8407,13 @@
                 totalRev, customers, avg: Math.floor(totalRev / customers), avgItems: (totalItems / customers).toFixed(1),
                 maxSale: Math.max(...sorted.map(h => h.total)), minSale: Math.min(...sorted.map(h => h.total)),
                 peak: peak ? { label: peak[0], rev: peak[1] } : null, cashTotal, changeTotal, cashKnown, voidCount,
-                typeEditedLater, itemEdited, pendingLeft
+                typeEditedLater, itemEdited, pendingLeft,
+                discountTotal, discountCount, grossRev
             },
             abc, soldOut, inStock, oversoldItems, integrity: checkIntegrity(), slots, types, categories, copairs,
             goal: buildGoal(totalRev),
             baskets: buildBaskets(sorted),
+            substitutes: buildSubstitutes(sorted),
             priceBands: buildPriceBands(itemCounts, itemRev),
             pace: buildPace(sorted, totalRev),
             leftover: buildLeftover(itemCounts),
@@ -8207,6 +8458,7 @@
                 <div class="stat"><span class="stat-label">ピーク時間帯</span><span class="stat-val">${s.peak ? esc(s.peak.label) + '〜 ' + yen(s.peak.rev) : '-'}</span></div>
                 ${R.goal ? `<div class="stat"><span class="stat-label">売上目標／達成率</span><span class="stat-val">${yen(R.goal.goal)}（${R.goal.pct}%）</span></div>` : ''}
                 ${R.leftover.initial > 0 ? `<div class="stat"><span class="stat-label">全体の消化率</span><span class="stat-val">${R.leftover.sellThrough}%（売れ残り ${R.leftover.leftQty}点・売価 ${yen(R.leftover.leftValue)}）</span></div>` : ''}
+                ${s.discountTotal > 0 ? `<div class="stat"><span class="stat-label">セット割引</span><span class="stat-val">−${yen(s.discountTotal)}（${s.discountCount}件）</span></div>` : ''}
                 ${s.cashKnown > 0 ? `<div class="stat"><span class="stat-label">現金 お預り／お釣り</span><span class="stat-val">${yen(s.cashTotal)} / ${yen(s.changeTotal)}</span></div>` : ''}
                 <div class="stat"><span class="stat-label">会計取消</span><span class="stat-val">${s.voidCount}件</span></div>
                 <div class="stat"><span class="stat-label">属性の事後入力</span><span class="stat-val">${s.typeEditedLater}件（${s.customers ? Math.round(s.typeEditedLater / s.customers * 100) : 0}%）</span></div>
@@ -8314,6 +8566,16 @@
               + `</tbody></table>
               <div class="note-box"><div class="note-foot">「一緒に買う割合」は、片方を買った方のうち、もう片方も買った方の割合です。割合が高いほど、並べて置く・セットにする効果が出やすい組み合わせです。</div></div>`
             : `<div class="note-box"><div class="note-foot">同時に2種類以上買われた会計はありませんでした。</div></div>`;
+        // 併売分析の逆（一緒には買われにくい2品）
+        const sb = R.substitutes;
+        const subBlock = !sb.ready
+            ? `<div class="note-box"><div class="note-foot">2種類以上を買った会計が${sb.need}件未満（${sb.baskets}件）のため、判定していません。</div></div>`
+            : (!sb.pairs.length
+                ? `<div class="note-box"><div class="note-foot">はっきり「どちらか一方」になっている組み合わせは見つかりませんでした。</div></div>`
+                : `<table class="rep-table"><thead><tr><th>同じ分類の2品</th><th>判定</th><th class="num">一緒</th><th class="num">偶然なら</th><th class="num">売れ数</th></tr></thead><tbody>`
+                  + sb.pairs.map(p => { const tags = substituteTags(p); return `<tr><td>${esc(p.a)} と ${esc(p.b)}${tags.length ? `（${tags.map(esc).join('・')}）` : ''}</td><td>${p.strong ? 'はっきり' : '傾向あり'}${p.cut ? `・${esc(p.cut)}まで` : ''}</td><td class="num">${p.together}回</td><td class="num">約${p.expected}回</td><td class="num">${p.na}：${p.nb}</td></tr>`; }).join('')
+                  + `</tbody></table>
+                  <div class="note-box"><div class="note-foot">2種類以上を買った会計の中で、偶然なら一緒に入るはずの回数より少ない2品です。どちらか一方で満足されている見込みがあり、値段や味が近いなら、次回はどちらかを減らす候補になります（売れ数の少ない方）。完売した後の会計は数えていません。「傾向あり」は件数が少なめなので、次の販売会でも同じ結果になるかを見てから決めてください。</div></div>`);
 
         // 7. 参考メモ（推奨仕入れ）
         const recRows = R.recs.map(r => {
@@ -8404,6 +8666,8 @@
                     </div>
                     <div class="sub-heading">よく一緒に買われた商品（併売分析）</div>
                     ${coBlock}
+                    <div class="sub-heading">一緒には買われにくい商品（入れ替え・削減の候補）</div>
+                    ${subBlock}
                 </section>
 
                 <section class="report-section report-section--long">
@@ -8573,11 +8837,29 @@
         }
         if (!applyData(data)) return;
         lastSavedSnapshot = saved;
+        migrateDrinkPlaceholder();
 
         if (currentSession) {
             document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
             document.getElementById('session-display').style.background = 'var(--white)';
         }
+    }
+
+    // 前の版で保存された「ドリンク（準備中）」の枠を、コーヒー（100円）に置き換える。
+    // 保存データの商品は data/products の変更では入れ替わらないため、1回だけここで直す。
+    //  ・営業中は商品を変えない（売っている途中で並びが変わると困る）→ 閉店後に起動した時に直す
+    //  ・すでに「コーヒー」があれば何もしない／1回直したら二度としない
+    const MIG_COFFEE_KEY = 'taizanboku_pos_mig_coffee_v1';
+    function migrateDrinkPlaceholder() {
+        try { if (localStorage.getItem(MIG_COFFEE_KEY)) return; } catch (e) { return; }
+        if (currentSession) return;
+        const done = () => { try { localStorage.setItem(MIG_COFFEE_KEY, '1'); } catch (e) {} };
+        if (products.some(p => p && p.name === 'コーヒー')) { done(); return; }
+        const slot = products.find(p => p && p.name === 'ドリンク（準備中）' && !(Number(p.price) > 0));
+        if (!slot) { done(); return; }
+        Object.assign(slot, { name: 'コーヒー', price: 100, type: 'drink', stock: 50, initialStock: 50, active: true, soldOutTime: null });
+        done();
+        saveData();
     }
 
     // ▼▼▼ データのバックアップ書き出し／復元 ▼▼▼
@@ -8602,7 +8884,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal };
+        return { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -8624,6 +8906,8 @@
         syncRoundId = data.syncRoundId || '';
         syncRounds = new Set(Array.isArray(data.syncRounds) ? data.syncRounds : (syncEventCode ? [syncRoundId] : []));
         salesGoal = Number(data.salesGoal) > 0 ? Number(data.salesGoal) : 0;
+        // セット割は店の決まりなので、販売会をまたいで持ち越す（前の版のデータには無いのでオン）
+        setDiscountOn = (typeof data.setDiscountOn === 'boolean') ? data.setDiscountOn : true;
         return true;
     }
 
@@ -8791,7 +9075,16 @@
         });
         const totalProfit = cogsKnown ? (total - totalCogs) : '';
         csv += `合計,,,,${totalCount},,${totalLeft},${totalLeftValue},,${cogsKnown ? totalCogs : ''},${totalProfit},,${total}\n`;
-        if (salesGoal > 0) csv += `\n売上目標,${salesGoal}\n達成率(%),${Math.round(total / salesGoal * 100)}\n`;
+        // 商品別の売上は定価で数えているので、セット割で引いた分を別の行で引き、
+        // 実際に受け取った総売上（レジのお金と一致する額）を出す
+        const disc = salesHistory.reduce((s, h) => s + (Number(h.discount) || 0), 0);
+        const net = total - disc;
+        if (disc > 0) {
+            const nDisc = salesHistory.filter(h => (Number(h.discount) || 0) > 0).length;
+            csv += `セット割引（${nDisc}件）,,,,,,,,,,,,-${disc}\n`;
+            csv += `総売上（割引後）,,,,,,,,,,,,${net}\n`;
+        }
+        if (salesGoal > 0) csv += `\n売上目標,${salesGoal}\n達成率(%),${Math.round(net / salesGoal * 100)}\n`;
         triggerDownload(`taizanboku_精算_${dateStamp()}.csv`, csv, 'text/csv');
     }
 
@@ -8815,7 +9108,7 @@
         let csv = '﻿';
         csv += `販売会,${(currentSession || '前回').replace(/,/g, ' ')}\n`;
         csv += `出力日時,${new Date().toLocaleString('ja-JP')}\n\n`;
-        csv += `客No,時刻,客属性,購入内容,点数,合計,預かり,お釣り\n`;
+        csv += `客No,時刻,客属性,購入内容,点数,割引,合計,預かり,お釣り\n`;
         sorted.forEach((h, idx) => {
             const counts = {};
             h.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
@@ -8824,7 +9117,8 @@
             const tStr = `${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}:${String(t.getSeconds()).padStart(2, '0')}`;
             const cash = (h.cash != null) ? h.cash : '';
             const change = (h.change != null) ? h.change : '';
-            csv += `${h.no || idx + 1},${tStr},${h.customerType || '不明'},${detail},${h.items.length},${h.total},${cash},${change}\n`;
+            const disc = (Number(h.discount) || 0) > 0 ? -Number(h.discount) : '';
+            csv += `${h.no || idx + 1},${tStr},${h.customerType || '不明'},${detail},${h.items.length},${disc},${h.total},${cash},${change}\n`;
         });
         triggerDownload(`taizanboku_明細_${dateStamp()}.csv`, csv, 'text/csv');
     }
@@ -8945,6 +9239,10 @@
                         <span style="font-weight:bold;">¥${l.subtotal}</span>
                     </div>`;
             }).join('');
+            const discLine = (Number(h.discount) || 0) > 0
+                ? `<div class="disc-line" style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
+                        <span><svg class="ic"><use href="#ic-tag"/></svg>${SET_DISCOUNT.label}</span><span>−¥${h.discount}</span>
+                    </div>` : '';
             const cashStr = (h.cash != null) ? `¥${h.cash}` : '—';
             const changeStr = (h.change != null) ? `¥${h.change}` : '—';
             // 操作は塗りのボタンを3つ並べず、iOSのリストと同じ「文字だけのボタン」を1列に置く。
@@ -8982,7 +9280,7 @@
                     ${h.pendingType ? '<div class="rc-flag"><svg class="ic"><use href="#ic-alert"/></svg>客属性が未入力</div>' : ''}
                     ${typeBlock}
                     <div class="rc-sep"></div>
-                    <div class="rc-lines">${lines}</div>
+                    <div class="rc-lines">${lines}${discLine}</div>
                     <div class="rc-sep"></div>
                     <div class="rc-total"><span>合計</span><span class="num">¥${h.total}</span></div>
                     <div class="rc-pay"><span>お預かり ${cashStr}</span><span>お釣り ${changeStr}</span></div>
@@ -9034,13 +9332,15 @@
                 if (!prod) return;
                 items.push({ id: prod.id, name: prod.name, price: prod.price, type: prod.type });
             }
-            const total = items.reduce((s, i) => s + i.price, 0);
+            // セット割はその会計をした時の設定のまま付け直す（ドリンクを消したら割引も外れる）
+            const discount = setDiscountFor(items, rec.setDisc === true);
+            const total = Math.max(0, itemsGross(items) - discount);
             if (items.length === 0) {
                 syncUpdateSale(rec.remoteId, { voided: true, voidedAt: Date.now() }, rec.remoteCode);
                 editingRecordIdx = null;
                 showToast('全品目が無くなったため会計を削除しました');
             } else {
-                syncUpdateSale(rec.remoteId, { items, total, edited: true }, rec.remoteCode);
+                syncUpdateSale(rec.remoteId, { items, total, discount, edited: true }, rec.remoteCode);
             }
             logEdit(`会計修正 客No.${rec.no || '-'}：${name} ${delta < 0 ? '−1' : '＋1'}`);
             playSound(660, 0.06);
@@ -9052,15 +9352,16 @@
             const removed = rec.items.splice(i, 1)[0];
             const prod = products.find(p => p.id === removed.id);
             if (prod) restockOne(prod); // 在庫を戻す
-            rec.total -= removed.price;
         } else {
             const prod = products.find(p => p.name === name);
             if (!prod) return;
             rec.items.push({ id: prod.id, name: prod.name, price: prod.price, type: prod.type });
             prod.stock--; // 在庫から引く（在庫0でも許容）
             if (prod.stock === 0 && !prod.soldOutTime) prod.soldOutTime = new Date().toISOString();
-            rec.total += prod.price;
         }
+        // 合計は明細から付け直す。セット割はその会計をした時の設定のまま判定する
+        rec.discount = setDiscountFor(rec.items, rec.setDisc === true);
+        rec.total = Math.max(0, itemsGross(rec.items) - rec.discount);
         rec.edited = true;
         logEdit(`会計修正 客No.${rec.no || '-'}：${name} ${delta < 0 ? '−1' : '＋1'}`);
         playSound(660, 0.06);
@@ -9179,6 +9480,10 @@
         const dtStr = `${t.getFullYear()}年${t.getMonth() + 1}月${t.getDate()}日 ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
         const lines = itemLines(h.items).map(l =>
             `<tr><td>${esc(l.name)}</td><td class="c">${l.qty}</td><td class="r">${yen(l.price)}</td><td class="r">${yen(l.subtotal)}</td></tr>`).join('');
+        // セット割は明細の最後に「値引き」の行として載せる（明細の合計と金額がそろうように）
+        const disc = Number(h.discount) || 0;
+        const discRow = disc > 0
+            ? `<tr><td>${esc(SET_DISCOUNT.label)}（値引き）</td><td class="c"></td><td class="r"></td><td class="r">−${yen(disc)}</td></tr>` : '';
         const payRows = (h.cash != null)
             ? `<div class="pay"><span>お預かり</span><span>${yen(h.cash)}</span></div>
                <div class="pay"><span>お釣り</span><span>${yen(h.change || 0)}</span></div>` : '';
@@ -9235,7 +9540,7 @@
                 <div class="detail-head">明細</div>
                 <table>
                     <thead><tr><th>品名</th><th class="c">数量</th><th class="r">単価</th><th class="r">金額</th></tr></thead>
-                    <tbody>${lines}</tbody>
+                    <tbody>${lines}${discRow}</tbody>
                 </table>
                 <div class="total"><span>合計</span><span>${yen(h.total)}</span></div>
                 ${payRows}
@@ -10000,6 +10305,24 @@
                     if (!firstSnapshot) showToast(g > 0 ? `売上目標が ${yenStr(g)} にそろいました` : '売上目標がなしになりました');
                 }
             }
+            // セット割のオン・オフも全端末でそろえる。
+            // （同じカゴなのに端末によって10円違う、ということが起きないように）
+            if (syncMode && d && typeof d.setDiscount === 'boolean' && d.setDiscountBy !== getDeviceId()) {
+                if (d.setDiscount !== setDiscountOn) {
+                    setDiscountOn = d.setDiscount;
+                    saveData();
+                    renderSetDiscountState();
+                    updateCartDisplay();
+                    renderSettingsMenu();
+                    renderOpenMenu();
+                    if (!firstSnapshot) showToast(setDiscountOn ? 'ほかの端末でセット割がオンになりました' : 'ほかの端末でセット割がオフになりました');
+                }
+            } else if (firstSnapshot && syncMode && d && typeof d.setDiscount !== 'boolean' && syncEventCode === code) {
+                // 前の版で始めた販売会には印が無いので、この端末の設定を置いておく
+                fbDb.collection('events').doc(code)
+                    .set({ setDiscount: setDiscountOn, setDiscountAt: Date.now(), setDiscountBy: getDeviceId() }, { merge: true })
+                    .catch(() => {});
+            }
             // 合流の時に販売会の名前をそろえたら、他の端末の表示も合わせる。
             // （片方だけ名前が変わっていると、あとで集計を見た時にどの回か分からなくなる）
             if (syncMode && d && d.name && currentSession && d.name !== currentSession) {
@@ -10061,6 +10384,7 @@
         try { items = JSON.parse(JSON.stringify(res.items || [])); } catch (e) { items = []; }
         reservationsCol(syncEventCode).doc(String(res.id)).set({
             id: res.id, name: res.name || '', items: items, total: Number(res.total) || 0,
+            ...(typeof res.setDisc === 'boolean' ? { setDisc: res.setDisc } : {}),
             roundId: syncRoundId,
             at: Date.now(), by: getDeviceId()
         }).catch(e => console.warn('予約の共有に失敗しました', e));
@@ -10082,7 +10406,8 @@
                 const d = doc.data() || {};
                 if (d.id == null) return;
                 if (!inCurrentRound(d.roundId)) return;   // 前の回に残っている予約は見ない
-                rows.push({ id: d.id, name: d.name || '', items: Array.isArray(d.items) ? d.items : [], total: Number(d.total) || 0 });
+                rows.push({ id: d.id, name: d.name || '', items: Array.isArray(d.items) ? d.items : [], total: Number(d.total) || 0,
+                            setDisc: typeof d.setDisc === 'boolean' ? d.setDisc : undefined });
             });
             if (firstSnapshot) {
                 // 合流したとき、この端末がすでに持っていた予約を消してしまわない。
@@ -10166,6 +10491,8 @@
                 time: new Date(d.createdAt || Date.now()),
                 items: Array.isArray(d.items) ? d.items : [],
                 total: d.total || 0,
+                discount: Number(d.discount) || 0,
+                setDisc: d.setDisc === true,
                 customerType: d.customerType || '不明',
                 pendingType: !!d.pendingType,
                 typeEditedLater: !!d.typeEditedLater,
@@ -10247,6 +10574,9 @@
             time: firebase.firestore.FieldValue.serverTimestamp(),
             items: record.items.map(i => ({ id: i.id, name: i.name, price: i.price, type: i.type || '' })),
             total: record.total,
+            // セット割（前の版で記録した会計には無いので、必ず値を入れて送る）
+            discount: Number(record.discount) || 0,
+            setDisc: record.setDisc === true,
             customerType: record.customerType,
             pendingType: !!record.pendingType,
             typeEditedLater: false,

@@ -35,7 +35,7 @@ window.PRODUCT_SETS.normal = {
     { name: "カップケーキ",         price: 150, category: "クッキー" },
     { name: "ハイジのチーズケーキ", price: 300, category: "クッキー" },
     { name: "パウンドケーキ",       price: 350, category: "クッキー" },
-    // ドリンク枠（今後の販売用プレースホルダ。価格0・仕入0＝「準備中」表示）
-    { name: "ドリンク（準備中）",   price: 0,   category: "ドリンク", stock: 0 }
+    // ドリンク（クッキーと同じ会計で買うとセット割で10円引き。設定でオン・オフできる）
+    { name: "コーヒー",             price: 100, category: "ドリンク" }
   ]
 };
