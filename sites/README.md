@@ -6,12 +6,14 @@ GitHub のアカウントやリポジトリを増やす必要はありません�
 | フォルダ | URL（今のアプリのURLのうしろに付ける） | 中身 |
 |---|---|---|
 | （いちばん上） | そのまま | 泰山木のパン・クッキーの販売会 |
-| `sites/kitchen/` | `sites/kitchen/` | キッチン調理＋呼び出しの見本（試し用） |
+| `sites/kitchen/` | `sites/kitchen/` | ファストフード（キッチン・呼び出し）の見本（試し用。最初から店舗モードがファストフード） |
 
 ## しくみ
 
-- プログラム（`index.html`）は、いちばん上の1つだけを直します。
-  `sites/施設名/index.html` は、`node tools/sites.mjs build` で作る**写し**です（手で直さない）。
+- プログラム（`index.html` と、お客様の注文ページ `order.html`）は、いちばん上の1つだけを直します。
+  `sites/施設名/` の同じ名前のファイルは、`node tools/sites.mjs build` で作る**写し**です（手で直さない）。
+- 店舗モード（既製品の販売／ファストフード）は、どの施設でも「設定 → 店舗モード」で切り替えられます。
+  `data/site.js` の `mode` は、はじめのモードです。
 - 施設ごとに違うのは `sites/施設名/data/` と `manifest.webmanifest` だけです。
   - `data/site.js` … 施設の印・アプリの名前・店舗モード・客層・分類の名前
   - `data/products.normal.js` … 商品

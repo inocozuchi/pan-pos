@@ -46,6 +46,50 @@ service cloud.firestore {
 - これで「未認証の直アクセス」は弾けます。
 - さらに厳密にするなら、共有コードを**推測されにくい文字列**にする／後日 **App Check** を追加、を推奨します（完全会員制ではない点はご理解ください）。
 
+### モバイルオーダーを使う時（ファストフードのモード）
+- お客様のスマホ（`order.html`）も匿名ログインして、同じ `events/{コード}` の下に書き込みます。
+  - `orders/{注文}` … 注文（「モバイル・未払い」）
+  - `live/mseq` … M1、M2 … の番号を数える文書
+  - `live/menu` … メニューと品切れ（レジの端末が書き、お客様のページが読む）
+- 上のルールのままでも動きます。ただし、このルールでは**お客様のスマホからも売上などを読み書きできてしまう**ので、
+  モバイルオーダーを本番で使う前に、次のようにお客様の書き込みを注文だけに絞ることをすすめます（レジの動きには影響しません）。
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /events/{eventCode} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isStaff(eventCode);
+      // お客様：メニューを読む・番号を数える
+      match /live/{doc} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && (isStaff(eventCode) || doc == 'mseq');
+      }
+      // お客様：自分の注文を「調理中・未払い」で作るだけ。読めるのは注文の一覧（あと何組を数えるため）
+      match /orders/{orderId} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null && (isStaff(eventCode) ||
+          (request.resource.data.channel == 'mobile' && request.resource.data.paid == false
+           && request.resource.data.st == 'cook' && request.resource.data.uid == request.auth.uid));
+        allow update, delete: if request.auth != null && isStaff(eventCode);
+      }
+      // 売上・予約・端末の一覧は、スタッフの端末だけ
+      match /{sub}/{doc=**} {
+        allow read, write: if request.auth != null && isStaff(eventCode);
+      }
+    }
+    // スタッフの端末 … その販売会に合流した端末（devices に自分の文書がある）
+    function isStaff(eventCode) {
+      return exists(/databases/$(database)/documents/events/$(eventCode)/devices/$(request.auth.uid));
+    }
+  }
+}
+```
+- ※上の `isStaff` は、端末の一覧（`devices`）の文書の名前が匿名ログインの uid になっている前提の書き方です。
+  いまのアプリは端末の一覧に自分で決めた端末の印を使っているので、この厳しいルールに切り替える時は、
+  アプリの側も合わせて直す必要があります（切り替える時に一緒に作業します）。
+
 ## 4. 当日の使い方
 
 ### 仕組みの前提（重要）
@@ -113,4 +157,6 @@ service cloud.firestore {
 - [ ] 閉店済みのコードで再度「開店」しようとすると警告が出る。
 
 ## 9. 費用
+- モバイルオーダーを使うと、お客様がページを開くたびに読み込みが増えます。文化祭のように人が多い日は、無料の範囲（1日5万回の読み込み）を超えることがあります。
+  その時は従量課金（Blaze）にして、予算の上限と知らせを設定してください。
 - 無料枠（Sparkプラン）で十分です（学内販売会の件数なら余裕。クレジットカード登録も不要）。

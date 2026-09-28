@@ -33,27 +33,42 @@ export function siteHtml(src) {
     return '<!-- このファイルは tools/sites.mjs が作った写しです。直すときは、いちばん上の index.html を直して build してください。 -->\n' + out;
 }
 
+// お客様の注文ページ（order.html）の写し。アイコンだけ2つ上から読む
+export function siteOrderHtml(src) {
+    let out = src;
+    for (const [a, b] of [['<link rel="icon" href="icons/', `<link rel="icon" href="${UP}icons/`], ['<link rel="apple-touch-icon" href="icons/', `<link rel="apple-touch-icon" href="${UP}icons/`]]) {
+        if (!out.includes(a)) throw new Error('order.html に、書き換えるはずの所が見つかりません: ' + a);
+        out = out.split(a).join(b);
+    }
+    return '<!-- このファイルは tools/sites.mjs が作った写しです。直すときは、いちばん上の order.html を直して build してください。 -->\n' + out;
+}
+const PAGES = [['index.html', siteHtml], ['order.html', siteOrderHtml]];
+
 function listSites() {
     if (!fs.existsSync(SITES)) return [];
     return fs.readdirSync(SITES).filter(n => fs.existsSync(path.join(SITES, n, 'data', 'site.js')));
 }
 
 function build() {
-    const html = siteHtml(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'));
-    for (const id of listSites()) {
-        fs.writeFileSync(path.join(SITES, id, 'index.html'), html);
-        console.log('作り直しました: sites/' + id + '/index.html');
+    for (const [page, make] of PAGES) {
+        const html = make(fs.readFileSync(path.join(ROOT, page), 'utf8'));
+        for (const id of listSites()) {
+            fs.writeFileSync(path.join(SITES, id, page), html);
+            console.log('作り直しました: sites/' + id + '/' + page);
+        }
     }
 }
 
 function check() {
-    const html = siteHtml(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'));
     let bad = 0;
-    for (const id of listSites()) {
-        const f = path.join(SITES, id, 'index.html');
-        const cur = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
-        if (cur !== html) { bad++; console.log('古いままです: sites/' + id + '/index.html（node tools/sites.mjs build を実行してください）'); }
-        else console.log('そろっています: sites/' + id + '/index.html');
+    for (const [page, make] of PAGES) {
+        const html = make(fs.readFileSync(path.join(ROOT, page), 'utf8'));
+        for (const id of listSites()) {
+            const f = path.join(SITES, id, page);
+            const cur = fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '';
+            if (cur !== html) { bad++; console.log('古いままです: sites/' + id + '/' + page + '（node tools/sites.mjs build を実行してください）'); }
+            else console.log('そろっています: sites/' + id + '/' + page);
+        }
     }
     if (bad) process.exit(1);
 }

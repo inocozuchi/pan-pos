@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>モバイルオーダー</title>
+    <meta name="theme-color" content="#F2F3F7">
+    <link rel="icon" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <!--
+      お客様のスマホで開く注文のページ（アプリは要らない）。
+      レジのプログラム（index.html）は読み込まない。軽く、すぐ開くように、このファイルだけで動く。
+      ・QRコードの ?e=共有コード で、どの販売会に注文するかが決まる
+      ・メニューと品切れは、レジの端末が書く live/menu を読む
+      ・注文は orders に「モバイル・未払い」で書く。キッチンの画面にすぐ出る
+      ・注文したあとは、その注文の状態と「あと何組」を見続け、呼び出されたら音と画面で知らせる
+    -->
+    <script src="data/site.js"></script>
+    <script src="data/firebase-config.js"></script>
+    <style>
+        :root {
+            --bg: #F2F3F7; --surface: #FFFFFF; --sunken: #F4F5F9; --text: #1C1D22; --sub: #5F6472;
+            --hair: rgba(20, 24, 40, .12); --accent: #0A6CE0; --accent-ink: #0A5FC4; --accent-soft: #E6EFFC;
+            --danger: #C0283C; --danger-bg: #FDEBEE; --ok: #2B8A4B; --ok-bg: #E0F2E5;
+            --take: #C8660F; --take-bg: #FCEBDA; --eat: #2B8A4B; --eat-bg: #E0F2E5;
+            --shadow: 0 1px 2px rgba(20, 24, 40, .06), 0 4px 14px rgba(20, 24, 40, .06);
+            --r: 16px;
+            color-scheme: light;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --bg: #0E1015; --surface: #1B1E26; --sunken: #14171E; --text: #EDEFF4; --sub: #A9B0BF;
+                --hair: rgba(255, 255, 255, .12); --accent: #1D6FD0; --accent-ink: #74B6FF; --accent-soft: #1E3B5E;
+                --danger: #FF6F83; --danger-bg: #3A1820; --ok: #6FD08F; --ok-bg: #16301F;
+                --take: #C8660F; --take-bg: #3A2614; --eat: #2B8A4B; --eat-bg: #16301F;
+                --shadow: 0 1px 2px rgba(0, 0, 0, .4);
+                color-scheme: dark;
+            }
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; background: var(--bg); color: var(--text); }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+            font-size: 16px; line-height: 1.5; -webkit-text-size-adjust: 100%;
+            padding: calc(12px + env(safe-area-inset-top, 0px)) 16px calc(110px + env(safe-area-inset-bottom, 0px));
+            max-width: 640px; margin: 0 auto;
+        }
+        h1 { font-size: 20px; margin: 4px 0 2px; }
+        .sub { color: var(--sub); font-size: 13px; }
+        .notice { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 12px 14px; margin: 12px 0; font-size: 14px; white-space: pre-wrap; }
+        .notice.warn { background: var(--danger-bg); color: var(--danger); font-weight: 700; }
+        .cat { font-size: 13px; font-weight: 800; color: var(--sub); margin: 18px 4px 8px; display: flex; align-items: center; gap: 8px; }
+        .cat i { width: 10px; height: 10px; border-radius: 3px; background: var(--ink, var(--hair)); }
+        .item { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 12px 12px 12px 16px; margin-bottom: 8px; }
+        .item .nm { flex: 1; min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+        .item .pr { display: block; font-size: 14px; color: var(--sub); font-weight: 600; font-variant-numeric: tabular-nums; }
+        .item.out { opacity: .5; }
+        .item .so { font-size: 12px; font-weight: 800; color: var(--danger); background: var(--danger-bg); padding: 2px 8px; border-radius: 999px; }
+        .step { display: flex; align-items: center; gap: 6px; }
+        .step button { appearance: none; -webkit-appearance: none; border: none; width: 44px; height: 44px; border-radius: 12px; font-size: 22px; font-weight: 800; background: var(--sunken); color: var(--text); box-shadow: inset 0 0 0 1px var(--hair); font-family: inherit; }
+        .step button.plus { background: var(--accent); color: #fff; box-shadow: none; }
+        .step button:disabled { opacity: .35; }
+        .step .q { min-width: 1.6em; text-align: center; font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--surface); box-shadow: 0 -4px 16px rgba(20, 24, 40, .08); display: flex; align-items: center; gap: 12px; }
+        .bar .tot { flex: 1; font-size: 13px; color: var(--sub); }
+        .bar .tot b { display: block; font-size: 22px; color: var(--text); font-variant-numeric: tabular-nums; }
+        .btn { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; min-height: 52px; padding: 0 22px; border-radius: 14px; font-size: 17px; font-weight: 800; background: var(--accent); color: #fff; cursor: pointer; }
+        .btn:disabled { opacity: .4; cursor: default; }
+        .btn.sec { background: var(--sunken); color: var(--text); box-shadow: inset 0 0 0 1px var(--hair); }
+        .btn.full { width: 100%; }
+        .dine { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 8px 0 14px; }
+        .dine button { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; min-height: 64px; border-radius: 16px; font-size: 18px; font-weight: 800; background: var(--surface); color: var(--text); box-shadow: var(--shadow), inset 0 0 0 2px var(--hair); cursor: pointer; }
+        .dine button.on.take { background: var(--take); color: #fff; box-shadow: none; }
+        .dine button.on.eat { background: var(--eat); color: #fff; box-shadow: none; }
+        .lines { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 6px 14px; margin: 10px 0; }
+        .lines div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; font-variant-numeric: tabular-nums; }
+        .lines div.t { font-weight: 800; font-size: 18px; }
+        .card { background: var(--surface); border-radius: 20px; box-shadow: var(--shadow); padding: 20px 18px; margin: 12px 0; text-align: center; }
+        .card .k { font-size: 13px; color: var(--sub); font-weight: 700; }
+        .card .no { font-size: 64px; font-weight: 900; line-height: 1.1; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+        .card .st { font-size: 20px; font-weight: 800; margin-top: 6px; }
+        .card .ahead { font-size: 15px; color: var(--sub); margin-top: 4px; }
+        .card.ready { background: var(--ok-bg); box-shadow: inset 0 0 0 3px var(--ok), var(--shadow); animation: pop .45s cubic-bezier(.32,.72,0,1) both; }
+        .card.ready .st { color: var(--ok); font-size: 24px; }
+        .card.void .st { color: var(--danger); }
+        .card .dn { display: inline-block; margin-top: 8px; font-size: 13px; font-weight: 800; color: #fff; padding: 3px 12px; border-radius: 999px; background: var(--take); }
+        .card .dn.eat { background: var(--eat); }
+        @keyframes pop { from { transform: scale(.94); } to { transform: none; } }
+        .flash { animation: flash .5s ease-in-out 6 alternate; }
+        @keyframes flash { from { background: var(--bg); } to { background: var(--ok-bg); } }
+        .hide { display: none !important; }
+        .center { text-align: center; }
+        .foot { font-size: 12px; color: var(--sub); margin-top: 16px; text-align: center; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="sub" id="shop"></div>
+        <h1 id="title">モバイルオーダー</h1>
+    </header>
+
+    <!-- 読み込み中・使えない時の知らせ -->
+    <div id="msg" class="notice">読み込んでいます…</div>
+    <div id="note" class="notice hide"></div>
+
+    <!-- 注文した後：番号と状態 -->
+    <section id="my" class="hide"></section>
+
+    <!-- メニュー -->
+    <section id="menu" class="hide"></section>
+
+    <!-- 確かめる画面 -->
+    <section id="confirm" class="hide">
+        <h1>ご注文の確認</h1>
+        <div class="sub">お召し上がりを選んでください</div>
+        <div class="dine" role="group" aria-label="お召し上がり">
+            <button type="button" class="take" id="d-take" onclick="pickDine('take')">持ち帰り</button>
+            <button type="button" class="eat" id="d-eat" onclick="pickDine('eat')">店内</button>
+        </div>
+        <div class="lines" id="c-lines"></div>
+        <div class="notice">お支払いは、受け取りの時にレジでお願いします。注文すると番号が出ます。</div>
+        <button class="btn full" id="c-send" onclick="sendOrder()" disabled>注文する</button>
+        <button class="btn sec full" style="margin-top:8px;" onclick="showMenu()">メニューに戻る</button>
+    </section>
+
+    <!-- 下の合計 -->
+    <div class="bar hide" id="bar">
+        <div class="tot">合計（<span id="b-n">0</span>点）<b id="b-total">¥0</b></div>
+        <button class="btn" id="b-next" onclick="showConfirm()" disabled>注文へ進む</button>
+    </div>
+
+<script>
+(function () {
+    'use strict';
+    const SITE = window.SITE || {};
+    const COL = /^[A-Za-z0-9_-]{1,64}$/.test(String(SITE.eventsCollection || '')) ? SITE.eventsCollection : 'events';
+    const PRE = SITE.id && /^[A-Za-z0-9_-]{1,32}$/.test(SITE.id) ? SITE.id + ':' : '';
+    const MAX_EACH = 10, MAX_ITEMS = 20, MAX_ACTIVE = 3;
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const yen = n => '¥' + Number(n || 0).toLocaleString('ja-JP');
+    const code = (new URLSearchParams(location.search).get('e') || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 32);
+    const INK = { sweet: '#4A6FA5', savory: '#14837E', drink: '#5D5BC4', x1: '#A86A12', x2: '#B83A5E', x3: '#3E8A3A', x4: '#B85420', x5: '#8A3E96', x6: '#6F7A1E', x7: '#1F7FA6', x8: '#7A5238' };
+
+    let db = null, uid = '', ev = null, evData = null, menu = null, orders = [];
+    const qty = {};          // 商品名 → 個数
+    let dine = '';           // 'take' / 'eat'
+    let sending = false;
+    let audio = null;
+    const seenReady = new Set();
+    const MINE_KEY = PRE + 'mo_orders:' + code;
+    function loadMine() { try { return JSON.parse(localStorage.getItem(MINE_KEY) || '[]') || []; } catch (e) { return []; } }
+    function saveMine(list) { try { localStorage.setItem(MINE_KEY, JSON.stringify(list.slice(-10))); } catch (e) {} }
+    let mine = loadMine();
+
+    function say(text, warn) {
+        const m = $('msg');
+        if (!text) { m.classList.add('hide'); return; }
+        m.classList.remove('hide');
+        m.classList.toggle('warn', !!warn);
+        m.textContent = text;
+    }
+
+    function loadSdk() {
+        const base = 'https://www.gstatic.com/firebasejs/10.12.5/';
+        const files = ['firebase-app-compat.js', 'firebase-auth-compat.js', 'firebase-firestore-compat.js'];
+        return files.reduce((p, f) => p.then(() => new Promise((ok, ng) => {
+            const s = document.createElement('script'); s.src = base + f; s.onload = ok; s.onerror = () => ng(new Error(f)); document.head.appendChild(s);
+        })), Promise.resolve());
+    }
+
+    async function start() {
+        if (!code) { say('QRコードを読み直してください（お店のコードが入っていません）。', true); return; }
+        if (!window.FIREBASE_CONFIG) { say('このお店は、モバイルオーダーの準備ができていません。店頭でご注文ください。', true); return; }
+        try {
+            if (!window.firebase || !window.firebase.firestore) await loadSdk();
+            const app = firebase.apps && firebase.apps.length ? firebase.app() : firebase.initializeApp(window.FIREBASE_CONFIG);
+            db = firebase.firestore(app);
+            try { db.settings({ experimentalAutoDetectLongPolling: true, merge: true }); } catch (e) {}
+            const cred = await firebase.auth(app).signInAnonymously();
+            uid = (cred && cred.user && cred.user.uid) || (firebase.auth(app).currentUser || {}).uid || '';
+        } catch (e) {
+            say('つながりませんでした。電波の良い所で、ページを読み込み直してください。', true);
+            return;
+        }
+        attach(db);
+    }
+
+    // テストや、ほかの入口からも使えるように、つなぐ部分を分けておく
+    function attach(database, userId) {
+        db = database; if (userId) uid = userId;
+        ev = db.collection(COL).doc(code);
+        ev.onSnapshot(doc => { evData = doc.exists ? (doc.data() || {}) : null; render(); }, () => say('つながりが切れました。電波を確かめてください。', true));
+        ev.collection('live').doc('menu').onSnapshot(doc => { menu = doc.exists ? (doc.data() || null) : null; render(); }, () => {});
+        ev.collection('orders').onSnapshot(snap => {
+            const rows = [];
+            snap.forEach(d => { const v = d.data() || {}; if (v && v.id) rows.push(v); });
+            orders = rows;
+            renderMine();
+        }, () => {});
+    }
+    window.__attachOrderPage = attach;
+
+    function open() { return !!(evData && evData.status === 'open'); }
+    function accepting() { return open() && !!(evData.mobile && evData.mobile.on) && !!(menu && menu.on !== false); }
+
+    function render() {
+        const shop = $('shop');
+        if (evData && evData.name) { shop.textContent = evData.name; document.title = evData.name + '｜モバイルオーダー'; }
+        const note = $('note');
+        const noteText = evData && evData.mobile && evData.mobile.note;
+        note.classList.toggle('hide', !noteText || !accepting());
+        if (noteText) note.textContent = noteText;
+        if (!evData) { say('このお店の注文は受け付けていません（QRコードをもう一度お確かめください）。', true); hideOrdering(); renderMine(); return; }
+        if (!open()) { say('本日の受付は終了しました。ありがとうございました。', true); hideOrdering(); renderMine(); return; }
+        if (!accepting()) {
+            const m = evData.mobile && evData.mobile.stopMsg;
+            say(m || 'ただいま、スマホからの注文を止めています。店頭でご注文ください。', true);
+            hideOrdering(); renderMine(); return;
+        }
+        if (!menu || !Array.isArray(menu.items)) { say('メニューを読み込んでいます…'); hideOrdering(); renderMine(); return; }
+        say('');
+        renderMenu();
+        renderMine();
+    }
+    function hideOrdering() { $('menu').classList.add('hide'); $('bar').classList.add('hide'); $('confirm').classList.add('hide'); }
+
+    function activeMine() {
+        return mine.map(id => orders.find(o => o.id === id)).filter(o => o && o.st !== 'done' && o.st !== 'void');
+    }
+
+    function renderMenu() {
+        if (!$('confirm').classList.contains('hide')) { renderConfirm(); return; }
+        if (activeMine().length >= MAX_ACTIVE) { $('menu').classList.add('hide'); $('bar').classList.add('hide'); return; }
+        const box = $('menu');
+        box.classList.remove('hide');
+        const cats = Array.isArray(menu.cats) ? menu.cats : [];
+        const groups = cats.map(c => ({ c, items: menu.items.filter(i => i.type === c.id) })).filter(g => g.items.length);
+        const other = menu.items.filter(i => !cats.some(c => c.id === i.type));
+        if (other.length) groups.push({ c: { id: '', label: 'そのほか' }, items: other });
+        // 品切れになった商品は、選んでいた数も消す
+        menu.items.forEach(i => { if (i.soldOut && qty[i.name]) delete qty[i.name]; });
+        Object.keys(qty).forEach(n => { if (!menu.items.some(i => i.name === n)) delete qty[n]; });
+        box.innerHTML = groups.map(g => `<div class="cat" style="--ink:${INK[g.c.id] || 'var(--hair)'}"><i></i>${esc(g.c.label)}</div>` + g.items.map(i => {
+            const q = qty[i.name] || 0;
+            return `<div class="item${i.soldOut ? ' out' : ''}">
+                <div class="nm">${esc(i.name)}<span class="pr">${yen(i.price)}</span></div>
+                ${i.soldOut ? '<span class="so">売り切れ</span>' : `<div class="step">
+                    <button type="button" aria-label="${esc(i.name)}を1つ減らす" ${q ? '' : 'disabled'} data-n="${esc(i.name)}" data-d="-1">−</button>
+                    <span class="q">${q}</span>
+                    <button type="button" class="plus" aria-label="${esc(i.name)}を1つ増やす" ${q >= MAX_EACH ? 'disabled' : ''} data-n="${esc(i.name)}" data-d="1">＋</button>
+                </div>`}
+            </div>`;
+        }).join('')).join('');
+        box.querySelectorAll('.step button').forEach(b => b.onclick = () => change(b.dataset.n, +b.dataset.d));
+        renderBar();
+    }
+    function cartLines() {
+        return Object.keys(qty).filter(n => qty[n] > 0).map(n => {
+            const it = menu.items.find(i => i.name === n);
+            return it ? { name: n, qty: qty[n], price: it.price, type: it.type } : null;
+        }).filter(Boolean);
+    }
+    function renderBar() {
+        const lines = cartLines();
+        const n = lines.reduce((t, l) => t + l.qty, 0);
+        const tot = lines.reduce((t, l) => t + l.qty * l.price, 0);
+        $('bar').classList.remove('hide');
+        $('b-n').textContent = n;
+        $('b-total').textContent = yen(tot);
+        $('b-next').disabled = n === 0;
+    }
+    function change(name, d) {
+        const all = Object.values(qty).reduce((t, v) => t + v, 0);
+        const next = Math.max(0, Math.min(MAX_EACH, (qty[name] || 0) + d));
+        if (d > 0 && all >= MAX_ITEMS) return;
+        if (next) qty[name] = next; else delete qty[name];
+        renderMenu();
+    }
+    window.showConfirm = function () {
+        if (!cartLines().length) return;
+        $('menu').classList.add('hide'); $('bar').classList.add('hide');
+        $('confirm').classList.remove('hide');
+        renderConfirm();
+        window.scrollTo(0, 0);
+    };
+    window.showMenu = function () {
+        $('confirm').classList.add('hide');
+        render();
+    };
+    window.pickDine = function (d) { dine = d === 'eat' ? 'eat' : 'take'; renderConfirm(); };
+    function renderConfirm() {
+        const lines = cartLines();
+        $('d-take').classList.toggle('on', dine === 'take');
+        $('d-eat').classList.toggle('on', dine === 'eat');
+        const tot = lines.reduce((t, l) => t + l.qty * l.price, 0);
+        $('c-lines').innerHTML = lines.map(l => `<div><span>${esc(l.name)} ×${l.qty}</span><span>${yen(l.qty * l.price)}</span></div>`).join('')
+            + `<div class="t"><span>合計</span><span>${yen(tot)}</span></div>`;
+        const send = $('c-send');
+        send.disabled = !dine || !lines.length || sending;
+        send.textContent = sending ? '送っています…' : (dine ? '注文する' : 'お召し上がりを選んでください');
+    }
+
+    // 音は、ボタンを押した時にしか鳴らせない（スマホの決まり）。注文を押した時に準備しておく
+    function unlockAudio() {
+        try {
+            audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+            if (audio.state === 'suspended') audio.resume();
+            const o = audio.createOscillator(), g = audio.createGain();
+            g.gain.value = 0.0001; o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + 0.05);
+        } catch (e) {}
+    }
+    function chime() {
+        try {
+            if (!audio) return;
+            [0, 0.18, 0.36].forEach((t, i) => {
+                const o = audio.createOscillator(), g = audio.createGain();
+                o.frequency.value = [1047, 1319, 1568][i]; o.type = 'sine';
+                g.gain.setValueAtTime(0.25, audio.currentTime + t); g.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + t + 0.3);
+                o.connect(g); g.connect(audio.destination); o.start(audio.currentTime + t); o.stop(audio.currentTime + t + 0.32);
+            });
+        } catch (e) {}
+    }
+
+    window.sendOrder = async function () {
+        if (sending) return;
+        const lines = cartLines();
+        if (!dine || !lines.length || !accepting()) return;
+        if (activeMine().length >= MAX_ACTIVE) { alert(`一度に注文できるのは${MAX_ACTIVE}件までです。受け取ってから、次の注文をしてください。`); return; }
+        unlockAudio();
+        sending = true; renderConfirm();
+        try {
+            // 番号（M1, M2 …）は、ほかのお客様とぶつからないよう置き場で1つずつ数える
+            const seqRef = ev.collection('live').doc('mseq');
+            const n = await db.runTransaction(async tx => {
+                const s = await tx.get(seqRef);
+                const cur = s.exists ? (Number((s.data() || {}).n) || 0) : 0;
+                tx.set(seqRef, { n: cur + 1 });
+                return cur + 1;
+            });
+            const at = Date.now();
+            const id = 'm-' + (uid || 'x').slice(0, 10) + '-' + at;
+            const items = lines.map(l => ({ name: l.name, qty: l.qty, price: l.price, type: l.type || 'sweet' }));
+            const total = items.reduce((t, l) => t + l.qty * l.price, 0);
+            await ev.collection('orders').doc(id).set({
+                id, no: 'M' + n, at, dine, items, st: 'cook', channel: 'mobile', paid: false, total,
+                uid, roundId: (evData && evData.roundId) || '', upd: at, chk: [], t: {}, dev: ''
+            });
+            mine.push(id); saveMine(mine);
+            Object.keys(qty).forEach(k => delete qty[k]);
+            dine = '';
+            $('confirm').classList.add('hide');
+            window.scrollTo(0, 0);
+        } catch (e) {
+            alert('注文を送れませんでした。電波を確かめて、もう一度お試しください。');
+        } finally {
+            sending = false;
+            render();
+        }
+    };
+
+    function renderMine() {
+        const box = $('my');
+        const list = mine.map(id => orders.find(o => o.id === id)).filter(Boolean).filter(o => o.st !== 'done' || Date.now() - ((o.t && o.t.done) || 0) < 30 * 60000);
+        if (!list.length) { box.classList.add('hide'); box.innerHTML = ''; return; }
+        box.classList.remove('hide');
+        let anyReady = false;
+        box.innerHTML = list.slice().reverse().map(o => {
+            const ahead = orders.filter(x => x.st === 'cook' && (Number(x.at) || 0) < (Number(o.at) || 0)).length;
+            let cls = '', st = '', sub = '';
+            if (o.st === 'ready') { cls = 'ready'; st = 'できあがりました！'; sub = '受け取り口へお越しください'; anyReady = true; }
+            else if (o.st === 'done') { st = 'お受け取りありがとうございました'; }
+            else if (o.st === 'void') { cls = 'void'; st = 'この注文は取り消されました'; sub = 'くわしくは店頭でお尋ねください'; }
+            else { st = 'お作りしています'; sub = ahead ? `あと ${ahead} 組` : 'まもなくできあがります'; }
+            const items = (o.items || []).map(i => `${esc(i.name)}×${i.qty}`).join('、');
+            return `<div class="card ${cls}">
+                <div class="k">ご注文の番号</div>
+                <div class="no">${esc(o.no)}</div>
+                <div class="st">${st}</div>
+                ${sub ? `<div class="ahead">${sub}</div>` : ''}
+                <span class="dn ${o.dine === 'eat' ? 'eat' : ''}">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>
+                <div class="sub" style="margin-top:10px;">${items}</div>
+                ${o.st !== 'void' && !o.paid ? `<div class="sub" style="margin-top:6px;">受け取りの時に、この番号を見せてレジで ${yen(o.total)} をお支払いください</div>` : ''}
+            </div>`;
+        }).join('') + (list.some(o => o.st === 'cook') ? '<div class="foot">この画面を開いたままにしてください。できあがると、音と画面でお知らせします（画面を消すと、お知らせが届きません）。</div>' : '');
+        // 呼び出されたら、音・振動・画面の色で知らせる（初めて呼び出された時だけ）
+        list.forEach(o => {
+            if (o.st === 'ready' && !seenReady.has(o.id)) {
+                seenReady.add(o.id);
+                chime();
+                try { if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]); } catch (e) {}
+                document.body.classList.remove('flash'); void document.body.offsetWidth; document.body.classList.add('flash');
+            }
+        });
+        document.title = (anyReady ? '【できあがり】' : '') + ((evData && evData.name) || 'モバイルオーダー');
+        if (menu && accepting() && $('confirm').classList.contains('hide')) {
+            const full = activeMine().length >= MAX_ACTIVE;
+            $('menu').classList.toggle('hide', full);
+            $('bar').classList.toggle('hide', full);
+        }
+    }
+
+    if (!window.__ORDER_PAGE_TEST) start();
+})();
+</script>
+</body>
+</html>
