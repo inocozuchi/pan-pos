@@ -90,6 +90,19 @@
             --cat-sweet-ink: #4A6FA5; /* スレートブルー */
             --cat-savory-ink: #14837E; /* ティール */
             --cat-drink-ink: #5D5BC4; /* インディゴ */
+            /* 足した分類の色（設定の「商品の分類」から足した順に使う）。
+               いまの3色（寒色）と見分けやすいよう、暖色・緑・紫などを選ぶ */
+            --btn-x1: #F6EEDF; --cat-x1-ink: #A86A12;  /* こはく */
+            --btn-x2: #F7E6EA; --cat-x2-ink: #B83A5E;  /* ばら */
+            --btn-x3: #E5F1E3; --cat-x3-ink: #3E8A3A;  /* みどり */
+            --btn-x4: #F8E9E0; --cat-x4-ink: #B85420;  /* だいだい */
+            --btn-x5: #F1E6F3; --cat-x5-ink: #8A3E96;  /* すもも */
+            --btn-x6: #EEF0DD; --cat-x6-ink: #6F7A1E;  /* オリーブ */
+            --btn-x7: #E0F1F7; --cat-x7-ink: #1F7FA6;  /* 水色 */
+            --btn-x8: #EFE7E1; --cat-x8-ink: #7A5238;  /* 茶 */
+            /* キッチンの「持ち帰り」「店内」の色（分類の色とは別の、はっきり違う2色） */
+            --dine-take: #C8660F; --dine-take-bg: #FCEBDA;
+            --dine-eat: #2B8A4B;  --dine-eat-bg: #E0F2E5;
             /* 操作の色（青1色の濃淡）。白文字を載せても、白地に文字を置いても 4.96:1 */
             --accent: #0A6CE0;
             --accent-ink: #0A5FC4;    /* 小さい文字・アイコン用にもう少し濃く */
@@ -162,6 +175,16 @@
             --cat-sweet-ink: #8FB4E8;
             --cat-savory-ink: #4FC2BC;
             --cat-drink-ink: #9B99F0;
+            --btn-x1: #3A2E17; --cat-x1-ink: #E3B45C;
+            --btn-x2: #3D1F28; --cat-x2-ink: #EE8AA6;
+            --btn-x3: #1E3320; --cat-x3-ink: #85CF7F;
+            --btn-x4: #3E2517; --cat-x4-ink: #F0A070;
+            --btn-x5: #33203A; --cat-x5-ink: #D08FDB;
+            --btn-x6: #2D3016; --cat-x6-ink: #C3CD6A;
+            --btn-x7: #15303B; --cat-x7-ink: #6CC4E6;
+            --btn-x8: #30241C; --cat-x8-ink: #C79B7E;
+            --dine-take: #C8660F; --dine-take-bg: #3A2614;
+            --dine-eat: #2B8A4B;  --dine-eat-bg: #16301F;
             /* 操作の色。塗りボタンは白文字を載せて 4.96:1 になる濃さを選ぶ */
             --accent: #1D6FD0;
             --accent-ink: #74B6FF;    /* 暗い面の上に置く青い文字・アイコン */
@@ -537,6 +560,42 @@
         .arc-card .arc-src { flex: 1 1 180px; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-light); }
         .arc-card .arc-src .ic { width: 15px; height: 15px; flex-shrink: 0; }
         .arc-card .arc-src + .action-btn { flex: 0 0 auto; min-width: 0; padding: 8px 14px; }
+        /* 開店の「商品と仕入れ数」のカードの上のスイッチ（販売する・在庫は無制限） */
+        .setup-sws { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+        .ls-unl { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-light); margin-left: auto; cursor: pointer; }
+        .setup-sws label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-light); cursor: pointer; }
+        .unl-box { padding: 8px; font-size: 14px; font-weight: 700; color: var(--text-light); border-radius: var(--r-sm); background: var(--sunken); text-align: center; }
+
+        /* 商品の分類の一覧 */
+        .cat-list { display: flex; flex-direction: column; gap: 8px; }
+        .cat-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow-card); }
+        .cat-row .cat-sw { width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0; background: var(--bg); box-shadow: inset 0 0 0 3px var(--ink); }
+        .cat-row input[type="text"] { flex: 1; min-width: 0; margin: 0; width: auto; padding: 9px 12px; font-size: 16px; }
+        .cat-row .cat-n { font-size: 12px; color: var(--text-light); font-weight: 700; white-space: nowrap; }
+        .cat-row .cat-del { appearance: none; -webkit-appearance: none; border: none; cursor: pointer; width: 40px; height: 40px; border-radius: 10px; background: var(--danger-bg); color: var(--danger); display: grid; place-items: center; flex-shrink: 0; }
+        .cat-row .cat-del .ic { width: 18px; height: 18px; }
+        .cat-add { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+        .cat-add input[type="text"] { flex: 1; min-width: 0; margin: 0; width: auto; padding: 11px 12px; font-size: 16px; }
+        .cat-add .action-btn { margin: 0; flex-shrink: 0; padding: 11px 16px; width: auto; }
+
+        /* 店舗モードを選ぶカード（選んでいる方を青い枠と印で示す） */
+        .mode-list { display: flex; flex-direction: column; gap: 10px; }
+        .mode-card {
+            appearance: none; -webkit-appearance: none; border: none; cursor: pointer; font-family: inherit; text-align: left;
+            display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px; border-radius: var(--r-lg);
+            background: var(--surface); color: var(--text-main); box-shadow: var(--shadow-card);
+        }
+        .mode-card > .ic { width: 28px; height: 28px; flex-shrink: 0; color: var(--text-light); }
+        .mode-card .mc-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+        .mode-card .mc-t { font-size: 16px; font-weight: 800; }
+        .mode-card .mc-s { font-size: 12.5px; color: var(--text-light); line-height: 1.5; }
+        .mode-card .mc-chk { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 2px var(--hairline); display: grid; place-items: center; }
+        .mode-card.on { box-shadow: inset 0 0 0 2px var(--accent), var(--shadow-card); }
+        .mode-card.on > .ic { color: var(--accent); }
+        .mode-card.on .mc-chk { background: var(--accent); box-shadow: none; }
+        .mode-card.on .mc-chk::after { content: ''; width: 10px; height: 5px; border: solid #fff; border-width: 0 0 2px 2px; transform: translate(0, -1px) rotate(-45deg); }
+        .mode-card:disabled { opacity: .55; cursor: default; }
+
         /* ▼ キッチン（店舗モード「キッチン調理＋呼び出し」）▼
            注文を1件ずつカードにする。カードの上に番号・状態・経過時間・持ち帰りか店内か。
            商品の行は分類の色の帯で塗り分け、遠くからでも何を作るかが分かるようにする。
@@ -563,43 +622,53 @@
         .kds-station button.on { box-shadow: inset 0 0 0 2px var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
         .kds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; align-items: start; }
         @media (max-width: 560px) { .kds-grid { grid-template-columns: 1fr; gap: 10px; } }
-        .kds-card { background: var(--surface); border-radius: var(--r-lg, 16px); box-shadow: var(--shadow-card); overflow: hidden; display: flex; flex-direction: column; }
-        .kds-card .kds-head { display: flex; align-items: baseline; gap: 8px; padding: 12px 14px 10px; background: var(--sunken); flex-wrap: wrap; }
+        /* 持ち帰りと店内は、カードの左の太い帯と見出しの色で分ける（遠くからでも分かるように） */
+        .kds-card { background: var(--surface); border-radius: var(--r-lg, 16px); box-shadow: var(--shadow-card), inset 6px 0 0 var(--dine); overflow: hidden; display: flex; flex-direction: column; --dine: var(--dine-take); --dine-bg: var(--dine-take-bg); }
+        .kds-card.dine-eat { --dine: var(--dine-eat); --dine-bg: var(--dine-eat-bg); }
+        .kds-card .kds-head { display: flex; align-items: center; gap: 8px; padding: 11px 14px 10px 20px; background: var(--dine-bg); flex-wrap: wrap; }
         .kds-card .kds-no { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .01em; line-height: 1; }
-        .kds-card .kds-st { font-size: 12px; font-weight: 700; color: var(--text-light); }
-        .kds-card .kds-min { margin-left: auto; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
-        .kds-card .kds-dine { font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--btn-neutral); color: var(--text-main); }
-        .kds-card .kds-dine.eat { background: var(--accent-soft); color: var(--accent-ink); }
+        .kds-card .kds-min { margin-left: auto; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .kds-card .kds-dine { font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: var(--dine); color: #fff; }
+        .kds-card .kds-tag { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--surface); color: var(--accent-ink); box-shadow: inset 0 0 0 1.5px var(--accent); }
+        .kds-card .kds-state { font-size: 12.5px; font-weight: 800; color: var(--accent-ink); padding: 8px 14px 0 20px; }
+        .kds-card.st-done .kds-state { color: var(--text-light); }
         .kds-card.warn .kds-min { color: var(--warn-ink); }
         .kds-card.late .kds-min { color: var(--danger); }
-        .kds-card.late .kds-head { background: var(--danger-bg); }
-        .kds-card.st-ready .kds-head { background: var(--positive); }
-        .kds-card .kds-edit { font-size: 11.5px; font-weight: 700; color: var(--warn-ink); padding: 6px 14px 0; }
-        .kds-items { list-style: none; margin: 0; padding: 8px 8px 4px; display: flex; flex-direction: column; gap: 4px; }
+        .kds-card.late { box-shadow: var(--shadow-card), inset 6px 0 0 var(--dine), inset 0 0 0 2px var(--danger); }
+        .kds-card .kds-edit { font-size: 11.5px; font-weight: 700; color: var(--warn-ink); padding: 6px 14px 0 20px; }
+        /* 会計中（レジのカート）：点滅させて、まだ会計が済んでいないことを示す */
+        .kds-card.st-draft { animation: kdsBlink .5s ease-in-out infinite alternate; }
+        .kds-card.st-draft .kds-no { font-size: 18px; color: var(--accent-ink); }
+        @keyframes kdsBlink { from { opacity: 1; } to { opacity: .55; } }
+        @media (prefers-reduced-motion: reduce) { .kds-card.st-draft { animation: none; box-shadow: var(--shadow-card), inset 6px 0 0 var(--dine), inset 0 0 0 2px var(--accent); } }
+        .kds-items { list-style: none; margin: 0; padding: 8px 8px 4px 14px; display: flex; flex-direction: column; gap: 4px; }
         .kds-items li button {
             appearance: none; -webkit-appearance: none; border: none; cursor: pointer; font-family: inherit; width: 100%;
-            display: flex; align-items: center; gap: 10px; text-align: left; min-height: 44px;
+            display: flex; align-items: center; gap: 12px; text-align: left; min-height: 46px;
             padding: 8px 10px; border-radius: var(--r-sm); background: transparent; color: var(--text-main);
-            font-size: 16px; font-weight: 700; box-shadow: inset 4px 0 0 var(--ink, var(--hairline));
+            font-size: 17px; font-weight: 700; box-shadow: inset 4px 0 0 var(--ink, var(--hairline));
         }
-        .kds-items li i.kds-chk { width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 2px var(--hairline); display: grid; place-items: center; }
+        .kds-items li button:disabled { cursor: default; }
+        .kds-items li .kds-mi { color: var(--danger); font-weight: 900; font-size: 18px; width: 1.2em; flex-shrink: 0; text-align: center; }
+        .kds-items li .qty { font-size: 17px; font-weight: 800; min-width: 1.4em; text-align: right; font-variant-numeric: tabular-nums; }
         .kds-items li .nm { flex: 1; min-width: 0; overflow-wrap: anywhere; line-height: 1.3; }
-        .kds-items li .qty { font-size: 15px; font-weight: 800; padding: 2px 9px; border-radius: 8px; background: var(--sunken); font-variant-numeric: tabular-nums; }
-        .kds-items li.done .nm { color: var(--text-light); text-decoration: line-through; }
-        .kds-items li.done i.kds-chk { background: var(--accent); box-shadow: none; }
-        .kds-items li.done i.kds-chk::after { content: ''; width: 9px; height: 5px; border: solid #fff; border-width: 0 0 2px 2px; transform: translate(0, -1px) rotate(-45deg); }
-        .kds-card .kds-foot { display: flex; gap: 8px; padding: 8px 10px 10px; margin-top: auto; }
+        .kds-items li.done .kds-mi { visibility: hidden; }
+        .kds-items li.done .nm, .kds-items li.done .qty { color: var(--text-light); }
+        .kds-card .kds-foot { display: flex; gap: 8px; padding: 8px 10px 10px 16px; margin-top: auto; }
         .kds-card .kds-foot button {
             appearance: none; -webkit-appearance: none; border: none; cursor: pointer; font-family: inherit;
             min-height: 52px; border-radius: var(--r-md); font-size: 16px; font-weight: 800;
             display: inline-flex; align-items: center; justify-content: center; gap: 6px;
         }
         .kds-card .kds-foot .kds-go { flex: 1; background: var(--accent); color: #fff; }
-        .kds-card.st-new .kds-foot .kds-go { background: var(--surface); color: var(--accent-ink); box-shadow: inset 0 0 0 2px var(--accent); }
+        .kds-card .kds-foot .kds-go:disabled { background: var(--btn-neutral); color: var(--text-light); cursor: default; }
+        .kds-card.st-ready .kds-foot .kds-go { background: var(--positive-ink); }
         .kds-card.st-done .kds-foot .kds-go { background: var(--btn-neutral); color: var(--text-main); }
         .kds-card .kds-foot .kds-undo { width: 56px; flex-shrink: 0; background: var(--btn-neutral); color: var(--text-light); }
         .kds-card .kds-foot .ic { width: 18px; height: 18px; }
+        .kds-card .kds-wait { flex: 1; text-align: center; font-size: 13px; font-weight: 700; color: var(--accent-ink); padding: 14px 0; }
         .kds-card.fresh { animation: kdsIn .45s cubic-bezier(.32,.72,0,1) both; }
+        .kds-card.st-draft.fresh { animation: kdsIn .45s cubic-bezier(.32,.72,0,1) both, kdsBlink .5s ease-in-out .45s infinite alternate; }
         @keyframes kdsIn { from { transform: scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
         .kds-empty { text-align: center; color: var(--text-light); padding: 40px 10px; font-size: 15px; line-height: 1.8; grid-column: 1 / -1; }
         /* お会計の窓の「持ち帰り／店内」 */
@@ -610,7 +679,8 @@
             flex: 1; min-height: 44px; border-radius: var(--r-md); font-size: 15px; font-weight: 800;
             background: var(--sunken); color: var(--text-main); box-shadow: inset 0 0 0 1px var(--hairline);
         }
-        .dine-seg button.on { background: var(--accent); color: #fff; box-shadow: none; }
+        .dine-seg button.on { background: var(--dine-take); color: #fff; box-shadow: none; }
+        .dine-seg #dine-eat.on { background: var(--dine-eat); }
         /* お客様用の表示：呼び出し番号 */
         #customer-display .cd-call { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.6fr 1fr; gap: 18px; padding: 12px 0 4px; }
         @media (orientation: portrait) { #customer-display .cd-call { grid-template-columns: 1fr; grid-template-rows: 1.5fr 1fr; } }
@@ -763,6 +833,35 @@
             border-left: none; border-right: none; border-top: none; width: 100%;
         }
         #pending-reminder.show { display: flex; }
+        #mobile-pay-bar {
+            display: none; align-items: center; justify-content: center; gap: 6px; width: 100%; flex-shrink: 0;
+            appearance: none; -webkit-appearance: none; border: none; cursor: pointer; font-family: inherit;
+            background: var(--accent-soft); color: var(--accent-ink); font-weight: 800; font-size: 13.5px; padding: 10px 8px;
+        }
+        #mobile-pay-bar.show { display: flex; }
+        #mobile-pay-bar .ic { width: 16px; height: 16px; }
+        /* モバイルオーダーの設定 */
+        .mo-state { border-radius: var(--r-lg); padding: 14px 16px; margin-bottom: 12px; box-shadow: var(--shadow-card); background: var(--surface); }
+        .mo-state.on { box-shadow: inset 0 0 0 2px var(--dine-eat), var(--shadow-card); }
+        .mo-state.off { box-shadow: inset 0 0 0 2px var(--danger), var(--shadow-card); background: var(--danger-bg); }
+        .mo-state .sw-row { margin: 0; padding: 0; background: transparent; box-shadow: none; }
+        .mo-state textarea, #sub-mobile textarea {
+            width: 100%; box-sizing: border-box; min-height: 64px; margin: 6px 0 0; padding: 10px 12px; font-size: 16px; font-family: inherit;
+            border: none; border-radius: var(--r-md); background: var(--sunken); color: var(--text-main); box-shadow: inset 0 0 0 1px var(--hairline); resize: vertical;
+        }
+        .mo-qr { text-align: center; padding: 16px; border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-card); margin: 12px 0; }
+        .mo-qr .qr-img { display: inline-block; background: #fff; padding: 12px; border-radius: 14px; }
+        .mo-qr .qr-img svg { width: 200px; height: 200px; display: block; }
+        .mo-url { font-size: 12.5px; color: var(--text-light); overflow-wrap: anywhere; margin: 10px 0; }
+        .mo-flow { font-size: 13px; line-height: 1.7; color: var(--text-main); padding-left: 1.3em; margin: 6px 0 0; }
+        .mp-card { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-card), inset 6px 0 0 var(--dine); margin-bottom: 10px; --dine: var(--dine-take); }
+        .mp-card.dine-eat { --dine: var(--dine-eat); }
+        .mp-card .mp-head { display: flex; align-items: center; gap: 8px; }
+        .mp-card .mp-no { font-size: 22px; font-weight: 800; }
+        .mp-card .mp-total { margin-left: auto; font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .mp-card .mp-items { font-size: 13.5px; color: var(--text-main); line-height: 1.5; }
+        .mp-card .mp-acts { display: flex; gap: 8px; }
+        .mp-card .mp-acts .action-btn { margin: 0; }
 
         /* 通信が切れている時の帯。危険の紅で、押すと共有の画面へ行ける */
         #sync-health-bar {
@@ -2672,6 +2771,8 @@
             <!-- 共有中にサーバーとつながっていない時だけ出る帯。会計は続けられることも書く -->
             <div id="sync-health-bar" onclick="openPanel('settings','sync')"></div>
             <div id="pending-reminder" onclick="navTo('records')" style="display:none;"></div>
+            <!-- ファストフードの時：まだ払っていないモバイルの注文（受け取りの時にレジで会計する） -->
+            <button type="button" id="mobile-pay-bar" onclick="openPanel('settings','mobile-pay')"></button>
 
             <!-- スマホ縦画面では、カートの明細は畳んで商品ボタンの面積を優先する -->
             <button id="cart-toggle" onclick="toggleCartSheet()">
@@ -2783,6 +2884,25 @@
         <div class="panel-view" id="view-settings">
             <div class="sub-view" id="sub-settings-menu">
                 <div class="menu-list" id="settings-menu-list"></div>
+            </div>
+
+            <!-- 店舗モード（既製品の販売／ファストフード） -->
+            <div class="sub-view" id="sub-mode" style="display:none;">
+                <div id="mode-body"></div>
+            </div>
+
+            <!-- モバイルオーダー（ファストフードの時だけ） -->
+            <div class="sub-view" id="sub-mobile" style="display:none;">
+                <div id="mobile-body"></div>
+            </div>
+            <!-- まだ払っていないモバイルの注文（レジで会計する） -->
+            <div class="sub-view" id="sub-mobile-pay" style="display:none;">
+                <div id="mobile-pay-body"></div>
+            </div>
+
+            <!-- 商品の分類 -->
+            <div class="sub-view" id="sub-cats" style="display:none;">
+                <div id="cats-body"></div>
             </div>
 
             <!-- 商品・在庫の調整 -->
@@ -3303,7 +3423,10 @@
     function sk(name) { return STORE_PREFIX + name; }
     // 会計で選べる客層（最後は必ず「不明」）
     const CUST_TYPES = [...SITE_CFG.customerTypes, '不明'];
-    const IS_KITCHEN = SITE_CFG.mode === 'kitchen';
+    // 店舗モード：'retail' 既製品の販売（今までどおり）／ 'kitchen' ファストフード（キッチン・呼び出し）。
+    // 設定から切り替える（閉店中だけ）。共有する時は、開店した端末のモードに合流した端末もそろう。
+    let storeMode = SITE_CFG.mode;
+    function isKitchen() { return storeMode === 'kitchen'; }
     // 共有に使う Firebase の置き場（施設ごとに別のプロジェクトなら 'events' のまま）
     const EVENTS_COL = SITE_CFG.eventsCollection;
     // アプリの名前（タブ・ホーム画面・画面の左上）
@@ -3315,14 +3438,6 @@
         const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
         box.innerHTML = CUST_TYPES.map(t => `<label class="type-btn"><input type="radio" name="customerType" value="${esc(t)}"> ${esc(t)}</label>`).join('')
             + '<label class="type-btn type-later"><input type="radio" name="customerType" value="__later__" checked> 後で</label>';
-    })();
-    // 画面の上の分類の見本（色と名前）も、施設の分類の名前にする
-    (function applyCategoryLegend() {
-        const spans = document.querySelectorAll('.cat-legend span');
-        ['sweet', 'savory', 'drink'].forEach((k, i) => {
-            const sp = spans[i];
-            if (sp && sp.lastChild && sp.lastChild.nodeType === 3) sp.lastChild.textContent = SITE_CFG.categories[k].label;
-        });
     })();
     (function applySiteName() {
         const n = SITE_CFG.appName;
@@ -3419,7 +3534,8 @@
                 price: it.price,
                 type: CATEGORY_MAP[it.category] || 'sweet',
                 stock: s,
-                initialStock: s,
+                initialStock: it.unlimited === true ? 0 : s,
+                unlimited: it.unlimited === true,
                 note: it.note || '',
                 active: it.active !== false, // この回で取り扱うか（既定: 取扱う）
                 cost: (it.cost != null && it.cost !== '') ? Number(it.cost) : null, // 原価（任意）
@@ -3560,6 +3676,11 @@
         const same = i => i && (i.id === p.id || i.name === p.name);
         let n = cart.filter(same).length;
         reservations.forEach(r => { (r.items || []).forEach(i => { if (same(i)) n++; }); });
+        // まだ払っていないモバイルの注文も、作る分として残数から引いておく（レジで会計すると売上に移る）
+        if (isKitchen()) kitchenOrders.forEach(o => {
+            if (o.channel !== 'mobile' || o.paid || o.st === 'void' || o.id === pendingMobileOrderId) return;
+            o.items.forEach(i => { if (i.name === p.name) n += i.qty; });
+        });
         if (pendingSent.length) {
             const have = new Set(salesHistory.map(h => h.localId).filter(Boolean));
             pendingSent = pendingSent.filter(x => !have.has(x.localId) && Date.now() - x.at < 60000);
@@ -3567,7 +3688,10 @@
         }
         return n;
     }
-    function shownStock(p) { return (p ? p.stock : 0) - heldCount(p); }
+    function shownStock(p) { return isUnlimited(p) ? Infinity : (p ? p.stock : 0) - heldCount(p); }
+    // 在庫を数えない商品（コーヒーやその場で作る物など）。完売にならず、残数も出さない。
+    // 仕入れ数は 0 のまま持つので、消化率・売れ残り・仕入れの目安の計算には入らない。
+    function isUnlimited(p) { return !!(p && p.unlimited); }
 
     let lastTileQty = {};   // 前に描いた時の、商品ごとのカートの個数（増えた時だけ数字を弾ませる）
     function init() {
@@ -3599,15 +3723,9 @@
             if (isPlaceholder || isOut) {
                 btn.style.backgroundColor = 'var(--btn-neutral)';
                 btn.style.setProperty('--cat-bar', 'var(--line-strong)');
-            } else if (p.type === 'sweet') {
-                btn.style.backgroundColor = 'var(--btn-sweet)';
-                btn.style.setProperty('--cat-bar', 'var(--cat-sweet-ink)');
-            } else if (p.type === 'savory') {
-                btn.style.backgroundColor = 'var(--btn-savory)';
-                btn.style.setProperty('--cat-bar', 'var(--cat-savory-ink)');
             } else {
-                btn.style.backgroundColor = 'var(--btn-drink)';
-                btn.style.setProperty('--cat-bar', 'var(--cat-drink-ink)');
+                btn.style.backgroundColor = catBg(p.type);
+                btn.style.setProperty('--cat-bar', catInk(p.type));
             }
 
             let badge = '';
@@ -3618,7 +3736,7 @@
             // 残りわずか（1〜5個）はオレンジ、超過（在庫マイナス）は赤で強調
             const lowStock = left > 0 && left <= 5;
             const stockStyle = oversold ? 'color:var(--danger); font-weight:bold;' : (lowStock ? 'color:var(--low-ink); font-weight:bold;' : '');
-            const stockText = oversold ? `在庫:0（超過${-left}）` : `在庫:${left}${lowStock ? ' 残少' : ''}`;
+            const stockText = isUnlimited(p) ? '在庫:無制限' : (oversold ? `在庫:0（超過${-left}）` : `在庫:${left}${lowStock ? ' 残少' : ''}`);
             const qtyBadge = qty > 0
                 ? `<span class="cart-qty${qty !== (lastTileQty[p.id] || 0) ? ' pop' : ''}" aria-label="カートに${qty}個">${qty}</span>` : '';
             btn.innerHTML = `
@@ -3632,6 +3750,7 @@
             grid.appendChild(btn);
         });
         lastTileQty = nextQty;
+        publishMobileMenu();   // モバイルオーダーのメニュー（品切れ）も新しくする
         updateCartDisplay();
         updatePendingReminder();
         updateNavBadges();
@@ -3654,7 +3773,7 @@
         // 同期中は在庫（p.stock）を「全端末の販売実績」から算出するため、ここでは減らさない
         // （会計確定時にFirestoreへ送信 → 購読の再計算で全端末の残数が更新される）。
         // 画面の残数は、カートに入れた分を引いて出す（shownStock）ので、押したその場で減る。
-        if (!syncMode) {
+        if (!syncMode && !isUnlimited(p)) {
             p.stock--;
             if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
         }
@@ -3681,6 +3800,7 @@
     // 在庫を1つ戻す。在庫が復活したら「在庫切れ日時」の記録を消す。
     function restockOne(p) {
         if (!p) return;
+        if (isUnlimited(p)) return;
         p.stock++;
         if (p.stock > 0) p.soldOutTime = null;
     }
@@ -3797,17 +3917,141 @@
     function catInk(type) {
         if (type === 'savory') return 'var(--cat-savory-ink)';
         if (type === 'drink') return 'var(--cat-drink-ink)';
+        if (/^x[1-8]$/.test(type || '')) return `var(--cat-${type}-ink)`;
         return 'var(--cat-sweet-ink)';
+    }
+    // 商品ボタンの面の色（淡い方）
+    function catBg(type) {
+        if (type === 'savory') return 'var(--btn-savory)';
+        if (type === 'drink') return 'var(--btn-drink)';
+        if (/^x[1-8]$/.test(type || '')) return `var(--btn-${type})`;
+        return 'var(--btn-sweet)';
     }
 
     // 商品の「種類」（レジのボタンの色分け）を選ぶセグメント。
     // 開店前の商品リストでも、営業中の在庫調整でも同じ形で使う。
     // onclickTemplate の %T% のところに、選ばれた種類（sweet/savory/drink）が入る。
-    const CAT_TYPES = [
-        { id: 'sweet', label: SITE_CFG.categories.sweet.label },
-        { id: 'savory', label: SITE_CFG.categories.savory.label },
-        { id: 'drink', label: SITE_CFG.categories.drink.label }
-    ];
+    // ▼ 商品の分類 ▼
+    // はじめの3つ（パン・クッキー・ドリンク。施設の設定で名前が変わる）は、色を変えずに残す。
+    // 設定の「商品の分類」から、8つまで足せる（足した順に x1〜x8 の色を使う）。
+    // 共有している時は、分類の一覧も全部の端末でそろえる。
+    const CAT_BASE_IDS = ['sweet', 'savory', 'drink'];
+    const CAT_EXTRA_MAX = 8;
+    const CAT_LABEL_MAX = 12;
+    function defaultCategories() {
+        return CAT_BASE_IDS.map(id => ({ id, label: SITE_CFG.categories[id].label, total: SITE_CFG.categories[id].total }));
+    }
+    function normCategories(list) {
+        const base = defaultCategories();
+        const out = base.map(b => {
+            const v = (Array.isArray(list) ? list : []).find(x => x && x.id === b.id);
+            const label = v && typeof v.label === 'string' && v.label.trim() ? v.label.trim().slice(0, CAT_LABEL_MAX) : b.label;
+            const total = v && typeof v.total === 'string' && v.total.trim() ? v.total.trim().slice(0, CAT_LABEL_MAX + 2) : (label === b.label ? b.total : label);
+            return { id: b.id, label, total };
+        });
+        (Array.isArray(list) ? list : []).forEach(v => {
+            if (!v || !/^x[1-8]$/.test(v.id || '') || out.some(o => o.id === v.id)) return;
+            const label = typeof v.label === 'string' ? v.label.trim().slice(0, CAT_LABEL_MAX) : '';
+            if (!label) return;
+            out.push({ id: v.id, label, total: label });
+        });
+        return out;
+    }
+    let categories = defaultCategories();
+    let categoriesBy = '';   // 最後に分類を変えた端末（共有の時、自分の書いた分を取り込み直さない）
+    const CAT_TYPES = [];    // いまの分類（中身は setCategories で入れ替える。配列そのものは同じもの）
+    function setCategories(list) {
+        categories = normCategories(list);
+        CAT_TYPES.length = 0;
+        categories.forEach(c => { CAT_TYPES.push({ id: c.id, label: c.label }); CATEGORY_MAP[c.label] = CATEGORY_MAP[c.label] || c.id; });
+        renderCategoryLegend();
+    }
+    function catLabelOf(id) { return (CAT_TYPES.find(c => c.id === id) || {}).label || ''; }
+    function catTotalOf(id) { const c = categories.find(x => x.id === id); return c ? c.total : (catLabelOf(id) || 'その他'); }
+    // 画面の上の分類の見本（色と名前）。狭い画面では出さない
+    function renderCategoryLegend() {
+        const box = document.querySelector('.cat-legend');
+        if (!box) return;
+        box.innerHTML = categories.map(c => `<span><i style="background:${catBg(c.id)}; --cat-ink:${catInk(c.id)}"></i>${escHtml(c.label)}</span>`).join('');
+        // 分類が多い時は、上のバーに並べきれないので出さない（ボタンの色の帯で分かる）
+        box.style.display = categories.length > 5 ? 'none' : '';
+    }
+
+    // ---- 設定：商品の分類（足す・名前を変える・消す）----
+    function categoryUsers(id) {
+        const names = new Set();
+        products.forEach(p => { if (p.type === id) names.add(p.name); });
+        (tempSetupProducts || []).forEach(p => { if (p.type === id) names.add(p.name || '（名前なし）'); });
+        return [...names];
+    }
+    function renderCategoriesView() {
+        const box = document.getElementById('cats-body');
+        if (!box) return;
+        const extra = categories.filter(c => !CAT_BASE_IDS.includes(c.id)).length;
+        box.innerHTML = `<p class="settings-hint">レジのボタンの色は、分類ごとに決まっています。はじめの3つは消せません（名前は変えられます）。${syncMode ? '共有中は、全部の端末に同じ分類が出ます。' : ''}</p>
+            <div class="cat-list">` + categories.map(c => {
+                const used = categoryUsers(c.id).length;
+                const base = CAT_BASE_IDS.includes(c.id);
+                return `<div class="cat-row" style="--ink:${catInk(c.id)}; --bg:${catBg(c.id)};">
+                    <i class="cat-sw" aria-hidden="true"></i>
+                    <input type="text" value="${escHtml(c.label)}" maxlength="${CAT_LABEL_MAX}" aria-label="分類の名前" onchange="renameCategory('${c.id}', this.value)">
+                    <span class="cat-n">${used}品</span>
+                    ${base ? '' : `<button type="button" class="cat-del" onclick="removeCategory('${c.id}')" aria-label="${escHtml(c.label)}を消す"><svg class="ic"><use href="#ic-trash"/></svg></button>`}
+                </div>`;
+            }).join('') + `</div>
+            <div class="cat-add">
+                <input type="text" id="cat-add-input" maxlength="${CAT_LABEL_MAX}" placeholder="足す分類の名前（例：ケーキ）" ${extra >= CAT_EXTRA_MAX ? 'disabled' : ''}>
+                <button type="button" class="action-btn btn-checkout" onclick="addCategory()" ${extra >= CAT_EXTRA_MAX ? 'disabled' : ''}><svg class="ic"><use href="#ic-plus"/></svg>足す</button>
+            </div>
+            ${extra >= CAT_EXTRA_MAX ? `<p class="settings-hint">足せるのは${CAT_EXTRA_MAX}つまでです。</p>` : ''}
+            <p class="settings-hint" style="margin-top:10px;">商品をどの分類にするかは、開店の「商品と仕入れ数」と「商品・在庫の調整」で選べます。</p>`;
+    }
+    function afterCategoriesChanged(logText) {
+        categoriesBy = getDeviceId();
+        saveData();
+        init();
+        if (syncMode) syncPushProducts();   // 分類も商品といっしょに全端末へ
+        logEdit(logText);
+        renderCategoriesView();
+    }
+    function addCategory() {
+        const inp = document.getElementById('cat-add-input');
+        const label = (inp && inp.value || '').trim();
+        if (!label) { playError(); showToast('分類の名前を入れてください'); return; }
+        if (categories.some(c => c.label === label)) { playError(); alert(`「${label}」はもうあります。`); return; }
+        const free = [1, 2, 3, 4, 5, 6, 7, 8].map(n => 'x' + n).find(id => !categories.some(c => c.id === id));
+        if (!free) { playError(); alert(`分類は、足せるのは${CAT_EXTRA_MAX}つまでです。`); return; }
+        setCategories(categories.concat([{ id: free, label, total: label }]));
+        afterCategoriesChanged(`分類を足した：${label}`);
+        showToast(`分類「${label}」を足しました`);
+    }
+    function renameCategory(id, value) {
+        const c = categories.find(x => x.id === id);
+        const label = String(value || '').trim().slice(0, CAT_LABEL_MAX);
+        if (!c) return;
+        if (!label || categories.some(x => x.id !== id && x.label === label)) {
+            playError(); if (label) alert(`「${label}」はもうあります。`);
+            renderCategoriesView(); return;
+        }
+        if (label === c.label) return;
+        const before = c.label;
+        setCategories(categories.map(x => x.id === id ? { id, label, total: label } : x));
+        afterCategoriesChanged(`分類の名前を変えた：${before} → ${label}`);
+        showToast(`「${before}」を「${label}」にしました`);
+    }
+    function removeCategory(id) {
+        const c = categories.find(x => x.id === id);
+        if (!c || CAT_BASE_IDS.includes(id)) return;
+        const users = categoryUsers(id);
+        if (users.length) { playError(); alert(`「${c.label}」の商品があるため消せません。\n先に、次の商品を別の分類にしてください。\n\n${users.map(n => '・' + n).join('\n')}`); return; }
+        const r = normSetRule(setRule);
+        if (r && r.needs.includes(id)) { playError(); alert(`「${c.label}」はセット割の組み合わせに入っているため消せません。\n先に「セット割・売上目標」で組み合わせを変えてください。`); return; }
+        if (!confirm(`分類「${c.label}」を消しますか？`)) return;
+        setCategories(categories.filter(x => x.id !== id));
+        afterCategoriesChanged(`分類を消した：${c.label}`);
+        showToast(`分類「${c.label}」を消しました`);
+    }
+    setCategories(null);
     function catPicker(type, onclickTemplate) {
         const cur = CAT_TYPES.some(c => c.id === type) ? type : 'sweet';
         return `<div class="cat-picker" role="group" aria-label="商品の種類">
@@ -3818,7 +4062,10 @@
 
     let lastCartLines = {};   // 前に描いた時の、行ごとの個数
     function updateCartDisplay() {
+        if (!cart.length) pendingMobileOrderId = null;   // カートを空にしたら、モバイルの注文の会計もやめたことにする
+        renderMobilePayBar();
         publishCustomerDisplay();   // お客様用の画面にも、いまのカートを映す
+        publishKitchenDraft();      // ファストフードの時は、キッチンにも「会計中」として出す
         const list = document.getElementById('cart-list');
         list.innerHTML = '';
         let total = 0;
@@ -4201,6 +4448,7 @@
             setRule: checkoutSetRule,
             customerType: selectedType,
             pendingType: pending,
+            ...(isKitchen() && pendingMobileOrderId ? { channel: 'mobile' } : {}),
             cash: cash,
             change: Math.max(0, cash - total)
         };
@@ -4214,8 +4462,20 @@
         } else {
             salesHistory.push(record);
         }
-        // キッチン：この会計を注文としてキッチンの画面に出す（売上の記録とは別に置く）
-        if (IS_KITCHEN) { addKitchenOrder(record, checkoutDine); setCheckoutDine('take'); }
+        // キッチン：この会計を注文としてキッチンの画面に出す（売上の記録とは別に置く）。
+        // モバイルの注文をレジで会計した時は、その注文をもう作っているので「払い済み」にするだけ。
+        let kitchenNo = null;
+        if (isKitchen()) {
+            if (pendingMobileOrderId) {
+                const mo = markMobileOrderPaid(pendingMobileOrderId, record);
+                kitchenNo = mo ? mo.no : null;
+                pendingMobileOrderId = null;
+            } else {
+                const o = addKitchenOrder(record, checkoutDine);
+                kitchenNo = o ? o.no : null;
+            }
+            setCheckoutDine('take');
+        }
 
         // 次の会計に備え、既定（後で）に戻す
         for (let i = 0; i < typeRadios.length; i++) {
@@ -4231,7 +4491,7 @@
         const chgText = record.change > 0
             ? `お釣り¥${record.change}（${changeDenoms(record.change).map(d => `${d.unit}×${d.count}`).join('・')}）`
             : 'お釣りなし';
-        showToast(`記録しました（${IS_KITCHEN ? '番号' : '客No.'}${record.no} / ${chgText}）`);
+        showToast(`記録しました（${isKitchen() ? '番号' + (kitchenNo != null ? kitchenNo : record.no) : '客No.' + record.no} / ${chgText}）`);
         publishCustomerDone(record);   // お客様の画面に「ありがとうございました」を出す
     }
 
@@ -4328,6 +4588,7 @@
         if (applyBox) {
             applyBox.innerHTML =
                 (latest ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:8px; padding:10px; background:var(--accent-soft); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--accent-ink); display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="ic"><use href="#ic-bulb"/></svg>前回「${escHtml(latest.sessionName)}」の実績を参考に反映</button>` : '')
+                + `<button class="link-btn" style="margin:0 0 8px;" onclick="openPanel('settings','cats')"><svg class="ic"><use href="#ic-tag"/></svg>分類を足す・名前を変える</button>`
                 + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:var(--btn-neutral); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="ic"><use href="#ic-undo"/></svg>商品リストを「${escHtml(ACTIVE_EVENT_SET.label)}」の既定に戻す</button>`;
         }
 
@@ -4341,10 +4602,16 @@
             }
             cards.push(`
                 <div class="setup-card" style="border-left:5px solid ${catInk(p.type)}; ${p.active === false ? 'opacity:0.5;' : ''}">
-                    <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-light); margin-bottom:4px; cursor:pointer;">
-                        <span>この回で販売する</span>
-                        <input class="ios-switch" type="checkbox" ${p.active === false ? '' : 'checked'} onchange="updateTempProduct(${p.id}, 'active', this.checked)">
-                    </label>
+                    <div class="setup-sws">
+                        <label>
+                            <span>この回で販売する</span>
+                            <input class="ios-switch" type="checkbox" ${p.active === false ? '' : 'checked'} onchange="updateTempProduct(${p.id}, 'active', this.checked)">
+                        </label>
+                        <label>
+                            <span>在庫は無制限</span>
+                            <input class="ios-switch" type="checkbox" ${p.unlimited ? 'checked' : ''} onchange="updateTempProduct(${p.id}, 'unlimited', this.checked)">
+                        </label>
+                    </div>
                     <div style="display:flex; gap:5px; align-items:center;">
                         <input type="text" value="${escHtml(p.name)}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
                         <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
@@ -4357,7 +4624,9 @@
                         </div>
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">仕入れ数</div>
-                            <input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">
+                            ${p.unlimited
+                                ? `<div class="unl-box">無制限</div>`
+                                : `<input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">`}
                         </div>
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">原価（任意）</div>
@@ -4381,6 +4650,12 @@
             if (field === 'cost') { const n = parseInt(value); p.cost = (value === '' || isNaN(n)) ? null : n; }
             if (field === 'type') { p.type = value; renderInventorySetup(); }   // 左の色帯も塗り替える
             if (field === 'active') { p.active = value; renderInventorySetup(); }
+            if (field === 'unlimited') {
+                // 在庫を数えない：仕入れ数は 0 にして持つ。数えるに戻したら、仕入れ数を入れてもらう
+                p.unlimited = !!value;
+                if (p.unlimited) { p.initialStock = 0; p.stock = 0; }
+                renderInventorySetup();
+            }
         }
     }
 
@@ -4582,24 +4857,56 @@
                 </div>`
         },
         {
-            id: 'kitchen', icon: 'kitchen', title: 'キッチンで作る・番号で呼ぶ', sub: 'キッチン調理＋呼び出しのお店',
+            id: 'mode', icon: 'store', title: '店舗モード', sub: '既製品の販売／ファストフード',
+            body: `
+                <p><b>「設定 → 店舗モード」</b>で、お店でやることに合わせて選びます。<b>切り替えられるのは閉店中だけ</b>です。</p>
+                <table class="man-qa">
+                    <thead><tr><th>モード</th><th>こんなお店</th></tr></thead>
+                    <tbody>
+                        <tr><td><b>既製品の販売</b>（はじめはこれ）</td><td>パン・クッキーなど、その場で渡すお店。レジで会計したら完了です（今までどおり）。</td></tr>
+                        <tr><td><b>ファストフード</b>（キッチン・呼び出し）</td><td>作ってから番号で呼ぶお店。会計すると注文が下の<b>「キッチン」</b>に出ます。お客様のスマホからの<b>モバイルオーダー</b>も使えます。</td></tr>
+                    </tbody>
+                </table>
+                <p>共有する時は、<b>開店した端末のモードに、合流した端末もそろいます</b>（1台ずつ切り替える必要はありません）。</p>`
+        },
+        {
+            id: 'kitchen', icon: 'kitchen', title: 'キッチンで作る・番号で呼ぶ', sub: 'ファストフードのモード',
             kitchenOnly: true,
             body: `
-                <p>レジで会計すると、その注文が<b>下の「キッチン」</b>にカードで出ます。カードの番号が、お客様にお伝えする<b>番号</b>（会計の知らせに出る番号）です。</p>
+                <p>レジで商品を打つと、<b>会計が終わる前から</b>下の<b>「キッチン」</b>に「会計中」のカードが点滅して出て、音が鳴ります（共有している時）。先に作り始めて大丈夫です。会計が済むと、カードに<b>番号</b>が付きます。</p>
                 <ol class="man-steps">
-                    <li>レジの会計の窓で<b>「持ち帰り」か「店内」</b>を選んでから、いつもどおり会計します（何もしなければ持ち帰り）。</li>
-                    <li>キッチンの人は、カードの<b>「調理開始」</b>を押してから作ります。できた商品は、行を押すと印が付きます。</li>
-                    <li>全部できたら<b>「呼び出し」</b>を押します。お客様用の表示に、その番号が大きく出て音が鳴ります。</li>
+                    <li>レジの会計の窓で<b>「持ち帰り」か「店内」</b>を選んでから会計します（何もしなければ持ち帰り）。カードの色は、<b>持ち帰りが橙・店内が緑</b>です。</li>
+                    <li>キッチンの人は、できた商品の行を押します。<b>赤い「未」</b>が消えます（もう一度押すと戻ります）。</li>
+                    <li>全部の「未」が消えると<b>「呼び出し」</b>が押せるようになります。押すと、お客様用の表示に番号が大きく出て音が鳴ります。</li>
                     <li>お客様に渡したら<b>「受け渡し完了」</b>を押します。カードは「完了」に移ります。</li>
                 </ol>
                 <ul class="man-list">
-                    <li>押し間違えた時は、カードの左下の<b>↶</b>で1つ前に戻せます。「完了」からも「呼び出しに戻す」で戻せます。</li>
+                    <li>番号は、共有している時は<b>レジの端末ごとの文字＋数字</b>（A1、B1…）です。レジが何台あってもぶつかりません。モバイルオーダーは M1、M2…です。</li>
+                    <li>呼び出しを押し間違えた時は、↶ で調理中に戻せます。「完了」からも「呼び出しに戻す」で戻せます。</li>
                     <li>待たせている時間が<b>10分を過ぎると黄色、15分を過ぎると赤</b>になります。</li>
+                    <li><b>「担当」</b>で、ドリンク係はドリンクの行だけ、のように分けて見られます（端末ごとに覚えます）。</li>
                     <li>レジで会計を取り消すと、キッチンのカードも消えます。会計の中身を直すと、カードにも「直されました」と出ます。</li>
                     <li>キッチンで何を押しても、<b>売上の記録は変わりません</b>（お金の記録とは別に置いています）。</li>
-                    <li>キッチンを別の端末にする時は、その端末で販売会に<b>合流</b>して、下の「キッチン」を開いておきます。</li>
-                    <li>番号を映す端末は、合流の時に<b>「お客様用の表示」</b>を選びます。受け取り口に置く画面は、「設定 → 複数端末で使う → お客様用の表示」で<b>「呼び出し番号だけを映す」</b>をオンにします。</li>
-                    <li>売上集計の<b>「注文と提供時間」</b>で、呼び出すまでに何分かかったか、どこで待たせたかが見られます。</li>
+                    <li>キッチンを別の端末にする時は、その端末で販売会に<b>合流</b>して、下の「キッチン」を開いておきます。番号を映す端末は、合流の時に<b>「お客様用の表示」</b>を選びます。受け取り口に置く画面は、「設定 → 複数端末で使う → お客様用の表示」で<b>「呼び出し番号だけを映す」</b>をオンにします。</li>
+                    <li>売上集計の<b>「注文と提供時間」</b>で、呼び出すまでに何分かかったかが見られます。</li>
+                </ul>`
+        },
+        {
+            id: 'mobile', icon: 'qr', title: 'モバイルオーダー', sub: 'お客様のスマホから注文',
+            kitchenOnly: true,
+            body: `
+                <p>お客様がQRコードを読むと、スマホで注文の画面が開きます（アプリは要りません）。<b>共有している時だけ</b>使えます。</p>
+                <ol class="man-steps">
+                    <li><b>「設定 → モバイルオーダー」</b>で受付をオンにします。出てくる<b>QRコード</b>を印刷するか、画面を見せます。</li>
+                    <li>お客様は商品と<b>「持ち帰り／店内」</b>を選んで注文します。<b>M1</b> のような番号が出て、注文はすぐキッチンに「モバイル・未払い」で出ます。</li>
+                    <li>お客様の画面には<b>「あと何組」</b>が出て、呼び出すと音と画面で知らせます（その画面を開いている時）。</li>
+                    <li>受け取りに来たら、レジの上の<b>「モバイルの注文（未払い）」</b>から番号を選んで<b>「レジで会計する」</b>。中身がカートに入るので、いつもどおり会計します。</li>
+                </ol>
+                <ul class="man-list">
+                    <li>混んできたら受付をオフにします。お客様の画面には「止めている時のお知らせ」が出ます。</li>
+                    <li>来ない注文・いたずらの注文は、「モバイルの注文（未払い）」の<b>「取り消す」</b>で消せます。</li>
+                    <li>まだ払っていないモバイルの注文の分も、レジの残数から引いて数えます。</li>
+                    <li>1台のスマホから同時に頼めるのは3件までです。</li>
                 </ul>`
         },
         {
@@ -4651,6 +4958,8 @@
                     <li><b>値段を変えたい</b>…その場で価格を書き替えられます。</li>
                     <li><b>商品を足したい</b>…いちばん下の<b>「販売する商品を追加する」</b>を押すと、名前・価格・仕入れ数・種類を入れる欄が出ます。入れて「この内容で追加する」を押すと、すぐレジのボタンに並びます。</li>
                     <li><b>種類（ボタンの色）を変えたい</b>…各商品の<b>パン／クッキー／ドリンク</b>から選び直せます。開店前の「商品と仕入れ数」でも同じように選べます。</li>
+                    <li><b>種類そのものを足したい</b>（ケーキ・サンドイッチなど）…<b>「設定 → 商品の分類」</b>で名前を入れて「足す」を押します。新しい色が付き、8つまで足せます。名前の変更や、商品の無い分類を消すのもここからです。</li>
+                    <li><b>数を数えなくてよい商品</b>（その場でいれるコーヒーなど）…<b>「在庫は無制限」</b>をオンにします（開店前の「商品と仕入れ数」、または営業中の「商品・在庫の調整」の<b>「無制限」</b>）。完売にならず、ボタンには「在庫:無制限」と出ます。消化率や次の仕入れ数の目安には入りません。</li>
                 </ul>
                 <div class="man-box">
                     <div class="man-box-h">売り切れたら</div>
@@ -5231,6 +5540,13 @@
             const d = doc.exists ? (doc.data() || {}) : null;
             const hadEvent = cdSawEvent;
             if (d) cdSawEvent = true;
+            // 映している販売会の店舗モードにそろえる（ファストフードなら呼び出し番号を受け取る）
+            if (d && (d.storeMode === 'kitchen' || d.storeMode === 'retail') && d.storeMode !== storeMode) {
+                storeMode = d.storeMode;
+                saveData();
+                applyStoreMode();
+            }
+            if (isKitchen() && !cdOrdersUnsub) startCallBoardSubscription(code);
             // 閉店した、または（さっきまであった）置き場が片づけられた
             if ((d && d.status === 'closed') || (!d && hadEvent)) {
                 if (cdEnded) return;
@@ -5292,9 +5608,9 @@
         let state = (d && d.state) || 'idle';
         // キッチンの時：待ち受けの代わりに呼び出し番号を出す。
         // 「呼び出し番号だけ」にした端末（受け取り口に置く画面）は、会計中も番号のまま。
-        if (IS_KITCHEN && uiPrefs.cdCallOnly) state = 'idle';
+        if (isKitchen() && uiPrefs.cdCallOnly) state = 'idle';
         const call = document.getElementById('cd-call');
-        const showCall = IS_KITCHEN && state === 'idle' && !cdEnded;
+        const showCall = isKitchen() && state === 'idle' && !cdEnded;
         idle.style.display = state === 'idle' && !showCall ? '' : 'none';
         if (call) call.style.display = showCall ? '' : 'none';
         if (showCall) renderCallBoard();
@@ -5708,7 +6024,7 @@
         box.className = 'notice';
         // キッチンの時：映すものを選べる（受け取り口に置く画面は、呼び出し番号だけにする）
         const callOpt = document.getElementById('cd-call-opt');
-        if (callOpt && IS_KITCHEN) {
+        if (callOpt && isKitchen()) {
             callOpt.innerHTML = `<div class="sw-row">
                     <div class="sw-text"><b>呼び出し番号だけを映す</b><span>受け取り口に置く画面に。オフなら、会計中は金額、それ以外は呼び出し番号</span></div>
                     <input type="checkbox" class="ios-switch" id="opt-cd-call-only" onchange="setCallOnly(this.checked)"${uiPrefs.cdCallOnly ? ' checked' : ''}>
@@ -6507,12 +6823,12 @@
     let manualOpenId = 'flow';   // 画面で開いている章（はじめは「全体の流れ」）
 
     // 店舗モードに関係のない項目は出さない（キッチンの項目は、キッチンのお店だけ）
-    const MANUAL = MANUAL_ALL.filter(sec => !sec.kitchenOnly || IS_KITCHEN);
+    function manualSections() { return MANUAL_ALL.filter(sec => !sec.kitchenOnly || isKitchen()); }
 
     function renderManual() {
         const box = document.getElementById('manual-body');
         if (!box) return;
-        box.innerHTML = MANUAL.map(sec => {
+        box.innerHTML = manualSections().map(sec => {
             const open = manualOpenId === sec.id;
             return `
                 <div class="man-item${open ? ' open' : ''}">
@@ -6542,8 +6858,8 @@
                     <div class="s">この冊子は アプリの「設定 → 操作マニュアル」からいつでも出せます（${now} 版）</div>
                 </div>
                 <h4>もくじ</h4>
-                <ol class="man-toc">${MANUAL.map(s => `<li>${s.title} — ${s.sub}</li>`).join('')}</ol>
-                ${MANUAL.map(s => `<div class="man-sec"><h3>${s.title}</h3>${s.body}</div>`).join('')}
+                <ol class="man-toc">${manualSections().map(s => `<li>${s.title} — ${s.sub}</li>`).join('')}</ol>
+                ${manualSections().map(s => `<div class="man-sec"><h3>${s.title}</h3>${s.body}</div>`).join('')}
             </div>`;
         openReportWindow(SITE_CFG.appName + ' 操作マニュアル');
     }
@@ -6672,7 +6988,7 @@
         // 共有するか：いつも共有する（通信できない時だけ、この端末だけで開店する）。
         const wantShare = !!typedCode || shareOnOpenWanted();
         let useSync = !!(syncReady && window.FIREBASE_CONFIG && wantShare);
-        let code = null, joinedProducts = null, sharedName = name, isJoining = false, joinRound = '';
+        let code = null, joinedProducts = null, sharedName = name, isJoining = false, joinRound = '', joinedMode = null, joinedCats = null;
         let soloReason = (wantShare && window.FIREBASE_CONFIG && !syncReady) ? 'offline' : '';
         if (useSync && !typedCode) {
             // 新しく開店する時の共有コードは、自動で決める（打ち間違い・前のコードとの取り違えが起きない）
@@ -6701,6 +7017,8 @@
                         );
                         if (!ok) return;
                         joinedProducts = data.products;
+                        joinedMode = (data.storeMode === 'kitchen' || data.storeMode === 'retail') ? data.storeMode : null;
+                        if (Array.isArray(data.categories)) joinedCats = data.categories;
                         sharedName = data.name || name;
                         isJoining = true;
                         joinRound = data.roundId || '';   // 動いている回に合わせる
@@ -6729,7 +7047,7 @@
             const warnings = [];
             const latest = getLatestRecommendationMap();
             tempSetupProducts.forEach(p => {
-                if (p.price <= 0) return; // 未設定枠は対象外
+                if (p.price <= 0 || isUnlimited(p)) return; // 未設定枠・在庫を数えない商品は対象外
                 if (!(p.initialStock > 0)) {
                     warnings.push(`・${p.name}：仕入 0（販売しないなら「取扱商品」から外すと確実）`);
                 } else if (p.initialStock > 300) {
@@ -6791,6 +7109,7 @@
         reservations = [];
         kitchenOrders = [];
         kitchenSeen = new Set();
+        mobileCfg = normMobileCfg(null); mmLast = '';
         cart = [];
         receiptCounter = 0;
         voidCount = 0;
@@ -6800,6 +7119,9 @@
             // 参加：共有中の商品構成をそのまま採用（在庫は同期購読の再計算に任せる）
             products = JSON.parse(JSON.stringify(joinedProducts));
             products.forEach(p => { if (p.stock == null) p.stock = p.initialStock; if (p.soldOutTime === undefined) p.soldOutTime = null; });
+            // 店舗モードも、開いている販売会にそろえる
+            if (joinedMode && joinedMode !== storeMode) { storeMode = joinedMode; applyStoreMode(); }
+            if (joinedCats) setCategories(joinedCats);   // 分類も、開いている販売会にそろえる
         } else {
             // 新規作成：編集した一時データを本番の商品データとして適用する
             products = JSON.parse(JSON.stringify(tempSetupProducts));
@@ -6814,7 +7136,7 @@
             acceptRound(newRoundId());
             try {
                 await fbDb.collection(EVENTS_COL).doc(code).set({
-                    name: sharedName, status: 'open', products: products,
+                    name: sharedName, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(),
                     roundId: syncRoundId,
                     setDiscount: setDiscountOn, setRule: normSetRule(setRule) || SET_DEFAULT, setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                     openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
@@ -6937,6 +7259,8 @@
         cart = [];
         reservations = [];
         kitchenOrders = [];
+        kdLast = ''; kdStartedAt = 0; pendingMobileOrderId = null;   // 会計中の注文の控えも捨てる
+        mobileCfg = normMobileCfg(null); mmLast = '';
         receiptCounter = 0;
         voidCount = 0;
         operationLog = [];
@@ -7277,7 +7601,7 @@
         if ((m = flat.match(/セット割引 ?[−\-–] ?¥ ?([\d,]+)/))) r.setDiscount = pdfNum(m[1]);
 
         // 表の行の形
-        const RE_ABC = /^(.*?) ?[●◐○] ?[ABC] (\d+) ?\/ ?(\d+) (\d+)% ¥ ?([\d,]+)$/;       // 商品別（販売/仕入・売上）
+        const RE_ABC = /^(.*?) ?[●◐○] ?[ABC] (\d+) ?\/ ?(\d+|無制限) (\d+%|—) ¥ ?([\d,]+)$/;       // 商品別（販売/仕入・売上）
         const RE_REC = /^(.*?) ?(\d+) (\d+) (\d+) ([▲▼→]) ?([増減同]) ?(.*)$/;            // 次回の仕入れ数の目安
         const isDataRow = l => RE_ABC.test(l) || RE_REC.test(l) || (/\d/.test(l) && /¥|%|人/.test(l));
         const abc = [], recs = [];
@@ -7286,7 +7610,7 @@
             let a = l.match(RE_ABC);
             if (a) {
                 const name = canon(pdfRowName(lines, i, a[1], known, isDataRow));
-                if (name && !seenA.has(name)) { seenA.add(name); abc.push({ name, qty: +a[2], initial: +a[3], rev: pdfNum(a[5]) }); }
+                if (name && !seenA.has(name)) { seenA.add(name); abc.push({ name, qty: +a[2], initial: a[3] === '無制限' ? null : +a[3], rev: pdfNum(a[5]) }); }
                 return;
             }
             a = l.match(RE_REC);
@@ -7656,7 +7980,7 @@
         acceptRound(newRoundId());
         try {
             await fbDb.collection(EVENTS_COL).doc(code).set({
-                name: currentSession, status: 'open', products: products,
+                name: currentSession, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(),
                 roundId: syncRoundId,
                 setDiscount: setDiscountOn, setRule: normSetRule(setRule) || SET_DEFAULT, setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                 openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
@@ -7691,7 +8015,7 @@
             return;
         }
         if (syncMode) {
-            alert('この端末は、すでに共有しています。\n\n別の販売会に移る場合は、「設定 → 複数端末で使う」で\n「共有をやめてこの端末だけで続ける」を押してから、もう一度お試しください。');
+            alert('この端末は、すでに共有しています。\n\n別の販売会に移る場合は、「設定 → 複数端末で使う」で\n「この端末の利用を終える」を押してから、合流し直してください。');
             return;
         }
         if (!window.FIREBASE_CONFIG) { alert('この端末では共有機能の準備ができていません。\n（準備した方に「複数端末の設定」を確認してもらってください）'); return; }
@@ -7759,7 +8083,9 @@
         showToast(`「${currentSession}」に合流しました（共有コード ${code}）`);
     }
 
-    // 共有をやめて、この端末だけで営業を続ける（電波が不安定な時などの避難先）。
+    // 共有をやめて、この端末だけで営業を続ける。
+    // 画面のボタンは外した（開店すると必ず共有し、電波が切れても自動で追いつくため、使う場面が無い）。
+    // 前の版のテストや、万一の時に手で呼べるように、処理そのものは残してある。
     // ここまでの会計はこの端末に残り、あとで共有を再開すれば未送信分がまとめて送られる。
     function stopSyncMidSession() {
         if (!syncMode) return;
@@ -7774,6 +8100,7 @@
         syncEventCode = null;
         held.forEach(([p, n]) => {
             if (!n) return;
+            if (isUnlimited(p)) return;
             p.stock -= n;
             if (p.stock <= 0 && p.initialStock > 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
         });
@@ -7836,11 +8163,11 @@
     // 何が書いてあるかがそのまま分かる名前に変更した。
     //   次回インサイト        → 完売と売り逃し（早く売り切れてどれだけ売り逃したか）
     //   次回準備の参考メモ    → 次回の仕入れ数の目安
-    const ANALYTICS_ITEMS = [
+    const ANALYTICS_ITEMS_ALL = [
         { key: 'summary', icon: 'chart',   title: '売上の概要' },
         { key: 'items',   icon: 'box',     title: '商品別の売れ行き' },
         { key: 'time',    icon: 'clock',   title: '時間帯別の客数' },
-        ...(IS_KITCHEN ? [{ key: 'kitchen', icon: 'kitchen', title: '注文と提供時間' }] : []),
+        { key: 'kitchen', icon: 'kitchen', title: '注文と提供時間', kitchenOnly: true },
         { key: 'pace',    icon: 'trend',   title: '売上の積み上がり' },
         { key: 'basket',  icon: 'cart',    title: '買い方の傾向' },
         { key: 'stock',   icon: 'sliders', title: '在庫の減り方' },
@@ -7852,12 +8179,13 @@
         { key: 'log',     icon: 'list',    title: '操作の履歴' },
         { key: 'export',  icon: 'download', title: '書き出し（PDF・CSV）' }
     ];
-    const ANALYTICS_TITLES = ANALYTICS_ITEMS.reduce((m, it) => { m[it.key] = it.title; return m; }, {});
+    function analyticsItems() { return ANALYTICS_ITEMS_ALL.filter(it => !it.kitchenOnly || isKitchen()); }
+    const ANALYTICS_TITLES = ANALYTICS_ITEMS_ALL.reduce((m, it) => { m[it.key] = it.title; return m; }, {});
 
     function renderAnalyticsMenu() {
         const grid = document.getElementById('analytics-menu-grid');
         if (!grid) return;
-        grid.innerHTML = ANALYTICS_ITEMS.map(it =>
+        grid.innerHTML = analyticsItems().map(it =>
             `<button class="menu-card" onclick="showAnalyticsSection('${it.key}')">
                 <svg class="ic"><use href="#ic-${it.icon}"/></svg><span>${it.title}</span>
             </button>`).join('');
@@ -8023,8 +8351,8 @@
             <tbody>` + R.abc.map(r => `
                 <tr>
                     <td class="nm">${escHtml(r.name)}<span class="sub"><span class="a-rank ${r.rank.toLowerCase()}">${r.rank}</span></span></td>
-                    <td class="num">${r.sold} / ${r.initial}</td>
-                    <td class="num">${pctBar(r.sellThrough, r.sellThrough >= 100 ? 'full' : '')}<span class="sub">${r.sellThrough}%</span></td>
+                    <td class="num">${r.sold} / ${r.unl ? '無制限' : r.initial}</td>
+                    <td class="num">${r.unl ? '—' : `${pctBar(r.sellThrough, r.sellThrough >= 100 ? 'full' : '')}<span class="sub">${r.sellThrough}%</span>`}</td>
                     <td class="num">${yenStr(r.rev)}</td>
                 </tr>`).join('') + `</tbody></table>
         <p class="a-note">A・B・C は売上への貢献度です。A＝上位（累計70%まで）／B＝中位（90%まで）／C＝下位。消化率＝販売数÷仕入れ数。</p>`;
@@ -8894,7 +9222,7 @@
         // 5個単位に切り上げ（最低5個）
         const roundUp5 = n => Math.max(5, Math.ceil(n / 5) * 5);
 
-        return products.filter(p => p.active !== false && p.price > 0).map(p => {
+        return products.filter(p => p.active !== false && p.price > 0 && !isUnlimited(p)).map(p => {
             const sold = soldCount[p.name] || 0;
             const initial = p.initialStock || 0;
             const soldOut = initial > 0 && p.stock <= 0 && sold > 0;
@@ -9377,6 +9705,10 @@
     // サブ画面の見出し（戻るボタンつきで表示される）
     const SUB_TITLES = {
         'manual': '操作マニュアル',
+        'mode': '店舗モード',
+        'cats': '商品の分類',
+        'mobile': 'モバイルオーダー',
+        'mobile-pay': 'モバイルの注文を会計する',
         'customer': 'お客様用の表示',
         'goal': 'セット割・売上目標',
         'stock': '商品・在庫の調整',
@@ -9594,6 +9926,10 @@
             else if (sub === 'sync') renderSyncView();
             else if (sub === 'receipt') renderReceiptSettings();
             else if (sub === 'archive') renderArchiveList();
+            else if (sub === 'mode') renderStoreModeView();
+            else if (sub === 'cats') renderCategoriesView();
+            else if (sub === 'mobile') renderMobileView();
+            else if (sub === 'mobile-pay') renderMobilePayView();
             else if (sub === 'pdf-import') renderPdfImport();
             else if (sub === 'display') { updateFullscreenButton(); renderThemeSettings(); renderClockSettings(); renderLockEntry(); }
             else if (sub === 'lock') { lockDraft = null; lockReuse = true; renderLockView(); }
@@ -9693,8 +10029,11 @@
             .filter(Boolean).join('・');
         box.innerHTML =
             menuRow('book', '操作マニュアル', 'はじめての人向けの使い方（PDFにも出せます）', "openPanel('settings','manual')") +
+            menuRow(isKitchen() ? 'kitchen' : 'store', '店舗モード', storeModeLabel(), "openPanel('settings','mode')") +
             menuRow('sliders', '商品・在庫の調整', stockSub, "openPanel('settings','stock')", { disabled: !currentSession }) +
-            (IS_KITCHEN ? menuRow('calendar', '予約', reservations.length ? `${reservations.length}件の予約` : '先に受けて、あとで渡す注文', "openPanel('reservations')") : '') +
+            menuRow('tag', '商品の分類', categories.map(c => escHtml(c.label)).join('・'), "openPanel('settings','cats')") +
+            (isKitchen() ? menuRow('qr', 'モバイルオーダー', mobileSub(), "openPanel('settings','mobile')") : '') +
+            (isKitchen() ? menuRow('calendar', '予約', reservations.length ? `${reservations.length}件の予約` : '先に受けて、あとで渡す注文', "openPanel('reservations')") : '') +
             menuRow('target', 'セット割・売上目標', setGoalSub(), "openPanel('settings','goal')") +
             menuRow('link', '複数端末で使う', syncSub, "openPanel('settings','sync')", { disabled: !window.FIREBASE_CONFIG }) +
             menuRow('printer', '領収書の設定', `発行者「${escHtml(shopInfo().name)}」・但し書きの変更`, "openPanel('settings','receipt')") +
@@ -10214,8 +10553,7 @@
                 + `<div id="share-qr"></div>`;
             renderShareQr();
             acts.innerHTML =
-                `<button class="action-btn btn-secondary" onclick="leaveDeviceOnly()"><svg class="ic"><use href="#ic-power"/></svg>この端末の利用を終える（ほかの端末は続ける）</button>` +
-                `<button class="action-btn btn-secondary" onclick="stopSyncMidSession()"><svg class="ic"><use href="#ic-x"/></svg>共有をやめてこの端末だけで続ける</button>`;
+                `<button class="action-btn btn-secondary" onclick="leaveDeviceOnly()"><svg class="ic"><use href="#ic-power"/></svg>この端末の利用を終える（ほかの端末は続ける）</button>`;
             if (speed) speed.style.display = '';
         } else {
             box.className = 'notice';
@@ -10268,7 +10606,7 @@
             else b.style.display = 'none';
         };
         set('nav-reservations', reservations.length);
-        if (IS_KITCHEN) set('nav-kitchen', kitchenCounts().new);
+        if (isKitchen()) set('nav-kitchen', kitchenCounts().cook);
         set('nav-records', salesHistory.filter(h => h.pendingType).length);
     }
 
@@ -10310,8 +10648,8 @@
         const discountCount = sorted.filter(h => (Number(h.discount) || 0) > 0).length;
         const grossRev = totalRev + discountTotal;
 
-        const itemCounts = {}, itemRev = {}, categoryRev = { sweet: 0, savory: 0, drink: 0 };
-        const catNames = { sweet: SITE_CFG.categories.sweet.total, savory: SITE_CFG.categories.savory.total, drink: SITE_CFG.categories.drink.total };
+        const itemCounts = {}, itemRev = {}, categoryRev = {};
+        CAT_TYPES.forEach(c => { categoryRev[c.id] = 0; });
         const timeSlotRev = {}, timeSlotItems = {}, timeSlotCust = {};
         const custTypes = {};
         CUST_TYPES.forEach(t => { custTypes[t] = { count: 0, rev: 0 }; });
@@ -10339,7 +10677,7 @@
                 itemRev[i.name] = (itemRev[i.name] || 0) + i.price;
                 timeSlotItems[label][i.name] = (timeSlotItems[label][i.name] || 0) + 1;
                 totalItems++;
-                if (i.type) categoryRev[i.type] += i.price;
+                if (i.type) categoryRev[i.type] = (categoryRev[i.type] || 0) + i.price;
                 if (!itemStats[i.name]) itemStats[i.name] = { count: 0, lastTime: d };
                 itemStats[i.name].count++; itemStats[i.name].lastTime = d;
             });
@@ -10358,14 +10696,14 @@
             const prod = products.find(p => p.name === name);
             const initial = prod ? prod.initialStock : 0;
             const sold = itemCounts[name];
-            abc.push({ name, rev, rank, sold, initial, sellThrough: initial > 0 ? Math.round(sold / initial * 100) : 0 });
+            abc.push({ name, rev, rank, sold, initial, unl: isUnlimited(prod), sellThrough: initial > 0 ? Math.round(sold / initial * 100) : 0 });
         });
 
         // 完売時刻・販売スピード
         const soldOut = [], inStock = [];
         Object.keys(itemStats).forEach(name => {
             const prod = products.find(p => p.name === name);
-            const out = prod ? prod.stock <= 0 : false;
+            const out = prod ? (!isUnlimited(prod) && prod.stock <= 0) : false;
             if (out) {
                 const t = (prod && prod.soldOutTime) ? new Date(prod.soldOutTime) : new Date(itemStats[name].lastTime);
                 const dur = Math.max(1, (t - sessionStart) / 60000);
@@ -10376,7 +10714,7 @@
 
         // 販売数 > 仕入数（在庫過少入力の可能性）。備考があれば併記。
         const oversoldItems = products
-            .filter(p => p.price > 0 && p.initialStock >= 0 && (itemCounts[p.name] || 0) > p.initialStock)
+            .filter(p => p.price > 0 && !isUnlimited(p) && p.initialStock >= 0 && (itemCounts[p.name] || 0) > p.initialStock)
             .map(p => ({ name: p.name, sold: itemCounts[p.name] || 0, initial: p.initialStock, note: p.note || '' }));
 
         // 時間帯別は「売上・客数・客単価」を並べた表にするため、客数も持たせる
@@ -10394,7 +10732,7 @@
             });
 
         const types = Object.entries(custTypes).filter(([, d]) => d.count > 0).map(([type, d]) => ({ type, count: d.count, avg: Math.floor(d.rev / d.count) }));
-        const categories = Object.keys(categoryRev).filter(c => categoryRev[c] > 0).map(c => ({ name: catNames[c], rev: categoryRev[c], pct: grossRev > 0 ? Math.round(categoryRev[c] / grossRev * 100) : 0 }));
+        const categories = Object.keys(categoryRev).filter(c => categoryRev[c] > 0).map(c => ({ name: catTotalOf(c), rev: categoryRev[c], pct: grossRev > 0 ? Math.round(categoryRev[c] / grossRev * 100) : 0 }));
         const copairs = Object.entries(coPurchase).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([pair, count]) => ({ pair, count }));
 
         const typeEditedLater = sorted.filter(h => h.typeEditedLater).length;
@@ -10509,8 +10847,8 @@
             <tr>
                 <td>${esc(r.name)}</td>
                 <td><span class="rank rank-${r.rank.toLowerCase()}">${rankMark[r.rank]} ${r.rank}</span></td>
-                <td class="num">${r.sold} / ${r.initial}</td>
-                <td class="num">${r.sellThrough}%</td>
+                <td class="num">${r.sold} / ${r.unl ? '無制限' : r.initial}</td>
+                <td class="num">${r.unl ? '—' : r.sellThrough + '%'}</td>
                 <td class="num">${yen(r.rev)}</td>
             </tr>`).join('');
         // 完売時刻：箇条書きではなく表にして時刻・ペースの桁をそろえる
@@ -10936,7 +11274,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { siteId: SITE_CFG.id, products, cart, salesHistory, reservations, orders: kitchenOrders, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
+        return { siteId: SITE_CFG.id, storeMode, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -10947,6 +11285,11 @@
         salesHistory = Array.isArray(data.salesHistory) ? data.salesHistory : [];
         reservations = Array.isArray(data.reservations) ? data.reservations : [];
         kitchenOrders = Array.isArray(data.orders) ? data.orders.map(normOrder).filter(Boolean) : [];
+        storeMode = (data.storeMode === 'kitchen' || data.storeMode === 'retail') ? data.storeMode : SITE_CFG.mode;
+        setCategories(data.categories);
+        categoriesBy = typeof data.categoriesBy === 'string' ? data.categoriesBy : '';
+        kitchenLetter = typeof data.kitchenLetter === 'string' ? data.kitchenLetter : '';
+        kitchenLetterCode = typeof data.kitchenLetterCode === 'string' ? data.kitchenLetterCode : '';
         currentSession = data.currentSession || null;
         sessionArchive = Array.isArray(data.sessionArchive) ? data.sessionArchive : [];
         receiptCounter = data.receiptCounter || salesHistory.length;
@@ -11109,7 +11452,8 @@
         const rows = buildItemSalesRows();
         if (rows.length === 0) { alert('書き出す売上データがありません。'); return; }
 
-        const catNames = { sweet: SITE_CFG.categories.sweet.total, savory: SITE_CFG.categories.savory.total, drink: SITE_CFG.categories.drink.total };
+        const catNames = {};
+        categories.forEach(c => { catNames[c.id] = c.total; });
         const total = rows.reduce((s, r) => s + r.revenue, 0);
         const totalCount = rows.reduce((s, r) => s + r.count, 0);
         // 完売時刻の対応（記録があれば）
@@ -11125,9 +11469,10 @@
         rows.forEach(r => {
             const p = products.find(prod => prod.name === r.name);
             const cat = p ? (catNames[p.type] || '') : '';
+            const unl = isUnlimited(p);
             const initial = p ? (p.initialStock || 0) : 0;
             const sellThrough = initial > 0 ? Math.round(r.count / initial * 100) : '';
-            const left = Math.max(0, initial - r.count);
+            const left = unl ? 0 : Math.max(0, initial - r.count);
             const leftValue = left * r.price;
             totalLeft += left; totalLeftValue += leftValue;
             const soldOutStr = (p && p.soldOutTime) ? new Date(p.soldOutTime).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '';
@@ -11423,8 +11768,10 @@
             const prod = products.find(p => p.name === name);
             if (!prod) return;
             rec.items.push({ id: prod.id, name: prod.name, price: prod.price, type: prod.type });
-            prod.stock--; // 在庫から引く（在庫0でも許容）
-            if (prod.stock === 0 && !prod.soldOutTime) prod.soldOutTime = new Date().toISOString();
+            if (!isUnlimited(prod)) {
+                prod.stock--; // 在庫から引く（在庫0でも許容）
+                if (prod.stock === 0 && !prod.soldOutTime) prod.soldOutTime = new Date().toISOString();
+            }
         }
         // 合計は明細から付け直す。セット割はその会計をした時の設定のまま判定する
         rec.discount = setDiscountFor(rec.items, ruleOfRecord(rec));
@@ -11895,15 +12242,16 @@
                     <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
                         <span style="flex:1; font-size:14px; font-weight:bold; overflow-wrap:anywhere;">${escHtml(p.name)}${oversold ? ' <b style="color:var(--danger); font-size:12px;">販売&gt;仕入</b>' : ''}${inactive ? ' <span style="font-size:11px; color:var(--text-light); font-weight:normal;">(この回は販売しない)</span>' : ''}</span>
                         <span style="font-size:13px; color:var(--text-light);">残り</span>
-                        <span class="num" style="font-size:17px; font-weight:bold; min-width:38px; text-align:right; color:${oversold ? 'var(--danger)' : (left <= 5 ? 'var(--low-ink)' : 'var(--text-main)')};">${left}</span>
+                        <span class="num" style="font-size:17px; font-weight:bold; min-width:38px; text-align:right; color:${oversold ? 'var(--danger)' : (left <= 5 ? 'var(--low-ink)' : 'var(--text-main)')};">${isUnlimited(p) ? '無制限' : left}</span>
                     </div>
                     <div class="ls-row" style="display:flex; gap:8px; align-items:center;">
                         <label style="font-size:12px; color:var(--text-light);">価格</label>
                         <input type="number" value="${p.price}" class="num ls-price" style="width:78px; padding:6px; text-align:right; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLivePrice(${p.id}, this.value)">
-                        <label style="font-size:12px; color:var(--text-light); margin-left:2px;">仕入れ数</label>
+                        ${isUnlimited(p) ? '' : `<label style="font-size:12px; color:var(--text-light); margin-left:2px;">仕入れ数</label>
                         <button class="step-btn minus" onclick="adjustLiveInitialStock(${p.id}, -1)">−</button>
                         <input type="number" value="${p.initialStock}" class="num ls-stock" style="width:62px; padding:6px; text-align:center; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLiveInitialStock(${p.id}, this.value)">
-                        <button class="step-btn plus" onclick="adjustLiveInitialStock(${p.id}, 1)">＋</button>
+                        <button class="step-btn plus" onclick="adjustLiveInitialStock(${p.id}, 1)">＋</button>`}
+                        <label class="ls-unl"><span>無制限</span><input class="ios-switch" type="checkbox" ${isUnlimited(p) ? 'checked' : ''} onchange="setLiveUnlimited(${p.id}, this.checked)"></label>
                     </div>
                     ${catPicker(p.type, `setLiveType(${p.id}, '%T%')`)}
                     ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:6px; padding:6px; font-size:12px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" onchange="setProductNote(${p.id}, this.value)">` : ''}
@@ -11911,6 +12259,20 @@
             `);
         });
         list.innerHTML = rows.join('');
+    }
+
+    // 営業中に「在庫は無制限」を切り替える。数えるに戻す時は、いま売れた数を仕入れ数にして（残り0）から入れ直してもらう
+    function setLiveUnlimited(id, on) {
+        const p = products.find(x => x.id === id);
+        if (!p) return;
+        const sold = salesHistory.reduce((t, h) => t + (h.items || []).filter(i => i.name === p.name).length, 0);
+        p.unlimited = !!on;
+        if (p.unlimited) { p.initialStock = 0; p.stock = 0; p.soldOutTime = null; }
+        else { p.initialStock = sold; p.stock = 0; }
+        if (syncMode) { recomputeStockFromSales(); syncPushProducts(); }
+        logEdit(`在庫の数え方を変更：${p.name} → ${p.unlimited ? '無制限' : '数える'}`);
+        saveData(); init(); renderLiveStock();
+        if (!p.unlimited) showToast(`${p.name}：仕入れ数を入れてください（いまは売れた数＝${sold}）`);
     }
 
     // 仕入れ数を変えた分だけ残数も動かす（同期中は共有の販売実績から再計算されるので触らない）
@@ -12351,7 +12713,7 @@
     function syncPushProducts() {
         if (!syncMode || !syncEventCode || !fbDb) return;
         fbDb.collection(EVENTS_COL).doc(syncEventCode)
-            .set({ products: products, productsUpdatedAt: Date.now(), productsUpdatedBy: getDeviceId() }, { merge: true })
+            .set({ products: products, categories, categoriesBy: getDeviceId(), productsUpdatedAt: Date.now(), productsUpdatedBy: getDeviceId() }, { merge: true })
             .catch(e => console.warn('商品構成の共有に失敗しました', e));
     }
 
@@ -12429,6 +12791,33 @@
                     if (!firstSnapshot) showToast(g > 0 ? `売上目標が ${yenStr(g)} にそろいました` : '売上目標がなしになりました');
                 }
             }
+            // 商品の分類も全端末でそろえる（ほかの端末で足した・名前を変えた時）
+            if (syncMode && d && Array.isArray(d.categories) && d.categoriesBy !== getDeviceId()
+                && JSON.stringify(normCategories(d.categories)) !== JSON.stringify(categories)) {
+                setCategories(d.categories);
+                categoriesBy = d.categoriesBy || '';
+                saveData();
+                init();
+                if (currentView === 'settings' && currentSub === 'cats') renderCategoriesView();
+            }
+            // モバイルオーダーの受付（受付中／停止中・お知らせ）も全端末でそろえる
+            if (syncMode && d) {
+                const mc = normMobileCfg(d.mobile);
+                if (JSON.stringify(mc) !== JSON.stringify(mobileCfg)) {
+                    mobileCfg = mc;
+                    if (currentView === 'settings' && currentSub === 'mobile') renderMobileView();
+                    publishMobileMenu();
+                    if (currentView === 'settings' && !currentSub) renderSettingsMenu();
+                }
+            }
+            // 店舗モードも、開店した端末にそろえる（合流した時・営業中に合流させた時）
+            if (syncMode && d && (d.storeMode === 'kitchen' || d.storeMode === 'retail') && d.storeMode !== storeMode) {
+                storeMode = d.storeMode;
+                saveData();
+                applyStoreMode();
+                if (isKitchen()) startOrdersSubscription(code); else stopOrdersSubscription();
+                showToast(isKitchen() ? 'この販売会はファストフードのモードです' : 'この販売会は既製品の販売のモードです');
+            }
             // セット割のオン・オフも全端末でそろえる。
             // （同じカゴなのに端末によって10円違う、ということが起きないように）
             if (syncMode && d && typeof d.setDiscount === 'boolean' && d.setDiscountBy !== getDeviceId()) {
@@ -12469,7 +12858,7 @@
     // （以前は種類だけ変えても「同じ内容」と判断して取り込まれなかった）
     function applyRemoteProducts(remoteProducts) {
         const key = list => JSON.stringify(list.map(p => ({
-            n: p.name, p: p.price, i: p.initialStock, t: p.type || '', o: p.note || '', a: p.active !== false
+            n: p.name, p: p.price, i: p.initialStock, t: p.type || '', o: p.note || '', a: p.active !== false, u: !!p.unlimited
         })));
         const before = key(products);
         const next = JSON.parse(JSON.stringify(remoteProducts));
@@ -12583,42 +12972,87 @@
     // 【共有】共有中は events/{コード}/orders に1件1文書で置き、全端末で同じ一覧を見る。
     //   共有していない時は、この端末の中だけで同じように動く。
     // パン・クッキーの販売会（店舗モード retail）では、ここは一切動かない。
-    const KITCHEN_ST = { new: '受付', cook: '調理中', ready: '呼び出し中', done: '受け渡し済み', void: '取り消し' };
-    const KITCHEN_NEXT = { new: 'cook', cook: 'ready', ready: 'done' };
-    const KITCHEN_PREV = { cook: 'new', ready: 'cook', done: 'ready' };
-    const KITCHEN_GO = { new: '調理開始', cook: '呼び出し', ready: '受け渡し完了', done: '呼び出しに戻す' };
-    const KITCHEN_GO_ICON = { new: 'kitchen', cook: 'bolt', ready: 'check', done: 'undo' };
+    // 状態：調理中（注文が入ったらすぐ）→ 呼び出し中 → 受け渡し済み（取り消しは void）。
+    // 会計が終わる前のレジのカートは「会計中」（draft）として出し、点滅させる。
+    const KITCHEN_ST = { draft: '会計中', cook: '調理中', ready: '呼び出し中', done: '受け渡し済み', void: '取り消し' };
+    const KITCHEN_NEXT = { cook: 'ready', ready: 'done' };
+    const KITCHEN_PREV = { ready: 'cook', done: 'ready' };
     const KITCHEN_WARN_MIN = 10;    // これより待たせている注文は、経過時間を黄色に
     const KITCHEN_LATE_MIN = 15;    // これより待たせている注文は、赤に
     const KITCHEN_DONE_SHOW = 40;   // 「完了」に並べる件数（新しい順）
+    const KITCHEN_DRAFT_STALE_MS = 20 * 60000;   // これより動きのない「会計中」は出さない（レジの端末が止まった時の残り）
     let kitchenOrders = [];
     let kitchenFilter = 'active';
     let checkoutDine = 'take';
     let fbOrdersUnsub = null;
-    let kitchenSeen = new Set();    // すでに画面に出した注文（新しく来た注文だけ動かし、音を鳴らす）
+    let kitchenSeen = new Set();    // すでに画面に出した注文（新しく来た注文だけ動かす）
+    let pendingMobileOrderId = null; // レジでいま会計しているモバイルの注文（あれば）
     let kitchenTick = null;
 
     function ordersCol(code) {
         return fbDb.collection(EVENTS_COL).doc(code).collection('orders');
     }
+    // 会計1件と注文1件を結びつける印。共有中は会計ごとの印（localId）を使う
+    // （共有中の客No.は、ほかの端末の会計が届くと振り直されるので使えない）。
     function orderKeyOf(rec) {
+        if (rec && rec.localId) return 'L:' + rec.localId;
         const t = rec && rec.time ? new Date(rec.time).getTime() : 0;
         return (rec && rec.no != null ? rec.no : '') + '@' + t;
+    }
+    // ---- キッチンの番号 ----
+    // 共有中はレジが何台あっても番号がぶつからないよう、端末ごとの文字を頭に付ける（A1、B1…）。
+    // 文字は開店・合流の時に1回だけ決める（会計のたびに通信を待たないので、会計は遅くならない）。
+    // モバイルオーダーは M を使う。
+    const KITCHEN_LETTERS = 'ABCDEFGHJKLNPRSTUVWXYZ';
+    let kitchenLetter = '';        // この端末の文字（共有している販売会ごと）
+    let kitchenLetterCode = '';
+    async function ensureKitchenLetter(code) {
+        if (!code || !fbDb) return;
+        if (kitchenLetter && kitchenLetterCode === code) return;
+        const ref = fbDb.collection(EVENTS_COL).doc(code);
+        const me = getDeviceId();
+        try {
+            const letter = await fbDb.runTransaction(async tx => {
+                const snap = await tx.get(ref);
+                const map = (snap.exists && (snap.data() || {}).letters) || {};
+                if (map[me]) return map[me];
+                const used = new Set(Object.values(map));
+                const free = [...KITCHEN_LETTERS].find(l => !used.has(l)) || deviceLabel().slice(0, 1);
+                tx.set(ref, { letters: Object.assign({}, map, { [me]: free }) }, { merge: true });
+                return free;
+            });
+            kitchenLetter = letter; kitchenLetterCode = code;
+            saveData();
+        } catch (e) {
+            // 通信できない時は、端末の記号の1文字目で代わりにする（あとで、つながった時に決め直す）
+            console.warn('キッチンの番号の文字を決められませんでした', e);
+        }
+    }
+    function kitchenNoOf(record) {
+        if (!syncMode) return record.no;
+        const l = (kitchenLetterCode === syncEventCode && kitchenLetter) ? kitchenLetter : deviceLabel().slice(0, 1);
+        return l + record.no;
     }
     // 置き場から来た文書を、決まった形にそろえる（欠けていても画面が壊れないように）
     function normOrder(d) {
         if (!d || typeof d !== 'object' || !d.id) return null;
-        const st = KITCHEN_ST[d.st] ? d.st : 'new';
+        let st = d.st === 'new' ? 'cook' : d.st;          // 前の版の「受付」は、いまの「調理中」
+        if (!KITCHEN_ST[st]) st = 'cook';
         const items = (Array.isArray(d.items) ? d.items : []).map(x => ({
-            name: String((x && x.name) || ''), type: (x && x.type) || 'sweet', qty: Math.max(1, parseInt(x && x.qty, 10) || 1)
+            name: String((x && x.name) || ''), type: (x && x.type) || 'sweet', qty: Math.max(1, parseInt(x && x.qty, 10) || 1),
+            price: Number(x && x.price) || 0
         })).filter(x => x.name);
         const t = (d.t && typeof d.t === 'object') ? d.t : {};
+        // できた印は商品名で持つ（前の版は行の番号で持っていた）
+        const chk = (Array.isArray(d.chk) ? d.chk : []).map(v => typeof v === 'number' ? (items[v] || {}).name : String(v))
+            .filter(n => n && items.some(x => x.name === n));
         return {
             id: String(d.id), key: String(d.key || ''), no: d.no != null ? d.no : '', at: Number(d.at) || 0,
             dine: d.dine === 'eat' ? 'eat' : 'take', items, st,
-            t: { cook: Number(t.cook) || 0, ready: Number(t.ready) || 0, done: Number(t.done) || 0, void: Number(t.void) || 0 },
-            chk: Array.isArray(d.chk) ? d.chk.map(Number).filter(n => n >= 0) : [],
-            edited: !!d.edited, dev: String(d.dev || ''), roundId: d.roundId || ''
+            t: { ready: Number(t.ready) || 0, done: Number(t.done) || 0, void: Number(t.void) || 0 },
+            chk: [...new Set(chk)], edited: !!d.edited, dev: String(d.dev || ''), roundId: d.roundId || '',
+            channel: d.channel === 'mobile' ? 'mobile' : 'pos', paid: d.channel === 'mobile' ? !!d.paid : true,
+            total: Number(d.total) || 0, fromDraft: !!d.fromDraft, upd: Number(d.upd) || 0, uid: String(d.uid || ''), by: String(d.by || '')
         };
     }
     // 会計の商品（1個ずつの並び）を、商品ごとの個数にまとめる（打った順を保つ）
@@ -12626,43 +13060,51 @@
         const out = [];
         (items || []).forEach(it => {
             const g = out.find(x => x.name === it.name);
-            if (g) g.qty++; else out.push({ name: it.name, type: it.type || 'sweet', qty: 1 });
+            if (g) g.qty++; else out.push({ name: it.name, type: it.type || 'sweet', qty: 1, price: Number(it.price) || 0 });
         });
         return out;
     }
+    function orderLeft(o) { return o.items.filter(x => !o.chk.includes(x.name)).length; }   // まだ「未」の行の数
 
-    function pushOrder(o) {
+    function pushOrder(o, merge) {
         if (!syncMode || !syncEventCode || !fbDb || !o) return;
         let doc;
         try { doc = JSON.parse(JSON.stringify(o)); } catch (e) { return; }
         doc.roundId = syncRoundId;
-        ordersCol(syncEventCode).doc(o.id).set(doc)
+        ordersCol(syncEventCode).doc(o.id).set(doc, merge ? { merge: true } : undefined)
             .catch(e => console.warn('注文の共有に失敗しました', e));
     }
 
-    // 会計が済んだ時に呼ぶ（completeTransaction から）
+    // 会計が済んだ時に呼ぶ（completeTransaction から）。
+    // 会計中に出していた「会計中」の注文があれば、キッチンで付けた「できた」の印を引き継いで置き換える。
     function addKitchenOrder(record, dine) {
-        if (!IS_KITCHEN || !record) return null;
+        if (!isKitchen() || !record) return null;
         const at = new Date(record.time).getTime();
+        const items = groupOrderItems(record.items);
+        const draft = kitchenOrders.find(x => x.id === draftIdOf(getDeviceId()));
         const o = {
             id: 'o-' + getDeviceId() + '-' + record.no + '-' + at,
-            key: orderKeyOf(record), no: record.no, at,
+            key: orderKeyOf(record), no: kitchenNoOf(record), at: draft ? Math.min(draft.at || at, at) : at,
             dine: dine === 'eat' ? 'eat' : 'take',
-            items: groupOrderItems(record.items), st: 'new',
-            t: { cook: 0, ready: 0, done: 0, void: 0 }, chk: [], edited: false,
-            dev: syncMode ? deviceLabel() : '', roundId: syncRoundId
+            items, st: 'cook', t: { ready: 0, done: 0, void: 0 },
+            chk: draft ? draft.chk.filter(n => items.some(x => x.name === n)) : [],
+            edited: false, dev: syncMode ? deviceLabel() : '', by: getDeviceId(), roundId: syncRoundId,
+            channel: 'pos', paid: true, total: record.total, fromDraft: !!draft, upd: Date.now(), uid: ''
         };
+        kitchenOrders = kitchenOrders.filter(x => x.id !== draftIdOf(getDeviceId()));
         kitchenOrders.push(o);
         pushOrder(o);
+        clearKitchenDraft();
         afterKitchenChange();
         return o;
     }
 
-    function setKitchenOrder(id, change) {
+    function setKitchenOrder(id, change, merge) {
         const o = kitchenOrders.find(x => x.id === id);
         if (!o) return null;
         change(o);
-        pushOrder(o);
+        o.upd = Date.now();
+        pushOrder(o, merge);
         afterKitchenChange();
         return o;
     }
@@ -12673,46 +13115,101 @@
         if (currentView === 'kitchen') renderKitchen();
     }
 
+    // ---- 会計中の注文（レジのカートをそのままキッチンに見せる）----
+    function draftIdOf(dev) { return 'draft-' + dev; }
+    let kdTimer = null, kdLast = '', kdStartedAt = 0;
+    function publishKitchenDraft(force) {
+        if (!isKitchen() || !syncMode || !syncEventCode || !fbDb || customerMode) return;
+        if (kdTimer) clearTimeout(kdTimer);
+        kdTimer = setTimeout(() => {
+            kdTimer = null;
+            // モバイルの注文をレジで会計している時は、その注文がもうキッチンにあるので出さない
+            const items = pendingMobileOrderId ? [] : groupOrderItems(cart);
+            if (!items.length) { clearKitchenDraft(); return; }
+            if (!kdStartedAt) kdStartedAt = Date.now();
+            const key = JSON.stringify([items, checkoutDine]);
+            if (!force && key === kdLast) return;
+            kdLast = key;
+            // 「できた」の印（chk）はキッチンが書くので、ここでは送らない（merge で残す）
+            const id = draftIdOf(getDeviceId());
+            ordersCol(syncEventCode).doc(id).set({
+                id, st: 'draft', no: '', at: kdStartedAt, dine: checkoutDine, items,
+                dev: deviceLabel(), by: getDeviceId(), roundId: syncRoundId, channel: 'pos', paid: false, upd: Date.now()
+            }, { merge: true }).catch(e => { kdLast = ''; console.warn('会計中の注文の共有に失敗しました', e); });
+        }, force ? 0 : 200);
+    }
+    function clearKitchenDraft() {
+        if (kdTimer) { clearTimeout(kdTimer); kdTimer = null; }
+        const had = kdLast !== '' || kdStartedAt;
+        kdLast = ''; kdStartedAt = 0;
+        if (!had || !syncMode || !syncEventCode || !fbDb) return;
+        ordersCol(syncEventCode).doc(draftIdOf(getDeviceId())).delete().catch(() => {});
+    }
+
     // 会計を取り消した時・直した時に、キッチンの注文も合わせる
     function kitchenOnVoid(rec) {
-        if (!IS_KITCHEN || !rec) return;
+        if (!isKitchen() || !rec) return;
         const key = orderKeyOf(rec);
         const o = kitchenOrders.find(x => x.key === key && x.st !== 'void');
         if (o) setKitchenOrder(o.id, x => { x.st = 'void'; x.t.void = Date.now(); });
     }
     function kitchenOnEdit(rec, items) {
-        if (!IS_KITCHEN || !rec) return;
+        if (!isKitchen() || !rec) return;
         const key = orderKeyOf(rec);
         const o = kitchenOrders.find(x => x.key === key && x.st !== 'void');
         if (!o) return;
-        setKitchenOrder(o.id, x => { x.items = groupOrderItems(items); x.chk = []; x.edited = true; });
+        setKitchenOrder(o.id, x => {
+            x.items = groupOrderItems(items);
+            x.chk = x.chk.filter(n => x.items.some(i => i.name === n));
+            x.edited = true;
+            if (x.st === 'ready' && orderLeft(x) > 0) { x.st = 'cook'; x.t.ready = 0; }   // 増えた商品は、まだ作っていない
+        });
     }
 
     // キッチンの操作（カードのボタン）
+    function cardIdOf(btn) {
+        const c = btn && btn.closest && btn.closest('.kds-card');
+        return c ? c.dataset.id : null;
+    }
     function kitchenGo(btn) {
-        const id = btn && btn.closest('.kds-card') && btn.closest('.kds-card').dataset.id;
+        const id = cardIdOf(btn);
         const o = kitchenOrders.find(x => x.id === id);
-        if (!o) { playError(); return; }
+        if (!o || o.st === 'draft') { playError(); return; }
         if (o.st === 'done') { kitchenBack(btn); return; }
+        if (o.st === 'cook' && orderLeft(o) > 0) {
+            playError();
+            showToast(`「未」があと${orderLeft(o)}品あります。できた商品を押してください`);
+            return;
+        }
         const next = KITCHEN_NEXT[o.st];
         if (!next) return;
         playSound(next === 'ready' ? 988 : 880, 0.07);
         setKitchenOrder(id, x => { x.st = next; x.t[next] = Date.now(); });
     }
     function kitchenBack(btn) {
-        const id = btn && btn.closest('.kds-card') && btn.closest('.kds-card').dataset.id;
+        const id = cardIdOf(btn);
         const o = kitchenOrders.find(x => x.id === id);
         if (!o || !KITCHEN_PREV[o.st]) { playError(); return; }
         playSound(660, 0.06);
         setKitchenOrder(id, x => { x.t[x.st] = 0; x.st = KITCHEN_PREV[x.st]; });
     }
-    function kitchenCheck(btn, i) {
-        const id = btn && btn.closest('.kds-card') && btn.closest('.kds-card').dataset.id;
-        if (!kitchenOrders.some(x => x.id === id)) return;
-        setKitchenOrder(id, x => {
-            const k = x.chk.indexOf(i);
-            if (k >= 0) x.chk.splice(k, 1); else x.chk.push(i);
-        });
+    // 商品の行を押すと「未」が消える（もう一度押すと戻る）
+    function kitchenCheck(btn, name) {
+        const id = cardIdOf(btn);
+        const o = kitchenOrders.find(x => x.id === id);
+        if (!o || (o.st !== 'cook' && o.st !== 'draft')) return;
+        const was = o.chk.includes(name);
+        playSound(was ? 660 : 880, 0.04);
+        o.chk = was ? o.chk.filter(n => n !== name) : o.chk.concat([name]);
+        if (o.st === 'draft') {
+            // 会計中の注文はレジが中身を書き換え続けるので、印（chk）だけを書き足す
+            if (syncMode && syncEventCode && fbDb) ordersCol(syncEventCode).doc(id).set({ chk: o.chk.slice() }, { merge: true }).catch(() => {});
+            afterKitchenChange();
+            return;
+        }
+        o.upd = Date.now();
+        pushOrder(o);
+        afterKitchenChange();
     }
     function setKitchenFilter(f) {
         kitchenFilter = f;
@@ -12721,19 +13218,22 @@
     // 担当：その分類の商品の行だけを出す（ほかの分類だけの注文は出さない）
     function kitchenStation() {
         const s = uiPrefs.kdsStation;
-        return (s === 'sweet' || s === 'savory' || s === 'drink') ? s : 'all';
+        return CAT_TYPES.some(c => c.id === s) ? s : 'all';
     }
     function setKitchenStation(s) {
-        uiPrefs.kdsStation = (s === 'sweet' || s === 'savory' || s === 'drink') ? s : 'all';
+        uiPrefs.kdsStation = CAT_TYPES.some(c => c.id === s) ? s : 'all';
         try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
         renderKitchen();
     }
 
+    function liveDraft(o, now) { return o.st !== 'draft' || (now - (o.upd || o.at)) < KITCHEN_DRAFT_STALE_MS; }
     function kitchenCounts(pred) {
-        const c = { active: 0, new: 0, cook: 0, ready: 0, done: 0 };
+        const c = { active: 0, cook: 0, ready: 0, done: 0 };
+        const now = Date.now();
         kitchenOrders.forEach(o => {
-            if (o.st === 'void' || (pred && !pred(o))) return;
-            c[o.st]++;
+            if (o.st === 'void' || !liveDraft(o, now) || (pred && !pred(o))) return;
+            if (o.st === 'draft' || o.st === 'cook') c.cook++;
+            else c[o.st]++;
             if (o.st !== 'done') c.active++;
         });
         return c;
@@ -12748,48 +13248,55 @@
         const grid = document.getElementById('kds-grid');
         const fil = document.getElementById('kds-filters');
         if (!grid || !fil) return;
-        const c = kitchenCounts(o => kitchenStation() === 'all' || o.items.some(x => x.type === kitchenStation()));
-        const tabs = [['active', '全て'], ['new', '受付'], ['cook', '調理中'], ['ready', '呼び出し中'], ['done', '完了']];
+        const stn = kitchenStation();
+        const mine = o => stn === 'all' || o.items.some(x => x.type === stn);
+        const c = kitchenCounts(mine);
+        const tabs = [['active', '全て'], ['cook', '調理中'], ['ready', '呼び出し中'], ['done', '完了']];
         fil.innerHTML = tabs.map(([k, label]) =>
             `<button type="button" class="${kitchenFilter === k ? 'on' : ''}" onclick="setKitchenFilter('${k}')">${label}<b>${c[k]}</b></button>`).join('');
-        const stn = kitchenStation();
         const stBox = document.getElementById('kds-station');
-        if (stBox) stBox.innerHTML = '<span>担当</span>' + [['all', '全部']].concat(CAT_TYPES.map(c => [c.id, c.label])).map(([k, label]) =>
+        if (stBox) stBox.innerHTML = '<span>担当</span>' + [['all', '全部']].concat(CAT_TYPES.map(x => [x.id, x.label])).map(([k, label]) =>
             `<button type="button" class="${stn === k ? 'on' : ''}" ${k !== 'all' ? `style="--ink:${catInk(k)};"` : ''} onclick="setKitchenStation('${k}')">${k !== 'all' ? '<i></i>' : ''}${escHtml(label)}</button>`).join('');
-        const mine = o => stn === 'all' || o.items.some(x => x.type === stn);
         const now = Date.now();
-        let rows = kitchenOrders.filter(o => o.st !== 'void' && mine(o));
+        let rows = kitchenOrders.filter(o => o.st !== 'void' && liveDraft(o, now) && mine(o));
         if (kitchenFilter === 'active') rows = rows.filter(o => o.st !== 'done');
+        else if (kitchenFilter === 'cook') rows = rows.filter(o => o.st === 'cook' || o.st === 'draft');
         else rows = rows.filter(o => o.st === kitchenFilter);
         if (kitchenFilter === 'done') rows = rows.sort((a, b) => (b.t.done || 0) - (a.t.done || 0)).slice(0, KITCHEN_DONE_SHOW);
         else rows = rows.sort((a, b) => a.at - b.at);
         if (!rows.length) {
             grid.innerHTML = `<div class="kds-empty">${!currentSession
                 ? '開店すると、レジで受けた注文がここに出ます。'
-                : (kitchenFilter === 'active' ? 'いま作る注文はありません。<br><span>レジで会計すると、ここに出ます。</span>' : 'この状態の注文はありません。')}</div>`;
+                : (kitchenFilter === 'active' ? 'いま作る注文はありません。<br><span>レジで商品を打つと、会計が終わる前からここに出ます。</span>' : 'この状態の注文はありません。')}</div>`;
             return;
         }
         grid.innerHTML = rows.map(o => {
             const min = kitchenMinutes(o, now);
-            const cls = ['kds-card', 'st-' + o.st];
+            const left = orderLeft(o);
+            const cls = ['kds-card', 'st-' + o.st, 'dine-' + o.dine];
             if (o.st !== 'done' && min >= KITCHEN_LATE_MIN) cls.push('late');
             else if (o.st !== 'done' && min >= KITCHEN_WARN_MIN) cls.push('warn');
             if (!kitchenSeen.has(o.id)) cls.push('fresh');
-            const items = o.items.map((x, i) => (stn !== 'all' && x.type !== stn) ? '' : `<li class="${o.chk.includes(i) ? 'done' : ''}" style="--ink:${catInk(x.type)};">
-                    <button type="button" onclick="kitchenCheck(this, ${i})"><i class="kds-chk"></i><span class="nm">${escHtml(x.name)}</span><span class="qty">×${x.qty}</span></button></li>`).join('');
+            const canTap = o.st === 'cook' || o.st === 'draft';
+            const items = o.items.map(x => (stn !== 'all' && x.type !== stn) ? '' : `<li class="${o.chk.includes(x.name) ? 'done' : ''}" style="--ink:${catInk(x.type)};">
+                    <button type="button" ${canTap ? '' : 'disabled'} data-name="${escHtml(x.name)}" onclick="kitchenCheck(this, this.dataset.name)"><span class="kds-mi" aria-label="${o.chk.includes(x.name) ? 'できた' : 'まだ'}">未</span><span class="qty">${x.qty}</span><span class="nm">${escHtml(x.name)}</span></button></li>`).join('');
+            const no = o.st === 'draft' ? '会計中' : '#' + escHtml(String(o.no));
+            let foot;
+            if (o.st === 'draft') foot = `<div class="kds-wait">レジで会計しています</div>`;
+            else if (o.st === 'cook') foot = `<button type="button" class="kds-go" ${left ? 'disabled' : ''} onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-bolt"/></svg>${left ? `呼び出し（未 ${left}）` : '呼び出し'}</button>`;
+            else if (o.st === 'ready') foot = `<button type="button" class="kds-undo" onclick="kitchenBack(this)" aria-label="調理中に戻す"><svg class="ic"><use href="#ic-undo"/></svg></button><button type="button" class="kds-go" onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-check"/></svg>受け渡し完了</button>`;
+            else foot = `<button type="button" class="kds-go" onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-undo"/></svg>呼び出しに戻す</button>`;
             return `<article class="${cls.join(' ')}" data-id="${escHtml(o.id)}">
                 <div class="kds-head">
-                    <span class="kds-no">#${escHtml(String(o.no))}</span>
-                    <span class="kds-st">${KITCHEN_ST[o.st]}</span>
-                    <span class="kds-dine ${o.dine}">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>
+                    <span class="kds-no">${no}</span>
+                    <span class="kds-dine">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>
+                    ${o.channel === 'mobile' ? `<span class="kds-tag">モバイル${o.paid ? '' : '・未払い'}</span>` : ''}
                     <span class="kds-min">${min}分</span>
                 </div>
+                ${o.st !== 'cook' && o.st !== 'draft' ? `<div class="kds-state">${KITCHEN_ST[o.st]}</div>` : ''}
                 ${o.edited ? '<div class="kds-edit">レジで中身が直されました</div>' : ''}
                 <ul class="kds-items">${items}</ul>
-                <div class="kds-foot">
-                    ${KITCHEN_PREV[o.st] && o.st !== 'done' ? `<button type="button" class="kds-undo" onclick="kitchenBack(this)" aria-label="1つ前の状態に戻す"><svg class="ic"><use href="#ic-undo"/></svg></button>` : ''}
-                    <button type="button" class="kds-go" onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-${KITCHEN_GO_ICON[o.st]}"/></svg>${KITCHEN_GO[o.st]}</button>
-                </div>
+                <div class="kds-foot">${foot}</div>
             </article>`;
         }).join('');
         rows.forEach(o => kitchenSeen.add(o.id));
@@ -12810,8 +13317,9 @@
     }
 
     function startOrdersSubscription(code) {
-        if (!IS_KITCHEN || !syncReady || !code || !fbDb) return;
+        if (!isKitchen() || !syncReady || !code || !fbDb) return;
         stopOrdersSubscription();
+        ensureKitchenLetter(code);
         let first = true;
         fbOrdersUnsub = ordersCol(code).onSnapshot(snap => {
             const rows = [];
@@ -12823,16 +13331,18 @@
                 // 共有を始めた時・合流した時、この端末にだけある注文も置き場に送って1つにまとめる
                 first = false;
                 const known = new Set(rows.map(r => r.id));
-                kitchenOrders.forEach(o => { if (!known.has(o.id)) { rows.push(o); pushOrder(o); } });
+                kitchenOrders.forEach(o => { if (!known.has(o.id) && o.st !== 'draft') { rows.push(o); pushOrder(o); } });
             }
             rows.sort((a, b) => a.at - b.at);
             const before = new Set(kitchenOrders.map(o => o.id));
-            const arrived = rows.some(r => r.st === 'new' && !before.has(r.id));
+            // 新しい注文が来たら音で知らせる（会計中のカートが出た時と、モバイルの注文。会計が済んで置き換わった時は鳴らさない）
+            const arrived = rows.some(r => !before.has(r.id) && (r.st === 'draft' || (r.st === 'cook' && !r.fromDraft)) && r.by !== getDeviceId());
             if (JSON.stringify(rows) === JSON.stringify(kitchenOrders)) return;
             kitchenOrders = rows;
             saveData();
             updateNavBadges();
             if (currentView === 'kitchen') { renderKitchen(); if (arrived) kitchenChime(); }
+            if (typeof onOrdersChangedForRegister === 'function') onOrdersChangedForRegister();
         }, err => { console.warn('注文の購読でエラー', err); });
     }
     function stopOrdersSubscription() {
@@ -12845,29 +13355,67 @@
         const a = document.getElementById('dine-take'), b = document.getElementById('dine-eat');
         if (a) a.classList.toggle('on', checkoutDine === 'take');
         if (b) b.classList.toggle('on', checkoutDine === 'eat');
+        publishKitchenDraft();   // キッチンの「会計中」の色も変える
     }
 
     // 店舗モードに合わせて、画面の出し分けを決める（起動時に1回）
     function applyStoreMode() {
+        const k = isKitchen();
         const dine = document.getElementById('co-dine');
-        if (dine) dine.style.display = IS_KITCHEN ? '' : 'none';
+        if (dine) dine.style.display = k ? '' : 'none';
         // 客層を1つも決めていない施設は、客層の欄そのものを出さない
         const type = document.getElementById('co-type');
         if (type) type.style.display = SITE_CFG.customerTypes.length ? '' : 'none';
-        if (!IS_KITCHEN) return;
-        // 予約のタブの場所に「キッチン」を置く（予約は設定から開ける）。
-        // 泰山木などキッチンの無いお店では、この部品そのものを作らない。
+        // ファストフードの時は、予約のタブの場所に「キッチン」を置く（予約は設定から開ける）。
+        // 既製品の販売の時は、この部品そのものを作らない。
         const r = document.getElementById('nav-reservations');
-        if (r && !document.getElementById('nav-kitchen')) {
+        const kn = document.getElementById('nav-kitchen');
+        if (k && r && !kn) {
             r.insertAdjacentHTML('beforebegin', `<button class="nav-item" id="nav-kitchen" onclick="navTo('kitchen')"><svg class="ic nav-ico"><use href="#ic-kitchen"/></svg>キッチン<span class="nav-badge"></span></button>`);
-            r.style.display = 'none';
         }
+        if (!k && kn) kn.remove();
+        if (r) r.style.display = k ? 'none' : '';
+        if (!k && currentView === 'kitchen') showRegister();
+        renderAnalyticsMenu();
+        updateNavBadges();
+    }
+
+    // ---- 設定：店舗モード ----
+    const STORE_MODES = [
+        { id: 'retail', icon: 'store', title: '既製品の販売', sub: 'パン・クッキーなど、その場で渡すお店。レジで会計したら完了です（今までどおり）。' },
+        { id: 'kitchen', icon: 'kitchen', title: 'ファストフード（キッチン・呼び出し）', sub: '作ってから番号で呼ぶお店。会計すると注文がキッチンの画面に出ます。モバイルオーダーも使えます。' }
+    ];
+    function storeModeLabel() { return (STORE_MODES.find(m => m.id === storeMode) || STORE_MODES[0]).title; }
+    function renderStoreModeView() {
+        const box = document.getElementById('mode-body');
+        if (!box) return;
+        const locked = !!currentSession;
+        box.innerHTML = (locked
+            ? `<div class="notice notice-warn"><svg class="ic"><use href="#ic-alert"/></svg><span>営業中は切り替えられません。閉店してから切り替えてください。</span></div>`
+            : `<p class="settings-hint">お店でやることに合わせて選びます。共有する時は、開店した端末のモードに、合流した端末もそろいます。</p>`)
+            + `<div class="mode-list" role="radiogroup" aria-label="店舗モード">` + STORE_MODES.map(m => `
+                <button type="button" class="mode-card${m.id === storeMode ? ' on' : ''}" role="radio" aria-checked="${m.id === storeMode}" ${locked ? 'disabled' : ''} onclick="setStoreMode('${m.id}')">
+                    <svg class="ic"><use href="#ic-${m.icon}"/></svg>
+                    <span class="mc-body"><span class="mc-t">${m.title}</span><span class="mc-s">${m.sub}</span></span>
+                    <span class="mc-chk" aria-hidden="true"></span>
+                </button>`).join('') + `</div>`;
+    }
+    function setStoreMode(m) {
+        if (m !== 'retail' && m !== 'kitchen') return;
+        if (currentSession) { playError(); alert('営業中は店舗モードを切り替えられません。\n閉店してから切り替えてください。'); return; }
+        if (m === storeMode) return;
+        storeMode = m;
+        saveData();
+        applyStoreMode();
+        renderStoreModeView();
+        logEdit(`店舗モードを「${storeModeLabel()}」にした`);
+        showToast(`店舗モードを「${storeModeLabel()}」にしました`);
     }
 
     // ---- 集計：注文と提供時間 ----
     // 注文を受けてから呼び出すまでに何分かかったか、どこで待たせたか（作り始めるまで／作っている間）。
     function buildKitchenStats() {
-        const orders = kitchenOrders.filter(o => o.st !== 'void');
+        const orders = kitchenOrders.filter(o => o.st !== 'void' && o.st !== 'draft');
         if (!orders.length) return null;
         const saleByKey = {};
         salesHistory.forEach(h => { saleByKey[orderKeyOf(h)] = h; });
@@ -12882,9 +13430,8 @@
         };
         const served = orders.filter(o => o.t.ready > 0);
         const total = stat(served.map(o => mins(o.t.ready - o.at)));
-        const queue = stat(orders.filter(o => o.t.cook > 0).map(o => mins(o.t.cook - o.at)));
-        const cook = stat(orders.filter(o => o.t.cook > 0 && o.t.ready > 0).map(o => mins(o.t.ready - o.t.cook)));
         const pickup = stat(orders.filter(o => o.t.ready > 0 && o.t.done > 0).map(o => mins(o.t.done - o.t.ready)));
+        const channel = { pos: orders.filter(o => o.channel !== 'mobile').length, mobile: orders.filter(o => o.channel === 'mobile').length };
         const slow = served.map(o => ({ no: o.no, min: mins(o.t.ready - o.at), items: o.items }))
             .sort((a, b) => b.min - a.min).slice(0, 5);
         // 30分ごとの、呼び出すまでの平均（混んだ時間にどれだけ遅れたか）
@@ -12896,8 +13443,8 @@
             const st = stat(slots[k]);
             return { range: `${hm(d)}〜${hm(e)}`, n: st.n, avg: st.avg, max: st.max };
         });
-        const left = orders.filter(o => o.st === 'new' || o.st === 'cook' || o.st === 'ready').length;
-        return { count: orders.length, dine, total, queue, cook, pickup, slow, bySlot, left };
+        const left = orders.filter(o => o.st === 'cook' || o.st === 'ready').length;
+        return { count: orders.length, dine, total, pickup, channel, slow, bySlot, left };
     }
     function secKitchenHTML() {
         const k = buildKitchenStats();
@@ -12911,11 +13458,17 @@
         </div>`;
         h += `<div class="a-head">どこで待たせたか</div>
         <table class="a-table"><thead><tr><th>区間</th><th class="num">平均</th><th class="num">いちばん長い</th><th class="num">件数</th></tr></thead><tbody>
-            <tr><td>受けてから作り始めるまで</td><td class="num">${k.queue ? m(k.queue.avg) : '—'}</td><td class="num">${k.queue ? m(k.queue.max) : '—'}</td><td class="num">${k.queue ? k.queue.n : 0}</td></tr>
-            <tr><td>作り始めてから呼び出すまで</td><td class="num">${k.cook ? m(k.cook.avg) : '—'}</td><td class="num">${k.cook ? m(k.cook.max) : '—'}</td><td class="num">${k.cook ? k.cook.n : 0}</td></tr>
+            <tr><td>注文から呼び出すまで</td><td class="num">${k.total ? m(k.total.avg) : '—'}</td><td class="num">${k.total ? m(k.total.max) : '—'}</td><td class="num">${k.total ? k.total.n : 0}</td></tr>
             <tr><td>呼び出してから受け取りまで</td><td class="num">${k.pickup ? m(k.pickup.avg) : '—'}</td><td class="num">${k.pickup ? m(k.pickup.max) : '—'}</td><td class="num">${k.pickup ? k.pickup.n : 0}</td></tr>
         </tbody></table>
-        <p class="a-note">「受けてから作り始めるまで」が長い時は作る人が足りず、「作り始めてから呼び出すまで」が長い時は、作る手順か道具が詰まっています。</p>`;
+        <p class="a-note">「呼び出してから受け取りまで」が長い時は、呼び出しに気づかれていないかもしれません。番号の画面を見やすい所に置いてください。</p>`;
+        if (k.channel.mobile) {
+            h += `<div class="a-head">レジとモバイル</div>
+            <table class="a-table"><tbody>
+                <tr><td>レジで受けた注文</td><td class="num">${k.channel.pos}件</td></tr>
+                <tr><td>モバイルオーダー</td><td class="num">${k.channel.mobile}件（${pct(k.channel.mobile)}%）</td></tr>
+            </tbody></table>`;
+        }
         if (k.bySlot.length) {
             h += `<div class="a-head">時間帯ごとの、呼び出すまでの時間</div>
             <table class="a-table"><thead><tr><th>時間帯</th><th class="num">注文</th><th class="num">平均</th><th class="num">いちばん長い</th></tr></thead><tbody>`
@@ -12938,6 +13491,175 @@
         return h;
     }
 
+    // ▼▼▼ モバイルオーダー（ファストフードの時だけ）▼▼▼
+    // お客様がQRコードから order.html を開いて注文する。注文はキッチンの注文の置き場（orders）に
+    // 「モバイル・未払い」で入り、すぐ調理中になる。お支払いは受け取りの時にレジで。
+    // ・受付中／停止中とお知らせは、販売会の文書（events/{コード}.mobile）に置いて全端末でそろえる
+    // ・メニューと品切れは、レジの端末が live/menu に書く（お客様のページはそれだけを読む）
+    let mobileCfg = { on: false, stopMsg: '', note: '' };
+    function normMobileCfg(m) {
+        m = (m && typeof m === 'object') ? m : {};
+        const str = (v, n) => typeof v === 'string' ? v.slice(0, n) : '';
+        return { on: m.on === true, stopMsg: str(m.stopMsg, 200), note: str(m.note, 300) };
+    }
+    function mobileSub() {
+        if (!currentSession) return '開店してから使えます';
+        if (!syncMode) return '共有している時だけ使えます';
+        return mobileCfg.on ? '受付中' : '受付を止めています';
+    }
+    function orderPageUrl(code) {
+        const base = location.href.split('#')[0].split('?')[0].replace(/[^/]*$/, '');
+        return base + 'order.html?e=' + encodeURIComponent(code);
+    }
+    function renderMobileView() {
+        const box = document.getElementById('mobile-body');
+        if (!box) return;
+        if (!currentSession || !syncMode) {
+            box.innerHTML = `<div class="notice notice-warn"><svg class="ic"><use href="#ic-alert"/></svg><span>${!currentSession
+                ? 'モバイルオーダーは、開店してから使えます。'
+                : 'モバイルオーダーは、共有している時だけ使えます（お客様のスマホとつなぐため）。「設定 → 複数端末で使う」から共有を始めてください。'}</span></div>`;
+            return;
+        }
+        const url = orderPageUrl(syncEventCode);
+        box.innerHTML = `
+            <div class="mo-state ${mobileCfg.on ? 'on' : 'off'}">
+                <div class="sw-row">
+                    <div class="sw-text"><b>${mobileCfg.on ? '受付中' : '受付を止めています'}</b><span>${mobileCfg.on ? 'お客様のスマホから注文できます' : '注文の画面に、下のお知らせを出します'}</span></div>
+                    <input type="checkbox" class="ios-switch" id="opt-mobile-on" ${mobileCfg.on ? 'checked' : ''} onchange="setMobileOn(this.checked)">
+                </div>
+            </div>
+            <label class="field-label" for="mo-stop">止めている時のお知らせ</label>
+            <textarea id="mo-stop" maxlength="200" placeholder="ただいま混み合っているため、注文の受付を止めています。店頭でご注文ください。">${escHtml(mobileCfg.stopMsg)}</textarea>
+            <label class="field-label" for="mo-note">注文の画面のいちばん上に出す説明（空なら出しません）</label>
+            <textarea id="mo-note" maxlength="300" placeholder="例：お支払いは受け取りの時にレジでお願いします。">${escHtml(mobileCfg.note)}</textarea>
+            <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="saveMobileTexts()"><svg class="ic"><use href="#ic-check"/></svg>お知らせを保存する</button>
+            <div class="mo-qr">
+                <div class="qr-img">${qrSvg(url)}</div>
+                <div class="mo-url selectable">${escHtml(url)}</div>
+                <div class="btn-stack">
+                    <button class="action-btn btn-secondary" onclick="copyText('${escArg(url)}', '注文ページのアドレスをコピーしました')"><svg class="ic"><use href="#ic-copy"/></svg>アドレスをコピー</button>
+                    <button class="action-btn btn-secondary" onclick="window.open('${escArg(url)}', '_blank')"><svg class="ic"><use href="#ic-link"/></svg>注文ページを開いて確かめる</button>
+                </div>
+            </div>
+            <div class="a-head">注文から受け取りまで</div>
+            <ol class="mo-flow">
+                <li>お客様がこのQRコードを読むと、注文の画面が開きます（アプリは要りません）。</li>
+                <li>商品と「持ち帰り／店内」を選んで注文すると、<b>M1</b> のような番号が出ます。注文はすぐキッチンの画面に「モバイル・未払い」で出ます。</li>
+                <li>お客様の画面には「あと何組」が出て、呼び出すと音と画面で知らせます（画面を開いたままの時）。</li>
+                <li>受け取りの時に、レジの上の<b>「モバイルの注文」</b>から番号を選んで会計します。</li>
+            </ol>`;
+    }
+    function copyText(text, msg) {
+        try { navigator.clipboard.writeText(text).then(() => showToast(msg), () => showToast('コピーできませんでした')); }
+        catch (e) { showToast('コピーできませんでした'); }
+    }
+    function writeMobileCfg(next, logText) {
+        if (!syncMode || !syncEventCode || !fbDb) { playError(); return; }
+        mobileCfg = normMobileCfg(next);
+        fbDb.collection(EVENTS_COL).doc(syncEventCode).set({ mobile: mobileCfg, mobileBy: getDeviceId(), mobileAt: Date.now() }, { merge: true })
+            .catch(e => { console.warn('モバイルオーダーの設定の共有に失敗しました', e); showToast('共有に失敗しました。電波を確かめてください'); });
+        logEdit(logText);
+        publishMobileMenu(true);
+        renderMobileView();
+    }
+    function setMobileOn(on) {
+        writeMobileCfg(Object.assign({}, mobileCfg, { on: !!on }), on ? 'モバイルオーダーの受付を始めた' : 'モバイルオーダーの受付を止めた');
+        showToast(on ? 'モバイルオーダーの受付を始めました' : 'モバイルオーダーの受付を止めました');
+    }
+    function saveMobileTexts() {
+        const v = id => (document.getElementById(id) || {}).value || '';
+        writeMobileCfg(Object.assign({}, mobileCfg, { stopMsg: v('mo-stop').trim(), note: v('mo-note').trim() }), 'モバイルオーダーのお知らせを変更');
+        showToast('お知らせを保存しました');
+    }
+    // メニュー（売っている商品・値段・品切れ）を live/menu に書く。変わった時だけ、まとめて書く
+    let mmTimer = null, mmLast = '';
+    function publishMobileMenu(force) {
+        if (!isKitchen() || !syncMode || !syncEventCode || !fbDb || customerMode) return;
+        if (mmTimer) clearTimeout(mmTimer);
+        mmTimer = setTimeout(() => {
+            mmTimer = null;
+            const items = products.filter(p => p.active !== false && p.price > 0).map(p => {
+                let left = Infinity;
+                if (!isUnlimited(p)) {
+                    left = p.stock;
+                    reservations.forEach(r => (r.items || []).forEach(i => { if (i.name === p.name) left--; }));
+                    kitchenOrders.forEach(o => { if (o.channel === 'mobile' && !o.paid && o.st !== 'void') o.items.forEach(i => { if (i.name === p.name) left -= i.qty; }); });
+                }
+                return { name: p.name, price: p.price, type: p.type || 'sweet', soldOut: left <= 0 };
+            });
+            const doc = { items, cats: CAT_TYPES.map(c => ({ id: c.id, label: c.label })), on: mobileCfg.on };
+            const key = JSON.stringify(doc);
+            if (!force && key === mmLast) return;
+            mmLast = key;
+            doc.at = Date.now();
+            fbDb.collection(EVENTS_COL).doc(syncEventCode).collection('live').doc('menu').set(doc)
+                .catch(e => { mmLast = ''; console.warn('モバイルのメニューの共有に失敗しました', e); });
+        }, force ? 0 : 800);
+    }
+
+    // ---- レジ：まだ払っていないモバイルの注文 ----
+    function unpaidMobileOrders() {
+        return kitchenOrders.filter(o => o.channel === 'mobile' && !o.paid && o.st !== 'void').sort((a, b) => a.at - b.at);
+    }
+    function renderMobilePayBar() {
+        const bar = document.getElementById('mobile-pay-bar');
+        if (!bar) return;
+        const n = isKitchen() && currentSession ? unpaidMobileOrders().length : 0;
+        bar.classList.toggle('show', n > 0);
+        if (n > 0) bar.innerHTML = `<svg class="ic"><use href="#ic-qr"/></svg>モバイルの注文（未払い ${n}件）を会計する`;
+    }
+    function onOrdersChangedForRegister() {
+        renderMobilePayBar();
+        if (currentView === 'settings' && currentSub === 'mobile-pay') renderMobilePayView();
+        publishMobileMenu();
+        // ほかの端末の注文が変わると、残数（まだ払っていないモバイルの分）も変わる
+        if (currentView === 'register') init();
+    }
+    function renderMobilePayView() {
+        const box = document.getElementById('mobile-pay-body');
+        if (!box) return;
+        const list = unpaidMobileOrders();
+        if (!list.length) { box.innerHTML = '<p class="settings-hint">まだ払っていないモバイルの注文はありません。</p>'; return; }
+        box.innerHTML = '<p class="settings-hint">受け取りに来たお客様の番号を選んで「レジで会計する」を押すと、その中身がカートに入り、お会計の窓が開きます。</p>'
+            + list.map(o => `<div class="mp-card dine-${o.dine}" data-id="${escHtml(o.id)}">
+                <div class="mp-head"><span class="mp-no">#${escHtml(String(o.no))}</span><span class="kds-dine" style="background:var(--dine); color:#fff; font-size:12.5px; font-weight:800; padding:2px 9px; border-radius:999px;">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span><span style="font-size:12.5px; color:var(--text-light); font-weight:700;">${KITCHEN_ST[o.st]}</span><span class="mp-total">${yenStr(o.total)}</span></div>
+                <div class="mp-items">${o.items.map(i => `${escHtml(i.name)}×${i.qty}`).join('、')}</div>
+                <div class="mp-acts">
+                    <button class="action-btn btn-checkout" style="flex:1;" onclick="payMobileOrder(this.closest('.mp-card').dataset.id)"><svg class="ic"><use href="#ic-register"/></svg>レジで会計する</button>
+                    <button class="action-btn btn-secondary" onclick="cancelMobileOrder(this.closest('.mp-card').dataset.id)"><svg class="ic"><use href="#ic-x"/></svg>取り消す</button>
+                </div>
+            </div>`).join('');
+    }
+    // モバイルの注文の中身をカートに入れて、お会計の窓を開く
+    function payMobileOrder(id) {
+        const o = kitchenOrders.find(x => x.id === id);
+        if (!o || o.paid || o.st === 'void') { playError(); renderMobilePayView(); return; }
+        if (cart.length && !confirm('いまカートに入っている商品を取り消して、この注文の会計にしますか？')) return;
+        const missing = o.items.filter(i => !products.some(p => p.name === i.name));
+        if (missing.length) { playError(); alert(`次の商品がレジの商品にないため、会計できません：${missing.map(i => i.name).join('、')}`); return; }
+        cart = [];
+        o.items.forEach(i => { const p = products.find(x => x.name === i.name); for (let k = 0; k < i.qty; k++) cart.push({ ...p }); });
+        pendingMobileOrderId = o.id;
+        setCheckoutDine(o.dine);
+        showRegister();
+        init();
+        openCheckout();
+        showToast(`モバイルの注文 ${o.no} をお会計に入れました`);
+    }
+    function markMobileOrderPaid(id, record) {
+        return setKitchenOrder(id, x => { x.paid = true; x.key = orderKeyOf(record); x.total = record.total; });
+    }
+    function cancelMobileOrder(id) {
+        const o = kitchenOrders.find(x => x.id === id);
+        if (!o) return;
+        if (!confirm(`モバイルの注文 ${o.no}（${o.items.map(i => i.name + '×' + i.qty).join('、')}）を取り消しますか？\nお客様の画面にも「取り消されました」と出ます。`)) return;
+        setKitchenOrder(id, x => { x.st = 'void'; x.t.void = Date.now(); });
+        logEdit(`モバイルの注文を取り消した：${o.no}`);
+        renderMobilePayView();
+        renderMobilePayBar();
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     // ---- お客様用の表示：呼び出し番号 ----
     let cdOrdersUnsub = null;
     let cdOrders = [];
@@ -12948,7 +13670,7 @@
     }
     function startCallBoardSubscription(code) {
         stopCallBoardSubscription();
-        if (!IS_KITCHEN || !syncReady || !code || !fbDb) return;
+        if (!isKitchen() || !syncReady || !code || !fbDb) return;
         cdReadySeen = null;
         cdOrdersUnsub = ordersCol(code).onSnapshot(snap => {
             const rows = [];
@@ -12965,7 +13687,7 @@
         const ready = document.getElementById('cdc-ready'), wait = document.getElementById('cdc-wait'), wn = document.getElementById('cdc-wait-n');
         if (!ready || !wait) return;
         const rd = cdOrders.filter(o => o.st === 'ready').sort((a, b) => (a.t.ready || 0) - (b.t.ready || 0));
-        const wt = cdOrders.filter(o => o.st === 'new' || o.st === 'cook').sort((a, b) => a.at - b.at);
+        const wt = cdOrders.filter(o => o.st === 'cook').sort((a, b) => a.at - b.at);
         const seen = cdReadySeen || new Set(rd.map(o => o.id));   // 最初に映した時は鳴らさない
         const fresh = rd.filter(o => !seen.has(o.id));
         ready.innerHTML = rd.length
@@ -13029,6 +13751,7 @@
                 setRule: normSetRule(d.setRule),
                 customerType: d.customerType || '不明',
                 pendingType: !!d.pendingType,
+                ...(d.channel === 'mobile' ? { channel: 'mobile' } : {}),
                 typeEditedLater: !!d.typeEditedLater,
                 edited: !!d.edited,
                 cash: (d.cash != null) ? d.cash : null,
@@ -13085,6 +13808,7 @@
         });
         products.forEach(p => {
             const initial = p.initialStock || 0;
+            if (isUnlimited(p)) { p.stock = 0; p.soldOutTime = null; return; }
             p.stock = initial - (sold[p.name] || 0);
             if (p.stock <= 0 && initial > 0) p.soldOutTime = soldOutAt[p.name] || p.soldOutTime || new Date().toISOString();
             else p.soldOutTime = null;
@@ -13114,6 +13838,7 @@
             setRule: normSetRule(record.setRule) || null,
             customerType: record.customerType,
             pendingType: !!record.pendingType,
+            channel: record.channel === 'mobile' ? 'mobile' : 'pos',
             typeEditedLater: false,
             edited: false,
             cash: record.cash,
