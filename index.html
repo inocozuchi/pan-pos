@@ -619,6 +619,13 @@
         /* セット割の行（カート・お会計・レシート・お客様の画面で同じ色） */
         .disc-line { color: var(--positive-ink); font-weight: bold; }
         .disc-line .ic { width: 15px; height: 15px; vertical-align: -2px; margin-right: 4px; }
+        /* 空のカートに出す「いまのセット割」 */
+        .cart-set-hint { display: inline-flex; align-items: center; gap: 5px; margin-top: 14px; padding: 5px 11px;
+            border-radius: var(--r-pill); background: var(--positive); color: var(--positive-ink); font-size: 13px; font-weight: bold; line-height: 1.4; }
+        .cart-set-hint .ic { width: 14px; height: 14px; }
+        .set-amount-row { display: flex; align-items: center; gap: 8px; }
+        .set-amount-row input { flex: 1; min-width: 0; }
+        .set-amount-row span { font-weight: bold; white-space: nowrap; }
 
         footer {
             min-width: 0;
@@ -1267,7 +1274,8 @@
         }
         .closed-card .cc-title { font-size: 21px; font-weight: bold; color: var(--text-main); }
         .closed-card .cc-sub { font-size: 14px; color: var(--text-light); line-height: 1.7; }
-        .closed-card .cc-steps { text-align: left; font-size: 13px; color: var(--text-light); line-height: 1.9; margin: 2px 0 6px; }
+        .closed-card .cc-btns { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 320px; margin-top: 4px; }
+        .closed-card .cc-btns .action-btn { width: 100%; margin: 0; }
 
         .closed-card .cc-icon { width: 44px; height: 44px; color: var(--accent); }
 
@@ -1394,6 +1402,67 @@
             }
             .menu-row > .ic:first-child { width: 18px; height: 18px; }
         }
+
+        /* はじめの画面：「新しく開店する」と「合流する」を並べる2枚のカード */
+        .start-choices { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        @media (min-width: 600px) { .start-choices { grid-template-columns: 1fr 1fr; gap: 12px; } }
+        .start-card {
+            position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
+            width: 100%; text-align: left; border: none; cursor: pointer; font-family: inherit; color: var(--text-main);
+            background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-card);
+            padding: 18px 18px 16px; min-height: 150px;
+            transition: background .15s ease, transform .12s ease, box-shadow .15s ease;
+        }
+        .start-card:active { background: var(--accent-soft); transform: scale(0.985); box-shadow: none; }
+        @media (hover: hover) { .start-card:hover { background: var(--sunken); } }
+        .start-card .sc-ic {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 44px; height: 44px; border-radius: 13px; background: var(--accent-soft); color: var(--accent-ink);
+        }
+        .start-card .sc-ic .ic { width: 24px; height: 24px; }
+        .start-card .sc-t { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
+        .start-card .sc-s { font-size: 13px; color: var(--text-light); line-height: 1.55; }
+        .start-card .sc-badge {
+            position: absolute; top: 16px; right: 16px;
+            font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: var(--r-pill);
+            background: var(--positive); color: var(--positive-ink);
+        }
+        @media (max-width: 599px) {
+            .start-card { min-height: 0; padding: 14px 16px; flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 12px; row-gap: 2px; }
+            .start-card .sc-ic { width: 40px; height: 40px; flex: 0 0 auto; }
+            .start-card .sc-t { font-size: 16.5px; flex: 1; min-width: 0; }
+            .start-card .sc-s { flex-basis: 100%; font-size: 12.5px; padding-left: 52px; }
+            .start-card .sc-badge { position: static; margin-left: 52px; }
+        }
+        /* 2つから1つを選ぶ並び（明るさの選び方と同じ形） */
+        .seg-pick { display: flex; gap: 2px; background: var(--btn-neutral); border-radius: 12px; padding: 3px; margin: 6px 0 4px; }
+        .seg-pick button {
+            flex: 1; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            border: none; border-radius: 9px; background: none; cursor: pointer; font-family: inherit;
+            padding: 10px 4px; min-height: 44px; font-size: 13.5px; font-weight: 600; color: var(--text-light); white-space: nowrap;
+        }
+        .seg-pick button .ic { width: 18px; height: 18px; }
+        .seg-pick button.on {
+            background: var(--surface); color: var(--text-main); font-weight: 700;
+            box-shadow: 0 1px 3px rgba(28,29,34,.14), 0 0 0 .5px rgba(28,29,34,.04);
+        }
+        .seg-pick button.on .ic { color: var(--accent-ink); }
+        :root[data-theme="dark"] .seg-pick button.on { box-shadow: 0 0 0 1px rgba(255,255,255,.11), 0 2px 6px rgba(0,0,0,.5); }
+        /* 見出しと、その右の小さな文字ボタン */
+        .list-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+        .list-head .field-label { margin-bottom: 6px; }
+        .link-btn {
+            display: inline-flex; align-items: center; gap: 4px; border: none; background: none; cursor: pointer;
+            font-family: inherit; font-size: 13px; font-weight: 700; color: var(--accent-ink); padding: 6px 2px;
+        }
+        .link-btn .ic { width: 15px; height: 15px; }
+        /* 共有コードを大きく見せる（ほかの端末で打ち込む時に読み上げやすく） */
+        .share-code-big {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            background: var(--display-face); color: #fff; border-radius: var(--r-md); padding: 14px 18px; margin: 10px 0 4px;
+        }
+        .share-code-big .k { font-size: 12.5px; color: var(--on-display-sub); line-height: 1.4; }
+        .share-code-big .v { font-size: 34px; font-weight: 800; letter-spacing: .08em; font-variant-numeric: tabular-nums; user-select: all; -webkit-user-select: all; }
 
         /* 集計のメニュー（項目カード） */
         .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -2318,7 +2387,7 @@
         </div>
         <!-- 営業の開始／終了はいつでも押せるよう、ヘッダー右に固定する -->
         <button class="hdr-btn" id="header-session-btn" onclick="headerSessionAction()">
-            <svg class="ic"><use id="header-session-icon" href="#ic-store"/></svg><span id="header-session-label">開店する</span>
+            <svg class="ic"><use id="header-session-icon" href="#ic-store"/></svg><span id="header-session-label">開店・合流</span>
         </button>
     </div>
 </header>
@@ -2335,11 +2404,15 @@
             <div class="closed-card">
                 <svg class="ic cc-icon"><use href="#ic-store"/></svg>
                 <div class="cc-title">まだ開店していません</div>
-                <div class="cc-sub">開店すると商品ボタンが押せるようになり、会計を始められます。</div>
-                <div class="cc-steps">① 右上の「開店する」から、販売会の名前と仕入れ数を決める<br>② 商品をタップしてお会計<br>③ 閉店すると売上が自動で集計されます</div>
-                <button class="action-btn btn-checkout" style="max-width:300px; width:100%; margin-top:2px;" onclick="headerSessionAction()">
-                    <svg class="ic"><use href="#ic-store"/></svg>開店する
-                </button>
+                <div class="cc-sub">この端末で新しく始めるか、ほかの端末で開いている販売会に合流します。</div>
+                <div class="cc-btns">
+                    <button class="action-btn btn-checkout" onclick="headerSessionAction(); openNewSetup();">
+                        <svg class="ic"><use href="#ic-store"/></svg>新しく開店する
+                    </button>
+                    <button class="action-btn btn-accent-outline" onclick="headerSessionAction(); openJoinSetup();">
+                        <svg class="ic"><use href="#ic-link"/></svg>開いている販売会に合流する
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -2488,6 +2561,7 @@
             <!-- 複数端末の共有 -->
             <div class="sub-view" id="sub-sync" style="display:none;">
                 <div id="sync-state-box" class="notice"></div>
+                <div id="sync-code-wrap"></div>
                 <div id="sync-actions" class="btn-stack"></div>
                 <div id="sync-health" class="notice" style="display:none; margin-top:10px;"></div>
                 <div id="sync-devices-wrap" style="display:none;">
@@ -2510,27 +2584,26 @@
                 <label class="field-label sec">共有されるもの</label>
                 <div class="notice">
                     <svg class="ic"><use href="#ic-link"/></svg>
-                    <span>会計・在庫・商品・販売会の名前・売上目標・予約が<b>全部の端末で同じ</b>に。どこから閉じても<b>いっしょに閉店</b>します。<br>
-                    端末ごとなのは、領収書の発行者名と画面まわりの設定だけ。</span>
+                    <span>会計・在庫・商品・セット割・目標・予約は<b>全端末で同じ</b>。どこから閉じても<b>いっしょに閉店</b>し、コードの中身は片づけます。</span>
                 </div>
             </div>
 
             <!-- 共有コードの追加（入力画面） -->
             <div class="sub-view" id="sub-sync-add" style="display:none;">
-                <p class="settings-hint">全部の端末で<b>同じコード</b>を入れてください。開店前でも営業中でも入れられます。</p>
+                <p class="settings-hint">ほかの端末で開いている販売会に、<b>この端末の会計ごと</b>合流します。</p>
                 <div id="live-live-wrap" style="display:none;">
                     <label class="field-label">いま開いている販売会</label>
                     <div class="menu-list" id="live-live-list"></div>
                     <p class="settings-hint" style="margin-top:4px;">押すだけで合流します（コードを入れなくてもかまいません）。</p>
                 </div>
-                <label class="field-label">共有コード</label>
-                <input type="text" id="sync-live-code-input" placeholder="例: pansale-1101" autocomplete="off" autocapitalize="characters" oninput="peekEventCode('live')" onkeydown="if(event.key==='Enter'){event.preventDefault();startSyncMidSession();}">
+                <label class="field-label">コードで合流する</label>
+                <input type="text" id="sync-live-code-input" placeholder="例: 4821" autocomplete="off" autocapitalize="characters" oninput="peekEventCode('live')" onkeydown="if(event.key==='Enter'){event.preventDefault();startSyncMidSession();}">
                 <!-- 開店の準備の画面と同じ下調べを出す。どちらの画面から入れても、
                      「新しく始める／合流する／もう一度使う」の言い方をそろえる。 -->
                 <div id="live-sync-peek" class="notice" style="margin-top:10px; display:none;"></div>
                 <label class="field-label sec">この端末の役割</label>
                 <div class="btn-stack">
-                    <button class="action-btn btn-checkout" id="live-sync-ok" style="margin-top:0;" onclick="startSyncMidSession()"><svg class="ic"><use href="#ic-register"/></svg>この端末でも会計する</button>
+                    <button class="action-btn btn-checkout" id="live-sync-ok" style="margin-top:0;" onclick="startSyncMidSession()" disabled><svg class="ic"><use href="#ic-link"/></svg>合流する</button>
                     <button class="action-btn btn-secondary" id="live-sync-cd" onclick="startCustomerModeFromSettings()"><svg class="ic"><use href="#ic-users"/></svg>お客様用の金額表示にする</button>
                 </div>
                 <p class="settings-hint" style="margin-top:10px;">お客様用にすると、この端末では<b>会計できません</b>（映すだけ）。</p>
@@ -2570,12 +2643,21 @@
             <!-- 画面表示 -->
             <!-- 売上目標（任意）。開店時にも設定でき、あとから変えられる -->
             <div class="sub-view" id="sub-goal" style="display:none;">
-                <!-- セット割：ドリンク＋クッキーを同じ会計で買うと10円引き（1会計10円まで） -->
+                <!-- セット割：決めた種類の組み合わせを同じ会計で買うと、決めた額を引く（1会計1回まで） -->
+                <div id="set-discount-state" class="notice" style="margin:0 0 10px;"></div>
                 <div class="sw-row">
-                    <div class="sw-text"><b>セット割</b><span>コーヒー＋クッキーで10円引き</span></div>
+                    <div class="sw-text"><b>セット割をする</b><span>オフにすると、どの会計も定価のまま</span></div>
                     <input type="checkbox" class="ios-switch" id="opt-set-discount" onchange="toggleSetDiscount(this.checked)">
                 </div>
-                <div id="set-discount-state" class="notice" style="margin:8px 0 18px;"></div>
+                <label class="field-label">組み合わせる種類（2つ以上）</label>
+                <div class="cat-picker" id="set-rule-cats" role="group" aria-label="セットにする種類"></div>
+                <p class="settings-hint" id="set-rule-hint" style="margin-top:4px;"></p>
+                <label class="field-label">割引額（1会計あたり）</label>
+                <div class="set-amount-row">
+                    <input type="number" id="set-rule-amount" inputmode="numeric" min="1" max="999" step="1" placeholder="10" onkeydown="if(event.key==='Enter'){event.preventDefault();saveSetRule();}">
+                    <span>円引き</span>
+                </div>
+                <button class="action-btn btn-secondary" style="width:100%; margin:10px 0 20px;" onclick="saveSetRule()"><svg class="ic"><use href="#ic-check"/></svg>このセット割にする</button>
                 <label class="field-label">この回の売上目標（円）</label>
                 <input type="number" id="sales-goal-input" inputmode="numeric" placeholder="例: 50000" min="0" step="1000">
                 <p class="settings-hint">売上集計に達成率と、グラフの目標線が出ます。空欄か0で目標なし。</p>
@@ -2646,17 +2728,55 @@
                         <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="reopenLastSession()"><svg class="ic"><use href="#ic-undo"/></svg>直前の販売会を再開する</button>
                     </div>
                 </div>
-                <!-- いま他の端末で開いている販売会を、自動で探して出す。
-                     コードを打たなくても、押すだけで合流できるようにするため。
-                     見つからない時は何も出さない（ふだんの開店の邪魔をしない）。 -->
-                <div id="open-live-wrap" style="display:none;">
-                    <label class="field-label" style="margin-top:0;">いま開いている販売会</label>
-                    <div class="menu-list" id="open-live-list"></div>
-                    <p class="settings-hint" style="margin-top:4px;">押すだけで合流します（コードを入れなくてもかまいません）。</p>
-                    <label class="field-label">新しく開店する</label>
+                <!-- はじめの画面は「開店」と「合流」の2つだけ。
+                     合流は開店ではない（名前も商品も決めない）ので、入口から分けて並べる。 -->
+                <div class="start-choices">
+                    <button class="start-card" id="start-new" onclick="openNewSetup()">
+                        <span class="sc-ic"><svg class="ic"><use href="#ic-store"/></svg></span>
+                        <span class="sc-t">新しく開店する</span>
+                        <span class="sc-s">この端末で販売会を始めます。<br>名前と商品・仕入れ数を決めます。</span>
+                    </button>
+                    <button class="start-card" id="start-join" onclick="openJoinSetup()">
+                        <span class="sc-ic"><svg class="ic"><use href="#ic-link"/></svg></span>
+                        <span class="sc-t">開いている販売会に合流する</span>
+                        <span class="sc-s">ほかの端末で営業中の販売会に入ります。<br>準備はいりません。</span>
+                        <span class="sc-badge" id="start-join-badge" style="display:none;"></span>
+                    </button>
                 </div>
+                <div class="menu-list" id="start-extra-list" style="margin-top:14px;"></div>
+            </div>
+
+            <!-- 新しく開店する -->
+            <div class="sub-view" id="sub-open-new" style="display:none;">
                 <div class="menu-list" id="open-menu-list"></div>
+                <!-- ほかの端末と共有するか。共有コードは自動で決まるので、打たなくてよい -->
+                <div class="sw-row" id="open-share-row" style="display:none; margin-top:12px;">
+                    <div class="sw-text"><b>ほかの端末と共有する</b><span id="open-share-sub">共有コードは自動で決まります</span></div>
+                    <input type="checkbox" class="ios-switch" id="open-share-switch" onchange="setShareOnOpen(this.checked)">
+                </div>
+                <!-- 引き継ぎ・テスト用：決まった共有コードで開く時だけ値が入る（画面には出さない） -->
+                <input type="hidden" id="sync-event-code-input" value="">
                 <button class="action-btn btn-checkout" id="open-primary-btn" style="width:100%; margin-top:14px;" onclick="startSession()"><svg class="ic"><use href="#ic-store"/></svg>この内容で開店する</button>
+            </div>
+
+            <!-- 開いている販売会に合流する -->
+            <div class="sub-view" id="sub-open-join" style="display:none;">
+                <label class="field-label" style="margin-top:0;">この端末の使い方</label>
+                <div class="seg-pick" id="join-role" role="group" aria-label="この端末の使い方">
+                    <button type="button" id="join-role-register" class="on" onclick="setJoinRole('register')"><svg class="ic"><use href="#ic-register"/></svg>レジとして使う</button>
+                    <button type="button" id="join-role-display" onclick="setJoinRole('display')"><svg class="ic"><use href="#ic-users"/></svg>お客様用の表示</button>
+                </div>
+                <div class="list-head">
+                    <label class="field-label">いま開いている販売会</label>
+                    <button class="link-btn" onclick="loadOpenEvents(true)"><svg class="ic"><use href="#ic-refresh"/></svg>探し直す</button>
+                </div>
+                <div class="menu-list" id="open-live-list"></div>
+                <div id="open-live-empty" class="notice" style="display:none;"></div>
+                <label class="field-label sec">コードで合流する</label>
+                <input type="text" id="join-code-input" placeholder="例: 4821" inputmode="text" autocomplete="off" autocapitalize="characters" oninput="peekEventCode('join')" onkeydown="if(event.key==='Enter'){event.preventDefault();joinByTypedCode();}">
+                <div id="join-peek" class="notice" style="margin-top:10px; display:none;"></div>
+                <button class="action-btn btn-secondary" id="join-code-btn" style="width:100%; margin-top:10px;" onclick="joinByTypedCode()" disabled><svg class="ic"><use href="#ic-link"/></svg>合流する</button>
+                <p class="settings-hint">コードは、開いている端末の「設定 → 複数端末で使う」に大きく出ています。</p>
             </div>
 
             <!-- 販売会の名前 -->
@@ -2675,19 +2795,6 @@
                 <!-- 直したそばから控えているので、この一押しは「決めて戻る」だけ。
                      何も押さずに戻っても同じだが、決め終わりが分かる場所が要る。 -->
                 <button class="action-btn btn-checkout" style="width:100%; margin-top:12px;" onclick="confirmOpenStock()"><svg class="ic"><use href="#ic-check"/></svg>この商品と仕入れ数にする</button>
-            </div>
-
-            <!-- 開店時の共有コード -->
-            <div class="sub-view" id="sub-open-sync" style="display:none;">
-                <p class="settings-hint">全部の端末で<b>同じコード</b>を入れると、売上をリアルタイムで共有します。1台だけなら<b>空欄のまま</b>で。</p>
-                <label class="field-label">共有コード（任意）</label>
-                <input type="text" id="sync-event-code-input" placeholder="例: pansale-1101" oninput="peekEventCode('open')" onkeydown="if(event.key==='Enter'){event.preventDefault();confirmOpenSyncCode();}">
-                <!-- 入れたコードが「すでに開店中の販売会」かどうかを、その場で調べて出す。
-                     新しく開店するのか、動いている販売会に参加するのかは
-                     まったく違う行いなので、押す前に分かるようにする。 -->
-                <div id="open-sync-peek" class="notice" style="margin-top:10px; display:none;"></div>
-                <button class="action-btn btn-checkout" id="open-sync-ok" style="width:100%; margin-top:12px;" onclick="confirmOpenSyncCode()"><svg class="ic"><use href="#ic-check"/></svg>このコードを使う</button>
-                <div id="sync-status" class="settings-hint" style="margin-top:10px;"></div>
             </div>
 
             <!-- データを取り込んで始める -->
@@ -2819,8 +2926,8 @@
     <div class="cd-main" id="cd-main">
         <div class="cd-idle" id="cd-idle">
             <svg class="ic"><use href="#ic-basket"/></svg>
-            <div class="cd-idle-t">いらっしゃいませ</div>
-            <div class="cd-idle-s">お会計の金額がこちらに出ます</div>
+            <div class="cd-idle-t" id="cd-idle-t">いらっしゃいませ</div>
+            <div class="cd-idle-s" id="cd-idle-s">お会計の金額がこちらに出ます</div>
         </div>
         <div class="cd-order" id="cd-order" style="display:none;">
             <div class="cd-items" id="cd-items"></div>
@@ -2984,20 +3091,23 @@
     let lastCustomerType = null;   // 直前に選ばれた客属性（保存データの互換のため保持）
     let salesGoal = 0;             // その回の売上目標（円）。0 なら決めていない
     // ▼ セット割 ▼
-    // ドリンク（コーヒー）とクッキーを同じ会計で買うと10円引き。
-    // 【上限】1会計につき10円まで。2セット買っても10円（1会計1回きり）。
-    // 【オンオフ】設定の「売上目標・セット割」から切り替える。共有中は全端末でそろえる。
+    // 決めた「種類の組み合わせ」を同じ会計で買うと、決めた額だけ引く（初期設定：クッキー＋ドリンクで10円引き）。
+    // 【上限】1会計につき1回だけ。2セット買っても引くのは1回ぶん。
+    // 【設定】設定の「セット割・売上目標」で、オン・オフ／組み合わせ／割引額を変えられる。共有中は全端末でそろえる。
     // 割引の決まりは setDiscountFor() の1か所にだけ書く。
     // 会計・カート・予約・会計記録の修正・お客様用の表示は、みなここを通す。
-    const SET_DISCOUNT = { amount: 10, label: 'セット割', needs: ['drink', 'savory'] };
+    const SET_LABEL = 'セット割';
+    const SET_DEFAULT = { needs: ['savory', 'drink'], amount: 10 };
+    const SET_MAX_AMOUNT = 999;
     let setDiscountOn = true;
+    let setRule = { needs: SET_DEFAULT.needs.slice(), amount: SET_DEFAULT.amount };
     // 会計の二重記録を防ぐための通し番号。お会計画面を開くたびに +1 され、
     // 記録が成立した番号は checkoutRecordedToken に控えて、同じ番号では二度と記録しない。
     let checkoutOpenToken = 0;
     let checkoutRecordedToken = -1;
     // いま開いているお会計画面のセット割（開いた時に決め、記録にそのまま残す）
     let checkoutDiscount = 0;
-    let checkoutSetDiscOn = false;
+    let checkoutSetRule = null;
 
     // ▼ 複数端末リアルタイム同期（Cloud Firestore）用の状態 ▼
     // syncMode が true の間だけ、salesHistory は Firestore（events/{code}/sales）を正とする。
@@ -3332,7 +3442,7 @@
             total -= disc;
             list.innerHTML += `
                 <div class="cart-item disc-line" id="cart-disc" style="border-left:6px solid transparent; padding-left:8px;">
-                    <span><svg class="ic"><use href="#ic-tag"/></svg>${SET_DISCOUNT.label}</span>
+                    <span><svg class="ic"><use href="#ic-tag"/></svg>${SET_LABEL}</span>
                     <span class="num">−¥${disc}</span>
                 </div>`;
         }
@@ -3343,7 +3453,10 @@
             const repeatBtn = last
                 ? `<button class="action-btn btn-accent-outline" style="display:block; margin:16px auto 0; max-width:230px; font-size:14px; padding:10px 14px; line-height:1.45;" onclick="repeatLastOrder()"><svg class="ic"><use href="#ic-refresh"/></svg>直前と同じ内容<br><span style="font-size:12px; font-weight:normal;">${last.text}</span></button>`
                 : '';
-            list.innerHTML = `<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><svg class="ic ce-icon" style="width:34px; height:34px; color:var(--line-strong);"><use href="#ic-basket"/></svg><br>商品をタップして<br>お会計に追加してください${repeatBtn}</div>`;
+            // いまのセット割を1行で見せておく（何を組み合わせると安くなるか、レジで迷わないように）
+            const rule = currentSession ? currentSetRule() : null;
+            const setHint = rule ? `<br><span class="cart-set-hint" id="cart-set-hint"><svg class="ic"><use href="#ic-tag"/></svg>${SET_LABEL}：${escHtml(setRuleText(rule))}</span>` : '';
+            list.innerHTML = `<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><svg class="ic ce-icon" style="width:34px; height:34px; color:var(--line-strong);"><use href="#ic-basket"/></svg><br>商品をタップして<br>お会計に追加してください${setHint}${repeatBtn}</div>`;
         }
 
         const cartTotalEl = document.getElementById('cart-total');
@@ -3396,7 +3509,7 @@
         if (discount > 0) {
             html += `
                 <li class="receipt-item disc-line" id="checkout-disc" style="border-left:5px solid transparent; padding-left:8px;">
-                    <span><svg class="ic"><use href="#ic-tag"/></svg>${SET_DISCOUNT.label}</span>
+                    <span><svg class="ic"><use href="#ic-tag"/></svg>${SET_LABEL}</span>
                     <span class="num">−¥${discount}</span>
                 </li>`;
         }
@@ -3406,15 +3519,15 @@
     function openCheckout(reservationId = null) {
         let itemsToProcess = cart;
         processingReservationId = reservationId;
-        // セット割をするかどうか。ふだんはいまの設定、予約は予約した時の設定に従う
+        // 使うセット割。ふだんはいまの設定、予約は予約した時の設定に従う
         // （予約の時に伝えた金額と、受け取りの時の金額が食い違わないように）
-        let discOn = setDiscountOn;
+        let rule = currentSetRule();
 
         if (reservationId !== null) {
             const res = reservations.find(r => r.id === reservationId);
             if (!res) { processingReservationId = null; return; } // 予約が既に清算/取消済みなら何もしない
             itemsToProcess = res.items;
-            if (typeof res.setDisc === 'boolean') discOn = res.setDisc;
+            if (res.setRule !== undefined || typeof res.setDisc === 'boolean') rule = ruleOfRecord(res);
         } else if (cart.length === 0) {
             playError(); // 空のカートで「会計へ進む」を押した時のフィードバック
             return;
@@ -3425,8 +3538,8 @@
         checkoutOpenToken++;
 
         // 割引はこの画面を開いた時に1回だけ決め、記録まで同じ値を使う
-        checkoutDiscount = setDiscountFor(itemsToProcess, discOn);
-        checkoutSetDiscOn = discOn;
+        checkoutDiscount = setDiscountFor(itemsToProcess, rule);
+        checkoutSetRule = rule;
         const total = Math.max(0, itemsGross(itemsToProcess) - checkoutDiscount);
         document.getElementById('checkout-receipt').innerHTML = generateReceiptHTML(itemsToProcess, checkoutDiscount);
         document.getElementById('modal-total').innerText = total;
@@ -3667,7 +3780,8 @@
             total: total,
             // セット割：引いた額と、その会計でセット割をしていたか（あとで明細を直した時に使う）
             discount: checkoutDiscount,
-            setDisc: checkoutSetDiscOn,
+            setDisc: !!checkoutSetRule,
+            setRule: checkoutSetRule,
             customerType: selectedType,
             pendingType: pending,
             cash: cash,
@@ -3715,7 +3829,8 @@
         if (name) {
             // 予約した時のセット割を覚えておき、受け取りの会計でも同じ金額にする
             const total = itemsNet(cart);
-            const res = { id: newReservationId(), name: name, items: [...cart], total: total, setDisc: setDiscountOn };
+            const rule = currentSetRule();
+            const res = { id: newReservationId(), name: name, items: [...cart], total: total, setDisc: !!rule, setRule: rule };
             reservations.push(res);
             syncPushReservation(res);   // 他の端末でも受け取れるようにする
             cart = []; 
@@ -3908,7 +4023,7 @@
             body: `
                 <p>レジ当番がすることは、<b>開店 → 会計（お客様ごとに繰り返し）→ 閉店</b>の3つだけです。</p>
                 <div class="man-flow">
-                    <div class="fb">① 開店する<small>1日のはじめに1回</small></div>
+                    <div class="fb">① 開店・合流<small>1日のはじめに1回</small></div>
                     <div class="ar">→</div>
                     <div class="fb">② 会計する<small>お客様ごとに</small></div>
                     <div class="ar">→</div>
@@ -3929,7 +4044,7 @@
                 <h4>画面のいちばん上</h4>
                 <ul class="man-list">
                     <li>左に<b>いまの状態</b>が出ます（「営業中: 販売会の名前」または「閉店中」）。</li>
-                    <li>右の<b>「開店する」／「閉店する」</b>が、営業を始める・終えるボタンです。</li>
+                    <li>右の<b>「開店・合流」／「閉店する」</b>が、営業を始める・終えるボタンです。</li>
                 </ul>
                 <h4>画面のいちばん下（5つのボタン）</h4>
                 <table class="man-qa">
@@ -3949,18 +4064,34 @@
                 </div>`
         },
         {
-            id: 'open', icon: 'store', title: '① 開店する', sub: '1日のはじめに1回だけ',
+            id: 'open', icon: 'store', title: '① 開店・合流', sub: '1日のはじめに1回だけ',
             body: `
+                <p>画面の右上の<b>「開店・合流」</b>を押すと、2つの入口が並びます。<b>どちらか1つ</b>を選びます。</p>
+                <table class="man-qa">
+                    <thead><tr><th>入口</th><th>こんな時</th></tr></thead>
+                    <tbody>
+                        <tr><td><b>新しく開店する</b></td><td>その日の<b>1台目</b>。この端末で販売会を始めます。</td></tr>
+                        <tr><td><b>開いている販売会に合流する</b></td><td><b>2台目から</b>。ほかの端末がもう開いている販売会に入ります。準備はいりません。</td></tr>
+                    </tbody>
+                </table>
+                <h4>新しく開店する（1台目）</h4>
                 <ol class="man-steps">
-                    <li>画面の右上の<b>「開店する」</b>を押します。</li>
+                    <li><b>「新しく開店する」</b>を押します。</li>
                     <li><b>「販売会の名前」</b>を確認します（例：11月1日 パン販売）。あとで集計を見分けるための名前です。直したら<b>「この名前にする」</b>を押すと前の画面に戻ります。</li>
                     <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。入れ終えたら<b>「この商品と仕入れ数にする」</b>を押します。</li>
-                    <li>複数の端末で同時に会計する場合だけ、<b>「複数端末で共有」</b>に責任者から指定された共有コードを入れて<b>「このコードで共有する」</b>を押します。前の回と同じコードで構いません。1台だけなら空欄のままで構いません。<br>※他の端末がもう開いているなら、この画面の上に出る<b>「いま開いている販売会」</b>を押すだけで合流できます（2〜5は不要です）。</li>
+                    <li>ほかの端末でも会計するなら、<b>「ほかの端末と共有する」</b>をオンのままにします（最初からオンです）。<b>共有コードは自動で決まる</b>ので、打つ必要はありません。1台だけならオフにします。</li>
                     <li>いちばん下の<b>「この内容で開店する」</b>を押して完了です。</li>
                 </ol>
+                <h4>開いている販売会に合流する（2台目から）</h4>
+                <ol class="man-steps">
+                    <li><b>「開いている販売会に合流する」</b>を押します。</li>
+                    <li><b>「いま開いている販売会」</b>の一覧から、入りたい販売会を<b>押すだけ</b>です。名前・商品・それまでの会計は、開いている側のものがそのまま出ます。</li>
+                </ol>
+                <p>一覧に出ない時は、開いている端末の<b>「設定 → 複数端末で使う」</b>に大きく出ている<b>4けたの共有コード</b>を、<b>「コードで合流する」</b>に入れてください。合流できるのは<b>いま開いている販売会だけ</b>です（閉店した販売会や、間違ったコードには入りません。合流の操作で新しい販売会ができてしまうこともありません）。</p>
+                <p>お客様に金額を見せる端末にする時は、一覧を押す前に<b>「この端末の使い方」</b>で<b>「お客様用の表示」</b>を選びます。</p>
                 <div class="man-box">
                     <div class="man-box-h">どの画面も、下のボタンで決まります</div>
-                    <p>名前・商品・共有コードのどの画面にも、いちばん下に<b>決めるためのボタン</b>があります。押すと前の画面に戻り、決めた内容がその場に出ます。左上の<b>「戻る」</b>でも同じように残りますが、迷ったときは下のボタンを押してください。</p>
+                    <p>名前・商品のどの画面にも、いちばん下に<b>決めるためのボタン</b>があります。押すと前の画面に戻り、決めた内容がその場に出ます。左上の<b>「戻る」</b>でも同じように残りますが、迷ったときは下のボタンを押してください。</p>
                     <p><b>画面の左端から右へなぞっても、前の画面に戻れます</b>（iPhone・iPad と同じ手つきです）。</p>
                 </div>
                 <div class="man-box">
@@ -4009,13 +4140,15 @@
                     <p>お客様が<b>「40円あります」</b>と小銭を先に出したときは、<b>¥1,040</b> を押せばそのまま合います。探して打ち込む必要はありません。</p>
                 </div>
                 <div class="man-box tip">
-                    <div class="man-box-h">セット割（コーヒー＋クッキーで10円引き）</div>
-                    <p><b>コーヒー</b>と<b>クッキー</b>を同じ会計で買うと、<b>自動で10円引き</b>になります。カートとお会計の明細に<b>「セット割 −¥10」</b>の行が出て、合計はもう引いた後の額です。何もしなくて大丈夫です。</p>
+                    <div class="man-box-h">セット割（初期設定：クッキー＋ドリンクで10円引き）</div>
+                    <p>決めた<b>種類の組み合わせ</b>を同じ会計で買うと、<b>自動で割り引き</b>になります。カートとお会計の明細に<b>「セット割 −¥10」</b>の行が出て、合計はもう引いた後の額です。何もしなくて大丈夫です。</p>
+                    <p><b>いまのセット割</b>は、空のカートの下（「セット割：クッキー＋ドリンクで10円引き」）と、<b>「設定 → セット割・売上目標」</b>に出ています。</p>
                     <ul class="man-list">
-                        <li><b>2セット以上買っても、1会計10円まで</b>です（コーヒー2杯＋クッキー2枚でも10円引き）。</li>
-                        <li>パンがいっしょに入っていても、コーヒーとクッキーがあれば割引になります。</li>
-                        <li>やめる時・また始める時は<b>「設定 → セット割・売上目標」</b>のスイッチで切り替えます。共有中は全部の端末がいっしょに切り替わります。</li>
-                        <li>予約は、<b>予約を受けた時の金額</b>のまま清算されます。</li>
+                        <li><b>2セット以上買っても、引くのは1会計1回ぶん</b>です（コーヒー2杯＋クッキー2枚でも10円引き）。</li>
+                        <li>ほかの種類の商品がいっしょに入っていても、組み合わせがそろえば割引になります。</li>
+                        <li><b>組み合わせと割引額は変えられます。</b>「設定 → セット割・売上目標」で、組み合わせる種類（パン・クッキー・ドリンクから2つ以上）を押し、割引額（1〜999円）を入れて<b>「このセット割にする」</b>を押します。押すまでは変わりません。</li>
+                        <li>やめる時・また始める時は、同じ画面の<b>「セット割をする」</b>のスイッチで切り替えます。共有中は全部の端末がいっしょに変わります。</li>
+                        <li>会計した後で決まりを変えても、<b>済んだ会計の金額は変わりません</b>。会計記録の修正も、予約の清算も、<b>その時の決まり</b>のまま計算されます。</li>
                     </ul>
                 </div>
                 <div class="man-box warn">
@@ -4081,30 +4214,26 @@
         {
             id: 'sync', icon: 'link', title: '複数の端末で同時に会計する', sub: '2台以上でさばくとき',
             body: `
-                <p>同じ<b>共有コード</b>を入れた端末どうしで、売上も在庫も自動でひとつにまとまります。</p>
-                <div class="man-box tip">
-                    <div class="man-box-h">いちばん簡単なのは、一覧から押すだけ</div>
-                    <p>他の端末がもう開いていれば、<b>開店の準備</b>の画面のいちばん上に<b>「いま開いている販売会」</b>が出ます。<b>その行を押すだけで合流できます</b>（コードを打つ必要はありません）。営業中でも、<b>設定 →「複数端末で使う」→「共有コードを入れる」</b>に同じ一覧が出ます。</p>
-                    <p>一覧に出るのは<b>1日以内に開いた販売会</b>だけです。出てこない時や、別の場所の販売会に入る時は、下のとおりコードを入れてください。</p>
-                </div>
+                <p>1台目が<b>「新しく開店する」</b>、2台目からは<b>「開いている販売会に合流する」</b>。これだけで、売上も在庫も自動でひとつにまとまります。</p>
                 <div class="man-box tip">
                     <div class="man-box-h">覚えることは、これだけ</div>
-                    <p><b>全部の端末で、同じ共有コードを入れる。</b>それだけです。<b>開店前でも、営業中でも、まだ開店していない端末でも</b>、入れる場所は次の2つのどちらかで、どちらも同じように動きます。</p>
-                    <p>・開店前 … <b>開店の準備 →「複数端末で共有」</b><br>・それ以外 … <b>設定 →「複数端末で使う」→「共有コードを入れる」</b></p>
-                    <p>コードを入れると<b>その場でそのコードを調べて、これから何が起きるかを画面に出します</b>。ボタンの文字もそれに合わせて変わるので、押す前に分かります。</p>
+                    <ul class="man-list">
+                        <li><b>開店は1台だけ。</b>ほかの端末は<b>合流</b>します（合流は開店ではないので、名前や商品は決めません）。</li>
+                        <li>合流する端末は、<b>「いま開いている販売会」の一覧を押すだけ</b>。コードを打つ必要はありません。</li>
+                        <li><b>共有コードは自動で決まる4けたの数字</b>です。一覧に出ない時だけ、開いている端末の<b>「設定 → 複数端末で使う」</b>に大きく出ているコードを、<b>「コードで合流する」</b>に入れます。</li>
+                    </ul>
                 </div>
                 <h4>コードを入れると出るもの</h4>
-                <p><b>「このコードで新しく開店します」</b>… まだ誰も使っていないコードです。この端末が共有の元になります。</p>
-                <p><b>「このコードは『◯◯』として開店中です」</b>… もう他の端末が使っています。ボタンは<b>「『◯◯』に参加する（合流する）」</b>に変わり、<b>これを押すだけで合流できます</b>。商品と仕入れ数は先に開いている側のものになります。</p>
-                <p><b>「このコードは前に『◯◯』で使いました」</b>… 前の販売会で使ったコードです。<b>そのまま使えます。</b>新しい販売会として始まり、前回の会計が混ざることはありません。</p>
+                <p><b>「『◯◯』が開いています」</b>… ボタンが<b>「『◯◯』に合流する」</b>に変わるので、押せば合流します。</p>
+                <p><b>「閉店しています」「開いている販売会はありません」「長いあいだ使われていません」</b>… 合流できません（ボタンは押せません）。コードを確かめてください。<b>合流の操作で新しい販売会ができてしまうことはありません。</b></p>
                 <div class="man-box tip">
-                    <div class="man-box-h">同じコードを毎回使ってかまいません</div>
-                    <p>共有コードは<b>「どの端末どうしがつながるか」を決めるための合言葉</b>で、売上の記録には残りません。ですから<b>毎回同じコードを使っても差し支えありません</b>（覚えやすいので、むしろそのほうが楽です）。</p>
-                    <p>アプリが勝手にコードを変えることもありません。<b>「テスト」と入れたら、必ず「テスト」で共有されます。</b>他の端末は「テスト」と入れれば必ず合流できます。</p>
+                    <div class="man-box-h">閉店したコードは、中身が片づけられます</div>
+                    <p>閉店すると、全部の端末が集計を残したあとで、そのコードの中身（会計・予約・端末の一覧）は置き場から<b>自動で消されます</b>。あとで同じ番号のコードが出ても、<b>前の販売会のデータが出てくることはありません</b>。集計はそれぞれの端末の<b>「設定 → 過去の販売会」</b>に残っています。</p>
+                    <p>電波が切れていて閉店を受け取れなかった端末も、つながった時に<b>自分の手元の会計で閉店して集計を残します</b>。</p>
                 </div>
                 <h4>途中から共有したくなった</h4>
-                <p>開店し直す必要はありません。<b>「設定 → 複数端末で使う」</b>にコードを入れて<b>「この端末でも会計する」</b>を押すと、ここまでの会計も在庫もそのまま引き継がれます。</p>
-                <p><b>どの端末も、開店前でも営業中でも参加できます。</b>すでに営業を始めてしまった端末どうしでも、同じコードを入れれば途中から1つにまとまります。まだ開店していない端末なら、コードを入れるだけでそのまま合流します（開店の操作はいりません）。</p>
+                <p>開店し直す必要はありません。<b>「設定 → 複数端末で使う」</b>の<b>「ほかの端末と共有を始める」</b>を押すと、共有コードが自動で決まり、ここまでの会計も在庫もそのまま引き継がれます。ほかの端末は、いつもどおり<b>「合流する」</b>の一覧から選ぶだけです。</p>
+                <p>すでに<b>別々に営業を始めてしまった端末どうし</b>をまとめる時は、片方で<b>「設定 → 複数端末で使う → 別の端末の販売会に合流する」</b>を開き、もう片方の販売会を選びます。この端末の会計もいっしょに持っていきます。</p>
                 <div class="man-box">
                     <div class="man-box-h">名前の違う販売会が1つになるとき</div>
                     <p>たとえば1台目が「午前の部」、2台目が「午後の部」で開店していた場合、合流するときに<b>どちらの名前にするかを選ぶ画面</b>が出ます。選んだ名前に、全部の端末がそろいます。</p>
@@ -4121,12 +4250,12 @@
                     <p>レジの画面に<b>赤い帯</b>が出ます。<b>その間も会計はそのまま続けられます</b>（この端末に貯まり、つながると自動でまとめて送られます）。つながっていないまま閉店しようとすると引き止めるので、電波の良い場所で表示が緑になってから閉店してください。</p>
                 </div>
                 <h4>共有されるもの</h4>
-                <p>会計（売上・取消）／在庫と残数／商品の追加・値段・種類・備考／販売会の名前／売上目標／セット割のオン・オフ／予約／閉店。<b>これらは全部の端末で同じになります。</b></p>
+                <p>会計（売上・取消）／在庫と残数／商品の追加・値段・種類・備考／販売会の名前／売上目標／セット割（オン・オフ、組み合わせと額）／予約／閉店。<b>これらは全部の端末で同じになります。</b></p>
                 <p>端末ごとに持つのは、<b>領収書の発行者名</b>と<b>画面の明るさ・時計や天気の設定</b>だけです。</p>
                 <div class="man-box warn">
                     <div class="man-box-h">共有しているときの閉店</div>
                     <p><b>「閉店する」は共有している販売会そのものを終わらせる操作</b>です。どの端末から閉店しても、<b>共有中のすべての端末がいっしょに閉店</b>になり、それぞれの端末に同じ集計が保存されます。ほかの端末がまだ会計している場合は、先に声をかけてください。</p>
-                    <p>自分の端末だけ先に終えたいときは、「設定 → 複数端末で使う」の<b>「この端末の利用を終える」</b>を使います。</p>
+                    <p>自分の端末だけ先に終えたいときは、「設定 → 複数端末で使う」の<b>「この端末の利用を終える」</b>を使います。ほかにレジの端末が残っていない時は、<b>閉店して集計するか</b>を先に聞かれます（交代で次の人があとから合流する時だけ、閉店せずに抜けます）。</p>
                 </div>
                 <p>反映は電波の状況でおくれることがあります。おくれても、その端末だけで会計を続けられます。<b>「設定 → 複数端末で使う → 速さを測る」</b>で、いまどのくらいおくれているかを数字で確かめられます。</p>`
         },
@@ -4135,9 +4264,9 @@
             body: `
                 <p>もう1台の端末を<b>お客様に向ける金額表示</b>にできます。レジ役の端末で打った内容が、そのまま大きな文字で映ります。</p>
                 <ol class="man-steps">
-                    <li>レジ役の端末を<b>共有コードを入れて</b>開店しておきます（「複数の端末で同時に会計する」と同じ準備です）。</li>
-                    <li>表示に使う端末で<b>「設定 → 複数端末で使う → 共有コードを入れる」</b>を開きます。</li>
-                    <li><b>同じ共有コード</b>を入れて<b>「お客様用の金額表示にする」</b>を押します。<br>（同じ画面の「この端末でも会計する」を押せば、2台目のレジになります）</li>
+                    <li>レジ役の端末を、<b>「ほかの端末と共有する」をオンにして</b>開店しておきます。</li>
+                    <li>表示に使う端末で<b>「開店・合流 → 開いている販売会に合流する」</b>を開きます。</li>
+                    <li><b>「この端末の使い方」</b>で<b>「お客様用の表示」</b>を選び、一覧から販売会を押します。</li>
                     <li>お客様から見える向きに立てかけます。</li>
                 </ol>
                 <div class="man-box tip">
@@ -4211,7 +4340,8 @@
                         <tr><td>ほかの端末の会計が反映されない</td><td>「設定 → 複数端末で使う」で状態を確認してください。電波が戻れば自動で追いつきます。</td></tr>
                         <tr><td>画面がまぶしい・暗くて見えない</td><td>「設定 → 画面の表示 → 画面の明るさ」で<b>明るく／暗く</b>を選べます。ふだんは<b>「端末に合わせる」</b>のままで、iPhone・iPadの設定にそのまま付いていきます。</td></tr>
                         <tr><td>ほかの端末で閉店された</td><td>その端末も自動で閉店になり、同じ集計が保存されます。売上が消えたわけではありません（「設定 → 過去の販売会」で見られます）。</td></tr>
-                        <tr><td>交代する</td><td>そのまま次の人に渡してください。共有コードを使っている場合だけ、同じコードであることを確かめます。</td></tr>
+                        <tr><td>交代する</td><td>同じ端末なら、そのまま次の人に渡してください。次の人が自分の端末を使うなら、その端末で<b>「開店・合流 → 開いている販売会に合流する」</b>から入ります。</td></tr>
+                        <tr><td>合流したい販売会が一覧に出ない</td><td>開いている端末で<b>「ほかの端末と共有する」がオンだったか</b>を確かめてください。オフで開店していたら、その端末の<b>「設定 → 複数端末で使う → ほかの端末と共有を始める」</b>を押すと、一覧に出るようになります。</td></tr>
                         <tr><td>データを別の端末に移したい</td><td>「設定 → データの書き出し」で保存し、移す先の端末の開店画面の「データを取り込んで始める」で読み込みます。</td></tr>
                     </tbody>
                 </table>`
@@ -4223,8 +4353,8 @@
                 <ul class="man-check">
                     <li>端末の充電が十分にある</li>
                     <li>通信の状況を確認した（複数端末で共有する場合）</li>
-                    <li>「① 開店する」の手順で開店した</li>
-                    <li>複数端末を使う場合、全部の端末で共有コードが同じ</li>
+                    <li>「① 開店・合流」の手順で、1台目が開店した</li>
+                    <li>複数端末を使う場合、2台目からは「合流する」で同じ販売会に入った</li>
                     <li>釣り銭の準備ができている</li>
                 </ul>
                 <h4>営業中</h4>
@@ -4301,6 +4431,8 @@
     let cdRetrySend = null;          // 送信に失敗した時の、出し直しの予約
     let customerMode = false;     // この端末がお客様用か
     let cdUnsub = null;           // お客様用の端末の購読
+    let cdEventUnsub = null;      // お客様用の端末が、販売会の閉店を知るための購読
+    let cdEnded = false;          // 映していた販売会が閉店した
     let cdPushTimer = null;       // 書き込みの間引き用
     let cdLastPayload = '';       // 同じ内容を続けて書かないための控え
     let cdLastTotal = null;       // 金額が変わった時だけ弾ませるための控え
@@ -4475,11 +4607,20 @@
         // 映すだけだった端末は、この端末の売上データを作り替えることになるので、
         // 黙って入らずに「合流する」の一押しを見せるところまでにする。
         // （コードはもう入っているので、押すだけで済む）
-        const inp = document.getElementById('sync-live-code-input');
-        if (inp) inp.value = code;
-        openPanel('settings', 'sync-add');
-        peekEventCode('live');
-        showToast('レジに戻しました（合流するなら下のボタンを押してください）');
+        if (!currentSession) {
+            // 閉店中なら、合流の画面にコードを入れたところまで用意する
+            const jc = document.getElementById('join-code-input');
+            if (jc) jc.value = code;
+            joinRole = 'register';
+            openPanel('session', 'open-join');
+            peekEventCode('join');
+        } else {
+            const inp = document.getElementById('sync-live-code-input');
+            if (inp) inp.value = code;
+            openPanel('settings', 'sync-add');
+            peekEventCode('live');
+        }
+        showToast('レジに戻しました（合流するなら「合流する」を押してください）');
         renderSyncRoleList();
     }
 
@@ -4513,34 +4654,14 @@
         return true;
     }
 
-    // コードだけで、動いている販売会に入る（開店の操作をしないで済む道）
+    // コードだけで、動いている販売会にレジとして入る（前の版の呼び名。中身は joinEvent と同じ）
     async function joinByCodeOnly(code, doneMsg) {
-        const c = sanitizeEventCode(code || '');
-        if (!c || !syncReady || !fbDb) { openPanel('settings', 'sync-add'); return false; }
-        let d = null;
-        try {
-            const snap = await fbDb.collection('events').doc(c).get();
-            d = snap.exists ? (snap.data() || {}) : null;
-        } catch (e) { d = null; }
-        const live = d && d.status !== 'closed' && Array.isArray(d.products) && d.products.length > 0;
-        if (!live) {
-            // まだ誰も開いていない（または閉店済み）なら、商品と仕入れ数が要るので開店の準備へ
-            const openInput = document.getElementById('sync-event-code-input');
-            if (openInput) openInput.value = c;
-            showToast('開店の準備から始めます');
-            openPanel('session', 'open-sync');
-            peekEventCode('open');
-            return false;
-        }
-        // 調べた結果をそのまま下調べに入れておく（同じことを二度聞かない）
-        openSyncPeek = { code: c, state: 'open', name: d.name || '無題' };
-        const openInput = document.getElementById('sync-event-code-input');
-        if (openInput) openInput.value = c;
-        const nameInput = document.getElementById('session-name-input');
-        if (nameInput && !nameInput.value) nameInput.value = defaultSessionName();
-        await startSession();
-        if (doneMsg) showToast(doneMsg);
-        return true;
+        const before = joinRole;
+        joinRole = 'register';
+        const ok = await joinEvent(code);
+        joinRole = before;
+        if (ok && doneMsg) showToast(doneMsg);
+        return ok;
     }
 
     // 役割の切り替え本体（'register' / 'customer'）
@@ -4574,6 +4695,8 @@
         box.style.display = customerMode ? 'flex' : 'none';
         applySurfaceColors();    // 画面の端までの色も、役割に合わせて切り替える
         if (cdUnsub) { try { cdUnsub(); } catch (e) {} cdUnsub = null; }
+        if (cdEventUnsub) { try { cdEventUnsub(); } catch (e) {} cdEventUnsub = null; }
+        setCustomerEnded(false);
         if (!customerMode) { clearMyPresence(uiPrefs.cdCode); stopPresence(); renderCustomerSettings(); renderSyncRoleList(); return; }
         renderCustomerView(null, 'connecting');
         startCustomerSubscription(uiPrefs.cdCode);
@@ -4608,13 +4731,33 @@
             .then(snap => { if (snap.exists) { acceptRound((snap.data() || {}).roundId || ''); beatPresence(); } })
             .catch(() => {});
         startPresence();
+        // 映している販売会が閉店したら、待ち受けのまま残さずに「閉店しました」と出す。
+        // 在席の知らせも止める（片づけた置き場に、この端末の行だけが残り続けないように）。
+        let cdSawEvent = false;
+        cdEventUnsub = fbDb.collection('events').doc(code).onSnapshot(doc => {
+            if (doc.metadata && doc.metadata.fromCache) return;
+            const d = doc.exists ? (doc.data() || {}) : null;
+            const hadEvent = cdSawEvent;
+            if (d) cdSawEvent = true;
+            // 閉店した、または（さっきまであった）置き場が片づけられた
+            if ((d && d.status === 'closed') || (!d && hadEvent)) {
+                if (cdEnded) return;
+                stopPresence();
+                clearMyPresence(code);
+                setCustomerEnded(true);
+                renderCustomerView(null, 'live');
+            } else if (cdEnded) {
+                setCustomerEnded(false);
+                startPresence();
+            }
+        }, () => {});
         cdUnsub = fbDb.collection('events').doc(code).collection('live').doc(CD_DOC)
             .onSnapshot({ includeMetadataChanges: true }, doc => {
                 const d = doc.exists ? (doc.data() || null) : null;
                 cdLastSeen = Date.now();
                 // 手元の控えだけで出している間は「つながっていない」と正直に出す
                 const cached = doc.metadata && doc.metadata.fromCache;
-                renderCustomerView(d, cached ? 'lost' : 'live');
+                renderCustomerView(cdEnded ? null : d, cached ? 'lost' : 'live');
             }, err => {
                 console.warn('お客様用表示の購読でエラー', err);
                 renderCustomerView(null, 'lost');
@@ -4629,6 +4772,14 @@
                 if (linkEl && !linkEl.classList.contains('lost')) renderCustomerView(null, 'lost');
             }
         }, 15000);
+    }
+
+    // 映していた販売会が閉店した時の待ち受けの文
+    function setCustomerEnded(ended) {
+        cdEnded = !!ended;
+        const t = document.getElementById('cd-idle-t'), sub = document.getElementById('cd-idle-s');
+        if (t) t.textContent = ended ? 'ありがとうございました' : 'いらっしゃいませ';
+        if (sub) sub.textContent = ended ? '本日の販売は終了しました（左上の×で、ふだんの画面に戻せます）' : 'お会計の金額がこちらに出ます';
     }
 
     function renderCustomerView(d, link) {
@@ -4658,7 +4809,7 @@
             const plain = Array.isArray(d.items) ? d.items : [];
             // セット割は明細の最後に1行足す（お客様にも、何円引いたかが見えるように）
             const disc = Number(d.discount) || 0;
-            const items = disc > 0 ? plain.concat([{ name: SET_DISCOUNT.label, qty: '', subtotal: -disc, disc: true }]) : plain;
+            const items = disc > 0 ? plain.concat([{ name: SET_LABEL, qty: '', subtotal: -disc, disc: true }]) : plain;
             // レジで1点打たれるたび、増えた行だけがふわりと入ってくるようにする。
             // 毎回すべて描き直すと全部の行が動いてしまい、何が増えたのか分からない。
             const lines = items.map(i => `${i.name}${i.qty}${i.subtotal}`).join('');
@@ -5379,50 +5530,147 @@
     // ▲▲▲ ここまで ▲▲▲
 
     // ▼▼▼ セット割の計算（ここ1か所だけ）▼▼▼
+    // セット割の決まり（組み合わせと額）を、正しい形にそろえる。
+    // 種類は2つ以上・重複なし・並びは画面の順（パン→クッキー→ドリンク）。額は1〜999円の整数。
+    // 形がおかしい時は null（＝セット割なし）を返す。お金の計算なので、あいまいな値は通さない。
+    function normSetRule(r) {
+        if (!r || typeof r !== 'object') return null;
+        const ids = CAT_TYPES.map(c => c.id);
+        const want = Array.isArray(r.needs) ? r.needs : [];
+        const needs = ids.filter(id => want.includes(id));
+        const amount = Math.floor(Number(r.amount));
+        if (needs.length < 2 || !(amount >= 1) || amount > SET_MAX_AMOUNT) return null;
+        return { needs, amount };
+    }
+    // いまの設定で使うセット割（オフなら null）
+    function currentSetRule() { return setDiscountOn ? normSetRule(setRule) : null; }
+    // その会計をした時のセット割（会計記録の修正・予約の清算に使う）。
+    // 組み合わせを選べるようになる前の記録は「セット割をしたかどうか」だけを持っているので、
+    // その頃の決まり（クッキー＋ドリンクで10円引き）として読む。
+    function ruleOfRecord(h) {
+        if (!h) return null;
+        if (h.setRule) return normSetRule(h.setRule);
+        return h.setDisc === true ? { needs: SET_DEFAULT.needs.slice(), amount: SET_DEFAULT.amount } : null;
+    }
+    // 「クッキー＋ドリンクで10円引き」のような、人が読む形
+    function setRuleText(r) {
+        const rule = normSetRule(r);
+        if (!rule) return 'なし';
+        const names = rule.needs.map(id => (CAT_TYPES.find(c => c.id === id) || {}).label || id);
+        return `${names.join('＋')}で${rule.amount}円引き`;
+    }
     // items … 商品の並び（カート・予約・会計記録の明細。それぞれ type を持つ）
-    // on    … 割引をするか。省くといまの設定に従う（会計記録の修正では、その会計をした時の設定を渡す）
-    function setDiscountFor(items, on) {
-        const enabled = (on === undefined) ? setDiscountOn : !!on;
-        if (!enabled || !Array.isArray(items) || !items.length) return 0;
+    // rule  … 使うセット割。省くといまの設定。null/false なら割引なし。
+    //         true は「いまの組み合わせで割引する」（オン・オフに関係なく）。
+    function setDiscountFor(items, rule) {
+        const r = (rule === undefined) ? currentSetRule()
+            : (rule === true ? normSetRule(setRule) : (rule ? normSetRule(rule) : null));
+        if (!r || !Array.isArray(items) || !items.length) return 0;
         // 0円の商品（準備中の枠など）ではセットにしない
         const has = t => items.some(i => i && i.type === t && (Number(i.price) || 0) > 0);
-        return SET_DISCOUNT.needs.every(has) ? SET_DISCOUNT.amount : 0;
+        return r.needs.every(has) ? r.amount : 0;
     }
     function itemsGross(items) { return (items || []).reduce((s, i) => s + (Number(i.price) || 0), 0); }
     // 割引した後の、お客様が払う額
-    function itemsNet(items, on) { return Math.max(0, itemsGross(items) - setDiscountFor(items, on)); }
+    function itemsNet(items, rule) { return Math.max(0, itemsGross(items) - setDiscountFor(items, rule)); }
 
-    // 設定の画面で切り替えた時
-    function toggleSetDiscount(on) {
-        setDiscountOn = !!on;
-        // 共有中は、全部の端末で同じ値段になるようにそろえる
-        // （同じカゴなのに端末によって10円違う、ということが起きないように）
-        if (syncMode && syncEventCode && fbDb) {
-            fbDb.collection('events').doc(syncEventCode)
-                .set({ setDiscount: setDiscountOn, setDiscountAt: Date.now(), setDiscountBy: getDeviceId() }, { merge: true })
-                .catch(e => console.warn('セット割の設定の共有に失敗しました', e));
-        }
-        saveData();
-        logEdit(setDiscountOn ? 'セット割をオンにした' : 'セット割をオフにした');
-        playSound();
-        showToast(setDiscountOn ? `セット割をオンにしました（コーヒー＋クッキーで${SET_DISCOUNT.amount}円引き）` : 'セット割をオフにしました');
+    // 共有中は、全部の端末で同じ値段になるようにそろえる
+    // （同じカゴなのに端末によって10円違う、ということが起きないように）
+    function shareSetDiscount() {
+        if (!(syncMode && syncEventCode && fbDb)) return;
+        fbDb.collection('events').doc(syncEventCode)
+            .set({ setDiscount: setDiscountOn, setRule: normSetRule(setRule) || SET_DEFAULT,
+                   setDiscountAt: Date.now(), setDiscountBy: getDeviceId() }, { merge: true })
+            .catch(e => console.warn('セット割の設定の共有に失敗しました', e));
+    }
+
+    // セット割が変わった時に、関係する画面をまとめて描き直す
+    function afterSetDiscountChange() {
         renderSetDiscountState();
         init();                         // カートの合計も、その場で付け直す
         renderOpenMenu();
         renderSettingsMenu();
     }
 
+    // 設定の画面でオン・オフを切り替えた時
+    function toggleSetDiscount(on) {
+        setDiscountOn = !!on;
+        shareSetDiscount();
+        saveData();
+        logEdit(setDiscountOn ? `セット割をオンにした（${setRuleText(setRule)}）` : 'セット割をオフにした');
+        playSound();
+        showToast(setDiscountOn ? `セット割をオンにしました（${setRuleText(setRule)}）` : 'セット割をオフにしました');
+        afterSetDiscountChange();
+    }
+
+    // ---- 組み合わせと割引額を決める ----
+    // 押しただけでは決まらない（1つ目を押した瞬間に値段が変わると困る）。
+    // 「このセット割にする」を押した時にだけ、決まりを入れ替える。
+    let setRuleDraft = null;
+    function toggleSetRuleCat(id) {
+        if (!setRuleDraft) setRuleDraft = { needs: setRule.needs.slice(), amount: setRule.amount };
+        const i = setRuleDraft.needs.indexOf(id);
+        if (i >= 0) setRuleDraft.needs.splice(i, 1); else setRuleDraft.needs.push(id);
+        playSound(660, 0.05);
+        renderSetRuleEditor();
+    }
+    function saveSetRule() {
+        const draft = setRuleDraft || { needs: setRule.needs.slice(), amount: setRule.amount };
+        const input = document.getElementById('set-rule-amount');
+        const raw = input ? String(input.value).trim() : String(draft.amount);
+        const amount = Number(raw);
+        const needs = CAT_TYPES.map(c => c.id).filter(id => draft.needs.includes(id));
+        if (needs.length < 2) { playError(); alert('組み合わせる種類を2つ以上選んでください。'); return; }
+        if (!/^\d+$/.test(raw) || !(amount >= 1) || amount > SET_MAX_AMOUNT) {
+            playError(); alert(`割引額は 1〜${SET_MAX_AMOUNT} 円の整数で入れてください。`); return;
+        }
+        const next = normSetRule({ needs, amount });
+        const before = setRuleText(setRule);
+        setRule = next;
+        setRuleDraft = null;
+        shareSetDiscount();
+        saveData();
+        logEdit(`セット割を変更：${before} → ${setRuleText(setRule)}`);
+        playSound();
+        showToast(`セット割を「${setRuleText(setRule)}」にしました`);
+        afterSetDiscountChange();
+    }
+    function renderSetRuleEditor() {
+        const box = document.getElementById('set-rule-cats');
+        if (!box) return;
+        const d = setRuleDraft || setRule;
+        box.innerHTML = CAT_TYPES.map(c =>
+            `<button type="button" class="cat-pick${d.needs.includes(c.id) ? ' on' : ''}" style="--pick-ink:${catInk(c.id)};"
+                aria-pressed="${d.needs.includes(c.id)}" onclick="toggleSetRuleCat('${c.id}')"><i></i>${c.label}</button>`).join('');
+        const input = document.getElementById('set-rule-amount');
+        if (input && document.activeElement !== input && !setRuleDraft) input.value = setRule.amount;
+        const hint = document.getElementById('set-rule-hint');
+        if (hint) {
+            const n = d.needs.length;
+            hint.textContent = n < 2 ? '2つ以上選んでください' : `${d.needs.map(id => (CAT_TYPES.find(c => c.id === id) || {}).label).join('＋')} を同じ会計で買うと割引`;
+        }
+    }
+
     function renderSetDiscountState() {
         const sw = document.getElementById('opt-set-discount');
         if (sw) sw.checked = setDiscountOn;
         const box = document.getElementById('set-discount-state');
-        if (!box) return;
-        box.className = 'notice' + (setDiscountOn ? ' notice-ok' : '');
-        box.innerHTML = setDiscountOn
-            ? `<svg class="ic"><use href="#ic-check"/></svg><span><b>ドリンク（コーヒー）</b>と<b>クッキー</b>を同じ会計で買うと <b>${SET_DISCOUNT.amount}円引き</b>。2セット以上でも1会計${SET_DISCOUNT.amount}円までです。</span>`
-            : `<svg class="ic"><use href="#ic-x"/></svg><span>いまはセット割をしていません。</span>`;
+        if (box) {
+            const r = normSetRule(setRule);
+            box.className = 'notice' + (setDiscountOn ? ' notice-ok' : '');
+            box.innerHTML = setDiscountOn && r
+                ? `<svg class="ic"><use href="#ic-tag"/></svg><span>いまのセット割：<b>${escHtml(setRuleText(r))}</b><br>2セット以上買っても、引くのは1会計${r.amount}円までです。</span>`
+                : `<svg class="ic"><use href="#ic-x"/></svg><span>いまはセット割をしていません。<br>オンにすると「${escHtml(setRuleText(r))}」になります。</span>`;
+        }
+        renderSetRuleEditor();
     }
     // ▲▲▲ ここまで ▲▲▲
+
+    // 設定の1行に出す、いまのセット割と目標
+    function setGoalSub() {
+        const r = currentSetRule();
+        return `${r ? escHtml(setRuleText(r)) : 'セット割なし'}・目標${salesGoal > 0 ? ' ' + yenStr(salesGoal) : 'なし'}`;
+    }
 
     // ▼ 売上目標 ▼
     // 決めるかどうかは自由。決めておくと、集計に達成率と、積み上がりグラフに目標の線が出る。
@@ -5430,6 +5678,7 @@
         const input = document.getElementById('sales-goal-input');
         if (input) input.value = salesGoal > 0 ? salesGoal : '';
         updateGoalState();
+        setRuleDraft = null;          // 開き直したら、決めずに離れた選びかけは捨てる
         renderSetDiscountState();
     }
 
@@ -5513,7 +5762,7 @@
         updateReopenRow();
         updateSyncUi();
         if (currentView === 'settings' && !currentSub) renderSettingsMenu();
-        if (currentView === 'session' && !currentSub) renderOpenMenu();
+        if (currentView === 'session' && (!currentSub || currentSub === 'open-new')) renderOpenMenu();
     }
 
     // 「直前の販売会を再開する」導線の出し分け。
@@ -5620,22 +5869,32 @@
         //「1台だけで使うなら空欄のままでOK」と食い違ううえ、たまたま同じ名前を
         // つけた別の販売会どうしが勝手に合流してしまう危険があった。
         // 途中から共有したくなった場合は、営業中の画面から開始できる。
+        // 決まったコードが入っているのは「合流」から来た時（と、引き継ぎ・テスト）だけ。
+        // 読んだらすぐ空にする（残っていると、次の開店が合流になってしまう）。
         const codeInput = document.getElementById('sync-event-code-input');
         const typedCode = sanitizeEventCode((codeInput && codeInput.value || '').trim());
-        const useSync = !!(syncReady && window.FIREBASE_CONFIG && typedCode);
+        if (codeInput) codeInput.value = '';
+        // 共有するか：合流なら必ず。新しく開店するなら「ほかの端末と共有する」のスイッチしだい。
+        const wantShare = !!typedCode || shareOnOpenWanted();
+        let useSync = !!(syncReady && window.FIREBASE_CONFIG && wantShare);
         let code = null, joinedProducts = null, sharedName = name, isJoining = false, joinRound = '';
-        if (useSync) {
+        let soloReason = (wantShare && window.FIREBASE_CONFIG && !syncReady) ? 'offline' : '';
+        if (useSync && !typedCode) {
+            // 新しく開店する時の共有コードは、自動で決める（打ち間違い・前のコードとの取り違えが起きない）
+            code = await generateShareCode();
+            if (!code) { useSync = false; soloReason = 'nocode'; }
+        } else if (useSync) {
             code = typedCode;
             try {
                 const snap = await fbDb.collection('events').doc(code).get();
                 if (snap.exists) {
                     const data = snap.data() || {};
                     if (data.status === 'closed') {
-                        // 【変更】以前はここで黙って「テスト-1758…」のような別のコードを
-                        // 作って開店していた。打った本人は「テスト」で開いたつもりなので、
-                        // 他の端末が「テスト」を入れても出会えなかった。
-                        // いまは打ったコードのまま、新しい回として開き直す。
-                        // 前の回とは中で分けて数えるので、確認を挟まずそのまま進める。
+                        // 閉店済みのコードで開き直す時は、前の回の中身を先に片づける
+                        // （前の回の会計が、新しい販売会に出てくることがないように）。
+                        // 片づけられない時（まだ閉店を受け取っていない端末がいる等）も、
+                        // 新しい「回」の印で分けて数えるので混ざらない。
+                        await purgeClosedEvent(code);
                     } else if (Array.isArray(data.products) && data.products.length > 0) {
                         // 共有コードの画面で「『◯◯』に参加する」と書かれたボタンを押して来た時は、
                         // 何が起きるかをその画面で読んだうえで選んでいるので、重ねて聞かない。
@@ -5750,26 +6009,31 @@
             products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; });
         }
 
-        if (useSync) {
+        if (useSync && !isJoining) {
+            // 新規作成：この端末が共有元になる。
+            // 新しい「回」の印を押しておくと、同じコードに残っている前の回の会計は
+            // この販売会には入ってこない。
             resetRounds();
-            if (!isJoining) {
-                // 新規作成（閉店済みコードの開き直しも含む）：この端末が共有元になる。
-                // 新しい「回」の印を押しておくと、同じコードに残っている前の回の会計は
-                // この販売会には入ってこない。
-                acceptRound(newRoundId());
-                try {
-                    await fbDb.collection('events').doc(code).set({
-                        name: sharedName, status: 'open', products: products,
-                        roundId: syncRoundId,
-                        setDiscount: setDiscountOn, setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
-                        openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
-                    });
-                } catch (e) {
-                    console.warn('共有販売会の作成に失敗しました。この端末だけで開店します。', e);
-                }
-            } else {
-                acceptRound(joinRound);
+            acceptRound(newRoundId());
+            try {
+                await fbDb.collection('events').doc(code).set({
+                    name: sharedName, status: 'open', products: products,
+                    roundId: syncRoundId,
+                    setDiscount: setDiscountOn, setRule: normSetRule(setRule) || SET_DEFAULT, setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
+                    openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
+                });
+            } catch (e) {
+                // 置き場に書けなかった（権限など）。共有したつもりで誰とも出会えない状態にしないよう、
+                // この端末だけの営業にして、そのことを知らせる。
+                console.warn('共有販売会の作成に失敗しました。この端末だけで開店します。', e);
+                useSync = false; soloReason = 'failed';
+                resetRounds();
             }
+        } else if (useSync) {
+            resetRounds();
+            acceptRound(joinRound);
+        }
+        if (useSync) {
             startSalesSubscription(code);       // 以後 salesHistory は全端末の共有結果で上書きされる
             startSessionDocSubscription(code);  // 他端末での閉店（集計終了）を検知するため
             startReservationSubscription(code); // 予約も全端末で見えるようにする
@@ -5786,6 +6050,15 @@
         saveData();
         init();
         updateSessionTabView();
+        // 何が起きたかを1行で知らせる（共有したなら、ほかの端末に伝えるコードも）
+        if (useSync && !isJoining) showToast(`開店しました（共有コード ${code}）`);
+        else if (!useSync && soloReason && soloReason !== 'offline') {
+            // 通信できないことは開店の画面に書いてあるので、ここで重ねて言うのは
+            // 「共有するつもりで押したのに、できなかった」時だけ
+            setTimeout(() => alert(soloReason === 'nocode'
+                ? '通信が不安定で共有コードを決められなかったため、この端末だけで開店しました。\n電波の良い場所で「設定 → 複数端末で使う → ほかの端末と共有を始める」を押すと、あとから共有できます。'
+                : '共有の置き場に書き込めなかったため、この端末だけで開店しました。\nあとで「設定 → 複数端末で使う」から、もう一度共有を始められます。'), 60);
+        }
     }
 
     // FirestoreのドキュメントID/コードに使える形へ整える
@@ -5816,8 +6089,14 @@
         // 同期中：共有販売会そのものを「閉店済み」にする（同じコードの使い回し事故を防ぐ）。
         // これを見た他の端末も、同じ手順で自分の画面を閉店にする。
         if (syncMode && syncEventCode && fbDb) {
-            fbDb.collection('events').doc(syncEventCode).set({ status: 'closed', closedAt: Date.now(), closedBy: getDeviceId() }, { merge: true })
+            const code = syncEventCode, round = syncRoundId;
+            fbDb.collection('events').doc(code).set({ status: 'closed', closedAt: Date.now(), closedBy: getDeviceId() }, { merge: true })
                 .catch(e => console.warn('共有販売会の終了フラグの書き込みに失敗しました', e));
+            closeSessionLocally();
+            // ほかの端末が閉店を受け取って集計を残すのを待ってから、このコードの中身を片づける。
+            // （まだ受け取っていない端末がいれば、その端末が受け取った時に片づける）
+            schedulePurge(code, round, 8000);
+            return;
         }
         closeSessionLocally();
     }
@@ -6034,33 +6313,59 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
-    // ▼▼▼ 営業の途中から複数端末の共有を始める／やめる ▼▼▼
+    // ▼▼▼ 営業の途中から複数端末の共有を始める／合流する ▼▼▼
     // 「1台で開店したが、混んできたので応援の端末を足したい」という運用のための機能。
     // 開店をやり直す必要はなく、この端末のここまでの会計も在庫もそのまま引き継がれる。
+
+    // この端末の販売会を、ほかの端末と共有し始める（共有コードは自動で決まる）
+    async function startShareNow() {
+        if (!currentSession) { openNewSetup(); return; }
+        if (syncMode) { showToast(`すでに共有しています（共有コード ${syncEventCode}）`); return; }
+        if (!window.FIREBASE_CONFIG) { alert('この端末では共有機能の準備ができていません。\n（準備した方に「複数端末の設定」を確認してもらってください）'); return; }
+        if (!syncReady) { playError(); alert('同期サーバーに接続できていません。通信状況をご確認のうえ、少し待ってからもう一度お試しください。'); return; }
+        if (!confirm(`販売会「${currentSession}」を、ほかの端末と共有します。\n\n・共有コードは自動で決まります。\n・ほかの端末は「開店・合流 → 開いている販売会に合流する」で、この販売会を選ぶだけで入れます。\n・この端末の会計${salesHistory.length}件と商品が、共有の元になります。\n\nよろしいですか？`)) return;
+        const code = await generateShareCode();
+        if (!code) { playError(); alert('通信が不安定で、共有を始められませんでした。\n電波の良い場所で、もう一度お試しください。'); return; }
+        resetRounds();
+        acceptRound(newRoundId());
+        try {
+            await fbDb.collection('events').doc(code).set({
+                name: currentSession, status: 'open', products: products,
+                roundId: syncRoundId,
+                setDiscount: setDiscountOn, setRule: normSetRule(setRule) || SET_DEFAULT, setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
+                openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
+            });
+        } catch (e) {
+            console.warn('共有販売会の作成に失敗しました', e);
+            resetRounds();
+            playError();
+            alert('共有を始められませんでした。通信状況をご確認ください。');
+            return;
+        }
+        // 購読を始めると、この端末のここまでの会計（まだ共有していない分）がまとめて送られる
+        startSalesSubscription(code);
+        startSessionDocSubscription(code);
+        startReservationSubscription(code);
+        saveData();
+        init();
+        updateSessionTabView();
+        if (currentView === 'settings' && currentSub === 'sync') renderSyncView();
+        playSuccess();
+        showToast(`共有を始めました（共有コード ${code}）`);
+    }
+
+    // 営業中のこの端末を、ほかの端末で開いている販売会に合流させる（この端末の会計も持っていく）。
+    // 合流できるのは、いま開いている販売会だけ。新しい共有を始めるのは startShareNow()。
     async function startSyncMidSession() {
-        // まだ開店していない端末からでも、ここから入れるようにする。
-        // 以前は「営業中のみ使えます」で行き止まりになり、開店の画面へ回るしかなかった。
+        // まだ開店していない端末は、ふつうの合流と同じ
         if (!currentSession) {
             const c0 = sanitizeEventCode((document.getElementById('sync-live-code-input') || {}).value || '');
-            const openThere = c0 && openSyncPeek.code === c0 && openSyncPeek.state === 'open';
-            const openInput = document.getElementById('sync-event-code-input');
-            if (openInput) openInput.value = c0;
-            if (openThere) {
-                // 動いている販売会に、この端末がそのまま合流する
-                const nameInput = document.getElementById('session-name-input');
-                if (nameInput && !nameInput.value) nameInput.value = defaultSessionName();
-                await startSession();
-                return;
-            }
-            // 新しく始める時は、商品と仕入れ数も決める必要があるので開店の準備へ送る
-            playSound();
-            showToast('開店の準備から始めます');
-            openPanel('session', 'open-sync');
-            peekEventCode('open');
+            if (!c0) { openJoinSetup(); return; }
+            await joinEvent(c0);
             return;
         }
         if (syncMode) {
-            alert('この端末は、すでに共有しています。\n\n別のコードに入れ直す場合は、「設定 → 複数端末で使う」で\n「共有をやめてこの端末だけで続ける」を押してから、もう一度お試しください。');
+            alert('この端末は、すでに共有しています。\n\n別の販売会に移る場合は、「設定 → 複数端末で使う」で\n「共有をやめてこの端末だけで続ける」を押してから、もう一度お試しください。');
             return;
         }
         if (!window.FIREBASE_CONFIG) { alert('この端末では共有機能の準備ができていません。\n（準備した方に「複数端末の設定」を確認してもらってください）'); return; }
@@ -6068,44 +6373,18 @@
 
         const input = document.getElementById('sync-live-code-input');
         const code = sanitizeEventCode((input && input.value || '').trim());
-        if (!code) { alert('共有コードを入力してください（一緒に使う全端末で同じ文字にします）。'); return; }
+        if (!code) { alert('合流する販売会を一覧から選ぶか、共有コードを入れてください。'); return; }
 
-        let snap;
+        const info = await fetchEventInfo(code);
+        if (info.state !== 'open') { playError(); alert(joinRefusal(info)); return; }
+        let remote;
         try {
-            snap = await fbDb.collection('events').doc(code).get();
-        } catch (e) {
-            console.warn('共有販売会の確認に失敗しました', e);
-            alert('同期サーバーに接続できませんでした。通信状況をご確認ください。');
-            return;
-        }
-        const remote = snap && snap.exists ? (snap.data() || {}) : null;
-        // 閉店済みのコードも、そのまま使えるようにする（前の回とは中で分けて数える）。
-        // 以前はここで断っていたが、開店の画面では黙って別のコードを作っていたので、
-        // 画面によって結果が違い、しかもどちらも打った本人の意図と食い違っていた。
-        const reopening = !!(remote && remote.status === 'closed');
+            const snap = await fbDb.collection('events').doc(code).get();
+            remote = snap && snap.exists ? (snap.data() || {}) : null;
+        } catch (e) { remote = null; }
+        if (!remote || remote.status === 'closed') { playError(); alert(joinRefusal({ code, state: 'none' })); return; }
         resetRounds();
-
-        if (!remote || reopening) {
-            // ── この端末が「共有の元」になる ──
-            // いまの商品構成と、ここまでの会計をすべてアップロードする。
-            const head = reopening
-                ? `共有コード「${code}」で、いまの販売会「${currentSession}」の共有を始めます。\n（このコードは前にも使いましたが、前回の会計は入りません）`
-                : `共有コード「${code}」で、いまの販売会「${currentSession}」の共有を始めます。`;
-            if (!confirm(`${head}\n\n・この端末の会計${salesHistory.length}件と商品構成が、共有の元になります。\n・他の端末でも同じコードを入れてください。\n  開店前なら「開店の画面 → 複数端末で共有」、\n  すでに営業中なら「設定 → 複数端末で使う」から、どちらでも参加できます。\n\nよろしいですか？`)) return;
-            acceptRound(newRoundId());
-            try {
-                await fbDb.collection('events').doc(code).set({
-                    name: currentSession, status: 'open', products: products,
-                    roundId: syncRoundId,
-                    setDiscount: setDiscountOn, setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
-                    openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
-                });
-            } catch (e) {
-                console.warn('共有販売会の作成に失敗しました', e);
-                alert('共有を開始できませんでした。通信状況をご確認ください。');
-                return;
-            }
-        } else {
+        {
             acceptRound(remote.roundId || '');
             // ── すでに動いている共有販売会に、この端末が合流する ──
             // 商品構成は共有側にそろえる（同じ在庫を2台で数えているため、共有側が正）。
@@ -6151,7 +6430,7 @@
         saveData();
         init();
         updateSessionTabView();
-        showToast(`共有を開始しました（コード: ${code}）`);
+        showToast(`「${currentSession}」に合流しました（共有コード ${code}）`);
     }
 
     // 共有をやめて、この端末だけで営業を続ける（電波が不安定な時などの避難先）。
@@ -6174,7 +6453,18 @@
     // シフト交代（午前:端末A→午後:端末B）や、ピーク時だけ増やした応援端末を外す時に使う。
     function leaveDeviceOnly() {
         if (!syncMode) { alert('この操作は複数端末同期が有効な時だけ使えます。'); return; }
-        if (!confirm('この端末でのレジ操作を終えます。\n共有販売会そのものは終了せず、他の端末はそのまま続けられます。\n（この端末は次に開店するまで会計できません）\n\nよろしいですか？')) return;
+        // ほかにレジとして使っている端末がいなければ、この端末が抜けると誰も集計を残さない。
+        // その時は、閉店して集計するのをまず勧める（交代で次の人があとから合流する時だけ、開いたまま抜ける）。
+        const now = Date.now();
+        const others = presenceRows.filter(r => r.__id !== getDeviceId() && !r.left && r.role !== 'display'
+            && inCurrentRound(r.roundId) && (Number(r.at) || 0) > now - PRESENCE_ACTIVE_MS).length;
+        if (others === 0) {
+            if (confirm('ほかにこの販売会を使っているレジの端末がありません。\n\n閉店して、売上を集計しますか？（おすすめ）\n\n［OK］閉店して集計する\n［キャンセル］閉店しないで、この端末だけ抜ける')) {
+                endSession();
+                return;
+            }
+            if (!confirm('閉店しないで、この端末だけ抜けます。\n販売会は開いたまま残るので、あとで別の端末が「合流する」から続きを使えます。\n（誰も合流しないまま12時間たつと、合流できなくなります。売上の集計は、最後に閉店した端末に残ります）\n\nよろしいですか？')) return;
+        } else if (!confirm('この端末でのレジ操作を終えます。\n共有販売会そのものは終了せず、ほかの端末はそのまま続けられます。\n（この端末は、また合流するまで会計できません）\n\nよろしいですか？')) return;
         stopSalesSubscription();
         stopSessionDocSubscription();
         stopReservationSubscription();
@@ -7585,7 +7875,7 @@
         records: '会計記録',
         analytics: '売上集計',
         settings: '設定',
-        session: '開店の準備'
+        session: '開店・合流'
     };
     // サブ画面の見出し（戻るボタンつきで表示される）
     const SUB_TITLES = {
@@ -7594,7 +7884,7 @@
         'goal': 'セット割・売上目標',
         'stock': '商品・在庫の調整',
         'sync': '複数端末で使う',
-        'sync-add': '共有コードを入れる',
+        'sync-add': '別の販売会に合流する',
         'receipt': '領収書の設定',
         'archive': '過去の販売会',
         'data': 'データの書き出し',
@@ -7602,7 +7892,8 @@
         'reset': 'データの初期化',
         'open-name': '販売会の名前',
         'open-stock': '商品と仕入れ数',
-        'open-sync': '複数端末で共有',
+        'open-new': '新しく開店する',
+        'open-join': '販売会に合流する',
         'open-import': 'データを取り込んで始める'
     };
 
@@ -7806,8 +8097,9 @@
         }
         else if (view === 'session') {
             if (!sub) { renderOpenMenu(); loadOpenEvents(); }
+            else if (sub === 'open-new') renderOpenMenu();
+            else if (sub === 'open-join') { renderJoinView(); peekEventCode('join'); loadOpenEvents(true); }
             else if (sub === 'open-stock') renderInventorySetup();
-            else if (sub === 'open-sync') { updateSyncUi(); peekEventCode('open'); }
             else if (sub === 'open-name') updateSessionTabView();
         }
         else if (view === 'analytics') {
@@ -7846,7 +8138,7 @@
         const icon = document.getElementById('header-session-icon');
         if (!btn || !label || !icon) return;
         const open = !!currentSession;
-        const next = open ? '閉店する' : '開店する';
+        const next = open ? '閉店する' : '開店・合流';
         // 開店・閉店で見た目が入れ替わった時だけ、一度だけ動かして気づけるようにする
         if (label.textContent && label.textContent !== next) {
             btn.classList.remove('swapped');
@@ -7885,7 +8177,7 @@
         box.innerHTML =
             menuRow('book', '操作マニュアル', 'はじめての人向けの使い方（PDFにも出せます）', "openPanel('settings','manual')") +
             menuRow('sliders', '商品・在庫の調整', stockSub, "openPanel('settings','stock')", { disabled: !currentSession }) +
-            menuRow('target', 'セット割・売上目標', `セット割${setDiscountOn ? 'オン' : 'オフ'}・目標${salesGoal > 0 ? ' ' + yenStr(salesGoal) : 'なし'}`, "openPanel('settings','goal')") +
+            menuRow('target', 'セット割・売上目標', setGoalSub(), "openPanel('settings','goal')") +
             menuRow('link', '複数端末で使う', syncSub, "openPanel('settings','sync')", { disabled: !window.FIREBASE_CONFIG }) +
             menuRow('printer', '領収書の設定', `発行者「${escHtml(shopInfo().name)}」・但し書きの変更`, "openPanel('settings','receipt')") +
             menuRow('archive', '過去の販売会', archSub, "openPanel('settings','archive')") +
@@ -7902,21 +8194,145 @@
         tempSetupProducts = JSON.parse(JSON.stringify(products));
     }
 
-    // ▼▼▼ 共有コードの下調べ ▼▼▼
-    // 【なぜ必要か】「新しく共有を始める」「すでに開いている販売会に合流する」
-    // 「閉店済みのコードをもう一度使う」は、まったく違う行いなのに、
-    // 押すまで、あるいは押したあとの確認まで、どれになるのか分からなかった。
-    // コードを入れた時点で調べておき、出す文と、ボタンの文字そのものを変えて先に知らせる。
-    //
-    // 【いちばん大事な決まり】打ったコードは、そのまま使う。
-    //   以前は閉店済みのコードを入れると、黙って「テスト-1758…」のような
-    //   別のコードを作って開店していた。打った本人は「テスト」で開いたつもりなので、
-    //   他の端末が「テスト」を入れても永久に出会えない、という事故が起きていた。
-    //   閉店済みでも同じコードで開き直せるようにし、名前を書き換えるのはやめた。
-    let openSyncPeek = { code: '', state: 'none', name: '' };   // none/checking/new/open/closed/unknown
+    // ▼▼▼ 開店と合流のしくみ（ここを読めば全体が分かる）▼▼▼
+    // ・「開店」… この端末で新しい販売会を作る。共有するなら、共有コードは自動で決まる（4けたの数字）。
+    //            打たないので、打ち間違いも、前に使ったコードとぶつかることも起きない。
+    // ・「合流」… ほかの端末で開いている販売会に入る。名前も商品も決めない（向こうのものを使う）。
+    //            合流できるのは「いま開いている販売会」だけ。閉店済み・長く使われていないコードには入れない。
+    //            合流の操作で、新しい販売会ができてしまうことはない。
+    // ・「片づけ」… 閉店すると、全部の端末が閉店を受け取ったあとで、そのコードの中身を置き場から消す。
+    //            同じコードがあとでまた使われても、前の回のデータが出てくることはない。
+    const EVENT_STALE_MS = 12 * 3600000;    // これより長く誰も使っていない販売会は「使われていない」とみなす
+    const PRESENCE_ACTIVE_MS = 10 * 60000;  // この間に知らせのあった端末を「使用中」と数える
+    const PRESENCE_FRESH_MS = 30 * 60000;   // 片づけの前に、まだ閉店を受け取っていない端末を待つ長さ
+
+    // 共有コードをひとつ決める。まだ置き場に無い4けたの数字を選ぶ。
+    // 通信できない時は null（この端末だけで開店する）。
+    async function generateShareCode() {
+        if (!syncReady || !fbDb) return null;
+        for (let i = 0; i < 15; i++) {
+            const c = String(1000 + Math.floor(Math.random() * 9000));
+            try {
+                const snap = await fbDb.collection('events').doc(c).get();
+                if (!snap.exists) return c;
+            } catch (e) { return null; }
+        }
+        return null;
+    }
+
+    // 共有中の端末の一覧を読む（抜けた端末と、前の回の端末は数えない）
+    async function readPresence(code, roundId) {
+        const rows = [];
+        try {
+            const q = await fbDb.collection('events').doc(code).collection('devices').get();
+            q.forEach(x => { const v = x.data() || {}; v.__id = x.id; rows.push(v); });
+        } catch (e) { /* 一覧が読めなくても、開いているかどうかは決められる */ }
+        return rows.filter(r => !r.left && (!roundId || !r.roundId || r.roundId === roundId));
+    }
+    function eventInfoFrom(code, d, pres) {
+        const now = Date.now();
+        const lastAt = Math.max(Number(d.openedAt) || 0, ...pres.map(r => Number(r.at) || 0));
+        const active = pres.filter(r => (Number(r.at) || 0) > now - PRESENCE_ACTIVE_MS);
+        const registers = active.filter(r => r.role !== 'display').length;
+        return {
+            code, name: d.name || '無題',
+            state: (now - lastAt > EVENT_STALE_MS) ? 'stale' : 'open',
+            openedAt: Number(d.openedAt) || 0, lastAt,
+            registers, displays: active.length - registers
+        };
+    }
+    // 販売会の様子を調べる。state は open（合流できる）/ closed / stale（長く使われていない）/ none / unknown（通信できない）
+    async function fetchEventInfo(code) {
+        const c = sanitizeEventCode(code || '');
+        if (!c) return { code: c, state: 'none' };
+        if (!syncReady || !fbDb) return { code: c, state: 'unknown' };
+        try {
+            const snap = await fbDb.collection('events').doc(c).get();
+            if (!snap.exists) return { code: c, state: 'none' };
+            const d = snap.data() || {};
+            if (d.status === 'closed') return { code: c, state: 'closed', name: d.name || '無題' };
+            if (!Array.isArray(d.products) || !d.products.length) return { code: c, state: 'none' };
+            return eventInfoFrom(c, d, await readPresence(c, d.roundId));
+        } catch (e) {
+            return { code: c, state: 'unknown' };
+        }
+    }
+    function devicesText(r) {
+        const bits = [];
+        if (r.registers > 0) bits.push(`レジ${r.registers}台`);
+        if (r.displays > 0) bits.push(`表示${r.displays}台`);
+        return bits.length ? bits.join('・') + 'で使用中' : 'いま使っている端末なし';
+    }
+    // 合流できない時に出す文（なぜ入れないのかと、どうすればよいか）
+    function joinRefusal(info) {
+        const nm = info.name ? `「${info.name}」` : '';
+        if (info.state === 'closed') return `共有コード「${info.code}」の販売会${nm}は閉店しています。\n合流できるのは、いま開いている販売会だけです。`;
+        if (info.state === 'stale') return `共有コード「${info.code}」の販売会${nm}は、長いあいだどの端末も使っていないため合流できません。`;
+        if (info.state === 'unknown') return '通信できないため、販売会を確かめられませんでした。\n電波の良い場所で、もう一度お試しください。';
+        return `共有コード「${info.code}」で開いている販売会はありません。\nコードを確かめてください。`;
+    }
+
+    // ---- 閉店したコードの片づけ ----
+    // 閉店した販売会の中身（会計・予約・端末の一覧・お客様用の表示）と置き場そのものを消す。
+    // 【消さない時】
+    //  ・開き直されている（閉店になっていない／別の回になっている）
+    //  ・まだ閉店を受け取っていないレジ役の端末がいる（その端末が閉店を受け取って、自分の集計を残すまで待つ）
+    //    → その端末が閉店を受け取った時に、あらためて片づける
+    const PURGE_SUBCOLS = ['sales', 'reservations', 'devices', 'live'];
+    async function purgeClosedEvent(code, opts) {
+        const c = sanitizeEventCode(code || '');
+        if (!c || !fbDb || !syncReady) return false;
+        const round = opts && opts.round;
+        try {
+            const ev = fbDb.collection('events').doc(c);
+            const snap = await ev.get();
+            if (!snap.exists) return true;
+            const d = snap.data() || {};
+            if (d.status !== 'closed') return false;
+            if (round && d.roundId && d.roundId !== round) return false;
+            const now = Date.now();
+            const waiting = (await readPresence(c, d.roundId)).some(r =>
+                r.__id !== getDeviceId() && r.role !== 'display' && (Number(r.at) || 0) > now - PRESENCE_FRESH_MS);
+            if (waiting) return false;
+            for (const sub of PURGE_SUBCOLS) {
+                const q = await ev.collection(sub).get();
+                const ids = [];
+                q.forEach(x => ids.push(x.id));
+                await Promise.all(ids.map(id => ev.collection(sub).doc(id).delete()));
+            }
+            // 消している間に開き直されていたら、置き場そのものは残す
+            const again = await ev.get();
+            if (again.exists && (again.data() || {}).status !== 'closed') return false;
+            await ev.delete();
+            return true;
+        } catch (e) {
+            console.warn('閉店したコードの片づけに失敗しました（次の機会にもう一度行います）', e);
+            return false;
+        }
+    }
+    function schedulePurge(code, round, delay) {
+        if (!code) return;
+        setTimeout(() => { purgeClosedEvent(code, { round }); }, delay);
+    }
+    // 開いている販売会を探すついでに、閉店から時間のたった販売会を片づける（片づけそこねの回収）
+    let lastSweepAt = 0;
+    async function sweepClosedEvents() {
+        if (!syncReady || !fbDb || Date.now() - lastSweepAt < 10 * 60000) return;
+        lastSweepAt = Date.now();
+        try {
+            const snap = await fbDb.collection('events').where('status', '==', 'closed').get();
+            const old = [];
+            snap.forEach(x => { const v = x.data() || {}; if ((Number(v.closedAt) || 0) < Date.now() - PRESENCE_FRESH_MS) old.push(x.id); });
+            for (const c of old.slice(0, 5)) await purgeClosedEvent(c);
+        } catch (e) { /* 片づけはおまけ。できなくても困らない */ }
+    }
+
+    // ---- 合流するコードの下調べ ----
+    // コードを打ったら、その場で「合流できるか」を調べて、ボタンの文字と押せるかどうかを変える。
+    let openSyncPeek = { code: '', state: 'none', name: '' };   // state は fetchEventInfo と同じ＋checking
     let openSyncPeekTimer = null;
-    let peekWhere = 'open';                                      // open＝開店の準備 / live＝営業中
-    const PEEK_INPUT = { open: 'sync-event-code-input', live: 'sync-live-code-input' };
+    let peekWhere = 'join';                                      // join＝閉店中の合流 / live＝営業中の合流
+    const PEEK_INPUT = { join: 'join-code-input', live: 'sync-live-code-input' };
 
     function peekInputValue() {
         const el = document.getElementById(PEEK_INPUT[peekWhere]);
@@ -7924,12 +8340,12 @@
     }
 
     function renderCodePeek() {
-        renderOpenSyncPeek();
+        renderJoinPeek();
         renderLiveSyncPeek();
-        if (peekWhere === 'open') renderOpenMenu();
     }
 
     function peekEventCode(where) {
+        if (where === 'open') where = 'join';     // 前の版の呼び名
         if (where) peekWhere = where;
         const code = peekInputValue();
         if (code !== openSyncPeek.code) openSyncPeek = { code, state: code ? 'checking' : 'none', name: '' };
@@ -7940,134 +8356,181 @@
         // 打っている途中で何度も問い合わせないよう、手が止まってから調べる
         openSyncPeekTimer = setTimeout(async () => {
             openSyncPeekTimer = null;
-            try {
-                const snap = await fbDb.collection('events').doc(code).get();
-                if (openSyncPeek.code !== code) return;   // 調べている間に書き換えられた
-                if (!snap.exists) openSyncPeek = { code, state: 'new', name: '' };
-                else {
-                    const d = snap.data() || {};
-                    openSyncPeek = { code, state: d.status === 'closed' ? 'closed' : 'open', name: d.name || '無題' };
-                }
-            } catch (e) {
-                if (openSyncPeek.code === code) openSyncPeek.state = 'unknown';
-            }
+            const info = await fetchEventInfo(code);
+            if (openSyncPeek.code !== code) return;   // 調べている間に書き換えられた
+            openSyncPeek = info;
             renderCodePeek();
         }, 500);
     }
 
     // ▼▼▼ いま開いている販売会を、自動で探す ▼▼▼
-    // 【なぜ必要か】合流するだけなのに、毎回コードを打ち直すのは手間だし打ち間違える。
-    //   置き場に「開いている」と書いてある販売会はその場で分かるので、
-    //   一覧にして押すだけで入れるようにする。
-    // 【出す範囲】1日以内に開いたもの・商品が入っているものだけ。
-    //   閉め忘れて何日も開いたままの古いものを、合流先として勧めない。
-    const OPEN_EVENT_MAX_AGE = 24 * 3600000;
+    // 合流するだけなのに、毎回コードを打つのは手間だし打ち間違える。
+    // 開いていて、しかも最近まで使われている販売会だけを一覧にして、押すだけで入れるようにする。
     let openEventRows = [];
     let openEventsAt = 0;
     let openEventsBusy = false;
+    let openEventsState = 'idle';   // idle / loading / done / error
 
     async function loadOpenEvents(force) {
-        if (!window.FIREBASE_CONFIG || !syncReady || !fbDb) { openEventRows = []; renderOpenEventLists(); return; }
+        if (!window.FIREBASE_CONFIG || !syncReady || !fbDb) { openEventRows = []; openEventsState = 'error'; renderOpenEventLists(); return; }
         if (openEventsBusy) return;
         if (!force && Date.now() - openEventsAt < 15000) { renderOpenEventLists(); return; }
         openEventsBusy = true;
+        openEventsState = 'loading';
+        renderOpenEventLists();
         try {
             const snap = await fbDb.collection('events').where('status', '==', 'open').get();
-            const cut = Date.now() - OPEN_EVENT_MAX_AGE;
-            const rows = [];
-            snap.forEach(d => {
-                const v = d.data() || {};
-                const at = Number(v.openedAt) || 0;
-                if (at < cut) return;                                        // 古いものは勧めない
+            const cands = [];
+            snap.forEach(x => {
+                const v = x.data() || {};
                 if (!Array.isArray(v.products) || !v.products.length) return; // 中身が無いものは入れない
-                rows.push({ code: d.id, name: v.name || '無題', at });
+                cands.push({ code: x.id, d: v });
             });
-            rows.sort((a, b) => b.at - a.at);
+            cands.sort((a, b) => (Number(b.d.openedAt) || 0) - (Number(a.d.openedAt) || 0));
+            const rows = [];
+            for (const cd of cands.slice(0, 10)) {
+                const info = eventInfoFrom(cd.code, cd.d, await readPresence(cd.code, cd.d.roundId));
+                if (info.state === 'open') rows.push(info);
+            }
+            rows.sort((a, b) => b.lastAt - a.lastAt);
             openEventRows = rows.slice(0, 5);
+            openEventsState = 'done';
         } catch (e) {
-            // 権限や通信の都合で一覧を取れないことがある。その時は黙って出さない
-            // （コードを打って入る道は、これまでどおり使える）。
+            // 権限や通信の都合で一覧を取れないことがある。その時はコードを打って入る道を案内する
             console.warn('開いている販売会の一覧を取れませんでした', e);
             openEventRows = [];
+            openEventsState = 'error';
         }
         openEventsAt = Date.now();
         openEventsBusy = false;
         renderOpenEventLists();
+        sweepClosedEvents();
     }
 
     function renderOpenEventLists() {
         const rows = openEventRows.filter(r => !(syncMode && r.code === syncEventCode));
-        const html = rows.map(r => {
-            const d = new Date(r.at);
-            const when = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} 開店`;
-            return menuRow('link', r.name, `コード: ${escHtml(r.code)}・${when}`,
-                `joinOpenEvent('${escHtml(r.code).replace(/'/g, "\\'")}')`);
-        }).join('');
-        [['open-live-wrap', 'open-live-list'], ['live-live-wrap', 'live-live-list']].forEach(([w, l]) => {
-            const wrap = document.getElementById(w), list = document.getElementById(l);
-            if (!wrap || !list) return;
-            wrap.style.display = rows.length ? '' : 'none';
-            list.innerHTML = html;
-        });
+        const hm = t => { const d = new Date(t); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+        const html = rows.map(r =>
+            menuRow('link', r.name, `コード <b>${escHtml(r.code)}</b>・${hm(r.openedAt)} 開店・${devicesText(r)}`,
+                `joinOpenEvent('${escArg(r.code)}')`)).join('');
+        // 閉店中の「合流する」画面
+        const list = document.getElementById('open-live-list');
+        if (list) list.innerHTML = html;
+        const empty = document.getElementById('open-live-empty');
+        if (empty) {
+            let msg = '';
+            if (!rows.length) {
+                if (!window.FIREBASE_CONFIG) msg = 'この端末では共有が使えません。';
+                else if (!syncReady || openEventsState === 'error') msg = 'いま一覧を読めませんでした（通信を確かめてください）。<br>コードが分かれば、下の「コードで合流する」から入れます。';
+                else if (openEventsState === 'loading') msg = '探しています…';
+                else msg = 'いま開いている販売会は見つかりませんでした。<br>開店した端末で「ほかの端末と共有する」をオンにすると、ここに出ます。'
+                    + '<br>（すでに営業中なら、その端末の「設定 → 複数端末で使う → ほかの端末と共有を始める」）';
+            }
+            empty.style.display = msg ? '' : 'none';
+            empty.innerHTML = msg ? `<svg class="ic"><use href="#ic-${openEventsState === 'loading' ? 'clock' : 'link'}"/></svg><span>${msg}</span>` : '';
+        }
+        // 営業中の「別の販売会に合流する」画面
+        const wrap = document.getElementById('live-live-wrap'), llist = document.getElementById('live-live-list');
+        if (wrap && llist) { wrap.style.display = rows.length ? '' : 'none'; llist.innerHTML = html; }
+        // はじめの画面の「合流する」に、いま開いている数を出す
+        const badge = document.getElementById('start-join-badge');
+        if (badge) {
+            badge.style.display = rows.length ? '' : 'none';
+            badge.textContent = rows.length ? `いま${rows.length}件開いています` : '';
+        }
     }
 
-    // 一覧の1行を押した時。コードは入れずに、そのまま合流する。
+    // ---- 合流 ----
+    let joinRole = 'register';     // この端末を レジ / お客様用の表示 のどちらとして使うか
+    function setJoinRole(r) {
+        joinRole = r === 'display' ? 'display' : 'register';
+        ['register', 'display'].forEach(k => {
+            const b = document.getElementById('join-role-' + k);
+            if (b) { b.classList.toggle('on', joinRole === k); b.setAttribute('aria-pressed', joinRole === k); }
+        });
+        playSound(660, 0.05);
+        renderJoinPeek();
+    }
+
+    // 一覧の1行を押した時（コードは打たなくてよい）
     async function joinOpenEvent(code) {
+        return joinEvent(code);
+    }
+    function joinByTypedCode() {
+        const el = document.getElementById('join-code-input');
+        return joinEvent(el ? el.value : '');
+    }
+
+    // 動いている販売会に入る。合流の入口はすべてここを通す。
+    // 開いていない販売会には入らない（新しい販売会を作ってしまうことはない）。
+    async function joinEvent(code) {
         const c = sanitizeEventCode(code || '');
-        if (!c) return;
-        playSound();
+        if (!c) { playError(); return false; }
+        if (!window.FIREBASE_CONFIG || !syncReady || !fbDb) {
+            playError();
+            alert('共有サーバーにつながっていないため、合流できません。\n電波の良い場所で、もう一度お試しください。');
+            return false;
+        }
         if (currentSession) {
             // 営業中：この端末の会計ごと、その販売会に合流する
             const inp = document.getElementById('sync-live-code-input');
             if (inp) inp.value = c;
             await startSyncMidSession();
-            return;
+            return !!(syncMode && syncEventCode === c);
         }
-        await joinByCodeOnly(c);
+        playSound();
+        const info = await fetchEventInfo(c);
+        if (info.state !== 'open') {
+            playError();
+            alert(joinRefusal(info));
+            loadOpenEvents(true);
+            return false;
+        }
+        if (joinRole === 'display') {
+            // お客様用の表示：映すだけなので、この端末の売上データには触らない
+            if (!enterCustomerMode(c)) return false;
+            navTo('register');
+            return true;
+        }
+        openSyncPeek = { code: c, state: 'open', name: info.name };
+        const codeInput = document.getElementById('sync-event-code-input');
+        if (codeInput) codeInput.value = c;
+        const nameInput = document.getElementById('session-name-input');
+        if (nameInput && !nameInput.value) nameInput.value = defaultSessionName();
+        await startSession();
+        const ok = !!(currentSession && syncMode && syncEventCode === c);
+        if (ok) showToast(`「${currentSession}」に合流しました`);
+        return ok;
     }
 
     // いま入っているコードで何が起きるかを、1か所で決める。
-    // 開店の準備の画面と、営業中の画面で、言うことが食い違わないようにするため。
+    // 閉店中の合流画面と、営業中の合流画面で、言うことが食い違わないようにするため。
     function peekPlan(live) {
         const p = openSyncPeek;
         const nm = escHtml(p.name || '無題');
-        if (!p.code) {
-            return live
-                ? { kind: 'none', btn: '共有コードを入れてください', disabled: true }
-                : { kind: 'none', btn: '1台だけで使う', secondary: true };
-        }
+        if (!p.code) return { kind: 'none', btn: live ? 'コードを入れてください' : '合流する', disabled: true, icoBtn: 'link' };
         if (p.state === 'checking') {
-            return { kind: 'checking', cls: '', icon: 'clock',
-                note: 'このコードが使われていないか調べています…',
-                btn: live ? 'この端末でも会計する' : 'このコードを使う' };
+            return { kind: 'checking', cls: '', icon: 'clock', note: 'このコードの販売会を探しています…', btn: '合流する', disabled: true, icoBtn: 'link' };
         }
         if (p.state === 'open') {
+            const who = devicesText(p);
             return { kind: 'open', cls: 'notice-ok', icon: 'link', name: p.name,
-                note: `このコードは<b>「${nm}」として開店中</b>です。<br>`
+                note: `<b>「${nm}」</b>が開いています（${who}）。<br>`
                     + (live ? 'この端末の会計もその販売会に合わせ、売上・在庫・商品がひとつになります。'
-                            : '参加すると、売上・在庫・商品がその販売会とひとつになります。<br>この画面で決めた商品と仕入れ数は使われません。'),
-                btn: live ? `「${nm}」に合流する` : `「${nm}」に参加する`, icoBtn: 'link' };
-        }
-        if (p.state === 'closed') {
-            // 【方針】共有コードは「いまどの端末どうしがつながるか」を決めるだけの合言葉で、
-            //   売上の記録には残らない。前の回の会計は中で「回」を分けて数えているので、
-            //   同じコードを使い回しても混ざらない。
-            //   だから注意（⚠）ではなく、ふつうに使える案内として出す。
-            return { kind: 'closed', cls: '', icon: 'refresh', name: p.name,
-                note: `このコードは前に<b>「${nm}」</b>で使いました。<b>そのまま使えます。</b><br>`
-                    + '新しい販売会として始まり、前回の会計は混ざりません。',
-                btn: live ? 'このコードで共有を始める' : 'このコードで共有する' };
+                            : (!live && joinRole === 'display' ? 'この端末に、その販売会の金額を大きく映します。'
+                                : '合流すると、その販売会の商品と売上がこの端末に出ます。')),
+                btn: `「${nm}」に合流する`, icoBtn: 'link' };
         }
         if (p.state === 'unknown') {
             return { kind: 'unknown', cls: 'notice-warn', icon: 'alert',
-                note: 'いま通信できないため、このコードが使われているか確かめられませんでした。<br>電波の良い場所で開き直すか、このまま進むこともできます。',
-                btn: live ? 'この端末でも会計する' : 'このコードを使う' };
+                note: 'いま通信できないため、確かめられませんでした。<br>電波の良い場所で、もう一度入れてください。', btn: '合流する', disabled: true, icoBtn: 'link' };
         }
-        return { kind: 'new', cls: '', icon: 'plus',
-            note: live
-                ? 'このコードで<b>新しく共有を始めます</b>。<br>いまの会計・在庫・商品が共有の元になります。<br>一緒に使う端末にも、同じコードを入れてください。'
-                : 'このコードで<b>新しく開店</b>します。<br>一緒に使う端末にも、同じコードを入れてください。',
-            btn: live ? 'このコードで共有を始める' : 'このコードで共有する' };
+        const why = p.state === 'closed' ? `このコードの<b>「${nm}」は閉店しています</b>。`
+            : (p.state === 'stale' ? `このコードの<b>「${nm}」は、長いあいだ使われていません</b>。`
+                : 'このコードで<b>開いている販売会はありません</b>。');
+        return { kind: p.state, cls: 'notice-warn', icon: 'alert',
+            note: why + '<br>合流できるのは、いま開いている販売会だけです。コードを確かめてください。',
+            btn: '合流する', disabled: true, icoBtn: 'link' };
     }
 
     // 下調べの札とボタンを、決めたとおりに書き換える
@@ -8088,17 +8551,54 @@
         return plan;
     }
 
-    function renderOpenSyncPeek() {
-        paintPeek('open-sync-peek', 'open-sync-ok', false);
+    function renderJoinPeek() {
+        paintPeek('join-peek', 'join-code-btn', false);
     }
 
-    // 営業中の「共有コードを入れる」画面も、開店の準備とまったく同じ言い方にする。
-    // 画面が違うだけで言うことが変わると、どちらが正しいのか分からなくなるため。
+    // 営業中の「別の販売会に合流する」画面も、閉店中とまったく同じ言い方にする。
     function renderLiveSyncPeek() {
         const plan = paintPeek('live-sync-peek', 'live-sync-ok', true);
         if (!plan) return;
         const cd = document.getElementById('live-sync-cd');
-        if (cd) cd.disabled = !openSyncPeek.code;
+        if (cd) cd.disabled = !(openSyncPeek.code && openSyncPeek.state === 'open');
+    }
+
+    // 合流の画面を開く
+    function openJoinSetup() {
+        playSound();
+        openPanel('session', 'open-join');
+    }
+    function renderJoinView() {
+        setJoinRoleQuiet(joinRole);
+        renderOpenEventLists();
+        renderJoinPeek();
+    }
+    function setJoinRoleQuiet(r) {
+        ['register', 'display'].forEach(k => {
+            const b = document.getElementById('join-role-' + k);
+            if (b) { b.classList.toggle('on', r === k); b.setAttribute('aria-pressed', r === k); }
+        });
+    }
+
+    // 新しく開店する画面を開く
+    function openNewSetup() {
+        playSound();
+        // 合流のために入れたコードが残っていると、開店のつもりが合流になってしまう。
+        // 新しく開店する時は、コードは必ず自動で決める。
+        const ci = document.getElementById('sync-event-code-input');
+        if (ci) ci.value = '';
+        openPanel('session', 'open-new');
+    }
+
+    // 開店する時に共有するか（端末ごとに覚えておく。最初はオン）
+    function shareOnOpenWanted() {
+        return !!window.FIREBASE_CONFIG && uiPrefs.shareOnOpen !== false;
+    }
+    function setShareOnOpen(on) {
+        uiPrefs.shareOnOpen = !!on;
+        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
+        playSound(660, 0.05);
+        renderOpenMenu();
     }
 
     function confirmOpenStock() {
@@ -8122,49 +8622,6 @@
         panelBack();
     }
 
-    function confirmOpenSyncCode() {
-        const el = document.getElementById('sync-event-code-input');
-        const raw = (el && el.value || '').trim();
-        const code = sanitizeEventCode(raw);
-        if (el) el.value = code;
-        playSound();
-        renderOpenMenu();
-        // すでに開いている販売会だと分かっている時は、この画面のボタンが
-        // そのまま「合流する」ボタンになる。開店の準備へ戻って、もう一度
-        // 大きいボタンを押し直させない（＝合流だけを独立した一手にする）。
-        if (code && openSyncPeek.code === code && openSyncPeek.state === 'open') {
-            startSession();
-            return;
-        }
-        showToast(!code ? '1台だけで使います' : `共有コードを「${code}」にしました`);
-        panelBack();
-    }
-
-    // 開店の準備の1行に出す、共有コードの様子
-    function syncCodeSubLabel(code) {
-        if (!code) return '使わない（1台で営業）';
-        const p = openSyncPeek;
-        if (p.code === sanitizeEventCode(code)) {
-            if (p.state === 'open') return `「${escHtml(p.name)}」に参加します`;
-            if (p.state === 'closed') return `コード: ${escHtml(code)}（前にも使ったコード）`;
-            if (p.state === 'new') return `コード: ${escHtml(code)}（新しく開店）`;
-        }
-        return `コード: ${escHtml(code)}`;
-    }
-
-    // いちばん下の大きいボタンは、これから起きることをそのまま書く。
-    // 「新しく開店する」のか「動いている販売会に参加する」のかを、押す前に見せる。
-    function updateOpenPrimaryButton() {
-        const btn = document.getElementById('open-primary-btn');
-        if (!btn) return;
-        const el = document.getElementById('sync-event-code-input');
-        const code = sanitizeEventCode((el && el.value || '').trim());
-        const joining = code && openSyncPeek.code === code && openSyncPeek.state === 'open';
-        btn.innerHTML = joining
-            ? `<svg class="ic"><use href="#ic-link"/></svg>「${escHtml(openSyncPeek.name)}」に参加する`
-            : '<svg class="ic"><use href="#ic-store"/></svg>この内容で開店する';
-    }
-
     function renderOpenMenu() {
         const box = document.getElementById('open-menu-list');
         if (!box) return;
@@ -8173,25 +8630,25 @@
         if (!tempSetupProducts.length) prepareOpenSetup();
         const active = tempSetupProducts.filter(p => p.active !== false);
         const totalStock = active.reduce((sum, p) => sum + (p.initialStock || 0), 0);
-        const codeInput = document.getElementById('sync-event-code-input');
-        const code = (codeInput && codeInput.value || '').trim();
-        // すでに開いている販売会に合流する時は、名前も商品も向こうのものを使う。
-        // ここで決めた中身は使われないので、そのことを行ごとに書いておく。
-        const joining = !!code && openSyncPeek.code === sanitizeEventCode(code) && openSyncPeek.state === 'open';
         box.innerHTML =
-            menuRow('tag', '販売会の名前',
-                joining ? `「${escHtml(openSyncPeek.name)}」になります` : escHtml(nameInput ? nameInput.value : ''),
-                "openPanel('session','open-name')") +
-            menuRow('box', '商品と仕入れ数',
-                joining ? '参加先の商品を使います' : `${active.length}品・合計${totalStock}個`,
-                "openPanel('session','open-stock')") +
-            (window.FIREBASE_CONFIG
-                ? menuRow('link', '複数端末で共有', syncCodeSubLabel(code), "openPanel('session','open-sync')")
-                : '') +
-            menuRow('target', 'セット割・売上目標', `セット割${setDiscountOn ? 'オン' : 'オフ'}・目標${salesGoal > 0 ? ' ' + yenStr(salesGoal) : 'なし（任意）'}`, "openPanel('settings','goal')") +
-            menuRow('upload', 'データを取り込んで始める', '前回の続き・別の端末から引き継ぐ', "openPanel('session','open-import')");
+            menuRow('tag', '販売会の名前', escHtml(nameInput ? nameInput.value : ''), "openPanel('session','open-name')") +
+            menuRow('box', '商品と仕入れ数', `${active.length}品・合計${totalStock}個`, "openPanel('session','open-stock')") +
+            menuRow('target', 'セット割・売上目標', setGoalSub(), "openPanel('settings','goal')");
+        // 共有するかどうか（共有の準備がある端末だけ）
+        const row = document.getElementById('open-share-row');
+        if (row) {
+            row.style.display = window.FIREBASE_CONFIG ? '' : 'none';
+            const sw = document.getElementById('open-share-switch');
+            if (sw) sw.checked = shareOnOpenWanted();
+            const sub = document.getElementById('open-share-sub');
+            if (sub) sub.textContent = !shareOnOpenWanted() ? 'この端末だけで開店します（あとからでも共有できます）'
+                : (syncReady ? '共有コードは自動で決まります。ほかの端末は「合流する」から選ぶだけ'
+                             : 'いまは通信できないため、この端末だけで開店します');
+        }
+        // はじめの画面のおまけの行
+        const extra = document.getElementById('start-extra-list');
+        if (extra) extra.innerHTML = menuRow('upload', 'データを取り込んで始める', '前回の続き・別の端末から引き継ぐ', "openPanel('session','open-import')");
         renderOpenEventLists();
-        updateOpenPrimaryButton();
         updateReopenRow();
     }
 
@@ -8201,32 +8658,36 @@
         const acts = document.getElementById('sync-actions');
         if (!box || !acts) return;
         const speed = document.getElementById('sync-speed');
+        const codeWrap = document.getElementById('sync-code-wrap');
+        if (codeWrap) codeWrap.innerHTML = '';
         renderSyncRoleList();
         renderSyncDevices();
         renderSyncHealth();
         if (!currentSession) {
-            // 開店前でも行き止まりにしない。
-            // ・他の端末がもう開いている → コードを入れればそのまま合流できる
-            // ・まだ誰も開いていない → 開店の準備へ送る
+            // 開店前は「合流」の画面へ（新しく始めるなら開店の画面へ）
             box.className = 'notice';
-            box.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span>まだ開店していません。他の端末がもう開いているなら、<b>共有コードを入れるだけ</b>で合流できます。</span>';
+            box.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span>まだ開店していません。</span>';
             acts.innerHTML =
-                `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-link"/></svg>共有コードを入れて合流する</button>`;
+                `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openJoinSetup()"><svg class="ic"><use href="#ic-link"/></svg>開いている販売会に合流する</button>` +
+                `<button class="action-btn btn-secondary" onclick="headerSessionAction(); openNewSetup();"><svg class="ic"><use href="#ic-store"/></svg>新しく開店する</button>`;
             if (speed) speed.style.display = 'none';
             return;
         }
         if (syncMode) {
             box.className = 'notice notice-ok';
-            // 共有コードは他の端末に伝える値なので、ここだけは長押しでコピーできるようにする
-            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>共有中です。<br>共有コード：<b class="selectable">${escHtml(syncEventCode || '')}</b><br>この端末：${escHtml(deviceDisplayName() || '名前なし')}（会計記録の記号 ${deviceLabel()}）</span>`;
+            // 共有コードはほかの端末で打つこともあるので、大きく読みやすく出す（長押しでコピーもできる）
+            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>「${escHtml(currentSession)}」を共有中です。<br>この端末：${escHtml(deviceDisplayName() || '名前なし')}（会計記録の記号 ${deviceLabel()}）</span>`;
+            if (codeWrap) codeWrap.innerHTML = `<div class="share-code-big"><span class="k">共有コード<br>ほかの端末は「合流する」で<br>この販売会を選ぶだけ</span><span class="v selectable" id="share-code-big">${escHtml(syncEventCode || '')}</span></div>`;
             acts.innerHTML =
-                `<button class="action-btn btn-secondary" onclick="stopSyncMidSession()"><svg class="ic"><use href="#ic-x"/></svg>共有をやめてこの端末だけで続ける</button>` +
-                `<button class="action-btn btn-secondary" onclick="leaveDeviceOnly()"><svg class="ic"><use href="#ic-power"/></svg>この端末の利用を終える（他の端末は継続）</button>`;
+                `<button class="action-btn btn-secondary" onclick="leaveDeviceOnly()"><svg class="ic"><use href="#ic-power"/></svg>この端末の利用を終える（ほかの端末は続ける）</button>` +
+                `<button class="action-btn btn-secondary" onclick="stopSyncMidSession()"><svg class="ic"><use href="#ic-x"/></svg>共有をやめてこの端末だけで続ける</button>`;
             if (speed) speed.style.display = '';
         } else {
             box.className = 'notice';
-            box.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span><b>この端末だけ</b>で営業中です。コードを入れると、いまの会計・在庫のまま共有できます。</span>';
-            acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-plus"/></svg>共有コードを入れる</button>`;
+            box.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span><b>この端末だけ</b>で営業中です。</span>';
+            acts.innerHTML =
+                `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="startShareNow()"><svg class="ic"><use href="#ic-plus"/></svg>ほかの端末と共有を始める</button>` +
+                `<button class="action-btn btn-secondary" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-link"/></svg>別の端末の販売会に合流する</button>`;
             if (speed) speed.style.display = 'none';
         }
     }
@@ -8884,7 +9345,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn };
+        return { products, cart, salesHistory, reservations, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -8908,6 +9369,8 @@
         salesGoal = Number(data.salesGoal) > 0 ? Number(data.salesGoal) : 0;
         // セット割は店の決まりなので、販売会をまたいで持ち越す（前の版のデータには無いのでオン）
         setDiscountOn = (typeof data.setDiscountOn === 'boolean') ? data.setDiscountOn : true;
+        // 組み合わせと額（前の版のデータには無いので、初期設定のクッキー＋ドリンクで10円引き）
+        setRule = normSetRule(data.setRule) || { needs: SET_DEFAULT.needs.slice(), amount: SET_DEFAULT.amount };
         return true;
     }
 
@@ -9241,7 +9704,7 @@
             }).join('');
             const discLine = (Number(h.discount) || 0) > 0
                 ? `<div class="disc-line" style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
-                        <span><svg class="ic"><use href="#ic-tag"/></svg>${SET_DISCOUNT.label}</span><span>−¥${h.discount}</span>
+                        <span><svg class="ic"><use href="#ic-tag"/></svg>${SET_LABEL}</span><span>−¥${h.discount}</span>
                     </div>` : '';
             const cashStr = (h.cash != null) ? `¥${h.cash}` : '—';
             const changeStr = (h.change != null) ? `¥${h.change}` : '—';
@@ -9333,7 +9796,7 @@
                 items.push({ id: prod.id, name: prod.name, price: prod.price, type: prod.type });
             }
             // セット割はその会計をした時の設定のまま付け直す（ドリンクを消したら割引も外れる）
-            const discount = setDiscountFor(items, rec.setDisc === true);
+            const discount = setDiscountFor(items, ruleOfRecord(rec));
             const total = Math.max(0, itemsGross(items) - discount);
             if (items.length === 0) {
                 syncUpdateSale(rec.remoteId, { voided: true, voidedAt: Date.now() }, rec.remoteCode);
@@ -9360,7 +9823,7 @@
             if (prod.stock === 0 && !prod.soldOutTime) prod.soldOutTime = new Date().toISOString();
         }
         // 合計は明細から付け直す。セット割はその会計をした時の設定のまま判定する
-        rec.discount = setDiscountFor(rec.items, rec.setDisc === true);
+        rec.discount = setDiscountFor(rec.items, ruleOfRecord(rec));
         rec.total = Math.max(0, itemsGross(rec.items) - rec.discount);
         rec.edited = true;
         logEdit(`会計修正 客No.${rec.no || '-'}：${name} ${delta < 0 ? '−1' : '＋1'}`);
@@ -9483,7 +9946,7 @@
         // セット割は明細の最後に「値引き」の行として載せる（明細の合計と金額がそろうように）
         const disc = Number(h.discount) || 0;
         const discRow = disc > 0
-            ? `<tr><td>${esc(SET_DISCOUNT.label)}（値引き）</td><td class="c"></td><td class="r"></td><td class="r">−${yen(disc)}</td></tr>` : '';
+            ? `<tr><td>${esc(SET_LABEL)}（値引き）</td><td class="c"></td><td class="r"></td><td class="r">−${yen(disc)}</td></tr>` : '';
         const payRows = (h.cash != null)
             ? `<div class="pay"><span>お預かり</span><span>${yen(h.cash)}</span></div>
                <div class="pay"><span>お釣り</span><span>${yen(h.change || 0)}</span></div>` : '';
@@ -10114,6 +10577,16 @@
             snap.forEach(d => { const v = d.data() || {}; v.__id = d.id; docs.push(v); });
             const m = snap.metadata || {};
             noteSyncHealth({ fromCache: !!m.fromCache, pending: !!m.hasPendingWrites, docs: docs.length });
+            // 会計は取り消しても消さずに印を付けるだけなので、置き場から会計が消えるのは
+            // 「閉店して片づけられた」時だけ。その時は手元の会計を消さずに、閉店を確かめる。
+            // （電波が切れていて閉店を受け取れなかった端末でも、自分の集計を欠けずに残せるように）
+            if (!m.fromCache && syncMode && syncEventCode === code) {
+                const ids = new Set(docs.map(d => d.__id));
+                if (salesHistory.some(h => h.remoteId && h.remoteCode === code && !ids.has(h.remoteId))) {
+                    checkSharedEventGone(code, docs);
+                    return;
+                }
+            }
             applyRemoteSales(docs);
         }, err => {
             console.warn('同期の購読でエラー。ローカル表示を継続します。', err);
@@ -10233,6 +10706,16 @@
     window.addEventListener('pageshow', () => { if (syncMode || customerMode) wakeSync('画面が戻った'); });
     window.addEventListener('focus', () => { if (syncMode || customerMode) wakeSync('画面が戻った'); });
 
+    // 共有の置き場が片づけられていないか確かめ、片づけ済みならこの端末も閉店する。
+    // 片づけではなかった時（開いたまま）は、届いた内容をそのまま受け取る。
+    async function checkSharedEventGone(code, docs) {
+        let d = null;
+        try { const snap = await fbDb.collection('events').doc(code).get(); d = snap.exists ? (snap.data() || {}) : null; }
+        catch (e) { return; }   // 確かめられない時は何もしない（手元の会計はそのまま）
+        if (!(currentSession && syncMode && syncEventCode === code)) return;
+        if (!d || d.status === 'closed') { closeSessionLocally({ remote: true }); return; }
+        if (docs) applyRemoteSales(docs);
+    }
     function stopSalesSubscription() {
         clearMyPresence();
         stopPresence();
@@ -10265,12 +10748,24 @@
         const closeIfClosed = !!(opts && opts.closeIfClosed);
         if (fbSessionUnsub) { try { fbSessionUnsub(); } catch (e) {} fbSessionUnsub = null; }
         let firstSnapshot = true;
+        let sawDoc = false;   // この購読の中で、置き場があるのを一度でも見たか
         fbSessionUnsub = fbDb.collection('events').doc(code).onSnapshot(doc => {
             const d = doc.data();
-            if (firstSnapshot && closeIfClosed && d && d.status === 'closed' && syncMode && currentSession) {
+            const hadDoc = sawDoc;
+            if (d) sawDoc = true;
+            // 読み込み直した時・役割を切り替えて戻った時に、もう閉店していた
+            // （この端末が見ていない間に、同じ回がほかの端末で閉店された）
+            if (firstSnapshot && d && d.status === 'closed' && syncMode && currentSession
+                && (closeIfClosed || inCurrentRound(d.roundId))) {
                 firstSnapshot = false;
+                const round = syncRoundId;
                 // 会計の受け取りが届くのを少し待ってから閉じる（集計を欠けさせないため）
-                setTimeout(() => { if (currentSession) closeSessionLocally({ remote: true }); }, 1500);
+                setTimeout(() => {
+                    if (currentSession && syncEventCode === code) {
+                        closeSessionLocally({ remote: true });
+                        schedulePurge(code, round, 3000 + Math.floor(Math.random() * 4000));
+                    }
+                }, 1500);
                 return;
             }
             // 初回の受信（この端末が今まさに開店/参加した瞬間）は通知しない。以降の変化だけ知らせる。
@@ -10279,6 +10774,18 @@
             if (!firstSnapshot && d && d.status === 'closed' && syncMode && currentSession
                 && d.closedBy !== getDeviceId()) {
                 firstSnapshot = true;                 // この後の後片づけで二重に反応しないようにする
+                const round = syncRoundId;
+                closeSessionLocally({ remote: true });
+                // 閉店を受け取った端末も、最後の1台なら片づける（少しずらして、同時に消しに行かない）
+                schedulePurge(code, round, 3000 + Math.floor(Math.random() * 4000));
+                return;
+            }
+            // 置き場そのものが消えた＝閉店して片づけ済み（この端末は閉店の知らせを受け取れなかった）。
+            // 手元にある会計で、この端末も閉店して集計を残す。
+            // ※さっきまであった置き場が消えた時だけ信じる（手元の控えだけで「無い」と言っている時は信じない）
+            if (!d && hadDoc && syncMode && currentSession && syncEventCode === code
+                && !(doc.metadata && doc.metadata.fromCache)) {
+                firstSnapshot = true;
                 closeSessionLocally({ remote: true });
                 return;
             }
@@ -10308,20 +10815,21 @@
             // セット割のオン・オフも全端末でそろえる。
             // （同じカゴなのに端末によって10円違う、ということが起きないように）
             if (syncMode && d && typeof d.setDiscount === 'boolean' && d.setDiscountBy !== getDeviceId()) {
-                if (d.setDiscount !== setDiscountOn) {
+                const rr = normSetRule(d.setRule);
+                const ruleChanged = !!rr && JSON.stringify(rr) !== JSON.stringify(normSetRule(setRule));
+                if (d.setDiscount !== setDiscountOn || ruleChanged) {
                     setDiscountOn = d.setDiscount;
+                    if (rr) { setRule = rr; setRuleDraft = null; }
                     saveData();
                     renderSetDiscountState();
                     updateCartDisplay();
                     renderSettingsMenu();
                     renderOpenMenu();
-                    if (!firstSnapshot) showToast(setDiscountOn ? 'ほかの端末でセット割がオンになりました' : 'ほかの端末でセット割がオフになりました');
+                    if (!firstSnapshot) showToast(setDiscountOn ? `ほかの端末でセット割が「${setRuleText(setRule)}」になりました` : 'ほかの端末でセット割がオフになりました');
                 }
             } else if (firstSnapshot && syncMode && d && typeof d.setDiscount !== 'boolean' && syncEventCode === code) {
                 // 前の版で始めた販売会には印が無いので、この端末の設定を置いておく
-                fbDb.collection('events').doc(code)
-                    .set({ setDiscount: setDiscountOn, setDiscountAt: Date.now(), setDiscountBy: getDeviceId() }, { merge: true })
-                    .catch(() => {});
+                shareSetDiscount();
             }
             // 合流の時に販売会の名前をそろえたら、他の端末の表示も合わせる。
             // （片方だけ名前が変わっていると、あとで集計を見た時にどの回か分からなくなる）
@@ -10385,6 +10893,7 @@
         reservationsCol(syncEventCode).doc(String(res.id)).set({
             id: res.id, name: res.name || '', items: items, total: Number(res.total) || 0,
             ...(typeof res.setDisc === 'boolean' ? { setDisc: res.setDisc } : {}),
+            ...(res.setRule !== undefined ? { setRule: normSetRule(res.setRule) } : {}),
             roundId: syncRoundId,
             at: Date.now(), by: getDeviceId()
         }).catch(e => console.warn('予約の共有に失敗しました', e));
@@ -10407,7 +10916,8 @@
                 if (d.id == null) return;
                 if (!inCurrentRound(d.roundId)) return;   // 前の回に残っている予約は見ない
                 rows.push({ id: d.id, name: d.name || '', items: Array.isArray(d.items) ? d.items : [], total: Number(d.total) || 0,
-                            setDisc: typeof d.setDisc === 'boolean' ? d.setDisc : undefined });
+                            setDisc: typeof d.setDisc === 'boolean' ? d.setDisc : undefined,
+                            setRule: d.setRule !== undefined ? normSetRule(d.setRule) : undefined });
             });
             if (firstSnapshot) {
                 // 合流したとき、この端末がすでに持っていた予約を消してしまわない。
@@ -10493,6 +11003,7 @@
                 total: d.total || 0,
                 discount: Number(d.discount) || 0,
                 setDisc: d.setDisc === true,
+                setRule: normSetRule(d.setRule),
                 customerType: d.customerType || '不明',
                 pendingType: !!d.pendingType,
                 typeEditedLater: !!d.typeEditedLater,
@@ -10577,6 +11088,7 @@
             // セット割（前の版で記録した会計には無いので、必ず値を入れて送る）
             discount: Number(record.discount) || 0,
             setDisc: record.setDisc === true,
+            setRule: normSetRule(record.setRule) || null,
             customerType: record.customerType,
             pendingType: !!record.pendingType,
             typeEditedLater: false,
@@ -10613,7 +11125,7 @@
         let msg;
         if (!window.FIREBASE_CONFIG) msg = '';
         else if (syncMode) msg = `共有中：コード「<b>${escHtml(syncEventCode || '')}</b>」／この端末 ${escHtml(deviceDisplayName() || deviceLabel())}`;
-        else if (syncReady) msg = '共有サーバーに接続できています（コードを入れると開始できます）';
+        else if (syncReady) msg = '共有サーバーに接続できています';
         else msg = '共有サーバーに接続中…（つながらない場合はこの端末のみで動作します）';
         ['sync-status', 'sync-status-active'].forEach(id => {
             const el = document.getElementById(id);
@@ -10622,6 +11134,10 @@
         // 共有の状態画面を開いていれば作り直す
         if (currentView === 'settings' && currentSub === 'sync') renderSyncView();
         if (currentView === 'settings' && !currentSub) renderSettingsMenu();
+        // 開店の画面の「共有する」の説明（つながったら「自動で決まります」に変わる）
+        if (currentView === 'session' && currentSub === 'open-new') renderOpenMenu();
+        // 合流の画面を開いたまま、つながった時は一覧を読み直す
+        if (syncReady && currentView === 'session' && (!currentSub || currentSub === 'open-join') && openEventsState === 'error') loadOpenEvents(true);
     }
     // ▲▲▲ ここまで ▲▲▲
 
