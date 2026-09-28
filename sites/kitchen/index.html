@@ -1,3 +1,4 @@
+<!-- このファイルは tools/sites.mjs が作った写しです。直すときは、いちばん上の index.html を直して build してください。 -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -51,8 +52,8 @@
     })();
     </script>
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
-    <link rel="icon" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="../../icons/icon-192.png">
+    <link rel="icon" href="../../icons/icon-192.png">
     <style>
         /* ▼▼▼ 配色 ▼▼▼
            【方針】寒色のモノクロ（青みのグレー）を土台にして、色数をできるだけ絞る。
@@ -3258,7 +3259,7 @@
 <script src="data/taste-master.js"></script>
 <script src="data/firebase-config.js"></script>
 <!-- 共有コードのQRコードを作る（MIT license・Kazuhiko Arase。通信なしで動くよう同じ場所に置いている） -->
-<script src="vendor/qrcode-generator.js"></script>
+<script src="../../vendor/qrcode-generator.js"></script>
 
 <script>
     // ▼▼▼ この施設（アプリ）の設定（data/site.js）▼▼▼
@@ -7146,7 +7147,7 @@
     //   表の並び（商品名のあとに数字）を手がかりに読む
     // ・読み取った数字は、保存の前に必ず画面に出す。人がPDFと見比べて、直してから保存する
     // ・PDFを読む部品（pdf.js）は大きいので、取り込む時にだけ読み込む（会計の速さには関わらない）
-    const PDFJS_DIR = 'vendor/pdfjs/';
+    const PDFJS_DIR = '../../vendor/pdfjs/';
     const PDF_IMPORT_MAX_PAGES = 40;
     const PDF_CUST_TYPES = CUST_TYPES;
     let pdfjsLoading = null;

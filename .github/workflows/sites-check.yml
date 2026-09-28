@@ -1,0 +1,15 @@
+# 施設ごとのフォルダ（sites/）の index.html が、いちばん上の index.html とそろっているかを確かめる。
+# そろっていない時は「node tools/sites.mjs build」を実行してからコミットする。
+name: 施設のフォルダの確認
+on:
+  push:
+  pull_request:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node tools/sites.mjs check
