@@ -3224,14 +3224,37 @@
         saveData();
     }
 
+    // ▼ 画面に出す残数 ▼
+    // 1台で使っている時は、カートに入れた時点で在庫（p.stock）から引いている。
+    // 共有中は、在庫を「全端末の会計（済んだもの）」から数え直す作りなので、
+    // カートに入れただけの分や取り置き中の予約は p.stock に入っていない。
+    // そのままだと、商品を押しても残数が減らず、会計した瞬間にまとめて減って見えてしまう。
+    // 共有中は「この端末のカート」と「共有の予約」の分を引いた数を出す（1台の時と同じ見え方）。
+    // 送ったばかりで、まだ共有の会計に戻ってきていない会計（会計した瞬間に残数が一度増えて見えないように）
+    let pendingSent = [];   // { localId, items }
+    function heldCount(p) {
+        if (!syncMode || !p) return 0;
+        const same = i => i && (i.id === p.id || i.name === p.name);
+        let n = cart.filter(same).length;
+        reservations.forEach(r => { (r.items || []).forEach(i => { if (same(i)) n++; }); });
+        if (pendingSent.length) {
+            const have = new Set(salesHistory.map(h => h.localId).filter(Boolean));
+            pendingSent = pendingSent.filter(x => !have.has(x.localId) && Date.now() - x.at < 60000);
+            pendingSent.forEach(x => x.items.forEach(i => { if (same(i)) n++; }));
+        }
+        return n;
+    }
+    function shownStock(p) { return (p ? p.stock : 0) - heldCount(p); }
+
     function init() {
         const grid = document.getElementById('product-grid');
         grid.innerHTML = '';
         products.filter(p => p.active !== false).forEach(p => {
             const btn = document.createElement('button');
             const isPlaceholder = !(p.initialStock > 0) && p.price <= 0; // 未設定枠（例：準備中）
-            const isOut = p.stock <= 0;
-            const oversold = p.stock < 0; // 販売数 > 仕入数（過少入力の可能性）
+            const left = shownStock(p);   // カートに入れた分・取り置き分を引いた、いま売れる数
+            const isOut = left <= 0;
+            const oversold = left < 0; // 販売数 > 仕入数（過少入力の可能性）
 
             // 準備中の枠だけ操作不可。完売した実商品は「過少入力対策」で押せる（超過販売）
             let cls = 'product-btn';
@@ -3258,13 +3281,13 @@
 
             let badge = '';
             if (isPlaceholder) badge = `<span class="soldout-badge prep">準備中</span>`;
-            else if (oversold) badge = `<span class="soldout-badge warn">超過 ${-p.stock}</span>`;
+            else if (oversold) badge = `<span class="soldout-badge warn">超過 ${-left}</span>`;
             else if (isOut) badge = `<span class="soldout-badge">完売</span>`;
 
             // 残りわずか（1〜5個）はオレンジ、超過（在庫マイナス）は赤で強調
-            const lowStock = p.stock > 0 && p.stock <= 5;
+            const lowStock = left > 0 && left <= 5;
             const stockStyle = oversold ? 'color:var(--danger); font-weight:bold;' : (lowStock ? 'color:var(--low-ink); font-weight:bold;' : '');
-            const stockText = oversold ? `在庫:0（超過${-p.stock}）` : `在庫:${p.stock}${lowStock ? ' 残少' : ''}`;
+            const stockText = oversold ? `在庫:0（超過${-left}）` : `在庫:${left}${lowStock ? ' 残少' : ''}`;
             btn.innerHTML = `
                 ${badge}
                 <span class="pname">${escHtml(p.name)}</span>
@@ -3292,22 +3315,24 @@
         if (!(p.initialStock > 0) && p.price <= 0) { playError(); return; }
         // 在庫0でも登録可（開店前の在庫過少入力に備える）。在庫はマイナスまで許容し、
         // マイナス＝「販売数 > 仕入数（超過販売）」として警告表示する。
-        if (p.stock > 0) playSound(); else playError(); // 完売後の登録は警告音で気づけるように
-        // 同期中は在庫を「全端末の販売実績」から算出するため、ここでは在庫を減らさない
-        // （会計確定時にFirestoreへ送信 → 購読の再計算で全端末の残数が更新される）
+        if (shownStock(p) > 0) playSound(); else playError(); // 完売後の登録は警告音で気づけるように
+        // 同期中は在庫（p.stock）を「全端末の販売実績」から算出するため、ここでは減らさない
+        // （会計確定時にFirestoreへ送信 → 購読の再計算で全端末の残数が更新される）。
+        // 画面の残数は、カートに入れた分を引いて出す（shownStock）ので、押したその場で減る。
         if (!syncMode) {
             p.stock--;
             if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
-            // 残りわずか／完売のしきい値アラート（在庫がその値に「到達した瞬間」に1回だけ通知）
-            if (p.stock === 0) {
-                playSound(494, 0.12); setTimeout(() => playSound(370, 0.16), 120); // 完売の下降音
-                showToast(`${p.name} が完売しました`);
-            } else if (p.stock === LOW_STOCK_ALERT) {
-                playSound(1046, 0.09); // 残りわずかの高音
-                showToast(`${p.name} 残り${LOW_STOCK_ALERT}個`);
-            }
         }
         cart.push({...p});
+        // 残りわずか／完売のしきい値アラート（残数がその値に「到達した瞬間」に1回だけ通知）
+        const left = shownStock(p);
+        if (left === 0) {
+            playSound(494, 0.12); setTimeout(() => playSound(370, 0.16), 120); // 完売の下降音
+            showToast(`${p.name} が完売しました`);
+        } else if (left === LOW_STOCK_ALERT) {
+            playSound(1046, 0.09); // 残りわずかの高音
+            showToast(`${p.name} 残り${LOW_STOCK_ALERT}個`);
+        }
         saveData();
         init();
     }
@@ -3840,6 +3865,9 @@
         if (syncMode) {
             // 同期中：Firestoreへ送信し、salesHistoryは購読の再構築に任せる（全端末で共有）
             record.deviceLabel = deviceLabel();
+            record.localId = getDeviceId() + ':' + record.no + ':' + record.time.getTime();
+            // 共有の会計に戻ってくるまでは、この会計の分も残数から引いておく
+            pendingSent.push({ localId: record.localId, items: record.items.slice(), at: Date.now() });
             syncPushSale(record);
         } else {
             salesHistory.push(record);
@@ -4215,7 +4243,7 @@
                     <tbody>
                         <tr><td>会計をまるごと取り消す</td><td>カードの<b>「取り消し」</b>。売った商品は在庫にもどります。</td></tr>
                         <tr><td>品目や点数だけ直す</td><td>カードの<b>「修正」</b>。＋−で点数を変え、終わったら「修正を終了」。</td></tr>
-                        <tr><td>領収書を出す</td><td>カードの<b>「領収書」</b>。宛名・但し書きは「設定 → 領収書の設定」で変えられます。</td></tr>
+                        <tr><td>領収書を出す</td><td>カードの<b>「領収書」</b>。別の画面に領収書が出て、印刷の画面が開きます。印刷やPDF保存が済んだら、上の<b>「✕ 閉じて戻る」</b>で戻ります（印刷の画面を閉じてしまったら<b>「印刷・PDF保存」</b>でもう一度開けます）。宛名・但し書きは「設定 → 領収書の設定」で変えられます。</td></tr>
                         <tr><td>客属性をあとから入れる</td><td>カードの選択ボタンを押すだけ。<b>左に紅い帯が付いているカード</b>がまだ入っていないものです。</td></tr>
                     </tbody>
                 </table>
@@ -6573,10 +6601,19 @@
     function stopSyncMidSession() {
         if (!syncMode) return;
         if (!confirm('共有をやめて、この端末だけで営業を続けます。\n\n・ここまでの会計はこの端末に残ります。\n・この先の会計は他の端末には表示されません。\n・他の端末での会計も、この端末には表示されなくなります。\n\nよろしいですか？')) return;
+        // 共有中はカートと予約の分を在庫から引いていなかった。1台の時の数え方
+        // （カートに入れた時点で引く）にそろえるため、ここでその分を在庫から引いておく。
+        // そうしないと、あとでカートから取り消した時に在庫が実際より多く戻ってしまう。
+        const held = products.map(p => [p, heldCount(p)]);
         stopSalesSubscription();
         stopSessionDocSubscription();
         stopReservationSubscription();
         syncEventCode = null;
+        held.forEach(([p, n]) => {
+            if (!n) return;
+            p.stock -= n;
+            if (p.stock <= 0 && p.initialStock > 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
+        });
         saveData();
         init();
         updateSessionTabView();
@@ -9309,6 +9346,59 @@
     // タブレット(iPad等)で「印刷はできるが端末に保存できない」問題への対策：
     // アプリ本体は position:fixed の1画面構成で保存に回しにくいため、レシートと同じく
     // 別文書として開くことで、印刷プレビューから「PDFとして保存 / ファイルに保存」を確実に使える。
+    // ▼ 印刷用の別窓に付ける「閉じて戻る／印刷」の帯（集計のPDFと領収書で共通）▼
+    // 【なぜ】iPhone・iPad では印刷の画面を出しても、元の画面の処理は止まらない。
+    //   「印刷したら自動で閉じる」作りにすると、印刷の画面が出た直後に窓ごと消えてしまう。
+    //   自動では閉じず、帯の「✕ 閉じて戻る」で閉じる作りにそろえる。
+    //   ホーム画面から起動していると、この窓にはブラウザの「戻る」も出ないので、帯は必ず置く。
+    function printWindowBarCss() {
+        return (
+            '.rw-bar{position:sticky; top:0; z-index:9; display:flex; align-items:center; gap:10px;' +
+            ' background:#F2F3F7; margin:-16px -16px 14px; padding:12px 16px;' +
+            ' padding-top:calc(12px + env(safe-area-inset-top, 0px));}' +
+            '.rw-close{appearance:none; -webkit-appearance:none; border:none; cursor:pointer;' +
+            ' font-family:inherit; font-size:15px; font-weight:700; color:#fff; background:#0A6CE0;' +
+            ' border-radius:999px; padding:11px 20px; min-height:44px; flex-shrink:0;' +
+            ' box-shadow:0 3px 10px rgba(10,108,224,.26);}' +
+            '.rw-close:active{transform:scale(.96);}' +
+            '.rw-print{appearance:none; -webkit-appearance:none; border:none; cursor:pointer;' +
+            ' font-family:inherit; font-size:15px; font-weight:700; color:#0A5FC4; background:#fff;' +
+            ' border-radius:999px; padding:11px 20px; min-height:44px; flex-shrink:0;}' +
+            '.rw-hint{font-size:12px; color:#6B6E7A; line-height:1.45; flex:1; min-width:0;}' +
+            /* 幅の狭い端末では、2つのボタンがきちんと並ぶよう説明を畳む */
+            '@media (max-width:460px){.rw-hint{display:none;} .rw-close,.rw-print{flex:1; padding:11px 8px; text-align:center;}}' +
+            ''
+        );
+    }
+    function printWindowBarHtml(hint) {
+        return '<div class="rw-bar">' +
+            '<button class="rw-close" id="rw-close" type="button">✕ 閉じて戻る</button>' +
+            '<button class="rw-print" id="rw-print" type="button">印刷・PDF保存</button>' +
+            '<span class="rw-hint" id="rw-hint">' + escHtml(hint || '') + '</span>' +
+            '</div>';
+    }
+    // autoPrint … 開いた時に一度だけ印刷の画面を出す（閉じるのは、帯のボタンを押した時だけ）
+    function printWindowScript(autoPrint) {
+        return (
+            '<' + 'script>(function(){' +
+            'var c=document.getElementById("rw-close"),p=document.getElementById("rw-print"),h=document.getElementById("rw-hint");' +
+            'p.onclick=function(){try{window.print();}catch(e){}};' +
+            'c.onclick=function(){' +
+            '  try{window.close();}catch(e){}' +
+            // close() を断られる場合がある。その時は元のページへ戻すか、やり方を伝える
+            '  setTimeout(function(){ if(!window.closed){' +
+            '    try{ if(window.opener && !window.opener.closed){ window.opener.focus(); } }catch(e2){}' +
+            '    if(history.length>1){ history.back(); return; }' +
+            '    h.textContent="この画面は自動で閉じられません。ブラウザのタブを閉じるか、前の画面に戻ってください。";' +
+            '    h.style.color="#B3263C"; h.style.fontWeight="700";' +
+            '  }},350);' +
+            '};' +
+            (autoPrint ? 'window.onload=function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},400);};' : '') +
+            '})();<' + '/script>' +
+            ''
+        );
+    }
+
     function openReportWindow(docTitle) {
         const inner = document.getElementById('print-report').innerHTML;
         const css = (document.getElementById('report-css') || {}).textContent || '';
@@ -9330,47 +9420,16 @@
                ホーム画面から起動していると、この画面にはブラウザの「戻る」も
                タブも出ない。戻る手立てが無いと閉じ込められてしまうので、
                いちばん上に貼り付いたままの「閉じる」を必ず置く。 */
-            '.rw-bar{position:sticky; top:0; z-index:9; display:flex; align-items:center; gap:10px;' +
-            ' background:#F2F3F7; margin:-16px -16px 14px; padding:12px 16px;' +
-            ' padding-top:calc(12px + env(safe-area-inset-top, 0px));}' +
-            '.rw-close{appearance:none; -webkit-appearance:none; border:none; cursor:pointer;' +
-            ' font-family:inherit; font-size:15px; font-weight:700; color:#fff; background:#0A6CE0;' +
-            ' border-radius:999px; padding:11px 20px; min-height:44px; flex-shrink:0;' +
-            ' box-shadow:0 3px 10px rgba(10,108,224,.26);}' +
-            '.rw-close:active{transform:scale(.96);}' +
-            '.rw-print{appearance:none; -webkit-appearance:none; border:none; cursor:pointer;' +
-            ' font-family:inherit; font-size:15px; font-weight:700; color:#0A5FC4; background:#fff;' +
-            ' border-radius:999px; padding:11px 20px; min-height:44px; flex-shrink:0;}' +
-            '.rw-hint{font-size:12px; color:#6B6E7A; line-height:1.45; flex:1; min-width:0;}' +
-            /* 幅の狭い端末では、2つのボタンがきちんと並ぶよう説明を畳む */
-            '@media (max-width:460px){.rw-hint{display:none;} .rw-close,.rw-print{flex:1; padding:11px 8px; text-align:center;}}' +
+            printWindowBarCss() +
             '.report-note{background:#EAF1FD; color:#1C1D22; font-size:12.5px; padding:11px 14px; border-radius:8px; margin-bottom:16px;} ' +
             /* グラフの軸の説明は、画面と同じく左右に分けて置く（くっついて読めなくなるのを防ぐ） */
             '.chart-cap{display:flex; justify-content:space-between; gap:10px; font-size:9px; color:#6B6E7A; margin:0 2px 5px; letter-spacing:0.03em;} ' +
             '@media print{.report-note,.rw-bar{display:none;}}</style>' +
             '</head><body>' +
-            '<div class="rw-bar">' +
-            '<button class="rw-close" id="rw-close" type="button">✕ 閉じて戻る</button>' +
-            '<button class="rw-print" id="rw-print" type="button">印刷・PDF保存</button>' +
-            '<span class="rw-hint" id="rw-hint">印刷の画面が自動で開きます</span>' +
-            '</div>' +
+            printWindowBarHtml('印刷の画面が自動で開きます') +
             '<div class="report-note">印刷ダイアログを閉じてしまった場合は「印刷・PDF保存」を押すと、もう一度開けます。保存し終えたら「✕ 閉じて戻る」でレジにもどれます。</div>' +
             inner +
-            '<' + 'script>(function(){' +
-            'var c=document.getElementById("rw-close"),p=document.getElementById("rw-print"),h=document.getElementById("rw-hint");' +
-            'p.onclick=function(){try{window.print();}catch(e){}};' +
-            'c.onclick=function(){' +
-            '  try{window.close();}catch(e){}' +
-            // close() を断られる場合がある。その時は元のページへ戻すか、やり方を伝える
-            '  setTimeout(function(){ if(!window.closed){' +
-            '    try{ if(window.opener && !window.opener.closed){ window.opener.focus(); } }catch(e2){}' +
-            '    if(history.length>1){ history.back(); return; }' +
-            '    h.textContent="この画面は自動で閉じられません。ブラウザのタブを閉じるか、前の画面に戻ってください。";' +
-            '    h.style.color="#B3263C"; h.style.fontWeight="700";' +
-            '  }},350);' +
-            '};' +
-            'window.onload=function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},400);};' +
-            '})();<' + '/script>' +
+            printWindowScript(true) +
             '</body></html>'
         );
         win.document.close();
@@ -10113,10 +10172,12 @@
             return;
         }
         win.document.write(`
-            <html><head><meta charset="utf-8"><title>領収書 No.${esc(h.no || '')}</title>
+            <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>領収書 No.${esc(h.no || '')}</title>
+            <style>${printWindowBarCss()}</style>
             <style>
                 * { box-sizing: border-box; }
-                body { font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', sans-serif; color:#222; padding:20px; max-width:380px; margin:0 auto; line-height:1.5; }
+                body { font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', sans-serif; color:#222; padding:16px; margin:0; background:#fff; line-height:1.5; }
+                .paper { max-width:380px; margin:0 auto; }
                 h1 { font-size:22px; text-align:center; margin:0 0 2px; letter-spacing:0.4em; text-indent:0.4em; }
                 .no { text-align:center; font-size:11px; color:#888; margin-bottom:14px; }
                 .to { display:flex; align-items:flex-end; gap:6px; font-size:15px; margin-bottom:14px; }
@@ -10140,9 +10201,11 @@
                 .issuer .nm { font-size:15px; font-weight:bold; }
                 .issuer .ct { color:#666; font-size:11.5px; }
                 .foot { text-align:center; font-size:11.5px; color:#888; margin-top:14px; }
-                @media print { body { padding:0; } }
+                @media print { body { padding:0; } .rw-bar { display:none; } }
             </style></head>
             <body>
+                ${printWindowBarHtml('印刷の画面が自動で開きます')}
+                <div class="paper">
                 <h1>領収書</h1>
                 <div class="no">No. ${esc(h.no || '-')}　　${dtStr}</div>
 
@@ -10166,7 +10229,8 @@
                     ${shop.contact ? `<div class="ct">${esc(shop.contact)}</div>` : ''}
                 </div>
                 <div class="foot">ありがとうございました</div>
-                <script>window.onload=function(){window.print();setTimeout(function(){window.close();},400);};<\/script>
+                </div>
+                ${printWindowScript(true)}
             </body></html>
         `);
         win.document.close();
@@ -10428,7 +10492,8 @@
         // まとめて1回で入れる（1行ずつ足すと、そのたびに全体を組み直して入力中のカーソルが外れる）
         const rows = [];
         products.forEach(p => {
-            const oversold = p.stock < 0; // 販売数>仕入数（過少入力の可能性）
+            const left = shownStock(p);   // レジのボタンと同じ残数（カート・取り置きの分を引いた数）
+            const oversold = left < 0; // 販売数>仕入数（過少入力の可能性）
             const noteVal = escHtml(p.note || '');
             const inactive = p.active === false;
             rows.push(`
@@ -10436,7 +10501,7 @@
                     <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
                         <span style="flex:1; font-size:14px; font-weight:bold; overflow-wrap:anywhere;">${escHtml(p.name)}${oversold ? ' <b style="color:var(--danger); font-size:12px;">販売&gt;仕入</b>' : ''}${inactive ? ' <span style="font-size:11px; color:var(--text-light); font-weight:normal;">(この回は販売しない)</span>' : ''}</span>
                         <span style="font-size:13px; color:var(--text-light);">残り</span>
-                        <span class="num" style="font-size:17px; font-weight:bold; min-width:38px; text-align:right; color:${oversold ? 'var(--danger)' : (p.stock <= 5 ? 'var(--low-ink)' : 'var(--text-main)')};">${p.stock}</span>
+                        <span class="num" style="font-size:17px; font-weight:bold; min-width:38px; text-align:right; color:${oversold ? 'var(--danger)' : (left <= 5 ? 'var(--low-ink)' : 'var(--text-main)')};">${left}</span>
                     </div>
                     <div class="ls-row" style="display:flex; gap:8px; align-items:center;">
                         <label style="font-size:12px; color:var(--text-light);">価格</label>
@@ -11104,6 +11169,7 @@
             reservations = rows;
             saveData();
             renderReservations();
+            init();   // ほかの端末の予約（取り置き）も、レジの残数に反映する
             updateNavBadges();
         }, err => { console.warn('予約の購読でエラー', err); });
     }
@@ -11235,7 +11301,7 @@
             deviceLabel: deviceLabel(),
             // 会計1件を見分けるための印。取り消したあとに同じ客No.が
             // もう一度使われてもぶつからないよう、時刻も混ぜておく。
-            localId: getDeviceId() + ':' + record.no + ':' + ((record.time instanceof Date && !isNaN(record.time)) ? record.time.getTime() : Date.now()),
+            localId: record.localId || (getDeviceId() + ':' + record.no + ':' + ((record.time instanceof Date && !isNaN(record.time)) ? record.time.getTime() : Date.now())),
             roundId: syncRoundId,   // 同じコードを使い回した時に、前の回と混ざらないようにする印
             // 後から送る（同期再開時の救済）場合でも、実際に会計した時刻を保つ。
             // 時間帯別の集計と客No.の並び順が実態とずれないようにするため。
@@ -11262,6 +11328,8 @@
                 // 同期中はローカルにも控えていないため、黙っていると1件まるごと消えてしまう。
                 // 気づかず閉店してしまうのが最悪なので、必ず画面で知らせて手入力を促す。
                 console.warn('売上の同期送信に失敗', e);
+                pendingSent = pendingSent.filter(x => x.localId !== doc.localId);
+                init();
                 playError();
                 showToast('この会計を記録できませんでした');
                 const summary = record.items.map(i => i.name).join('、');
