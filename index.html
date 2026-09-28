@@ -526,7 +526,11 @@
 
         .product-btn {
             position: relative;
-            overflow: hidden;
+            /* カートの個数の印を角からはみ出させて置くので、中身は切り取らない
+               （上辺のカテゴリの帯は背景で描くので、角の丸みにそのまま沿う） */
+            overflow: visible;
+            background-image: linear-gradient(var(--cat-bar, transparent), var(--cat-bar, transparent));
+            background-size: 100% 4px; background-repeat: no-repeat; background-position: top left;
             border: none;
             border-radius: var(--r-md);
             color: var(--text-main);
@@ -542,11 +546,8 @@
             transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
         }
 
-        /* カテゴリの帯（上辺）。面の色が日光で飛んでも、この濃い帯で分類が分かる */
-        .product-btn::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-            background: var(--cat-bar, transparent);
-        }
+        /* カテゴリの帯（上辺）。面の色が日光で飛んでも、この濃い帯で分類が分かる
+           （.product-btn の背景の1枚目として描いている） */
         .product-btn:active { transform: scale(0.955); box-shadow: 0 1px 2px rgba(28,28,30,0.05); }
         .product-btn { transition: transform .14s cubic-bezier(.32,.72,0,1), box-shadow .12s ease, filter .12s ease; }
         @media (hover: hover) {
@@ -572,6 +573,19 @@
             background: var(--warn-ink); color: #fff; font-size: 11px; font-weight: bold;
             padding: 3px 9px; border-radius: var(--r-pill); box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
+        /* カートに入っている商品：濃い枠で囲み、左上に個数を出す（何をいくつ打ったか、ひと目で分かるように） */
+        .product-btn.in-cart { outline: 3px solid var(--text-main); outline-offset: -3px; }
+        .product-btn .cart-qty {
+            position: absolute; top: -9px; left: -9px; z-index: 2;
+            min-width: 26px; height: 26px; padding: 0 7px; border-radius: var(--r-pill);
+            border: 2px solid var(--bg-color);
+            display: inline-flex; align-items: center; justify-content: center;
+            background: var(--text-main); color: var(--surface);
+            font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1;
+            box-shadow: 0 1px 3px rgba(0,0,0,.18);
+        }
+        .product-btn .cart-qty.pop { animation: qtyPop .32s cubic-bezier(.32,.72,0,1); }
+        @keyframes qtyPop { 0% { transform: scale(.6); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
         .soldout-badge.prep { background: var(--muted-ink); }
         .soldout-badge.warn { background: var(--danger); } /* 販売数>仕入数（超過）の警告 */
 
@@ -1004,8 +1018,10 @@
                ・3行ぶんが入る高さを確保する
                ・それでも収まらない名前は「…」で省略する（途中で欠けるより読める）
                ・在庫の数字は補助情報なので、スマホでは小さめにして名前と価格の場所を優先する */
-            #product-grid { flex: 1; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(100px, 124px); padding: 10px; gap: 8px; }
+            #product-grid { flex: 1; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(100px, 124px); padding: 13px 10px 10px 12px; gap: 9px 8px; }
             .product-btn { padding: 6px 6px 5px; }
+            /* 狭いボタンでは、個数の印をほぼ角の外に出して、商品名にかからないようにする */
+            .product-btn .cart-qty { top: -11px; left: -10px; min-width: 24px; height: 24px; font-size: 13px; padding: 0 6px; }
             .product-btn .pname {
                 display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
                 overflow: hidden; font-size: 13.5px; line-height: 1.32;
@@ -1222,6 +1238,7 @@
 
         /* 節の見出しと注釈 */
         .a-head { font-size: 13px; font-weight: 700; color: var(--text-main); margin: 18px 0 7px; }
+        .a-head-sub { font-weight: 600; color: var(--text-light); font-size: 12px; margin-left: 8px; }
         .a-head:first-child { margin-top: 0; }
         .a-note { font-size: 11.5px; color: var(--text-light); line-height: 1.55; margin: 8px 2px 0; }
         .a-empty { font-size: 13px; color: var(--text-light); padding: 12px 2px; }
@@ -2039,7 +2056,9 @@
 
         /* カートに商品が入った時、その行だけがすっと現れる */
         @keyframes cartIn { from { opacity: 0; transform: translate3d(-8px, 0, 0); } to { opacity: 1; transform: none; } }
-        .cart-item { animation: cartIn .26s cubic-bezier(.32, .72, 0, 1) both; }
+        /* 増えた（または個数が変わった）行だけを動かす。全部の行が毎回動くと、どれが変わったのか分からない */
+        .cart-item.fresh { animation: cartIn .26s cubic-bezier(.32, .72, 0, 1) both, cartFresh .5s ease-out both; }
+        @keyframes cartFresh { from { background: var(--accent-soft); } to { background: transparent; } }
 
         /* 合計金額が変わった時に、数字だけを軽く弾ませる（変わったことに気づける） */
         @keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.07); } 100% { transform: scale(1); } }
@@ -3246,9 +3265,14 @@
     }
     function shownStock(p) { return (p ? p.stock : 0) - heldCount(p); }
 
+    let lastTileQty = {};   // 前に描いた時の、商品ごとのカートの個数（増えた時だけ数字を弾ませる）
     function init() {
         const grid = document.getElementById('product-grid');
         grid.innerHTML = '';
+        // カートに入っている数（商品ごと）
+        const inCart = {};
+        cart.forEach(i => { inCart[i.id] = (inCart[i.id] || 0) + 1; });
+        const nextQty = {};
         products.filter(p => p.active !== false).forEach(p => {
             const btn = document.createElement('button');
             const isPlaceholder = !(p.initialStock > 0) && p.price <= 0; // 未設定枠（例：準備中）
@@ -3260,6 +3284,9 @@
             let cls = 'product-btn';
             if (isPlaceholder) cls += ' out-of-stock';
             else if (isOut) cls += ' sold-open';
+            const qty = inCart[p.id] || 0;
+            nextQty[p.id] = qty;
+            if (qty > 0) cls += ' in-cart';
             btn.className = cls;
 
             // 面の色に加えて、ボタン上辺の帯にも濃い同系色を置く。
@@ -3288,7 +3315,10 @@
             const lowStock = left > 0 && left <= 5;
             const stockStyle = oversold ? 'color:var(--danger); font-weight:bold;' : (lowStock ? 'color:var(--low-ink); font-weight:bold;' : '');
             const stockText = oversold ? `在庫:0（超過${-left}）` : `在庫:${left}${lowStock ? ' 残少' : ''}`;
+            const qtyBadge = qty > 0
+                ? `<span class="cart-qty${qty !== (lastTileQty[p.id] || 0) ? ' pop' : ''}" aria-label="カートに${qty}個">${qty}</span>` : '';
             btn.innerHTML = `
+                ${qtyBadge}
                 ${badge}
                 <span class="pname">${escHtml(p.name)}</span>
                 <span class="price">¥${p.price}</span>
@@ -3297,6 +3327,7 @@
             btn.onclick = () => addToCart(p);
             grid.appendChild(btn);
         });
+        lastTileQty = nextQty;
         updateCartDisplay();
         updatePendingReminder();
         updateNavBadges();
@@ -3479,6 +3510,7 @@
         </div>`;
     }
 
+    let lastCartLines = {};   // 前に描いた時の、行ごとの個数
     function updateCartDisplay() {
         publishCustomerDisplay();   // お客様用の画面にも、いまのカートを映す
         const list = document.getElementById('cart-list');
@@ -3499,8 +3531,9 @@
         for (const [name, data] of Object.entries(counts)) {
             const subtotal = data.price * data.count;
             const safeName = escArg(name);
+            const fresh = data.count > (lastCartLines[name] || 0);   // いま増えた行だけ動かす
             list.innerHTML += `
-                <div class="cart-item" style="border-left:6px solid ${catInk(data.type)}; padding-left:8px;">
+                <div class="cart-item${fresh ? ' fresh' : ''}" style="border-left:6px solid ${catInk(data.type)}; padding-left:8px;">
                     <span style="display:flex; align-items:center; gap:6px; min-width:0;">
                         <button class="step-btn minus" onclick="removeOneFromCart('${safeName}')">−</button>
                         <button class="step-btn plus" onclick="addOneToCart('${safeName}')">＋</button>
@@ -3534,6 +3567,8 @@
             list.innerHTML = `<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><svg class="ic ce-icon" style="width:34px; height:34px; color:var(--line-strong);"><use href="#ic-basket"/></svg><br>商品をタップして<br>お会計に追加してください${setHint}${repeatBtn}</div>`;
         }
 
+        lastCartLines = {};
+        Object.entries(counts).forEach(([n, d]) => { lastCartLines[n] = d.count; });
         const cartTotalEl = document.getElementById('cart-total');
         cartTotalEl.innerText = total;
         bumpIfChanged(cartTotalEl, total);
@@ -4188,7 +4223,7 @@
             id: 'checkout', icon: 'yen', title: '② 会計する', sub: '基本の3タップ',
             body: `
                 <ol class="man-steps">
-                    <li>お客様が選んだ商品を、<b>商品ボタン</b>から必要な数だけ押します（同じ商品を2個なら2回）。</li>
+                    <li>お客様が選んだ商品を、<b>商品ボタン</b>から必要な数だけ押します（同じ商品を2個なら2回）。押した商品は<b>濃い枠で囲まれ、角に個数</b>が出るので、何をいくつ打ったかひと目で確かめられます。</li>
                     <li><b>「会計へ進む」</b>（青い大きなボタン）を押します。</li>
                     <li>お預かりした金額を、<b>テンキー</b>か<b>候補ボタン</b>で入れます。候補にはお釣りの額も小さく出ています。</li>
                     <li>黒い表示窓に<b>お釣りと、その内訳</b>（例：100円×3）が出るので、その通りにお釣りを渡します。</li>
@@ -4390,10 +4425,11 @@
                 <ul class="man-list">
                     <li><b>売上の概要</b>…総売上・来店人数・客単価など。売上目標を決めていれば達成率も出ます。セット割で引いた額と件数もここに出ます（総売上は引いた後の、実際に受け取った額です）。</li>
                     <li><b>商品別の売れ行き</b>…どれがどれだけ売れたか、仕入れのうち何％はけたか、売れ残りはいくらか。</li>
-                    <li><b>時間帯別の客数／売上の積み上がり</b>…いつ混んだか、開店からどう積み上がったか。</li>
-                    <li><b>買い方の傾向</b>…1人が何点買ったか、どの価格帯が売れたか、何と何が一緒に買われたか。</li>
+                    <li><b>時間帯別の客数／売上の積み上がり</b>…いつ混んだか、開店からどう積み上がったか。<b>レジの混み具合</b>（いちばん混んだ15分に何人さばいたか、<b>レジ2台あると安心だった時間帯</b>、共有した時の端末ごとの会計数）も出ます。</li>
+                    <li><b>買い方の傾向</b>…1人が何点買ったか、どの価格帯が売れたか、何と何が一緒に買われたか。<b>セット割の効果</b>（セットになった会計の数、セットの方の客単価、<b>あと1種類でセットだった会計</b>と、足りなかった種類）も出ます。声かけの参考にしてください。</li>
+                    <li><b>客層・カテゴリ別</b>…客属性ごとの人数と客単価、<b>客層ごとの人気商品</b>（その客層でとくに人気の商品が、全体の何倍売れたか）、カテゴリ別の売上。</li>
                     <li><b>一緒には買われにくい組み合わせ</b>（「買い方の傾向」の下）…似た商品（同じ分類）なのに、同じ会計にほとんど入らない2品です。お客様が<b>どちらか一方で満足している</b>見込みがあるので、値段や味が近いなら、次回はどちらかを減らす（売れ数の少ない方を削る）候補になります。完売した後の会計は数えません。<b>「傾向あり」は件数が少なめ</b>なので、次の回でも同じ結果になるかを見てから決めてください。</li>
-                    <li><b>客層・カテゴリ別／完売と売り逃し／次回の仕入れ数の目安</b>…次回の準備に使えます。</li>
+                    <li><b>完売と売り逃し／次回の仕入れ数の目安</b>…次回の準備に使えます。</li>
                     <li><b>販売会ごとの推移</b>…回を重ねるほど、前回からの伸びが見えます。</li>
                 </ul>
                 <h4>書き出し</h4>
@@ -6919,7 +6955,28 @@
                     <td class="num">${s.count}人</td>
                     <td class="num">${s.count ? yenStr(s.avg) : '—'}</td>
                 </tr>`).join('') + `</tbody></table>
-        <p class="a-note">色の付いた行が、最も売れた時間帯です。商品名は、その時間帯によく出たものです。</p>`;
+        <p class="a-note">色の付いた行が、最も売れた時間帯です。商品名は、その時間帯によく出たものです。</p>` + rushHTML(R.rush);
+    }
+    // レジの混み具合（画面）
+    function rushHTML(r) {
+        if (!r) return '';
+        const rows = [
+            ['いちばん混んだ15分', `${escHtml(r.peak.range)}<span class="sub">${r.peak.count}人（1人あたり約${r.peak.perCust}秒）</span>`],
+        ];
+        if (r.median != null) rows.push(['その間の会計の間隔', `約${r.median}秒<span class="sub">真ん中の値</span>`]);
+        let h = `<div class="a-head">レジの混み具合</div><table class="a-table"><tbody>`
+            + rows.map(x => `<tr><td>${x[0]}</td><td class="num">${x[1]}</td></tr>`).join('') + `</tbody></table>`;
+        if (r.rushSlots.length) {
+            h += `<p class="a-note"><b>レジ2台あると安心だった時間帯</b>（15分に${RUSH_PER_15}人以上＝1分半に1人より速い）：${r.rushSlots.map(x => `${escHtml(x.range)}（${x.count}人）`).join('、')}。次回はこの時間の前に、もう1台を合流させておくと待ち時間が減ります。</p>`;
+        } else {
+            h += `<p class="a-note">15分に${RUSH_PER_15}人を超える時間帯はありませんでした。レジ1台で回せる混み具合です。</p>`;
+        }
+        if (r.devices.length) {
+            h += `<table class="a-table"><thead><tr><th>端末（会計記録の記号）</th><th class="num">会計</th><th class="num" style="min-width:82px;">割合</th></tr></thead><tbody>`
+                + r.devices.map(d => `<tr><td class="nm">${escHtml(d.label)}</td><td class="num">${d.count}件</td><td class="num">${pctBar(d.pct)}<span class="sub">${d.pct}%</span></td></tr>`).join('')
+                + `</tbody></table>`;
+        }
+        return h;
     }
 
     // ▼ 売上の積み上がり：開店から閉店まで、売上がどう積み上がったか ▼
@@ -7032,6 +7089,8 @@
         <p class="a-note">割合が高い組み合わせは、並べて置いたりセットにしたりすると効きやすい組み合わせです。</p>`
             : '<div class="a-empty">2種類以上を同時に買われた会計がありませんでした。</div>';
 
+        h += setEffectHTML(R.setEffect);
+
         // 併売分析の逆：似た商品なのに一緒には買われない＝どちらか一方が選ばれている
         const sb = R.substitutes;
         h += `<div class="a-head">一緒には買われにくい組み合わせ</div>`;
@@ -7054,6 +7113,24 @@
         return h;
     }
 
+    // セット割の効果（画面）
+    function setEffectHTML(e) {
+        if (!e) return '';
+        let h = `<div class="a-head">セット割の効果<span class="a-head-sub">${escHtml(e.text)}${e.on ? '' : '（いまはオフ）'}</span></div>
+        <table class="a-table"><tbody>
+            <tr><td>セット割になった会計</td><td class="num">${e.count}件<span class="sub">全体の${e.pct}%・引いた額 ${yenStr(e.discount)}</span></td></tr>
+            <tr><td>客単価（セットで買った方）</td><td class="num">${e.count ? yenStr(e.avgSet) : '—'}</td></tr>
+            <tr><td>客単価（それ以外）</td><td class="num">${yenStr(e.avgOther)}</td></tr>
+            <tr><td>あと1種類でセットだった会計</td><td class="num">${e.near}件${e.nearTop.length ? `<span class="sub">${e.nearTop.map(x => `${escHtml(x.label)}が無い ${x.count}件`).join('・')}</span>` : ''}</td></tr>
+        </tbody></table>
+        <table class="a-table"><thead><tr><th>この種類を買った方のうち</th><th class="num">セットにした割合</th></tr></thead><tbody>`
+            + e.attach.map(a => `<tr><td class="nm">${escHtml(a.label)}<span class="sub">${a.base}人</span></td><td class="num">${pctBar(a.pct)}<span class="sub">${a.pct}%</span></td></tr>`).join('')
+            + `</tbody></table>`;
+        const tip = e.nearTop[0];
+        if (tip && e.near > 0) h += `<p class="a-note">「あと1種類でセット」の会計のうち、いちばん多かったのは<b>${escHtml(tip.label)}が無い</b>会計です。お会計の時に「${escHtml(tip.label)}もいかがですか（セットで${e.rule.amount}円引き）」と声をかけると、客単価が上がりやすくなります。</p>`;
+        return h;
+    }
+
     function secSegmentHTML() {
         const R = buildReportData();
         if (!R) return '<div class="a-empty">まだ売上データがありません。</div>';
@@ -7068,6 +7145,17 @@
         // 「後で」のまま残っている会計は「不明」として数えている。
         // どちらも同じ「不明」に入るので、内訳が分かるように件数を添える。
         if (R.summary.pendingLeft > 0) h += `<p class="a-note">「不明」${R.summary.pendingLeft}件は、まだ客属性を入力していない会計です。会計記録の画面から割り当てられます。</p>`;
+
+        // 客層ごとの人気商品
+        if (R.segmentItems.length) {
+            h += `<div class="a-head">客層ごとの人気商品</div>
+            <table class="a-table"><thead><tr><th>客層</th><th>よく買われた商品</th></tr></thead><tbody>`
+                + R.segmentItems.map(g => `<tr><td class="nm" style="white-space:nowrap;">${escHtml(g.type)}<span class="sub">${g.people}人・1人${g.avgItems}点</span></td>`
+                    + `<td>${g.top.map(t => `${escHtml(t.name)}<span style="color:var(--text-light);">×${t.count}</span>`).join('、')}`
+                    + `${g.fav ? `<span class="sub">とくに人気：${escHtml(g.fav.name)}（全体の${g.fav.lift}倍）</span>` : ''}</td></tr>`).join('')
+                + `</tbody></table>
+            <p class="a-note">「とくに人気」は、その客層の中での割合が全体の1.5倍以上の商品です。客層に合わせた呼び込みや、並べる場所の参考になります（3人未満の客層は出していません）。</p>`;
+        }
 
         h += `<div class="a-head">カテゴリ別の売上と占有率</div>
         <table class="a-table"><thead><tr><th>カテゴリ</th><th class="num">売上</th><th class="num" style="min-width:82px;">占有率</th></tr></thead><tbody>`
@@ -7891,6 +7979,112 @@
         return t;
     }
     // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ セット割の効果 ▼▼▼
+    // ・セット割になった会計の数と割合、引いた額
+    // ・セットで買った方と、そうでない方の客単価の違い
+    // ・「あと1種類でセットだった」会計（＝声をかければセットになったかもしれない会計）
+    // ・セットの片方を買った方のうち、もう片方も買った割合
+    // 見る決まりは、いまのセット割（オフなら、この回の会計でいちばん多く使われた決まり）。
+    function buildSetEffect(sorted) {
+        let rule = setDiscountOn ? normSetRule(setRule) : null;
+        if (!rule) {
+            const tally = {};
+            sorted.forEach(h => { const r = ruleOfRecord(h); if (r) { const k = JSON.stringify(r); tally[k] = (tally[k] || 0) + 1; } });
+            const top = Object.entries(tally).sort((a, b) => b[1] - a[1])[0];
+            rule = top ? JSON.parse(top[0]) : null;
+        }
+        if (!rule || !sorted.length) return null;
+        const label = id => (CAT_TYPES.find(c => c.id === id) || {}).label || id;
+        const has = (h, t) => (h.items || []).some(i => i && i.type === t && (Number(i.price) || 0) > 0);
+        const setRows = sorted.filter(h => (Number(h.discount) || 0) > 0);
+        const other = sorted.filter(h => !((Number(h.discount) || 0) > 0));
+        const avg = rows => rows.length ? Math.floor(rows.reduce((a, h) => a + h.total, 0) / rows.length) : 0;
+        // あと1種類でセットだった会計（割引の無かった会計のうち、組み合わせの1つだけが足りない）
+        const missing = {};
+        let near = 0;
+        other.forEach(h => {
+            const lack = rule.needs.filter(t => !has(h, t));
+            if (lack.length === 1 && rule.needs.length - lack.length >= 1) { near++; missing[lack[0]] = (missing[lack[0]] || 0) + 1; }
+        });
+        // 片方を買った方のうち、もう片方（残り全部）も買った割合
+        const attach = rule.needs.map(t => {
+            const base = sorted.filter(h => has(h, t));
+            const all = base.filter(h => rule.needs.every(u => has(h, u)));
+            return { type: t, label: label(t), base: base.length, pct: base.length ? Math.round(all.length / base.length * 100) : 0 };
+        });
+        return {
+            rule, text: setRuleText(rule), on: setDiscountOn,
+            count: setRows.length, pct: Math.round(setRows.length / sorted.length * 100),
+            discount: setRows.reduce((a, h) => a + (Number(h.discount) || 0), 0),
+            avgSet: avg(setRows), avgOther: avg(other),
+            near, nearTop: Object.entries(missing).sort((a, b) => b[1] - a[1]).map(([t, n]) => ({ label: label(t), count: n })),
+            attach
+        };
+    }
+
+    // ▼▼▼ 客層ごとの人気商品 ▼▼▼
+    // 客属性ごとに、よく買われた商品と、その客層でとくに人気の商品（全体と比べて何倍か）を出す。
+    function buildSegmentItems(sorted) {
+        const TYPES = ['学生', '教員', '職員', 'その他', '不明'];
+        const allQty = {}; let allN = 0;
+        sorted.forEach(h => (h.items || []).forEach(i => { allQty[i.name] = (allQty[i.name] || 0) + 1; allN++; }));
+        const out = [];
+        TYPES.forEach(t => {
+            const rows = sorted.filter(h => (h.customerType || '不明') === t);
+            if (rows.length < 3) return;   // 3人未満では傾向と言えない
+            const q = {}; let n = 0;
+            rows.forEach(h => (h.items || []).forEach(i => { q[i.name] = (q[i.name] || 0) + 1; n++; }));
+            const top = Object.entries(q).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name, c]) => ({ name, count: c }));
+            // とくに人気：その客層での割合が、全体での割合の1.5倍以上（3個以上売れたもの）
+            let fav = null;
+            Object.entries(q).forEach(([name, c]) => {
+                if (c < 3 || !allQty[name]) return;
+                const lift = (c / n) / (allQty[name] / allN);
+                if (lift >= 1.5 && (!fav || lift > fav.lift)) fav = { name, count: c, lift: Math.round(lift * 10) / 10 };
+            });
+            out.push({
+                type: t, people: rows.length,
+                avg: Math.floor(rows.reduce((a, h) => a + h.total, 0) / rows.length),
+                avgItems: (n / rows.length).toFixed(1),
+                top, fav
+            });
+        });
+        return out;
+    }
+
+    // ▼▼▼ レジの混み具合 ▼▼▼
+    // ・いちばん混んだ15分に何人さばいたか（1人あたり何秒）
+    // ・1台では追いつきにくかった時間帯（15分に RUSH_PER_15 人以上＝1分半に1人より速い）
+    // ・共有して使った時は、端末ごとの会計の数
+    const RUSH_PER_15 = 10;
+    function buildRush(sorted) {
+        if (sorted.length < 2) return null;
+        const SLOT = 15 * 60000;
+        const slot = {};
+        sorted.forEach(h => { const k = Math.floor(new Date(h.time).getTime() / SLOT) * SLOT; slot[k] = (slot[k] || 0) + 1; });
+        const hm = ms => { const x = new Date(Number(ms)); return `${x.getHours()}:${String(x.getMinutes()).padStart(2, '0')}`; };
+        const peak = Object.entries(slot).sort((a, b) => b[1] - a[1] || a[0] - b[0])[0];
+        const rushSlots = Object.entries(slot).filter(([, n]) => n >= RUSH_PER_15).map(([k, n]) => ({ range: `${hm(k)}〜${hm(Number(k) + SLOT)}`, count: n })).sort((a, b) => a.range.localeCompare(b.range));
+        // 会計と会計の間の時間（いちばん混んだ時間帯の中で）
+        const times = sorted.map(h => new Date(h.time).getTime());
+        const pk = Number(peak[0]);
+        const inPeak = times.filter(t => t >= pk && t < pk + SLOT);
+        const gaps = [];
+        for (let i = 1; i < inPeak.length; i++) gaps.push((inPeak[i] - inPeak[i - 1]) / 1000);
+        gaps.sort((a, b) => a - b);
+        const median = gaps.length ? Math.round(gaps[Math.floor(gaps.length / 2)]) : null;
+        // 端末ごと（共有して使った時だけ。記号が2種類以上ある時）
+        const dev = {};
+        sorted.forEach(h => { if (h.deviceLabel) dev[h.deviceLabel] = (dev[h.deviceLabel] || 0) + 1; });
+        const devices = Object.keys(dev).length >= 2
+            ? Object.entries(dev).sort((a, b) => b[1] - a[1]).map(([label, n]) => ({ label, count: n, pct: Math.round(n / sorted.length * 100) }))
+            : [];
+        return {
+            peak: { range: `${hm(pk)}〜${hm(pk + SLOT)}`, count: peak[1], perCust: Math.round(15 * 60 / peak[1]) },
+            median, rushSlots, devices
+        };
+    }
 
     // 価格帯別の売上。どの値段の商品が全体を支えたかを見る
     function buildPriceBands(itemCounts, itemRev) {
@@ -9064,6 +9258,9 @@
             goal: buildGoal(totalRev),
             baskets: buildBaskets(sorted),
             substitutes: buildSubstitutes(sorted),
+            setEffect: buildSetEffect(sorted),
+            segmentItems: buildSegmentItems(sorted),
+            rush: buildRush(sorted),
             priceBands: buildPriceBands(itemCounts, itemRev),
             pace: buildPace(sorted, totalRev),
             leftover: buildLeftover(itemCounts),
@@ -9216,6 +9413,31 @@
               + `</tbody></table>
               <div class="note-box"><div class="note-foot">「一緒に買う割合」は、片方を買った方のうち、もう片方も買った方の割合です。割合が高いほど、並べて置く・セットにする効果が出やすい組み合わせです。</div></div>`
             : `<div class="note-box"><div class="note-foot">同時に2種類以上買われた会計はありませんでした。</div></div>`;
+        // レジの混み具合
+        const rr = R.rush;
+        const rushBlock = !rr ? '' : `<div class="sub-heading">レジの混み具合</div>
+            <table class="rep-table"><tbody>
+                <tr><td>いちばん混んだ15分</td><td class="num">${esc(rr.peak.range)}　${rr.peak.count}人（1人あたり約${rr.peak.perCust}秒）</td></tr>
+                ${rr.median != null ? `<tr><td>その間の会計の間隔（真ん中の値）</td><td class="num">約${rr.median}秒</td></tr>` : ''}
+                ${rr.devices.map(d => `<tr><td>端末 ${esc(d.label)} の会計</td><td class="num">${d.count}件（${d.pct}%）</td></tr>`).join('')}
+            </tbody></table>
+            <div class="note-box"><div class="note-foot">${rr.rushSlots.length
+                ? `レジ2台あると安心だった時間帯（15分に${RUSH_PER_15}人以上）：${rr.rushSlots.map(x => `${esc(x.range)}（${x.count}人）`).join('、')}。`
+                : `15分に${RUSH_PER_15}人を超える時間帯はありませんでした（レジ1台で回せる混み具合）。`}</div></div>`;
+        // 客層ごとの人気商品
+        const segItemsBlock = !R.segmentItems.length ? '' : `<div class="sub-heading">客層ごとの人気商品</div>
+            <table class="rep-table"><thead><tr><th>客層</th><th class="num">人数</th><th>よく買われた商品</th><th>とくに人気（全体比）</th></tr></thead><tbody>`
+            + R.segmentItems.map(g => `<tr><td>${esc(g.type)}</td><td class="num">${g.people}人</td><td>${g.top.map(t => `${esc(t.name)}×${t.count}`).join('、')}</td><td>${g.fav ? `${esc(g.fav.name)}（${g.fav.lift}倍）` : '—'}</td></tr>`).join('')
+            + `</tbody></table>`;
+        // セット割の効果
+        const se = R.setEffect;
+        const setBlock = !se ? '' : `<div class="sub-heading">セット割の効果（${esc(se.text)}${se.on ? '' : '・いまはオフ'}）</div>
+            <table class="rep-table"><tbody>
+                <tr><td>セット割になった会計</td><td class="num">${se.count}件（全体の${se.pct}%）・引いた額 ${yen(se.discount)}</td></tr>
+                <tr><td>客単価（セットで買った方／それ以外）</td><td class="num">${se.count ? yen(se.avgSet) : '—'} ／ ${yen(se.avgOther)}</td></tr>
+                <tr><td>あと1種類でセットだった会計</td><td class="num">${se.near}件${se.nearTop.length ? `（${se.nearTop.map(x => `${esc(x.label)}が無い ${x.count}件`).join('・')}）` : ''}</td></tr>
+                ${se.attach.map(a => `<tr><td>${esc(a.label)}を買った方のうち、セットにした割合</td><td class="num">${a.pct}%（${a.base}人中）</td></tr>`).join('')}
+            </tbody></table>`;
         // 併売分析の逆（一緒には買われにくい2品）
         const sb = R.substitutes;
         const subBlock = !sb.ready
@@ -9276,6 +9498,7 @@
                         <tbody>${slotRows}</tbody>
                     </table>
                     <div class="note-box"><div class="note-foot">網かけの行が、最も売れた時間帯です。</div></div>
+                    ${rushBlock}
                 </section>
 
                 <section class="report-section report-section--long">
@@ -9318,6 +9541,8 @@
                     ${coBlock}
                     <div class="sub-heading">一緒には買われにくい商品（入れ替え・削減の候補）</div>
                     ${subBlock}
+                    ${segItemsBlock}
+                    ${setBlock}
                 </section>
 
                 <section class="report-section report-section--long">
