@@ -451,6 +451,55 @@
         .share-chip .ic { width: 15px; height: 15px; }
         .share-chip:active { transform: scale(0.96); }
 
+        /* 会計が済んだ時のカード（押せない。約3秒で消え、次の商品を押すとすぐ消える） */
+        .done-card {
+            position: fixed; left: 50%; top: 42%; z-index: 1500; pointer-events: none;
+            transform: translate(-50%, -50%); width: min(340px, calc(100vw - 32px));
+            background: var(--display-face); color: #fff; border-radius: var(--r-lg);
+            box-shadow: 0 18px 50px rgba(0,0,0,.28); padding: 18px 20px 14px; text-align: center;
+            animation: dcIn .26s cubic-bezier(.32,.72,0,1) both;
+        }
+        @keyframes dcIn { from { opacity: 0; transform: translate(-50%, -46%) scale(.96); } to { opacity: 1; transform: translate(-50%, -50%); } }
+        .done-card .dc-top { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: #7FE0A8; }
+        .done-card .dc-top .ic { width: 18px; height: 18px; stroke-width: 2.4; }
+        .done-card .dc-no { font-size: 15px; font-weight: 700; color: var(--on-display-sub); margin-top: 2px; }
+        .done-card .dc-no b { font-size: 46px; font-weight: 900; color: #fff; margin-left: 4px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+        .done-card .dc-change { font-size: 24px; font-weight: 900; color: var(--on-dark); font-variant-numeric: tabular-nums; }
+        .done-card .dc-denoms { font-size: 13px; color: var(--on-display-sub); margin-top: 2px; min-height: 1em; }
+        .done-card .dc-bar { height: 4px; border-radius: 2px; background: var(--on-display-chip); margin-top: 12px; overflow: hidden; }
+        .done-card .dc-bar i { display: block; height: 100%; background: #7FE0A8; transform-origin: left; animation: dcBar var(--dc-ms, 2800ms) linear both; }
+        @keyframes dcBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+        /* この端末をロックしている時の印 */
+        .lock-chip {
+            display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer;
+            border: none; font-family: inherit; font-size: 12.5px; font-weight: 800;
+            padding: 5px 10px; border-radius: var(--r-pill); background: var(--warn-bg); color: var(--warn-ink);
+        }
+        .lock-chip .ic { width: 14px; height: 14px; }
+        @media (max-width: 560px) { .lock-chip span { display: none; } .lock-chip { padding: 5px 8px; } }
+        .nav-item.is-locked, .hdr-btn.is-locked, #btn-reserve.is-locked { opacity: .45; }
+        .check-row.is-fixed { cursor: default; opacity: .8; }
+        /* パスコードの窓 */
+        .pc-overlay { position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center;
+            background: var(--scrim); padding: 16px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+        .pc-card { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-raised);
+            width: 100%; max-width: 330px; padding: 20px 18px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .pc-card .pc-ic { width: 30px; height: 30px; color: var(--accent); }
+        .pc-title { font-size: 18px; font-weight: 800; }
+        .pc-msg { font-size: 13px; color: var(--text-light); text-align: center; line-height: 1.55; }
+        .pc-dots { display: flex; gap: 12px; margin: 8px 0 2px; }
+        .pc-dots i { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--line-strong); }
+        .pc-dots i.on { background: var(--text-main); box-shadow: none; }
+        .pc-dots.shake { animation: pcShake .36s ease; }
+        @keyframes pcShake { 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(4px); } }
+        .pc-err { min-height: 18px; font-size: 12.5px; font-weight: 700; color: var(--danger-ink); text-align: center; }
+        .pc-keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+        .pc-keys button { border: none; border-radius: var(--r-md); background: var(--btn-neutral); color: var(--text-main);
+            font-family: inherit; font-size: 22px; font-weight: 700; min-height: 54px; cursor: pointer; font-variant-numeric: tabular-nums; }
+        .pc-keys button:active { background: var(--accent-soft); }
+        .pc-keys button.pc-sub { font-size: 14px; background: none; color: var(--accent-ink); }
+
         /* ▼ ヘッダーの時計と天気 ▼
            営業の主役ではないので、色も太さも控えめにして、数字だけが読めればよい扱いにする。 */
         .hdr-now {
@@ -1535,6 +1584,11 @@
             background: var(--display-face); color: #fff; border-radius: var(--r-md); padding: 14px 18px; margin: 10px 0 4px;
         }
         .share-code-big .k { font-size: 12.5px; color: var(--on-display-sub); line-height: 1.4; }
+        /* 合流用のQRコード（配色にかかわらず、読み取りやすい白地に黒） */
+        .qr-card { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-card); padding: 12px; margin: 10px 0 4px; }
+        .qr-img { background: #fff; border-radius: var(--r-md); padding: 10px; margin: 10px auto 0; width: 220px; max-width: 100%; }
+        .qr-img svg { display: block; width: 100%; height: auto; }
+        .qr-img svg rect[fill="#ffffff"], .qr-img svg rect[fill="white"] { fill: #fff; }
         .share-code-big .sc-copy { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px; border: none; cursor: pointer;
             background: var(--on-display-chip); color: #fff; display: inline-flex; align-items: center; justify-content: center; }
         .share-code-big .sc-copy .ic { width: 20px; height: 20px; }
@@ -2423,6 +2477,8 @@
   <symbol id="ic-yen" viewBox="0 0 24 24"><path d="M7.5 5l4.5 6.5L16.5 5"/><path d="M12 11.5V20M8 13.5h8M8 16.5h8"/></symbol>
   <symbol id="ic-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
   <symbol id="ic-bulb" viewBox="0 0 24 24"><path d="M9.5 18.5h5M10.5 21.5h3"/><path d="M12 3a6 6 0 00-3.8 10.6V16h7.6v-2.4A6 6 0 0012 3z"/></symbol>
+  <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2.5"/></symbol>
+  <symbol id="ic-qr" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1"/><path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 18.5h1.5M18.5 14h2"/></symbol>
   <symbol id="ic-copy" viewBox="0 0 24 24"><path d="M9 4.5h6v2.5H9z"/><path d="M8 6H6v15h12V6h-2"/><path d="M9.5 12h5M9.5 16h3.5"/></symbol>
   <symbol id="ic-sliders" viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h4M12 16h8"/><path d="M15 5.5v5M10 13.5v5"/></symbol>
   <symbol id="ic-tag" viewBox="0 0 24 24"><path d="M11 3.5H20v9l-8.5 8.5L3 12.5z"/><circle cx="16.5" cy="7.5" r="1.3"/></symbol>
@@ -2453,6 +2509,10 @@
         <!-- 共有中だけ出る、いまの共有コード。押すと「複数端末で使う」を開く -->
         <button class="share-chip" id="share-chip" style="display:none;" onclick="openPanel('settings','sync')" aria-label="共有コード（押すと複数端末の画面）">
             <svg class="ic"><use href="#ic-link"/></svg><span id="share-chip-code"></span>
+        </button>
+        <!-- この端末をロックしている時だけ出る。押すとパスコードを聞いてロックを外す -->
+        <button class="lock-chip" id="lock-chip" style="display:none;" onclick="lockChipTap()" aria-label="この端末は制限中（押すとロックを外す）">
+            <svg class="ic"><use href="#ic-lock"/></svg><span>制限中</span>
         </button>
     </div>
     <div class="header-right">
@@ -2781,7 +2841,8 @@
             </div>
 
             <div class="sub-view" id="sub-display" style="display:none;">
-                <label class="field-label">画面の明るさ</label>
+                <div class="menu-list" id="lock-entry"></div>
+                <label class="field-label sec">画面の明るさ</label>
                 <div id="theme-pick" class="theme-pick"></div>
                 <p class="settings-hint">「端末に合わせる」なら、iPhone・iPad の設定（ダークモード・夜間の切り替え）に付いていきます。</p>
                 <div id="theme-state" class="notice" style="margin-top:10px;"></div>
@@ -2804,6 +2865,20 @@
                 <label class="field-label sec">全画面表示</label>
                 <button id="btn-fullscreen" class="action-btn btn-secondary" style="width:100%; display:none;" onclick="toggleFullscreen()"><svg class="ic"><use href="#ic-expand"/></svg>今すぐ全画面表示にする</button>
                 <p class="settings-hint" style="margin-top:10px;">ホーム画面のアイコンから起動すると、全画面で使えます。</p>
+            </div>
+
+            <!-- この端末を制限（ロック） -->
+            <div class="sub-view" id="sub-lock" style="display:none;">
+                <p class="settings-hint" style="margin-top:0;">手伝いの人に端末を渡す時に、<b>この端末でできる操作</b>を決めて、6けたのパスコードでロックします。ほかの端末や、共有している売上には影響しません。</p>
+                <label class="field-label">ロック中にできること</label>
+                <div class="check-list" id="lock-perms" role="group" aria-label="ロック中にできること"></div>
+                <p class="settings-hint">選んでいない操作や設定を押すと、パスコードを聞きます。お客様用の表示にしている時は、戻す（×）のにもパスコードが要ります。</p>
+                <div class="sw-row" id="lock-reuse-row" style="display:none;">
+                    <div class="sw-text"><b>前と同じパスコードを使う</b><span>オフにすると、新しく決め直します</span></div>
+                    <input type="checkbox" class="ios-switch" id="lock-reuse" onchange="setLockReuse(this.checked)">
+                </div>
+                <button class="action-btn btn-checkout" id="lock-start" style="width:100%; margin-top:12px;" onclick="startLock()"><svg class="ic"><use href="#ic-lock"/></svg>パスコードを決めて制限を始める</button>
+                <div class="notice notice-warn" style="margin-top:12px;"><svg class="ic"><use href="#ic-alert"/></svg><span>パスコードを忘れると、この端末のロックを外せません（ブラウザのデータを消すと外れますが、この端末に残っている記録も消えます）。控えておいてください。</span></div>
             </div>
 
             <!-- データの初期化 -->
@@ -2881,6 +2956,32 @@
 </section>
 
 </main>
+
+<!-- 会計が済んだ時に、客No.とお釣りを大きく出す（押せない・次の商品を押すとすぐ消える） -->
+<div id="done-card" class="done-card" role="status" aria-live="polite" style="display:none;">
+    <div class="dc-top"><svg class="ic"><use href="#ic-check"/></svg>記録しました</div>
+    <div class="dc-no">客No.<b id="dc-no"></b></div>
+    <div class="dc-change" id="dc-change"></div>
+    <div class="dc-denoms" id="dc-denoms"></div>
+    <div class="dc-bar"><i></i></div>
+</div>
+
+<!-- パスコード（6けた）を入れる窓。ロックを外す時と、決める時に使う -->
+<div id="passcode-modal" class="pc-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="pc-title">
+    <div class="pc-card">
+        <svg class="ic pc-ic"><use href="#ic-lock"/></svg>
+        <div class="pc-title" id="pc-title">パスコード</div>
+        <div class="pc-msg" id="pc-msg"></div>
+        <div class="pc-dots" id="pc-dots"></div>
+        <div class="pc-err" id="pc-err" aria-live="polite"></div>
+        <div class="pc-keys">
+            <button type="button" onclick="pcKey('1')">1</button><button type="button" onclick="pcKey('2')">2</button><button type="button" onclick="pcKey('3')">3</button>
+            <button type="button" onclick="pcKey('4')">4</button><button type="button" onclick="pcKey('5')">5</button><button type="button" onclick="pcKey('6')">6</button>
+            <button type="button" onclick="pcKey('7')">7</button><button type="button" onclick="pcKey('8')">8</button><button type="button" onclick="pcKey('9')">9</button>
+            <button type="button" class="pc-sub" onclick="closePasscode()">やめる</button><button type="button" onclick="pcKey('0')">0</button><button type="button" class="pc-sub" onclick="pcKey('del')" aria-label="1文字消す">⌫</button>
+        </div>
+    </div>
+</div>
 
 <!-- 常設ボトムナビ：主要画面への導線を常に表示 -->
 <nav id="bottom-nav">
@@ -3031,6 +3132,8 @@
 <script src="data/shop.js"></script>
 <script src="data/taste-master.js"></script>
 <script src="data/firebase-config.js"></script>
+<!-- 共有コードのQRコードを作る（MIT license・Kazuhiko Arase。通信なしで動くよう同じ場所に置いている） -->
+<script src="vendor/qrcode-generator.js"></script>
 
 <script>
     // ▼▼▼ 操作音（電子音を鳴らす）▼▼▼
@@ -3355,6 +3458,7 @@
             if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
         }
         cart.push({...p});
+        hideDoneCard();   // 次のお客様の商品を打ち始めたら、前の会計のカードはすぐ消す
         // 残りわずか／完売のしきい値アラート（残数がその値に「到達した瞬間」に1回だけ通知）
         const left = shownStock(p);
         if (left === 0) {
@@ -3383,6 +3487,7 @@
 
     // 指定した会計を取り消す（会計済一覧から呼ぶ／会計後に気づいたミスの訂正）
     function voidSale(idx) {
+        if (!requirePerm('edit', () => voidSale(idx))) return;
         const rec = salesHistory[idx];
         if (!rec) { playError(); return; }
         const counts = {};
@@ -3917,12 +4022,32 @@
         saveData();
         init();
         renderReservations();
-        // モーダルを閉じた後もお釣りの内訳が見えるようにトーストにも出す（渡しながら確認できる）
-        const chgText = record.change > 0
-            ? `お釣り¥${record.change}（${changeDenoms(record.change).map(d => `${d.unit}×${d.count}`).join('・')}）`
-            : 'お釣りなし';
-        showToast(`記録しました（客No.${record.no} / ${chgText}）`);
+        // モーダルを閉じた後も、客No.とお釣りの内訳を大きく見せる（渡しながら確かめられる）
+        showDoneCard(record);
         publishCustomerDone(record);   // お客様の画面に「ありがとうございました」を出す
+    }
+
+    // ▼ 会計が済んだ時のカード ▼
+    // 押せない（下の商品ボタンはそのまま押せる）ので、行列を止めない。
+    const DONE_CARD_MS = 2800;
+    let doneCardTimer = null;
+    function showDoneCard(record) {
+        const el = document.getElementById('done-card');
+        if (!el || !record) return;
+        document.getElementById('dc-no').textContent = record.no;
+        const chg = Number(record.change) || 0;
+        document.getElementById('dc-change').textContent = chg > 0 ? `お釣り ¥${chg.toLocaleString('ja-JP')}` : 'お釣りなし';
+        document.getElementById('dc-denoms').textContent = chg > 0
+            ? changeDenoms(chg).map(d => `${d.unit >= 1000 ? d.unit + '円札' : d.unit + '円'}×${d.count}`).join('・') : '';
+        el.style.setProperty('--dc-ms', DONE_CARD_MS + 'ms');
+        el.style.display = 'none'; void el.offsetWidth; el.style.display = '';
+        if (doneCardTimer) clearTimeout(doneCardTimer);
+        doneCardTimer = setTimeout(hideDoneCard, DONE_CARD_MS);
+    }
+    function hideDoneCard() {
+        if (doneCardTimer) { clearTimeout(doneCardTimer); doneCardTimer = null; }
+        const el = document.getElementById('done-card');
+        if (el) el.style.display = 'none';
     }
 
     // 予約の番号。共有していると2台が同じ瞬間に予約を受けることがあるので、
@@ -3938,6 +4063,7 @@
 
     function promptReservation() {
         if (cart.length === 0) return;
+        if (!requirePerm('reserve', promptReservation)) return;
         const name = prompt('予約者のお名前を入力してください:');
         if (name) {
             // 予約した時のセット割を覚えておき、受け取りの会計でも同じ金額にする
@@ -4173,7 +4299,7 @@
                 <p>画面の左上に<b>「戻る」</b>が出ているときは、ひとつ前の画面にもどれます。</p>
                 <div class="man-box">
                     <div class="man-box-h">時計と天気</div>
-                    <p>画面の右上には<b>時刻</b>が出ます。<b>「設定 → 画面の表示」</b>で、時計を消したり、となりに<b>天気と気温</b>を出したりできます（地域は一覧から選びます）。天気は通信できないときは何も出さないだけで、会計には影響しません。</p>
+                    <p>画面の右上には<b>時刻</b>が出ます。<b>「設定 → この端末の設定」</b>で、時計を消したり、となりに<b>天気と気温</b>を出したりできます（地域は一覧から選びます）。天気は通信できないときは何も出さないだけで、会計には影響しません。</p>
                 </div>`
         },
         {
@@ -4227,7 +4353,7 @@
                     <li><b>「会計へ進む」</b>（青い大きなボタン）を押します。</li>
                     <li>お預かりした金額を、<b>テンキー</b>か<b>候補ボタン</b>で入れます。候補にはお釣りの額も小さく出ています。</li>
                     <li>黒い表示窓に<b>お釣りと、その内訳</b>（例：100円×3）が出るので、その通りにお釣りを渡します。</li>
-                    <li>いちばん下の<b>「完了・記録」</b>を押して会計終了です。</li>
+                    <li>いちばん下の<b>「完了・記録」</b>を押して会計終了です。画面の真ん中に<b>客No.とお釣り（何円玉を何枚）</b>が大きく出るので、見ながらお釣りを渡します（約3秒で消えます。次の商品を押せばすぐ消えます）。</li>
                 </ol>
                 <div class="man-box tip">
                     <div class="man-box-h">速く会計するコツ</div>
@@ -4344,6 +4470,10 @@
                     <p>閉店すると、全部の端末が集計を残したあとで、そのコードの中身（会計・予約・端末の一覧）は置き場から<b>自動で消されます</b>。あとで同じ番号のコードが出ても、<b>前の販売会のデータが出てくることはありません</b>。集計はそれぞれの端末の<b>「設定 → 過去の販売会」</b>に残っています。</p>
                     <p>電波が切れていて閉店を受け取れなかった端末も、つながった時に<b>自分の手元の会計で閉店して集計を残します</b>。</p>
                 </div>
+                <h4>QRコードで合流する</h4>
+                <p>共有している端末の<b>「設定 → 複数端末で使う」</b>（画面の上の共有コードを押しても開きます）に<b>QRコード</b>が出ます。もう1台の<b>カメラで読み取る</b>と、このアプリが開き、合流の画面がコード入りで用意されます。<b>「『◯◯』に合流する」を押せば合流</b>です（読み取っただけでは合流しません）。</p>
+                <p>QRコードの上で<b>「レジとして」「お客様用の表示」</b>を選べます。「お客様用の表示」のQRコードを読み取った端末は、合流するとそのまま金額表示になります。</p>
+                <p>※カメラで読み取るとブラウザで開きます。<b>ホーム画面に追加したアプリで使う端末</b>は、4けたのコードを「合流する」で入れてください（ブラウザとホーム画面のアプリは、中身が別々のため）。</p>
                 <h4>途中から共有したくなった</h4>
                 <p>開店し直す必要はありません。<b>「設定 → 複数端末で使う」</b>の<b>「ほかの端末と共有を始める」</b>を押すと、共有コードが自動で決まり、ここまでの会計も在庫もそのまま引き継がれます。ほかの端末は、いつもどおり<b>「合流する」</b>の一覧から選ぶだけです。</p>
                 <p>すでに<b>別々に営業を始めてしまった端末どうし</b>をまとめる時は、片方で<b>「設定 → 複数端末で使う → 別の端末の販売会に合流する」</b>を開き、もう片方の販売会を選びます。この端末の会計もいっしょに持っていきます。</p>
@@ -4440,6 +4570,27 @@
                 </div>`
         },
         {
+            id: 'lock', icon: 'lock', title: '手伝いの人に端末を渡す', sub: 'この端末を制限（ロック）',
+            body: `
+                <p>当日の手伝いの人に端末を渡す時は、<b>この端末でできる操作</b>を決めて、<b>6けたのパスコード</b>でロックできます。うっかり閉店したり、設定や記録を変えたりするのを防げます。</p>
+                <ol class="man-steps">
+                    <li><b>「設定 → この端末の設定 → この端末を制限する」</b>を開きます。</li>
+                    <li><b>「ロック中にできること」</b>にチェックを付けます。<b>会計はいつもできます。</b>初めは「予約」「会計記録を見る」だけにチェックが付いています。</li>
+                    <li><b>「パスコードを決めて制限を始める」</b>を押し、6けたの数字を2回入れます。</li>
+                </ol>
+                <p>ロック中は、画面の上に<b>鍵の印（制限中）</b>が出て、許していないボタンは薄くなります。押すとパスコードを聞かれ、<b>正しく入れるとロックが外れて</b>、押した画面が開きます。鍵の印を押しても外せます。</p>
+                <div class="man-box tip">
+                    <div class="man-box-h">覚えておくこと</div>
+                    <ul class="man-list">
+                        <li>ロックは<b>その端末だけ</b>のものです。ほかの端末や、共有している売上には影響しません。</li>
+                        <li>2回目からは<b>「前と同じパスコードで制限を始める」</b>で、パスコードを入れずにすぐロックできます。</li>
+                        <li><b>お客様用の表示</b>にしている端末をロックしておくと、お客様が×を押しても戻りません。</li>
+                        <li>5回続けて間違えると、30秒は入れられなくなります。</li>
+                        <li><b>パスコードを忘れると外せません</b>（ブラウザのデータを消すと外れますが、その端末に残っている記録も消えます）。控えておいてください。</li>
+                    </ul>
+                </div>`
+        },
+        {
             id: 'qa', icon: 'bulb', title: 'こんな時どうする？', sub: '困ったときの早見表',
             body: `
                 <table class="man-qa">
@@ -4452,7 +4603,7 @@
                         <tr><td>商品が売り切れた</td><td>ボタンに「完売」と出ます。お客様に売り切れをお伝えください。</td></tr>
                         <tr><td>電池が少ない</td><td>会計のたびに保存されているので、電源が切れてもデータは残ります。充電してから開き直してください。</td></tr>
                         <tr><td>ほかの端末の会計が反映されない</td><td>「設定 → 複数端末で使う」で状態を確認してください。電波が戻れば自動で追いつきます。</td></tr>
-                        <tr><td>画面がまぶしい・暗くて見えない</td><td>「設定 → 画面の表示 → 画面の明るさ」で<b>明るく／暗く</b>を選べます。ふだんは<b>「端末に合わせる」</b>のままで、iPhone・iPadの設定にそのまま付いていきます。</td></tr>
+                        <tr><td>画面がまぶしい・暗くて見えない</td><td>「設定 → この端末の設定 → 画面の明るさ」で<b>明るく／暗く</b>を選べます。ふだんは<b>「端末に合わせる」</b>のままで、iPhone・iPadの設定にそのまま付いていきます。</td></tr>
                         <tr><td>ほかの端末で閉店された</td><td>その端末も自動で閉店になり、同じ集計が保存されます。売上が消えたわけではありません（「設定 → 過去の販売会」で見られます）。</td></tr>
                         <tr><td>交代する</td><td>同じ端末なら、そのまま次の人に渡してください。次の人が自分の端末を使うなら、その端末で<b>「開店・合流 → 開いている販売会に合流する」</b>から入ります。</td></tr>
                         <tr><td>合流したい販売会が一覧に出ない</td><td>開いている端末の画面の上に<b>共有コード</b>が出ているか確かめてください。出ていなければ（通信できない時に開店した等）、その端末の<b>「設定 → 複数端末で使う → ほかの端末と共有を始める」</b>を押すと、一覧に出るようになります。</td></tr>
@@ -4704,6 +4855,8 @@
 
     async function exitCustomerMode(opts) {
         const quiet = !!(opts && opts.quiet);
+        // ロック中のお客様用の表示は、お客様が×を押しても戻らないようにする
+        if (!requirePerm('display-exit', () => exitCustomerMode(opts))) return;
         if (!quiet && !confirm('お客様用の表示をやめて、ふだんのレジの画面に戻しますか？')) return;
         const code = knownShareCode();
         customerMode = false;
@@ -5486,7 +5639,8 @@
                     role: d.role === 'customer' ? 'customer' : 'register',
                     cdCode: typeof d.cdCode === 'string' ? d.cdCode : '',
                     theme: (d.theme === 'light' || d.theme === 'dark') ? d.theme : 'auto',
-                    deviceName: typeof d.deviceName === 'string' ? d.deviceName.slice(0, 20) : ''
+                    deviceName: typeof d.deviceName === 'string' ? d.deviceName.slice(0, 20) : '',
+                    lock: normLock(d.lock)
                 };
             }
             const w = localStorage.getItem(UI_PREF_KEY + '_weather');
@@ -5640,6 +5794,222 @@
         setInterval(renderClockNow, 10000);
         if (uiPrefs.weather) refreshWeather(false);
         setInterval(() => refreshWeather(false), WEATHER_TTL);
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ この端末を制限する（ロック）▼▼▼
+    // 当日の手伝いの人に端末を渡す時に、この端末でできる操作を決めて、6けたのパスコードでロックする。
+    // ・会計（商品を打ってお会計）はいつもできる
+    // ・ほかの操作は、ここで選んだものだけ。選んでいない操作を押すと、パスコードを聞く
+    // ・設定はロック中は開けない（パスコードを入れるとロックが外れる）
+    // ・お客様用の表示にしている端末は、戻す（×）のにもパスコードが要る
+    // ロックはこの端末だけのもの。ほかの端末や共有の中身には影響しない。
+    // ※パスコードはそのままでは残さず、ばらした値（ハッシュ）で端末に残す。
+    //   ただし端末の中を詳しく調べれば外せる程度の、うっかり操作を防ぐためのしくみ。
+    const LOCK_PERMS = [
+        { id: 'reserve',   label: '予約を受ける・清算する', ex: '「予約保留」のボタンと、予約の画面' },
+        { id: 'records',   label: '会計記録を見る',         ex: '客属性の入力・領収書の発行を含む' },
+        { id: 'edit',      label: '会計の取り消し・修正',   ex: '会計記録の「取り消し」「修正」' },
+        { id: 'analytics', label: '売上集計を見る',         ex: '集計・PDF・CSVの書き出し' },
+        { id: 'session',   label: '開店・合流・閉店',       ex: 'ヘッダーの「開店・合流」「閉店する」' }
+    ];
+    const LOCK_DEFAULT_ALLOW = { reserve: true, records: true, edit: false, analytics: false, session: false };
+    const VIEW_PERM = { reservations: 'reserve', records: 'records', analytics: 'analytics', session: 'session', settings: 'settings' };
+    function normLock(l) {
+        if (!l || typeof l !== 'object' || typeof l.hash !== 'string' || !l.hash) return null;
+        const allow = {};
+        LOCK_PERMS.forEach(pm => { allow[pm.id] = !!(l.allow && l.allow[pm.id]); });
+        return { on: !!l.on, hash: l.hash, salt: String(l.salt || ''), allow };
+    }
+    function isLocked() { return !!(uiPrefs.lock && uiPrefs.lock.on); }
+    function lockAllows(perm) {
+        if (!isLocked()) return true;
+        if (perm === 'settings' || perm === 'display-exit') return false;
+        return !!uiPrefs.lock.allow[perm];
+    }
+    // 文字列を短い値にばらす（53ビット。元のパスコードは残さない）
+    function lockHash(str) {
+        let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+        for (let i = 0; i < str.length; i++) {
+            const ch = str.charCodeAt(i);
+            h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677);
+        }
+        h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+        h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+        return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+    }
+    function saveLockPrefs() {
+        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
+        applyLockUi();
+    }
+    // 制限中の操作を押した時：パスコードを聞き、合っていればロックを外して続ける
+    function requirePerm(perm, then) {
+        if (lockAllows(perm)) return true;
+        const what = perm === 'settings' ? '設定を開く'
+            : perm === 'display-exit' ? 'お客様用の表示をやめる'
+            : ((LOCK_PERMS.find(x => x.id === perm) || {}).label || 'この操作');
+        askPasscode({
+            title: 'この端末は制限中です',
+            msg: `「${what}」には、パスコードが要ります。<br>入れるとロックが外れます。`,
+            onOk: () => { unlockDevice(true); if (then) setTimeout(then, 0); }
+        });
+        return false;
+    }
+    function unlockDevice(quiet) {
+        if (!uiPrefs.lock) return;
+        uiPrefs.lock.on = false;
+        saveLockPrefs();
+        logEdit('この端末のロックを外した');
+        if (!quiet) playSound();
+        showToast('ロックを外しました（設定の「この端末を制限」から、もう一度ロックできます）');
+        renderLockView();
+    }
+    function startLock() {
+        const allow = lockDraftAllow();
+        const go = (hash, salt) => {
+            uiPrefs.lock = { on: true, hash, salt, allow };
+            saveLockPrefs();
+            logEdit('この端末をロックした（' + LOCK_PERMS.filter(pm => allow[pm.id]).map(pm => pm.label).join('・') + '）');
+            playSuccess();
+            showToast('この端末をロックしました');
+            lockDraft = null;
+            showRegister();
+        };
+        // 前に決めたパスコードがあれば、そのまま使える（毎回決め直さなくてよい）
+        if (uiPrefs.lock && uiPrefs.lock.hash && lockReuse) { go(uiPrefs.lock.hash, uiPrefs.lock.salt); return; }
+        askPasscode({
+            title: 'パスコードを決める', msg: 'ロックを外す時に入れる、6けたの数字を決めます。',
+            onOk: (code1) => {
+                askPasscode({
+                    title: 'もう一度入れてください', msg: '確かめのため、同じ6けたをもう一度。', setup: true,
+                    onOk: (code2) => {
+                        if (code1 !== code2) { playError(); alert('1回目と2回目のパスコードが違います。もう一度決め直してください。'); return; }
+                        const salt = Math.random().toString(36).slice(2, 10);
+                        go(lockHash(salt + ':' + code1), salt);
+                    }
+                });
+            }, setup: true
+        });
+    }
+    // 設定の画面で選びかけの「できること」
+    let lockDraft = null, lockReuse = true;
+    function lockDraftAllow() {
+        if (!lockDraft) lockDraft = Object.assign({}, (uiPrefs.lock && uiPrefs.lock.allow) || LOCK_DEFAULT_ALLOW);
+        return lockDraft;
+    }
+    function toggleLockPerm(id) {
+        const d = lockDraftAllow();
+        d[id] = !d[id];
+        playSound(660, 0.05);
+        renderLockView();
+    }
+    function setLockReuse(v) { lockReuse = !!v; renderLockView(); }
+    function renderLockView() {
+        const box = document.getElementById('lock-perms');
+        if (!box) return;
+        const d = lockDraftAllow();
+        box.innerHTML =
+            `<button type="button" class="check-row on is-fixed" aria-checked="true" disabled>`
+            + `<i class="cr-dot" style="background:var(--accent);"></i><span class="cr-body"><span class="cr-name">会計（商品を打ってお会計）</span><span class="cr-ex">いつもできます</span></span>`
+            + `<span class="cr-check"><svg class="ic"><use href="#ic-check"/></svg></span></button>`
+            + LOCK_PERMS.map(pm => `<button type="button" class="check-row${d[pm.id] ? ' on' : ''}" data-id="${pm.id}" role="checkbox" aria-checked="${!!d[pm.id]}" onclick="toggleLockPerm('${pm.id}')">`
+                + `<i class="cr-dot" style="background:var(--line-strong);"></i><span class="cr-body"><span class="cr-name">${pm.label}</span><span class="cr-ex">${pm.ex}</span></span>`
+                + `<span class="cr-check"><svg class="ic"><use href="#ic-check"/></svg></span></button>`).join('');
+        const had = !!(uiPrefs.lock && uiPrefs.lock.hash);
+        const reuse = document.getElementById('lock-reuse-row');
+        if (reuse) {
+            reuse.style.display = had ? '' : 'none';
+            const sw = document.getElementById('lock-reuse');
+            if (sw) sw.checked = lockReuse;
+        }
+        const btn = document.getElementById('lock-start');
+        if (btn) btn.innerHTML = `<svg class="ic"><use href="#ic-lock"/></svg>${had && lockReuse ? '前と同じパスコードで制限を始める' : 'パスコードを決めて制限を始める'}`;
+    }
+    // ヘッダーの「制限中」と、下のナビの鍵の印
+    function applyLockUi() {
+        const on = isLocked();
+        const chip = document.getElementById('lock-chip');
+        if (chip) chip.style.display = on ? '' : 'none';
+        [['nav-reservations', 'reserve'], ['nav-records', 'records'], ['nav-analytics', 'analytics'], ['nav-settings', 'settings']].forEach(([id, pm]) => {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('is-locked', !lockAllows(pm));
+        });
+        const hb = document.getElementById('header-session-btn');
+        if (hb) hb.classList.toggle('is-locked', !lockAllows('session'));
+        const rb = document.getElementById('btn-reserve');
+        if (rb) rb.classList.toggle('is-locked', !lockAllows('reserve'));
+    }
+    // 「この端末の設定」のいちばん上：制限（ロック）の入口
+    function renderLockEntry() {
+        const box = document.getElementById('lock-entry');
+        if (!box) return;
+        const l = uiPrefs.lock;
+        const sub = l && l.hash ? `前の設定：${LOCK_PERMS.filter(pm => l.allow[pm.id]).map(pm => pm.label).join('・') || '会計だけ'}` : 'できる操作を決めて、6けたのパスコードでロック';
+        box.innerHTML = menuRow('lock', 'この端末を制限する', escHtml(sub), "openPanel('settings','lock')");
+    }
+    // ヘッダーの「制限中」を押した時
+    function lockChipTap() {
+        askPasscode({ title: 'ロックを外す', msg: 'パスコードを入れると、この端末のロックが外れます。', onOk: () => unlockDevice() });
+    }
+
+    // ---- パスコードの入力（6けた）----
+    let pcState = null;   // { title, msg, onOk, setup, digits }
+    let pcFails = 0, pcBlockedUntil = 0;
+    function askPasscode(opts) {
+        pcState = Object.assign({ digits: '' }, opts);
+        const m = document.getElementById('passcode-modal');
+        if (!m) return;
+        document.getElementById('pc-title').textContent = pcState.title || 'パスコード';
+        document.getElementById('pc-msg').innerHTML = pcState.msg || '';
+        document.getElementById('pc-err').textContent = '';
+        renderPcDots();
+        m.style.display = 'flex';
+    }
+    function closePasscode() {
+        const m = document.getElementById('passcode-modal');
+        if (m) m.style.display = 'none';
+        pcState = null;
+    }
+    function renderPcDots() {
+        const box = document.getElementById('pc-dots');
+        if (!box || !pcState) return;
+        box.innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < pcState.digits.length ? 'on' : ''}"></i>`).join('');
+    }
+    function pcKey(k) {
+        if (!pcState) return;
+        const err = document.getElementById('pc-err');
+        if (!pcState.setup && Date.now() < pcBlockedUntil) {
+            playError();
+            err.textContent = `続けて間違えたため、あと${Math.ceil((pcBlockedUntil - Date.now()) / 1000)}秒待ってください`;
+            return;
+        }
+        if (k === 'del') { pcState.digits = pcState.digits.slice(0, -1); playSound(660, 0.04); renderPcDots(); return; }
+        if (pcState.digits.length >= 6) return;
+        pcState.digits += k;
+        playSound(880, 0.03);
+        renderPcDots();
+        if (pcState.digits.length < 6) return;
+        const code = pcState.digits;
+        const st = pcState;
+        setTimeout(() => {
+            if (pcState !== st) return;
+            if (st.setup) { closePasscode(); st.onOk(code); return; }
+            const l = uiPrefs.lock;
+            if (l && lockHash(l.salt + ':' + code) === l.hash) {
+                pcFails = 0;
+                closePasscode();
+                st.onOk(code);
+            } else {
+                pcFails++;
+                playError();
+                if (pcFails >= 5) { pcBlockedUntil = Date.now() + 30000; pcFails = 0; err.textContent = '5回間違えました。30秒待ってから入れてください'; }
+                else err.textContent = `パスコードが違います（あと${5 - pcFails}回で30秒待ち）`;
+                const dots = document.getElementById('pc-dots');
+                if (dots) { dots.classList.remove('shake'); void dots.offsetWidth; dots.classList.add('shake'); }
+                st.digits = '';
+                renderPcDots();
+            }
+        }, 120);
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -6339,7 +6709,11 @@
         renderReservations();
 
         // 閉店直後は、いま閉じたばかりの販売会の集計をそのまま表示する
-        if (closedSnapshot) {
+        // （この端末がロック中で、集計を見る許可が無い時はレジのカードに戻るだけ）
+        if (!lockAllows('analytics')) {
+            if (closedSnapshot) reportViewSnapshot = closedSnapshot;
+            showRegister();
+        } else if (closedSnapshot) {
             reportViewSnapshot = closedSnapshot;
             withSnapshot(closedSnapshot, () => updateAnalytics());
             showTab('analytics');
@@ -6492,6 +6866,79 @@
         showToast('バックアップファイルを保存しました');
     }
     // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ QRコードで合流 ▼▼▼
+    // 共有中の端末にQRコードを出し、もう1台のカメラで読み取ると、このアプリが
+    // 「?join=コード」付きで開き、合流の画面がコード入りで用意される（押せば合流）。
+    // 勝手には合流しない（開いた人が、どの販売会かを見てから押す）。
+    let qrRole = 'register';
+    function joinUrl(code, role) {
+        const base = location.href.split('#')[0].split('?')[0];
+        const ev = new URLSearchParams(location.search).get('event');
+        return base + '?join=' + encodeURIComponent(code) + (role === 'display' ? '&as=display' : '') + (ev ? '&event=' + encodeURIComponent(ev) : '');
+    }
+    function qrSvg(text) {
+        if (typeof qrcode !== 'function') return '';
+        try {
+            const q = qrcode(0, 'M');
+            q.addData(text);
+            q.make();
+            return q.createSvgTag({ cellSize: 4, margin: 2, scalable: true, alt: '合流用のQRコード' });
+        } catch (e) { return ''; }
+    }
+    function setQrRole(r) { qrRole = r === 'display' ? 'display' : 'register'; playSound(660, 0.05); renderShareQr(); }
+    function renderShareQr() {
+        const box = document.getElementById('share-qr');
+        if (!box) return;
+        if (!(syncMode && syncEventCode)) { box.innerHTML = ''; return; }
+        const url = joinUrl(syncEventCode, qrRole);
+        const svg = qrSvg(url);
+        box.innerHTML = `<div class="qr-card">
+            <div class="seg-pick" role="group" aria-label="読み取った端末の使い方">
+                <button type="button" class="${qrRole === 'register' ? 'on' : ''}" onclick="setQrRole('register')"><svg class="ic"><use href="#ic-register"/></svg>レジとして</button>
+                <button type="button" class="${qrRole === 'display' ? 'on' : ''}" onclick="setQrRole('display')"><svg class="ic"><use href="#ic-users"/></svg>お客様用の表示</button>
+            </div>
+            <div class="qr-img" id="share-qr-img">${svg || '<span class="settings-hint">QRコードを作れませんでした。4けたのコードを使ってください。</span>'}</div>
+            <p class="settings-hint" style="margin:6px 0 0;">もう1台の<b>カメラで読み取る</b>と、${qrRole === 'display' ? 'お客様用の表示として' : 'レジとして'}この販売会に合流する画面が開きます。<br>ホーム画面に追加したアプリで使う端末は、4けたのコードを「合流する」で入れてください。</p>
+        </div>`;
+    }
+    // 起動した時に「?join=」が付いていたら、合流の画面をコード入りで用意する
+    function handleJoinLink() {
+        const qs = new URLSearchParams(location.search);
+        const raw = qs.get('join');
+        if (!raw) return;
+        const code = sanitizeEventCode(raw);
+        const role = qs.get('as') === 'display' ? 'display' : 'register';
+        // 読み込み直した時にもう一度動かないよう、アドレスから外しておく（商品セットの指定は残す）
+        try {
+            const keep = new URLSearchParams();
+            if (qs.get('event')) keep.set('event', qs.get('event'));
+            const q = keep.toString();
+            history.replaceState(null, '', location.pathname + (q ? '?' + q : '') + location.hash);
+        } catch (e) { /* 消せなくても動く */ }
+        if (!code) return;
+        if (customerMode) {
+            if (uiPrefs.cdCode === code) return;
+            showToast('お客様用の表示をやめてから、もう一度読み取ってください');
+            return;
+        }
+        if (currentSession) {
+            if (syncMode && syncEventCode === code) { showToast('この販売会で、もう使っています'); return; }
+            const inp = document.getElementById('sync-live-code-input');
+            if (inp) inp.value = code;
+            openPanel('settings', 'sync-add');
+            peekEventCode('live');
+            showToast('QRコードの販売会です。「合流する」を押すと、この端末の会計ごと合流します');
+            return;
+        }
+        joinRole = role;
+        const jc = document.getElementById('join-code-input');
+        if (jc) jc.value = code;
+        openPanel('session', 'open-join');
+        setJoinRoleQuiet(role);
+        peekEventCode('join');
+        showToast(role === 'display' ? 'QRコードの販売会です。「合流する」を押すと、お客様用の表示になります' : 'QRコードの販売会です。「合流する」を押してください');
+    }
 
     // 共有コードをコピーする（メッセージで伝える時に）
     function copyShareCode() {
@@ -8254,7 +8701,8 @@
         'receipt': '領収書の設定',
         'archive': '過去の販売会',
         'data': 'データの書き出し',
-        'display': '画面の表示',
+        'display': 'この端末の設定',
+        'lock': 'この端末を制限',
         'reset': 'データの初期化',
         'open-name': '販売会の名前',
         'open-stock': '商品と仕入れ数',
@@ -8276,6 +8724,8 @@
 
     // ボトムナビ：そのタブを起点にして履歴をやり直す
     function navTo(section) {
+        // ロック中は、許していない画面を開く前にパスコードを聞く
+        if (VIEW_PERM[section] && !requirePerm(VIEW_PERM[section], () => navTo(section))) return;
         navStack = [{ view: section, sub: null }];
         navDir = 'forward';
         renderNav();
@@ -8285,6 +8735,8 @@
     function openPanel(view, sub) {
         // 開店・合流を選ぶ画面は、レジの上のカードにまとめた
         if (view === 'session' && !sub) { showStartCard(); return; }
+        // ロック中は、許していない画面を開く前にパスコードを聞く
+        if (VIEW_PERM[view] && !requirePerm(VIEW_PERM[view], () => openPanel(view, sub))) return;
         const top = navTop();
         if (top && top.view === view && (top.sub || null) === (sub || null)) { renderNav(); return; }
         navStack.push({ view, sub: sub || null });
@@ -8317,6 +8769,7 @@
 
         setPageActive(reg, onRegister);
         setPageActive(panel, !onRegister);
+        if (!onRegister) hideDoneCard();   // 会計のカードはレジの画面の上だけ
 
         if (!onRegister) {
             PANEL_VIEWS.forEach(v => {
@@ -8456,7 +8909,8 @@
             else if (sub === 'sync') renderSyncView();
             else if (sub === 'receipt') renderReceiptSettings();
             else if (sub === 'archive') renderArchiveList();
-            else if (sub === 'display') { updateFullscreenButton(); renderThemeSettings(); renderClockSettings(); }
+            else if (sub === 'display') { updateFullscreenButton(); renderThemeSettings(); renderClockSettings(); renderLockEntry(); }
+            else if (sub === 'lock') { lockDraft = null; lockReuse = true; renderLockView(); }
             else if (sub === 'manual') renderManual();
             else if (sub === 'customer') renderCustomerSettings();
             else if (sub === 'goal') renderSalesGoal();
@@ -8497,6 +8951,7 @@
     // 閉店中は、レジの上の「まだ開店していません」のカード（開店か合流を選ぶ所）へ戻す。
     // 選ぶ画面は1か所だけにして、同じことを聞く画面を2つ持たない。
     function headerSessionAction() {
+        if (!requirePerm('session', headerSessionAction)) return;
         if (currentSession) { endSession(); return; }
         prepareOpenSetup();   // いまの商品内容を編集用にコピーしておく（新しく開店する時に使う）
         showStartCard();
@@ -8558,7 +9013,7 @@
             menuRow('printer', '領収書の設定', `発行者「${escHtml(shopInfo().name)}」・但し書きの変更`, "openPanel('settings','receipt')") +
             menuRow('archive', '過去の販売会', archSub, "openPanel('settings','archive')") +
             menuRow('download', 'データの書き出し', 'バックアップの保存・端末間のコピー', "openPanel('settings','data')") +
-            menuRow('clock', '画面の表示', clockSub, "openPanel('settings','display')") +
+            menuRow('clock', 'この端末の設定', (isLocked() ? '制限中・' : '') + clockSub, "openPanel('settings','display')") +
             menuRow('trash', 'データの初期化', '不具合が直らない時の最終手段', "openPanel('settings','reset')", { danger: true });
     }
 
@@ -8853,6 +9308,7 @@
     async function joinEvent(code) {
         const c = sanitizeEventCode(code || '');
         if (!c) { playError(); return false; }
+        if (!requirePerm('session', () => joinEvent(c))) return false;
         if (!window.FIREBASE_CONFIG || !syncReady || !fbDb) {
             playError();
             alert('共有サーバーにつながっていないため、合流できません。\n電波の良い場所で、もう一度お試しください。');
@@ -9059,7 +9515,9 @@
             box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>「${escHtml(currentSession)}」を共有中です。<br>この端末：${escHtml(deviceDisplayName() || '名前なし')}（会計記録の記号 ${deviceLabel()}）</span>`;
             if (codeWrap) codeWrap.innerHTML = `<div class="share-code-big"><span class="k">共有コード<br>ほかの端末は「合流する」で<br>この販売会を選ぶだけ</span>`
                 + `<span class="v selectable" id="share-code-big">${escHtml(syncEventCode || '')}</span>`
-                + `<button class="sc-copy" onclick="copyShareCode()" aria-label="共有コードをコピー"><svg class="ic"><use href="#ic-copy"/></svg></button></div>`;
+                + `<button class="sc-copy" onclick="copyShareCode()" aria-label="共有コードをコピー"><svg class="ic"><use href="#ic-copy"/></svg></button></div>`
+                + `<div id="share-qr"></div>`;
+            renderShareQr();
             acts.innerHTML =
                 `<button class="action-btn btn-secondary" onclick="leaveDeviceOnly()"><svg class="ic"><use href="#ic-power"/></svg>この端末の利用を終える（ほかの端末は続ける）</button>` +
                 `<button class="action-btn btn-secondary" onclick="stopSyncMidSession()"><svg class="ic"><use href="#ic-x"/></svg>共有をやめてこの端末だけで続ける</button>`;
@@ -10212,6 +10670,7 @@
     // 会計済の品目・点数を修正（在庫・客数・売上に反映）
     let editingRecordIdx = null;
     function toggleEditRecord(idx) {
+        if (idx != null && !requirePerm('edit', () => toggleEditRecord(idx))) return;
         editingRecordIdx = idx;
         renderRecords();
     }
@@ -11599,6 +12058,8 @@
         if (currentView === 'session' && currentSub === 'open-new') renderOpenMenu();
         // 合流の画面を開いたまま、つながった時は一覧を読み直す
         if (syncReady && !currentSession && (openEventsState === 'error' || openEventsState === 'idle')) loadOpenEvents(true);
+        // QRコードから開いた直後など、まだつながる前に調べたコードは、つながったら調べ直す
+        if (syncReady && openSyncPeek.code && openSyncPeek.state === 'unknown') peekEventCode(currentSub === 'sync-add' ? 'live' : 'join');
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -11612,6 +12073,8 @@
     initFirebase();
 
     init();
+    applyLockUi();         // この端末をロックしていれば、ヘッダーとナビに印を出す
+    handleJoinLink();      // QRコードから開かれた時は、合流の画面を用意する
 </script>
 </body>
     
