@@ -441,6 +441,46 @@
             text-overflow: ellipsis; max-width: 220px;
         }
 
+        /* 共有中の共有コード（ほかの端末に伝える時に、すぐ読めるように） */
+        .share-chip {
+            display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer;
+            border: none; font-family: inherit; font-size: 13px; font-weight: 800; letter-spacing: .06em;
+            padding: 5px 11px; border-radius: var(--r-pill);
+            background: var(--positive); color: var(--positive-ink); font-variant-numeric: tabular-nums;
+        }
+        .share-chip .ic { width: 15px; height: 15px; }
+        .share-chip:active { transform: scale(0.96); }
+
+        /* この端末をロックしている時の印 */
+        .lock-chip {
+            display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer;
+            border: none; font-family: inherit; font-size: 12.5px; font-weight: 800;
+            padding: 5px 10px; border-radius: var(--r-pill); background: var(--warn-bg); color: var(--warn-ink);
+        }
+        .lock-chip .ic { width: 14px; height: 14px; }
+        @media (max-width: 560px) { .lock-chip span { display: none; } .lock-chip { padding: 5px 8px; } }
+        .nav-item.is-locked, .hdr-btn.is-locked, #btn-reserve.is-locked { opacity: .45; }
+        .check-row.is-fixed { cursor: default; opacity: .8; }
+        /* パスコードの窓 */
+        .pc-overlay { position: fixed; inset: 0; z-index: 3000; display: flex; align-items: center; justify-content: center;
+            background: var(--scrim); padding: 16px; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+        .pc-card { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-raised);
+            width: 100%; max-width: 330px; padding: 20px 18px 16px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .pc-card .pc-ic { width: 30px; height: 30px; color: var(--accent); }
+        .pc-title { font-size: 18px; font-weight: 800; }
+        .pc-msg { font-size: 13px; color: var(--text-light); text-align: center; line-height: 1.55; }
+        .pc-dots { display: flex; gap: 12px; margin: 8px 0 2px; }
+        .pc-dots i { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--line-strong); }
+        .pc-dots i.on { background: var(--text-main); box-shadow: none; }
+        .pc-dots.shake { animation: pcShake .36s ease; }
+        @keyframes pcShake { 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(4px); } }
+        .pc-err { min-height: 18px; font-size: 12.5px; font-weight: 700; color: var(--danger-ink); text-align: center; }
+        .pc-keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+        .pc-keys button { border: none; border-radius: var(--r-md); background: var(--btn-neutral); color: var(--text-main);
+            font-family: inherit; font-size: 22px; font-weight: 700; min-height: 54px; cursor: pointer; font-variant-numeric: tabular-nums; }
+        .pc-keys button:active { background: var(--accent-soft); }
+        .pc-keys button.pc-sub { font-size: 14px; background: none; color: var(--accent-ink); }
+
         /* ▼ ヘッダーの時計と天気 ▼
            営業の主役ではないので、色も太さも控えめにして、数字だけが読めればよい扱いにする。 */
         .hdr-now {
@@ -473,6 +513,8 @@
             .brand-name { display: none; }
             .app-title { gap: 8px; }
             .session-info { max-width: 40vw; }
+            .app-title.has-share .session-info { max-width: 26vw; }
+            .share-chip { padding: 5px 9px; font-size: 12.5px; }
         }
 
         /* 過去の販売会（閉店時に自動保存されたもの）の一覧 */
@@ -514,7 +556,11 @@
 
         .product-btn {
             position: relative;
-            overflow: hidden;
+            /* カートの個数の印を角からはみ出させて置くので、中身は切り取らない
+               （上辺のカテゴリの帯は背景で描くので、角の丸みにそのまま沿う） */
+            overflow: visible;
+            background-image: linear-gradient(var(--cat-bar, transparent), var(--cat-bar, transparent));
+            background-size: 100% 4px; background-repeat: no-repeat; background-position: top left;
             border: none;
             border-radius: var(--r-md);
             color: var(--text-main);
@@ -530,11 +576,8 @@
             transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
         }
 
-        /* カテゴリの帯（上辺）。面の色が日光で飛んでも、この濃い帯で分類が分かる */
-        .product-btn::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
-            background: var(--cat-bar, transparent);
-        }
+        /* カテゴリの帯（上辺）。面の色が日光で飛んでも、この濃い帯で分類が分かる
+           （.product-btn の背景の1枚目として描いている） */
         .product-btn:active { transform: scale(0.955); box-shadow: 0 1px 2px rgba(28,28,30,0.05); }
         .product-btn { transition: transform .14s cubic-bezier(.32,.72,0,1), box-shadow .12s ease, filter .12s ease; }
         @media (hover: hover) {
@@ -560,6 +603,19 @@
             background: var(--warn-ink); color: #fff; font-size: 11px; font-weight: bold;
             padding: 3px 9px; border-radius: var(--r-pill); box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
+        /* カートに入っている商品：濃い枠で囲み、左上に個数を出す（何をいくつ打ったか、ひと目で分かるように） */
+        .product-btn.in-cart { outline: 3px solid var(--text-main); outline-offset: -3px; }
+        .product-btn .cart-qty {
+            position: absolute; top: -9px; left: -9px; z-index: 2;
+            min-width: 26px; height: 26px; padding: 0 7px; border-radius: var(--r-pill);
+            border: 2px solid var(--bg-color);
+            display: inline-flex; align-items: center; justify-content: center;
+            background: var(--text-main); color: var(--surface);
+            font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1;
+            box-shadow: 0 1px 3px rgba(0,0,0,.18);
+        }
+        .product-btn .cart-qty.pop { animation: qtyPop .32s cubic-bezier(.32,.72,0,1); }
+        @keyframes qtyPop { 0% { transform: scale(.6); } 60% { transform: scale(1.18); } 100% { transform: scale(1); } }
         .soldout-badge.prep { background: var(--muted-ink); }
         .soldout-badge.warn { background: var(--danger); } /* 販売数>仕入数（超過）の警告 */
 
@@ -623,9 +679,49 @@
         .cart-set-hint { display: inline-flex; align-items: center; gap: 5px; margin-top: 14px; padding: 5px 11px;
             border-radius: var(--r-pill); background: var(--positive); color: var(--positive-ink); font-size: 13px; font-weight: bold; line-height: 1.4; }
         .cart-set-hint .ic { width: 14px; height: 14px; }
-        .set-amount-row { display: flex; align-items: center; gap: 8px; }
-        .set-amount-row input { flex: 1; min-width: 0; }
-        .set-amount-row span { font-weight: bold; white-space: nowrap; }
+        /* セット割の中身を変えるところ（iOSの設定と同じ、チェックの付く一覧） */
+        .set-editor { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-card); padding: 14px 14px 16px; margin: 12px 0 22px; }
+        .se-step { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; margin: 4px 0 8px; }
+        .se-step + .check-list + .se-step, .check-list + .se-step { margin-top: 16px; }
+        .se-step small { font-size: 11.5px; font-weight: 600; color: var(--text-light); margin-left: auto; }
+        .se-num { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%;
+            background: var(--accent); color: #fff; font-size: 12px; font-weight: 800; }
+        .check-list { display: flex; flex-direction: column; gap: 6px; }
+        .check-row {
+            display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; cursor: pointer;
+            border: none; font-family: inherit; color: var(--text-main);
+            background: var(--sunken); border-radius: var(--r-md); padding: 11px 12px; min-height: 50px;
+            box-shadow: inset 0 0 0 1.5px transparent;
+            transition: background .15s ease, box-shadow .15s ease, transform .12s ease;
+        }
+        .check-row:active { transform: scale(0.985); }
+        .check-row .cr-dot { width: 10px; height: 26px; border-radius: 5px; flex: 0 0 auto; }
+        .check-row .cr-body { flex: 1; min-width: 0; }
+        .check-row .cr-name { display: block; font-size: 15px; font-weight: 700; }
+        .check-row .cr-ex { display: block; font-size: 11.5px; color: var(--text-light); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .check-row .cr-check {
+            width: 26px; height: 26px; border-radius: 50%; flex: 0 0 auto;
+            display: inline-flex; align-items: center; justify-content: center;
+            box-shadow: inset 0 0 0 2px var(--line-strong); color: transparent;
+            transition: background .15s ease, box-shadow .15s ease;
+        }
+        .check-row .cr-check .ic { width: 16px; height: 16px; stroke-width: 2.6; }
+        .check-row.on { background: var(--accent-soft); box-shadow: inset 0 0 0 1.5px var(--accent); }
+        .check-row.on .cr-check { background: var(--accent); box-shadow: none; color: #fff; }
+        .stepper { display: flex; align-items: stretch; gap: 8px; }
+        .stepper .st-btn {
+            flex: 0 0 52px; border: none; border-radius: var(--r-md); background: var(--btn-neutral); color: var(--text-main);
+            font-size: 24px; font-weight: 700; cursor: pointer; font-family: inherit; min-height: 50px;
+        }
+        .stepper .st-btn:active { background: var(--accent-soft); }
+        .stepper .st-val { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; background: var(--sunken); border-radius: var(--r-md); padding: 0 12px; }
+        .stepper .st-val input { flex: 1; min-width: 0; border: none; background: none; box-shadow: none; text-align: right;
+            font-size: 22px; font-weight: 800; padding: 8px 0; font-variant-numeric: tabular-nums; }
+        .stepper .st-val span { font-weight: 700; white-space: nowrap; }
+        .set-preview { margin-top: 12px; font-size: 13px; line-height: 1.6; color: var(--text-light); background: var(--sunken); border-radius: var(--r-md); padding: 10px 12px; }
+        .set-preview b { color: var(--text-main); }
+        .set-preview .sp-now { color: var(--positive-ink); font-weight: 800; }
+        .set-preview.bad { background: var(--danger-bg); color: var(--danger-ink); }
 
         footer {
             min-width: 0;
@@ -952,8 +1048,10 @@
                ・3行ぶんが入る高さを確保する
                ・それでも収まらない名前は「…」で省略する（途中で欠けるより読める）
                ・在庫の数字は補助情報なので、スマホでは小さめにして名前と価格の場所を優先する */
-            #product-grid { flex: 1; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(100px, 124px); padding: 10px; gap: 8px; }
+            #product-grid { flex: 1; grid-template-columns: repeat(3, 1fr); grid-auto-rows: minmax(100px, 124px); padding: 13px 10px 10px 12px; gap: 9px 8px; }
             .product-btn { padding: 6px 6px 5px; }
+            /* 狭いボタンでは、個数の印をほぼ角の外に出して、商品名にかからないようにする */
+            .product-btn .cart-qty { top: -11px; left: -10px; min-width: 24px; height: 24px; font-size: 13px; padding: 0 6px; }
             .product-btn .pname {
                 display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
                 overflow: hidden; font-size: 13.5px; line-height: 1.32;
@@ -1170,6 +1268,7 @@
 
         /* 節の見出しと注釈 */
         .a-head { font-size: 13px; font-weight: 700; color: var(--text-main); margin: 18px 0 7px; }
+        .a-head-sub { font-weight: 600; color: var(--text-light); font-size: 12px; margin-left: 8px; }
         .a-head:first-child { margin-top: 0; }
         .a-note { font-size: 11.5px; color: var(--text-light); line-height: 1.55; margin: 8px 2px 0; }
         .a-empty { font-size: 13px; color: var(--text-light); padding: 12px 2px; }
@@ -1265,6 +1364,7 @@
             position: absolute; inset: 0; z-index: 20; display: none;
             align-items: center; justify-content: center; padding: 24px;
             background: var(--veil);
+            overflow-y: auto; -webkit-overflow-scrolling: touch;
         }
         #closed-cta.show { display: flex; }
         .closed-card {
@@ -1278,6 +1378,40 @@
         .closed-card .cc-btns .action-btn { width: 100%; margin: 0; }
 
         .closed-card .cc-icon { width: 44px; height: 44px; color: var(--accent); }
+        .closed-card { margin: auto 0; }
+        /* ヘッダーの「開店・合流」を押した時に、ここだと分かるよう一度だけ弾ませる */
+        .closed-card.nudge { animation: ccNudge .5s cubic-bezier(.32,.72,0,1); }
+        @keyframes ccNudge { 0% { transform: scale(1); } 35% { transform: scale(1.035); } 100% { transform: scale(1); } }
+        /* いま開いている販売会（押すとその場で合流） */
+        .cc-live { width: 100%; max-width: 320px; text-align: left; margin-top: 2px; }
+        .cc-live-h { display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+            font-size: 12.5px; font-weight: 700; color: var(--text-light); margin: 0 2px 6px; }
+        .cc-live-h span { font-weight: 600; font-size: 11.5px; }
+        .cc-live-row {
+            display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; cursor: pointer;
+            border: none; font-family: inherit; color: var(--text-main);
+            background: var(--positive); border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 6px;
+            transition: transform .12s ease;
+        }
+        .cc-live-row:active { transform: scale(0.98); }
+        .cc-live-row .ic { width: 20px; height: 20px; color: var(--positive-ink); }
+        .cc-live-row .lr-body { flex: 1; min-width: 0; }
+        .cc-live-row .lr-name { display: block; font-size: 14.5px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cc-live-row .lr-sub { display: block; font-size: 11.5px; color: var(--text-light); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cc-live-row .lr-sub b { color: var(--text-main); letter-spacing: .04em; }
+        .cc-live-row .lr-go { font-size: 13px; font-weight: 800; color: var(--positive-ink); white-space: nowrap; }
+        .cc-reopen {
+            display: flex; align-items: flex-start; gap: 8px; width: 100%; max-width: 320px; text-align: left; cursor: pointer;
+            border: none; font-family: inherit; font-size: 12.5px; line-height: 1.5; color: var(--warn-ink);
+            background: var(--warn-bg); border-radius: var(--r-md); padding: 9px 12px;
+        }
+        .cc-reopen .ic { width: 18px; height: 18px; margin-top: 1px; }
+        .closed-card .cc-import { margin-top: -2px; }
+        @media (max-height: 740px) {
+            .closed-card { padding: 20px 18px; gap: 9px; }
+            .closed-card .cc-icon { width: 34px; height: 34px; }
+            .closed-card .cc-title { font-size: 19px; }
+        }
 
         /* ▼▼▼ アイコン（ピクトグラム）の共通指定 ▼▼▼
            絵文字をやめ、線で描いた記号に統一。太さと角の丸めをそろえると
@@ -1403,37 +1537,6 @@
             .menu-row > .ic:first-child { width: 18px; height: 18px; }
         }
 
-        /* はじめの画面：「新しく開店する」と「合流する」を並べる2枚のカード */
-        .start-choices { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        @media (min-width: 600px) { .start-choices { grid-template-columns: 1fr 1fr; gap: 12px; } }
-        .start-card {
-            position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px;
-            width: 100%; text-align: left; border: none; cursor: pointer; font-family: inherit; color: var(--text-main);
-            background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-card);
-            padding: 18px 18px 16px; min-height: 150px;
-            transition: background .15s ease, transform .12s ease, box-shadow .15s ease;
-        }
-        .start-card:active { background: var(--accent-soft); transform: scale(0.985); box-shadow: none; }
-        @media (hover: hover) { .start-card:hover { background: var(--sunken); } }
-        .start-card .sc-ic {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 44px; height: 44px; border-radius: 13px; background: var(--accent-soft); color: var(--accent-ink);
-        }
-        .start-card .sc-ic .ic { width: 24px; height: 24px; }
-        .start-card .sc-t { font-size: 18px; font-weight: 800; letter-spacing: -0.01em; }
-        .start-card .sc-s { font-size: 13px; color: var(--text-light); line-height: 1.55; }
-        .start-card .sc-badge {
-            position: absolute; top: 16px; right: 16px;
-            font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: var(--r-pill);
-            background: var(--positive); color: var(--positive-ink);
-        }
-        @media (max-width: 599px) {
-            .start-card { min-height: 0; padding: 14px 16px; flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 12px; row-gap: 2px; }
-            .start-card .sc-ic { width: 40px; height: 40px; flex: 0 0 auto; }
-            .start-card .sc-t { font-size: 16.5px; flex: 1; min-width: 0; }
-            .start-card .sc-s { flex-basis: 100%; font-size: 12.5px; padding-left: 52px; }
-            .start-card .sc-badge { position: static; margin-left: 52px; }
-        }
         /* 2つから1つを選ぶ並び（明るさの選び方と同じ形） */
         .seg-pick { display: flex; gap: 2px; background: var(--btn-neutral); border-radius: 12px; padding: 3px; margin: 6px 0 4px; }
         .seg-pick button {
@@ -1462,6 +1565,15 @@
             background: var(--display-face); color: #fff; border-radius: var(--r-md); padding: 14px 18px; margin: 10px 0 4px;
         }
         .share-code-big .k { font-size: 12.5px; color: var(--on-display-sub); line-height: 1.4; }
+        /* 合流用のQRコード（配色にかかわらず、読み取りやすい白地に黒） */
+        .qr-card { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--shadow-card); padding: 12px; margin: 10px 0 4px; }
+        .qr-img { background: #fff; border-radius: var(--r-md); padding: 10px; margin: 10px auto 0; width: 220px; max-width: 100%; }
+        .qr-img svg { display: block; width: 100%; height: auto; }
+        .qr-img svg rect[fill="#ffffff"], .qr-img svg rect[fill="white"] { fill: #fff; }
+        .share-code-big .sc-copy { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 12px; border: none; cursor: pointer;
+            background: var(--on-display-chip); color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+        .share-code-big .sc-copy .ic { width: 20px; height: 20px; }
+        .share-code-big .v { margin-left: auto; }
         .share-code-big .v { font-size: 34px; font-weight: 800; letter-spacing: .08em; font-variant-numeric: tabular-nums; user-select: all; -webkit-user-select: all; }
 
         /* 集計のメニュー（項目カード） */
@@ -1979,7 +2091,9 @@
 
         /* カートに商品が入った時、その行だけがすっと現れる */
         @keyframes cartIn { from { opacity: 0; transform: translate3d(-8px, 0, 0); } to { opacity: 1; transform: none; } }
-        .cart-item { animation: cartIn .26s cubic-bezier(.32, .72, 0, 1) both; }
+        /* 増えた（または個数が変わった）行だけを動かす。全部の行が毎回動くと、どれが変わったのか分からない */
+        .cart-item.fresh { animation: cartIn .26s cubic-bezier(.32, .72, 0, 1) both, cartFresh .5s ease-out both; }
+        @keyframes cartFresh { from { background: var(--accent-soft); } to { background: transparent; } }
 
         /* 合計金額が変わった時に、数字だけを軽く弾ませる（変わったことに気づける） */
         @keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.07); } 100% { transform: scale(1); } }
@@ -2344,6 +2458,8 @@
   <symbol id="ic-yen" viewBox="0 0 24 24"><path d="M7.5 5l4.5 6.5L16.5 5"/><path d="M12 11.5V20M8 13.5h8M8 16.5h8"/></symbol>
   <symbol id="ic-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
   <symbol id="ic-bulb" viewBox="0 0 24 24"><path d="M9.5 18.5h5M10.5 21.5h3"/><path d="M12 3a6 6 0 00-3.8 10.6V16h7.6v-2.4A6 6 0 0012 3z"/></symbol>
+  <symbol id="ic-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><path d="M12 14.5v2.5"/></symbol>
+  <symbol id="ic-qr" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1"/><path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 18.5h1.5M18.5 14h2"/></symbol>
   <symbol id="ic-copy" viewBox="0 0 24 24"><path d="M9 4.5h6v2.5H9z"/><path d="M8 6H6v15h12V6h-2"/><path d="M9.5 12h5M9.5 16h3.5"/></symbol>
   <symbol id="ic-sliders" viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h4M12 16h8"/><path d="M15 5.5v5M10 13.5v5"/></symbol>
   <symbol id="ic-tag" viewBox="0 0 24 24"><path d="M11 3.5H20v9l-8.5 8.5L3 12.5z"/><circle cx="16.5" cy="7.5" r="1.3"/></symbol>
@@ -2371,6 +2487,14 @@
         <svg class="ic ic-brand"><use href="#ic-store"/></svg>
         <span class="brand-name">泰山木POS</span>
         <span class="session-info" id="session-display">閉店中</span>
+        <!-- 共有中だけ出る、いまの共有コード。押すと「複数端末で使う」を開く -->
+        <button class="share-chip" id="share-chip" style="display:none;" onclick="openPanel('settings','sync')" aria-label="共有コード（押すと複数端末の画面）">
+            <svg class="ic"><use href="#ic-link"/></svg><span id="share-chip-code"></span>
+        </button>
+        <!-- この端末をロックしている時だけ出る。押すとパスコードを聞いてロックを外す -->
+        <button class="lock-chip" id="lock-chip" style="display:none;" onclick="lockChipTap()" aria-label="この端末は制限中（押すとロックを外す）">
+            <svg class="ic"><use href="#ic-lock"/></svg><span>制限中</span>
+        </button>
     </div>
     <div class="header-right">
         <!-- 時計と天気。表示するかどうかは「設定 → 時計と天気」で決める -->
@@ -2399,20 +2523,31 @@
     <div id="app-container">
         <main id="product-grid"></main>
 
-        <!-- 閉店中に表示：まず開店へ誘導する大CTA -->
+        <!-- 閉店中に表示：はじめの一手はここだけ（「新しく開店する」か「合流する」）。
+             ヘッダーの「開店・合流」を押しても、ここに来る（同じ選択の画面を2つ持たない）。 -->
         <div id="closed-cta">
-            <div class="closed-card">
+            <div class="closed-card" id="closed-card">
                 <svg class="ic cc-icon"><use href="#ic-store"/></svg>
                 <div class="cc-title">まだ開店していません</div>
-                <div class="cc-sub">この端末で新しく始めるか、ほかの端末で開いている販売会に合流します。</div>
+                <div class="cc-sub"><b>1台目</b>は開店、<b>2台目から</b>は合流。</div>
                 <div class="cc-btns">
-                    <button class="action-btn btn-checkout" onclick="headerSessionAction(); openNewSetup();">
+                    <button class="action-btn btn-checkout" id="cta-new" onclick="openNewSetup()">
                         <svg class="ic"><use href="#ic-store"/></svg>新しく開店する
                     </button>
-                    <button class="action-btn btn-accent-outline" onclick="headerSessionAction(); openJoinSetup();">
+                    <button class="action-btn btn-accent-outline" id="cta-join" onclick="openJoinSetup()">
                         <svg class="ic"><use href="#ic-link"/></svg>開いている販売会に合流する
                     </button>
                 </div>
+                <!-- いま開いている販売会。押せばその場でレジとして合流する -->
+                <div class="cc-live" id="cta-live" style="display:none;">
+                    <div class="cc-live-h">いま開いている販売会<span>押すと合流します</span></div>
+                    <div id="cta-live-list"></div>
+                </div>
+                <!-- 閉店の押し間違いから戻る（閉店直後だけ出る） -->
+                <button class="cc-reopen" id="reopen-row" style="display:none;" onclick="reopenLastSession()">
+                    <svg class="ic"><use href="#ic-undo"/></svg><span><b>間違えて閉店しましたか？</b><br><span id="reopen-desc"></span></span>
+                </button>
+                <button class="link-btn cc-import" onclick="openPanel('session','open-import')"><svg class="ic"><use href="#ic-upload"/></svg>データを取り込んで始める</button>
             </div>
         </div>
 
@@ -2597,7 +2732,7 @@
                     <p class="settings-hint" style="margin-top:4px;">押すだけで合流します（コードを入れなくてもかまいません）。</p>
                 </div>
                 <label class="field-label">コードで合流する</label>
-                <input type="text" id="sync-live-code-input" placeholder="例: 4821" autocomplete="off" autocapitalize="characters" oninput="peekEventCode('live')" onkeydown="if(event.key==='Enter'){event.preventDefault();startSyncMidSession();}">
+                <input type="text" id="sync-live-code-input" placeholder="例: 4821" inputmode="numeric" autocomplete="off" autocapitalize="characters" oninput="peekEventCode('live')" onkeydown="if(event.key==='Enter'){event.preventDefault();startSyncMidSession();}">
                 <!-- 開店の準備の画面と同じ下調べを出す。どちらの画面から入れても、
                      「新しく始める／合流する／もう一度使う」の言い方をそろえる。 -->
                 <div id="live-sync-peek" class="notice" style="margin-top:10px; display:none;"></div>
@@ -2649,15 +2784,19 @@
                     <div class="sw-text"><b>セット割をする</b><span>オフにすると、どの会計も定価のまま</span></div>
                     <input type="checkbox" class="ios-switch" id="opt-set-discount" onchange="toggleSetDiscount(this.checked)">
                 </div>
-                <label class="field-label">組み合わせる種類（2つ以上）</label>
-                <div class="cat-picker" id="set-rule-cats" role="group" aria-label="セットにする種類"></div>
-                <p class="settings-hint" id="set-rule-hint" style="margin-top:4px;"></p>
-                <label class="field-label">割引額（1会計あたり）</label>
-                <div class="set-amount-row">
-                    <input type="number" id="set-rule-amount" inputmode="numeric" min="1" max="999" step="1" placeholder="10" onkeydown="if(event.key==='Enter'){event.preventDefault();saveSetRule();}">
-                    <span>円引き</span>
+                <!-- セットの中身を変える：①種類にチェック → ②引く額 → 例で確かめて「このセット割にする」 -->
+                <div class="set-editor" id="set-editor">
+                    <div class="se-step"><span class="se-num">1</span>セットにする種類<small>2つ以上にチェック</small></div>
+                    <div class="check-list" id="set-rule-cats" role="group" aria-label="セットにする種類"></div>
+                    <div class="se-step"><span class="se-num">2</span>1会計で引く額<small>何セット買っても1回だけ</small></div>
+                    <div class="stepper">
+                        <button type="button" class="st-btn" aria-label="10円へらす" onclick="stepSetAmount(-1)">−</button>
+                        <label class="st-val"><input type="number" id="set-rule-amount" inputmode="numeric" min="1" max="999" step="1" placeholder="10" oninput="onSetAmountInput()" onkeydown="if(event.key==='Enter'){event.preventDefault();saveSetRule();}"><span>円引き</span></label>
+                        <button type="button" class="st-btn" aria-label="10円ふやす" onclick="stepSetAmount(1)">＋</button>
+                    </div>
+                    <div id="set-rule-preview" class="set-preview"></div>
+                    <button class="action-btn btn-checkout" id="set-rule-save" style="width:100%; margin:12px 0 0;" onclick="saveSetRule()"><svg class="ic"><use href="#ic-check"/></svg>このセット割にする</button>
                 </div>
-                <button class="action-btn btn-secondary" style="width:100%; margin:10px 0 20px;" onclick="saveSetRule()"><svg class="ic"><use href="#ic-check"/></svg>このセット割にする</button>
                 <label class="field-label">この回の売上目標（円）</label>
                 <input type="number" id="sales-goal-input" inputmode="numeric" placeholder="例: 50000" min="0" step="1000">
                 <p class="settings-hint">売上集計に達成率と、グラフの目標線が出ます。空欄か0で目標なし。</p>
@@ -2683,7 +2822,8 @@
             </div>
 
             <div class="sub-view" id="sub-display" style="display:none;">
-                <label class="field-label">画面の明るさ</label>
+                <div class="menu-list" id="lock-entry"></div>
+                <label class="field-label sec">画面の明るさ</label>
                 <div id="theme-pick" class="theme-pick"></div>
                 <p class="settings-hint">「端末に合わせる」なら、iPhone・iPad の設定（ダークモード・夜間の切り替え）に付いていきます。</p>
                 <div id="theme-state" class="notice" style="margin-top:10px;"></div>
@@ -2708,6 +2848,20 @@
                 <p class="settings-hint" style="margin-top:10px;">ホーム画面のアイコンから起動すると、全画面で使えます。</p>
             </div>
 
+            <!-- この端末を制限（ロック） -->
+            <div class="sub-view" id="sub-lock" style="display:none;">
+                <p class="settings-hint" style="margin-top:0;">手伝いの人に端末を渡す時に、<b>この端末でできる操作</b>を決めて、6けたのパスコードでロックします。ほかの端末や、共有している売上には影響しません。</p>
+                <label class="field-label">ロック中にできること</label>
+                <div class="check-list" id="lock-perms" role="group" aria-label="ロック中にできること"></div>
+                <p class="settings-hint">選んでいない操作や設定を押すと、パスコードを聞きます。お客様用の表示にしている時は、戻す（×）のにもパスコードが要ります。</p>
+                <div class="sw-row" id="lock-reuse-row" style="display:none;">
+                    <div class="sw-text"><b>前と同じパスコードを使う</b><span>オフにすると、新しく決め直します</span></div>
+                    <input type="checkbox" class="ios-switch" id="lock-reuse" onchange="setLockReuse(this.checked)">
+                </div>
+                <button class="action-btn btn-checkout" id="lock-start" style="width:100%; margin-top:12px;" onclick="startLock()"><svg class="ic"><use href="#ic-lock"/></svg>パスコードを決めて制限を始める</button>
+                <div class="notice notice-warn" style="margin-top:12px;"><svg class="ic"><use href="#ic-alert"/></svg><span>パスコードを忘れると、この端末のロックを外せません（ブラウザのデータを消すと外れますが、この端末に残っている記録も消えます）。控えておいてください。</span></div>
+            </div>
+
             <!-- データの初期化 -->
             <div class="sub-view" id="sub-reset" style="display:none;">
                 <div class="notice notice-danger">
@@ -2720,40 +2874,11 @@
 
         <!-- ---------- 開店の準備（2段階メニュー） ---------- -->
         <div class="panel-view" id="view-session">
-            <div class="sub-view" id="sub-open-menu">
-                <div id="reopen-row" class="notice notice-warn" style="display:none;">
-                    <div style="flex:1;">
-                        <b>間違えて閉店しましたか？</b>
-                        <div id="reopen-desc" style="font-weight:normal; margin-top:2px;"></div>
-                        <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="reopenLastSession()"><svg class="ic"><use href="#ic-undo"/></svg>直前の販売会を再開する</button>
-                    </div>
-                </div>
-                <!-- はじめの画面は「開店」と「合流」の2つだけ。
-                     合流は開店ではない（名前も商品も決めない）ので、入口から分けて並べる。 -->
-                <div class="start-choices">
-                    <button class="start-card" id="start-new" onclick="openNewSetup()">
-                        <span class="sc-ic"><svg class="ic"><use href="#ic-store"/></svg></span>
-                        <span class="sc-t">新しく開店する</span>
-                        <span class="sc-s">この端末で販売会を始めます。<br>名前と商品・仕入れ数を決めます。</span>
-                    </button>
-                    <button class="start-card" id="start-join" onclick="openJoinSetup()">
-                        <span class="sc-ic"><svg class="ic"><use href="#ic-link"/></svg></span>
-                        <span class="sc-t">開いている販売会に合流する</span>
-                        <span class="sc-s">ほかの端末で営業中の販売会に入ります。<br>準備はいりません。</span>
-                        <span class="sc-badge" id="start-join-badge" style="display:none;"></span>
-                    </button>
-                </div>
-                <div class="menu-list" id="start-extra-list" style="margin-top:14px;"></div>
-            </div>
-
             <!-- 新しく開店する -->
             <div class="sub-view" id="sub-open-new" style="display:none;">
                 <div class="menu-list" id="open-menu-list"></div>
-                <!-- ほかの端末と共有するか。共有コードは自動で決まるので、打たなくてよい -->
-                <div class="sw-row" id="open-share-row" style="display:none; margin-top:12px;">
-                    <div class="sw-text"><b>ほかの端末と共有する</b><span id="open-share-sub">共有コードは自動で決まります</span></div>
-                    <input type="checkbox" class="ios-switch" id="open-share-switch" onchange="setShareOnOpen(this.checked)">
-                </div>
+                <!-- 共有コードは開店した時に自動で決まる（打たなくてよい・共有しない選択は無い） -->
+                <div id="open-share-note" class="notice" style="display:none; margin-top:12px;"></div>
                 <!-- 引き継ぎ・テスト用：決まった共有コードで開く時だけ値が入る（画面には出さない） -->
                 <input type="hidden" id="sync-event-code-input" value="">
                 <button class="action-btn btn-checkout" id="open-primary-btn" style="width:100%; margin-top:14px;" onclick="startSession()"><svg class="ic"><use href="#ic-store"/></svg>この内容で開店する</button>
@@ -2773,7 +2898,7 @@
                 <div class="menu-list" id="open-live-list"></div>
                 <div id="open-live-empty" class="notice" style="display:none;"></div>
                 <label class="field-label sec">コードで合流する</label>
-                <input type="text" id="join-code-input" placeholder="例: 4821" inputmode="text" autocomplete="off" autocapitalize="characters" oninput="peekEventCode('join')" onkeydown="if(event.key==='Enter'){event.preventDefault();joinByTypedCode();}">
+                <input type="text" id="join-code-input" placeholder="例: 4821" inputmode="numeric" autocomplete="off" autocapitalize="characters" oninput="peekEventCode('join')" onkeydown="if(event.key==='Enter'){event.preventDefault();joinByTypedCode();}">
                 <div id="join-peek" class="notice" style="margin-top:10px; display:none;"></div>
                 <button class="action-btn btn-secondary" id="join-code-btn" style="width:100%; margin-top:10px;" onclick="joinByTypedCode()" disabled><svg class="ic"><use href="#ic-link"/></svg>合流する</button>
                 <p class="settings-hint">コードは、開いている端末の「設定 → 複数端末で使う」に大きく出ています。</p>
@@ -2812,6 +2937,23 @@
 </section>
 
 </main>
+
+<!-- パスコード（6けた）を入れる窓。ロックを外す時と、決める時に使う -->
+<div id="passcode-modal" class="pc-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="pc-title">
+    <div class="pc-card">
+        <svg class="ic pc-ic"><use href="#ic-lock"/></svg>
+        <div class="pc-title" id="pc-title">パスコード</div>
+        <div class="pc-msg" id="pc-msg"></div>
+        <div class="pc-dots" id="pc-dots"></div>
+        <div class="pc-err" id="pc-err" aria-live="polite"></div>
+        <div class="pc-keys">
+            <button type="button" onclick="pcKey('1')">1</button><button type="button" onclick="pcKey('2')">2</button><button type="button" onclick="pcKey('3')">3</button>
+            <button type="button" onclick="pcKey('4')">4</button><button type="button" onclick="pcKey('5')">5</button><button type="button" onclick="pcKey('6')">6</button>
+            <button type="button" onclick="pcKey('7')">7</button><button type="button" onclick="pcKey('8')">8</button><button type="button" onclick="pcKey('9')">9</button>
+            <button type="button" class="pc-sub" onclick="closePasscode()">やめる</button><button type="button" onclick="pcKey('0')">0</button><button type="button" class="pc-sub" onclick="pcKey('del')" aria-label="1文字消す">⌫</button>
+        </div>
+    </div>
+</div>
 
 <!-- 常設ボトムナビ：主要画面への導線を常に表示 -->
 <nav id="bottom-nav">
@@ -2962,6 +3104,8 @@
 <script src="data/shop.js"></script>
 <script src="data/taste-master.js"></script>
 <script src="data/firebase-config.js"></script>
+<!-- 共有コードのQRコードを作る（MIT license・Kazuhiko Arase。通信なしで動くよう同じ場所に置いている） -->
+<script src="vendor/qrcode-generator.js"></script>
 
 <script>
     // ▼▼▼ 操作音（電子音を鳴らす）▼▼▼
@@ -3174,19 +3318,50 @@
         saveData();
     }
 
+    // ▼ 画面に出す残数 ▼
+    // 1台で使っている時は、カートに入れた時点で在庫（p.stock）から引いている。
+    // 共有中は、在庫を「全端末の会計（済んだもの）」から数え直す作りなので、
+    // カートに入れただけの分や取り置き中の予約は p.stock に入っていない。
+    // そのままだと、商品を押しても残数が減らず、会計した瞬間にまとめて減って見えてしまう。
+    // 共有中は「この端末のカート」と「共有の予約」の分を引いた数を出す（1台の時と同じ見え方）。
+    // 送ったばかりで、まだ共有の会計に戻ってきていない会計（会計した瞬間に残数が一度増えて見えないように）
+    let pendingSent = [];   // { localId, items }
+    function heldCount(p) {
+        if (!syncMode || !p) return 0;
+        const same = i => i && (i.id === p.id || i.name === p.name);
+        let n = cart.filter(same).length;
+        reservations.forEach(r => { (r.items || []).forEach(i => { if (same(i)) n++; }); });
+        if (pendingSent.length) {
+            const have = new Set(salesHistory.map(h => h.localId).filter(Boolean));
+            pendingSent = pendingSent.filter(x => !have.has(x.localId) && Date.now() - x.at < 60000);
+            pendingSent.forEach(x => x.items.forEach(i => { if (same(i)) n++; }));
+        }
+        return n;
+    }
+    function shownStock(p) { return (p ? p.stock : 0) - heldCount(p); }
+
+    let lastTileQty = {};   // 前に描いた時の、商品ごとのカートの個数（増えた時だけ数字を弾ませる）
     function init() {
         const grid = document.getElementById('product-grid');
         grid.innerHTML = '';
+        // カートに入っている数（商品ごと）
+        const inCart = {};
+        cart.forEach(i => { inCart[i.id] = (inCart[i.id] || 0) + 1; });
+        const nextQty = {};
         products.filter(p => p.active !== false).forEach(p => {
             const btn = document.createElement('button');
             const isPlaceholder = !(p.initialStock > 0) && p.price <= 0; // 未設定枠（例：準備中）
-            const isOut = p.stock <= 0;
-            const oversold = p.stock < 0; // 販売数 > 仕入数（過少入力の可能性）
+            const left = shownStock(p);   // カートに入れた分・取り置き分を引いた、いま売れる数
+            const isOut = left <= 0;
+            const oversold = left < 0; // 販売数 > 仕入数（過少入力の可能性）
 
             // 準備中の枠だけ操作不可。完売した実商品は「過少入力対策」で押せる（超過販売）
             let cls = 'product-btn';
             if (isPlaceholder) cls += ' out-of-stock';
             else if (isOut) cls += ' sold-open';
+            const qty = inCart[p.id] || 0;
+            nextQty[p.id] = qty;
+            if (qty > 0) cls += ' in-cart';
             btn.className = cls;
 
             // 面の色に加えて、ボタン上辺の帯にも濃い同系色を置く。
@@ -3208,14 +3383,17 @@
 
             let badge = '';
             if (isPlaceholder) badge = `<span class="soldout-badge prep">準備中</span>`;
-            else if (oversold) badge = `<span class="soldout-badge warn">超過 ${-p.stock}</span>`;
+            else if (oversold) badge = `<span class="soldout-badge warn">超過 ${-left}</span>`;
             else if (isOut) badge = `<span class="soldout-badge">完売</span>`;
 
             // 残りわずか（1〜5個）はオレンジ、超過（在庫マイナス）は赤で強調
-            const lowStock = p.stock > 0 && p.stock <= 5;
+            const lowStock = left > 0 && left <= 5;
             const stockStyle = oversold ? 'color:var(--danger); font-weight:bold;' : (lowStock ? 'color:var(--low-ink); font-weight:bold;' : '');
-            const stockText = oversold ? `在庫:0（超過${-p.stock}）` : `在庫:${p.stock}${lowStock ? ' 残少' : ''}`;
+            const stockText = oversold ? `在庫:0（超過${-left}）` : `在庫:${left}${lowStock ? ' 残少' : ''}`;
+            const qtyBadge = qty > 0
+                ? `<span class="cart-qty${qty !== (lastTileQty[p.id] || 0) ? ' pop' : ''}" aria-label="カートに${qty}個">${qty}</span>` : '';
             btn.innerHTML = `
+                ${qtyBadge}
                 ${badge}
                 <span class="pname">${escHtml(p.name)}</span>
                 <span class="price">¥${p.price}</span>
@@ -3224,6 +3402,7 @@
             btn.onclick = () => addToCart(p);
             grid.appendChild(btn);
         });
+        lastTileQty = nextQty;
         updateCartDisplay();
         updatePendingReminder();
         updateNavBadges();
@@ -3242,22 +3421,24 @@
         if (!(p.initialStock > 0) && p.price <= 0) { playError(); return; }
         // 在庫0でも登録可（開店前の在庫過少入力に備える）。在庫はマイナスまで許容し、
         // マイナス＝「販売数 > 仕入数（超過販売）」として警告表示する。
-        if (p.stock > 0) playSound(); else playError(); // 完売後の登録は警告音で気づけるように
-        // 同期中は在庫を「全端末の販売実績」から算出するため、ここでは在庫を減らさない
-        // （会計確定時にFirestoreへ送信 → 購読の再計算で全端末の残数が更新される）
+        if (shownStock(p) > 0) playSound(); else playError(); // 完売後の登録は警告音で気づけるように
+        // 同期中は在庫（p.stock）を「全端末の販売実績」から算出するため、ここでは減らさない
+        // （会計確定時にFirestoreへ送信 → 購読の再計算で全端末の残数が更新される）。
+        // 画面の残数は、カートに入れた分を引いて出す（shownStock）ので、押したその場で減る。
         if (!syncMode) {
             p.stock--;
             if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
-            // 残りわずか／完売のしきい値アラート（在庫がその値に「到達した瞬間」に1回だけ通知）
-            if (p.stock === 0) {
-                playSound(494, 0.12); setTimeout(() => playSound(370, 0.16), 120); // 完売の下降音
-                showToast(`${p.name} が完売しました`);
-            } else if (p.stock === LOW_STOCK_ALERT) {
-                playSound(1046, 0.09); // 残りわずかの高音
-                showToast(`${p.name} 残り${LOW_STOCK_ALERT}個`);
-            }
         }
         cart.push({...p});
+        // 残りわずか／完売のしきい値アラート（残数がその値に「到達した瞬間」に1回だけ通知）
+        const left = shownStock(p);
+        if (left === 0) {
+            playSound(494, 0.12); setTimeout(() => playSound(370, 0.16), 120); // 完売の下降音
+            showToast(`${p.name} が完売しました`);
+        } else if (left === LOW_STOCK_ALERT) {
+            playSound(1046, 0.09); // 残りわずかの高音
+            showToast(`${p.name} 残り${LOW_STOCK_ALERT}個`);
+        }
         saveData();
         init();
     }
@@ -3277,6 +3458,7 @@
 
     // 指定した会計を取り消す（会計済一覧から呼ぶ／会計後に気づいたミスの訂正）
     function voidSale(idx) {
+        if (!requirePerm('edit', () => voidSale(idx))) return;
         const rec = salesHistory[idx];
         if (!rec) { playError(); return; }
         const counts = {};
@@ -3404,6 +3586,7 @@
         </div>`;
     }
 
+    let lastCartLines = {};   // 前に描いた時の、行ごとの個数
     function updateCartDisplay() {
         publishCustomerDisplay();   // お客様用の画面にも、いまのカートを映す
         const list = document.getElementById('cart-list');
@@ -3424,8 +3607,9 @@
         for (const [name, data] of Object.entries(counts)) {
             const subtotal = data.price * data.count;
             const safeName = escArg(name);
+            const fresh = data.count > (lastCartLines[name] || 0);   // いま増えた行だけ動かす
             list.innerHTML += `
-                <div class="cart-item" style="border-left:6px solid ${catInk(data.type)}; padding-left:8px;">
+                <div class="cart-item${fresh ? ' fresh' : ''}" style="border-left:6px solid ${catInk(data.type)}; padding-left:8px;">
                     <span style="display:flex; align-items:center; gap:6px; min-width:0;">
                         <button class="step-btn minus" onclick="removeOneFromCart('${safeName}')">−</button>
                         <button class="step-btn plus" onclick="addOneToCart('${safeName}')">＋</button>
@@ -3459,6 +3643,8 @@
             list.innerHTML = `<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><svg class="ic ce-icon" style="width:34px; height:34px; color:var(--line-strong);"><use href="#ic-basket"/></svg><br>商品をタップして<br>お会計に追加してください${setHint}${repeatBtn}</div>`;
         }
 
+        lastCartLines = {};
+        Object.entries(counts).forEach(([n, d]) => { lastCartLines[n] = d.count; });
         const cartTotalEl = document.getElementById('cart-total');
         cartTotalEl.innerText = total;
         bumpIfChanged(cartTotalEl, total);
@@ -3790,6 +3976,9 @@
         if (syncMode) {
             // 同期中：Firestoreへ送信し、salesHistoryは購読の再構築に任せる（全端末で共有）
             record.deviceLabel = deviceLabel();
+            record.localId = getDeviceId() + ':' + record.no + ':' + record.time.getTime();
+            // 共有の会計に戻ってくるまでは、この会計の分も残数から引いておく
+            pendingSent.push({ localId: record.localId, items: record.items.slice(), at: Date.now() });
             syncPushSale(record);
         } else {
             salesHistory.push(record);
@@ -3804,7 +3993,8 @@
         saveData();
         init();
         renderReservations();
-        // モーダルを閉じた後もお釣りの内訳が見えるようにトーストにも出す（渡しながら確認できる）
+        // モーダルを閉じた後もお釣りの内訳が見えるようにトーストにも出す（渡しながら確認できる）。
+        // 大きな表示は出さない：次のお客様の会計に、待たずにすぐ移れることを何より優先する。
         const chgText = record.change > 0
             ? `お釣り¥${record.change}（${changeDenoms(record.change).map(d => `${d.unit}×${d.count}`).join('・')}）`
             : 'お釣りなし';
@@ -3825,6 +4015,7 @@
 
     function promptReservation() {
         if (cart.length === 0) return;
+        if (!requirePerm('reserve', promptReservation)) return;
         const name = prompt('予約者のお名前を入力してください:');
         if (name) {
             // 予約した時のセット割を覚えておき、受け取りの会計でも同じ金額にする
@@ -4060,13 +4251,13 @@
                 <p>画面の左上に<b>「戻る」</b>が出ているときは、ひとつ前の画面にもどれます。</p>
                 <div class="man-box">
                     <div class="man-box-h">時計と天気</div>
-                    <p>画面の右上には<b>時刻</b>が出ます。<b>「設定 → 画面の表示」</b>で、時計を消したり、となりに<b>天気と気温</b>を出したりできます（地域は一覧から選びます）。天気は通信できないときは何も出さないだけで、会計には影響しません。</p>
+                    <p>画面の右上には<b>時刻</b>が出ます。<b>「設定 → この端末の設定」</b>で、時計を消したり、となりに<b>天気と気温</b>を出したりできます（地域は一覧から選びます）。天気は通信できないときは何も出さないだけで、会計には影響しません。</p>
                 </div>`
         },
         {
             id: 'open', icon: 'store', title: '① 開店・合流', sub: '1日のはじめに1回だけ',
             body: `
-                <p>画面の右上の<b>「開店・合流」</b>を押すと、2つの入口が並びます。<b>どちらか1つ</b>を選びます。</p>
+                <p>閉店中は、レジの画面に<b>「まだ開店していません」</b>のカードが出ます（右上の<b>「開店・合流」</b>を押しても、ここに戻ります）。カードの2つのボタンから<b>どちらか1つ</b>を選びます。</p>
                 <table class="man-qa">
                     <thead><tr><th>入口</th><th>こんな時</th></tr></thead>
                     <tbody>
@@ -4079,15 +4270,15 @@
                     <li><b>「新しく開店する」</b>を押します。</li>
                     <li><b>「販売会の名前」</b>を確認します（例：11月1日 パン販売）。あとで集計を見分けるための名前です。直したら<b>「この名前にする」</b>を押すと前の画面に戻ります。</li>
                     <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。入れ終えたら<b>「この商品と仕入れ数にする」</b>を押します。</li>
-                    <li>ほかの端末でも会計するなら、<b>「ほかの端末と共有する」</b>をオンのままにします（最初からオンです）。<b>共有コードは自動で決まる</b>ので、打つ必要はありません。1台だけならオフにします。</li>
+                    <li>共有の設定はいりません。開店すると<b>共有コード（4けたの数字）が自動で決まり</b>、ほかの端末から合流できるようになります。1台だけで使う日も、そのままで大丈夫です（通信できない時だけ、この端末だけで開店します）。</li>
                     <li>いちばん下の<b>「この内容で開店する」</b>を押して完了です。</li>
                 </ol>
                 <h4>開いている販売会に合流する（2台目から）</h4>
                 <ol class="man-steps">
-                    <li><b>「開いている販売会に合流する」</b>を押します。</li>
-                    <li><b>「いま開いている販売会」</b>の一覧から、入りたい販売会を<b>押すだけ</b>です。名前・商品・それまでの会計は、開いている側のものがそのまま出ます。</li>
+                    <li>カードの下に<b>「いま開いている販売会」</b>が出ていれば、その行を<b>押すだけ</b>で合流します。名前・商品・それまでの会計は、開いている側のものがそのまま出ます。</li>
+                    <li>出ていない時は<b>「開いている販売会に合流する」</b>を押し、一覧から選ぶか、コードを入れます。</li>
                 </ol>
-                <p>一覧に出ない時は、開いている端末の<b>「設定 → 複数端末で使う」</b>に大きく出ている<b>4けたの共有コード</b>を、<b>「コードで合流する」</b>に入れてください。合流できるのは<b>いま開いている販売会だけ</b>です（閉店した販売会や、間違ったコードには入りません。合流の操作で新しい販売会ができてしまうこともありません）。</p>
+                <p>一覧に出ない時は、開いている端末の画面の上（<b>営業中の名前のとなり</b>）や<b>「設定 → 複数端末で使う」</b>に出ている<b>4けたの共有コード</b>を、<b>「コードで合流する」</b>に入れてください。合流できるのは<b>いま開いている販売会だけ</b>です（閉店した販売会や、間違ったコードには入りません。合流の操作で新しい販売会ができてしまうこともありません）。</p>
                 <p>お客様に金額を見せる端末にする時は、一覧を押す前に<b>「この端末の使い方」</b>で<b>「お客様用の表示」</b>を選びます。</p>
                 <div class="man-box">
                     <div class="man-box-h">どの画面も、下のボタンで決まります</div>
@@ -4110,11 +4301,11 @@
             id: 'checkout', icon: 'yen', title: '② 会計する', sub: '基本の3タップ',
             body: `
                 <ol class="man-steps">
-                    <li>お客様が選んだ商品を、<b>商品ボタン</b>から必要な数だけ押します（同じ商品を2個なら2回）。</li>
+                    <li>お客様が選んだ商品を、<b>商品ボタン</b>から必要な数だけ押します（同じ商品を2個なら2回）。押した商品は<b>濃い枠で囲まれ、角に個数</b>が出るので、何をいくつ打ったかひと目で確かめられます。</li>
                     <li><b>「会計へ進む」</b>（青い大きなボタン）を押します。</li>
                     <li>お預かりした金額を、<b>テンキー</b>か<b>候補ボタン</b>で入れます。候補にはお釣りの額も小さく出ています。</li>
                     <li>黒い表示窓に<b>お釣りと、その内訳</b>（例：100円×3）が出るので、その通りにお釣りを渡します。</li>
-                    <li>いちばん下の<b>「完了・記録」</b>を押して会計終了です。</li>
+                    <li>いちばん下の<b>「完了・記録」</b>を押して会計終了です。下に<b>客No.とお釣り（何円玉を何枚）</b>が小さく出るので、見ながらお釣りを渡せます。そのまま次のお客様の商品を押して大丈夫です。</li>
                 </ol>
                 <div class="man-box tip">
                     <div class="man-box-h">速く会計するコツ</div>
@@ -4146,7 +4337,7 @@
                     <ul class="man-list">
                         <li><b>2セット以上買っても、引くのは1会計1回ぶん</b>です（コーヒー2杯＋クッキー2枚でも10円引き）。</li>
                         <li>ほかの種類の商品がいっしょに入っていても、組み合わせがそろえば割引になります。</li>
-                        <li><b>組み合わせと割引額は変えられます。</b>「設定 → セット割・売上目標」で、組み合わせる種類（パン・クッキー・ドリンクから2つ以上）を押し、割引額（1〜999円）を入れて<b>「このセット割にする」</b>を押します。押すまでは変わりません。</li>
+                        <li><b>組み合わせと割引額は変えられます。</b>「設定 → セット割・売上目標」で、① セットにする種類（パン・クッキー・ドリンク）に<b>2つ以上チェック</b>を付け、② 引く額を<b>−／＋</b>（10円ずつ）か数字で決めます。下に<b>実際の商品でいくらになるかの例</b>が出るので、確かめてから<b>「このセット割にする」</b>を押します。押すまでは変わりません。</li>
                         <li>やめる時・また始める時は、同じ画面の<b>「セット割をする」</b>のスイッチで切り替えます。共有中は全部の端末がいっしょに変わります。</li>
                         <li>会計した後で決まりを変えても、<b>済んだ会計の金額は変わりません</b>。会計記録の修正も、予約の清算も、<b>その時の決まり</b>のまま計算されます。</li>
                     </ul>
@@ -4165,7 +4356,7 @@
                     <tbody>
                         <tr><td>会計をまるごと取り消す</td><td>カードの<b>「取り消し」</b>。売った商品は在庫にもどります。</td></tr>
                         <tr><td>品目や点数だけ直す</td><td>カードの<b>「修正」</b>。＋−で点数を変え、終わったら「修正を終了」。</td></tr>
-                        <tr><td>領収書を出す</td><td>カードの<b>「領収書」</b>。宛名・但し書きは「設定 → 領収書の設定」で変えられます。</td></tr>
+                        <tr><td>領収書を出す</td><td>カードの<b>「領収書」</b>。別の画面に領収書が出て、印刷の画面が開きます。印刷やPDF保存が済んだら、上の<b>「✕ 閉じて戻る」</b>で戻ります（印刷の画面を閉じてしまったら<b>「印刷・PDF保存」</b>でもう一度開けます）。宛名・但し書きは「設定 → 領収書の設定」で変えられます。</td></tr>
                         <tr><td>客属性をあとから入れる</td><td>カードの選択ボタンを押すだけ。<b>左に紅い帯が付いているカード</b>がまだ入っていないものです。</td></tr>
                     </tbody>
                 </table>
@@ -4219,8 +4410,8 @@
                     <div class="man-box-h">覚えることは、これだけ</div>
                     <ul class="man-list">
                         <li><b>開店は1台だけ。</b>ほかの端末は<b>合流</b>します（合流は開店ではないので、名前や商品は決めません）。</li>
-                        <li>合流する端末は、<b>「いま開いている販売会」の一覧を押すだけ</b>。コードを打つ必要はありません。</li>
-                        <li><b>共有コードは自動で決まる4けたの数字</b>です。一覧に出ない時だけ、開いている端末の<b>「設定 → 複数端末で使う」</b>に大きく出ているコードを、<b>「コードで合流する」</b>に入れます。</li>
+                        <li>合流する端末は、閉店中のカードに出る<b>「いま開いている販売会」を押すだけ</b>。コードを打つ必要はありません。</li>
+                        <li><b>共有コードは開店のたびに自動で決まる4けたの数字</b>です。営業中の画面の上（名前のとなり）に出ていて、押すと「複数端末で使う」が開きます。一覧に出ない時だけ、そのコードを<b>「コードで合流する」</b>に入れます。</li>
                     </ul>
                 </div>
                 <h4>コードを入れると出るもの</h4>
@@ -4231,6 +4422,10 @@
                     <p>閉店すると、全部の端末が集計を残したあとで、そのコードの中身（会計・予約・端末の一覧）は置き場から<b>自動で消されます</b>。あとで同じ番号のコードが出ても、<b>前の販売会のデータが出てくることはありません</b>。集計はそれぞれの端末の<b>「設定 → 過去の販売会」</b>に残っています。</p>
                     <p>電波が切れていて閉店を受け取れなかった端末も、つながった時に<b>自分の手元の会計で閉店して集計を残します</b>。</p>
                 </div>
+                <h4>QRコードで合流する</h4>
+                <p>共有している端末の<b>「設定 → 複数端末で使う」</b>（画面の上の共有コードを押しても開きます）に<b>QRコード</b>が出ます。もう1台の<b>カメラで読み取る</b>と、このアプリが開き、合流の画面がコード入りで用意されます。<b>「『◯◯』に合流する」を押せば合流</b>です（読み取っただけでは合流しません）。</p>
+                <p>QRコードの上で<b>「レジとして」「お客様用の表示」</b>を選べます。「お客様用の表示」のQRコードを読み取った端末は、合流するとそのまま金額表示になります。</p>
+                <p>※カメラで読み取るとブラウザで開きます。<b>ホーム画面に追加したアプリで使う端末</b>は、4けたのコードを「合流する」で入れてください（ブラウザとホーム画面のアプリは、中身が別々のため）。</p>
                 <h4>途中から共有したくなった</h4>
                 <p>開店し直す必要はありません。<b>「設定 → 複数端末で使う」</b>の<b>「ほかの端末と共有を始める」</b>を押すと、共有コードが自動で決まり、ここまでの会計も在庫もそのまま引き継がれます。ほかの端末は、いつもどおり<b>「合流する」</b>の一覧から選ぶだけです。</p>
                 <p>すでに<b>別々に営業を始めてしまった端末どうし</b>をまとめる時は、片方で<b>「設定 → 複数端末で使う → 別の端末の販売会に合流する」</b>を開き、もう片方の販売会を選びます。この端末の会計もいっしょに持っていきます。</p>
@@ -4264,7 +4459,7 @@
             body: `
                 <p>もう1台の端末を<b>お客様に向ける金額表示</b>にできます。レジ役の端末で打った内容が、そのまま大きな文字で映ります。</p>
                 <ol class="man-steps">
-                    <li>レジ役の端末を、<b>「ほかの端末と共有する」をオンにして</b>開店しておきます。</li>
+                    <li>レジ役の端末で、いつもどおり開店しておきます（共有コードは自動で決まります）。</li>
                     <li>表示に使う端末で<b>「開店・合流 → 開いている販売会に合流する」</b>を開きます。</li>
                     <li><b>「この端末の使い方」</b>で<b>「お客様用の表示」</b>を選び、一覧から販売会を押します。</li>
                     <li>お客様から見える向きに立てかけます。</li>
@@ -4312,10 +4507,11 @@
                 <ul class="man-list">
                     <li><b>売上の概要</b>…総売上・来店人数・客単価など。売上目標を決めていれば達成率も出ます。セット割で引いた額と件数もここに出ます（総売上は引いた後の、実際に受け取った額です）。</li>
                     <li><b>商品別の売れ行き</b>…どれがどれだけ売れたか、仕入れのうち何％はけたか、売れ残りはいくらか。</li>
-                    <li><b>時間帯別の客数／売上の積み上がり</b>…いつ混んだか、開店からどう積み上がったか。</li>
-                    <li><b>買い方の傾向</b>…1人が何点買ったか、どの価格帯が売れたか、何と何が一緒に買われたか。</li>
+                    <li><b>時間帯別の客数／売上の積み上がり</b>…いつ混んだか、開店からどう積み上がったか。<b>レジの混み具合</b>（いちばん混んだ15分に何人さばいたか、<b>レジ2台あると安心だった時間帯</b>、共有した時の端末ごとの会計数）も出ます。</li>
+                    <li><b>買い方の傾向</b>…1人が何点買ったか、どの価格帯が売れたか、何と何が一緒に買われたか。<b>セット割の効果</b>（セットになった会計の数、セットの方の客単価、<b>あと1種類でセットだった会計</b>と、足りなかった種類）も出ます。声かけの参考にしてください。</li>
+                    <li><b>客層・カテゴリ別</b>…客属性ごとの人数と客単価、<b>客層ごとの人気商品</b>（その客層でとくに人気の商品が、全体の何倍売れたか）、カテゴリ別の売上。</li>
                     <li><b>一緒には買われにくい組み合わせ</b>（「買い方の傾向」の下）…似た商品（同じ分類）なのに、同じ会計にほとんど入らない2品です。お客様が<b>どちらか一方で満足している</b>見込みがあるので、値段や味が近いなら、次回はどちらかを減らす（売れ数の少ない方を削る）候補になります。完売した後の会計は数えません。<b>「傾向あり」は件数が少なめ</b>なので、次の回でも同じ結果になるかを見てから決めてください。</li>
-                    <li><b>客層・カテゴリ別／完売と売り逃し／次回の仕入れ数の目安</b>…次回の準備に使えます。</li>
+                    <li><b>完売と売り逃し／次回の仕入れ数の目安</b>…次回の準備に使えます。</li>
                     <li><b>販売会ごとの推移</b>…回を重ねるほど、前回からの伸びが見えます。</li>
                 </ul>
                 <h4>書き出し</h4>
@@ -4323,6 +4519,27 @@
                 <div class="man-box">
                     <div class="man-box-h">印刷の画面からレジにもどるには</div>
                     <p>PDFにする時は別の画面が開きます。保存し終えたら、その画面のいちばん上の<b>「✕ 閉じて戻る」</b>を押すとレジにもどれます。印刷の画面を閉じてしまっても、となりの<b>「印刷・PDF保存」</b>でもう一度開けます。</p>
+                </div>`
+        },
+        {
+            id: 'lock', icon: 'lock', title: '手伝いの人に端末を渡す', sub: 'この端末を制限（ロック）',
+            body: `
+                <p>当日の手伝いの人に端末を渡す時は、<b>この端末でできる操作</b>を決めて、<b>6けたのパスコード</b>でロックできます。うっかり閉店したり、設定や記録を変えたりするのを防げます。</p>
+                <ol class="man-steps">
+                    <li><b>「設定 → この端末の設定 → この端末を制限する」</b>を開きます。</li>
+                    <li><b>「ロック中にできること」</b>にチェックを付けます。<b>会計はいつもできます。</b>初めは「予約」「会計記録を見る」だけにチェックが付いています。</li>
+                    <li><b>「パスコードを決めて制限を始める」</b>を押し、6けたの数字を2回入れます。</li>
+                </ol>
+                <p>ロック中は、画面の上に<b>鍵の印（制限中）</b>が出て、許していないボタンは薄くなります。押すとパスコードを聞かれ、<b>正しく入れるとロックが外れて</b>、押した画面が開きます。鍵の印を押しても外せます。</p>
+                <div class="man-box tip">
+                    <div class="man-box-h">覚えておくこと</div>
+                    <ul class="man-list">
+                        <li>ロックは<b>その端末だけ</b>のものです。ほかの端末や、共有している売上には影響しません。</li>
+                        <li>2回目からは<b>「前と同じパスコードで制限を始める」</b>で、パスコードを入れずにすぐロックできます。</li>
+                        <li><b>お客様用の表示</b>にしている端末をロックしておくと、お客様が×を押しても戻りません。</li>
+                        <li>5回続けて間違えると、30秒は入れられなくなります。</li>
+                        <li><b>パスコードを忘れると外せません</b>（ブラウザのデータを消すと外れますが、その端末に残っている記録も消えます）。控えておいてください。</li>
+                    </ul>
                 </div>`
         },
         {
@@ -4338,10 +4555,10 @@
                         <tr><td>商品が売り切れた</td><td>ボタンに「完売」と出ます。お客様に売り切れをお伝えください。</td></tr>
                         <tr><td>電池が少ない</td><td>会計のたびに保存されているので、電源が切れてもデータは残ります。充電してから開き直してください。</td></tr>
                         <tr><td>ほかの端末の会計が反映されない</td><td>「設定 → 複数端末で使う」で状態を確認してください。電波が戻れば自動で追いつきます。</td></tr>
-                        <tr><td>画面がまぶしい・暗くて見えない</td><td>「設定 → 画面の表示 → 画面の明るさ」で<b>明るく／暗く</b>を選べます。ふだんは<b>「端末に合わせる」</b>のままで、iPhone・iPadの設定にそのまま付いていきます。</td></tr>
+                        <tr><td>画面がまぶしい・暗くて見えない</td><td>「設定 → この端末の設定 → 画面の明るさ」で<b>明るく／暗く</b>を選べます。ふだんは<b>「端末に合わせる」</b>のままで、iPhone・iPadの設定にそのまま付いていきます。</td></tr>
                         <tr><td>ほかの端末で閉店された</td><td>その端末も自動で閉店になり、同じ集計が保存されます。売上が消えたわけではありません（「設定 → 過去の販売会」で見られます）。</td></tr>
                         <tr><td>交代する</td><td>同じ端末なら、そのまま次の人に渡してください。次の人が自分の端末を使うなら、その端末で<b>「開店・合流 → 開いている販売会に合流する」</b>から入ります。</td></tr>
-                        <tr><td>合流したい販売会が一覧に出ない</td><td>開いている端末で<b>「ほかの端末と共有する」がオンだったか</b>を確かめてください。オフで開店していたら、その端末の<b>「設定 → 複数端末で使う → ほかの端末と共有を始める」</b>を押すと、一覧に出るようになります。</td></tr>
+                        <tr><td>合流したい販売会が一覧に出ない</td><td>開いている端末の画面の上に<b>共有コード</b>が出ているか確かめてください。出ていなければ（通信できない時に開店した等）、その端末の<b>「設定 → 複数端末で使う → ほかの端末と共有を始める」</b>を押すと、一覧に出るようになります。</td></tr>
                         <tr><td>データを別の端末に移したい</td><td>「設定 → データの書き出し」で保存し、移す先の端末の開店画面の「データを取り込んで始める」で読み込みます。</td></tr>
                     </tbody>
                 </table>`
@@ -4590,6 +4807,8 @@
 
     async function exitCustomerMode(opts) {
         const quiet = !!(opts && opts.quiet);
+        // ロック中のお客様用の表示は、お客様が×を押しても戻らないようにする
+        if (!requirePerm('display-exit', () => exitCustomerMode(opts))) return;
         if (!quiet && !confirm('お客様用の表示をやめて、ふだんのレジの画面に戻しますか？')) return;
         const code = knownShareCode();
         customerMode = false;
@@ -5372,7 +5591,8 @@
                     role: d.role === 'customer' ? 'customer' : 'register',
                     cdCode: typeof d.cdCode === 'string' ? d.cdCode : '',
                     theme: (d.theme === 'light' || d.theme === 'dark') ? d.theme : 'auto',
-                    deviceName: typeof d.deviceName === 'string' ? d.deviceName.slice(0, 20) : ''
+                    deviceName: typeof d.deviceName === 'string' ? d.deviceName.slice(0, 20) : '',
+                    lock: normLock(d.lock)
                 };
             }
             const w = localStorage.getItem(UI_PREF_KEY + '_weather');
@@ -5529,6 +5749,222 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
+    // ▼▼▼ この端末を制限する（ロック）▼▼▼
+    // 当日の手伝いの人に端末を渡す時に、この端末でできる操作を決めて、6けたのパスコードでロックする。
+    // ・会計（商品を打ってお会計）はいつもできる
+    // ・ほかの操作は、ここで選んだものだけ。選んでいない操作を押すと、パスコードを聞く
+    // ・設定はロック中は開けない（パスコードを入れるとロックが外れる）
+    // ・お客様用の表示にしている端末は、戻す（×）のにもパスコードが要る
+    // ロックはこの端末だけのもの。ほかの端末や共有の中身には影響しない。
+    // ※パスコードはそのままでは残さず、ばらした値（ハッシュ）で端末に残す。
+    //   ただし端末の中を詳しく調べれば外せる程度の、うっかり操作を防ぐためのしくみ。
+    const LOCK_PERMS = [
+        { id: 'reserve',   label: '予約を受ける・清算する', ex: '「予約保留」のボタンと、予約の画面' },
+        { id: 'records',   label: '会計記録を見る',         ex: '客属性の入力・領収書の発行を含む' },
+        { id: 'edit',      label: '会計の取り消し・修正',   ex: '会計記録の「取り消し」「修正」' },
+        { id: 'analytics', label: '売上集計を見る',         ex: '集計・PDF・CSVの書き出し' },
+        { id: 'session',   label: '開店・合流・閉店',       ex: 'ヘッダーの「開店・合流」「閉店する」' }
+    ];
+    const LOCK_DEFAULT_ALLOW = { reserve: true, records: true, edit: false, analytics: false, session: false };
+    const VIEW_PERM = { reservations: 'reserve', records: 'records', analytics: 'analytics', session: 'session', settings: 'settings' };
+    function normLock(l) {
+        if (!l || typeof l !== 'object' || typeof l.hash !== 'string' || !l.hash) return null;
+        const allow = {};
+        LOCK_PERMS.forEach(pm => { allow[pm.id] = !!(l.allow && l.allow[pm.id]); });
+        return { on: !!l.on, hash: l.hash, salt: String(l.salt || ''), allow };
+    }
+    function isLocked() { return !!(uiPrefs.lock && uiPrefs.lock.on); }
+    function lockAllows(perm) {
+        if (!isLocked()) return true;
+        if (perm === 'settings' || perm === 'display-exit') return false;
+        return !!uiPrefs.lock.allow[perm];
+    }
+    // 文字列を短い値にばらす（53ビット。元のパスコードは残さない）
+    function lockHash(str) {
+        let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+        for (let i = 0; i < str.length; i++) {
+            const ch = str.charCodeAt(i);
+            h1 = Math.imul(h1 ^ ch, 2654435761); h2 = Math.imul(h2 ^ ch, 1597334677);
+        }
+        h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+        h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+        return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+    }
+    function saveLockPrefs() {
+        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
+        applyLockUi();
+    }
+    // 制限中の操作を押した時：パスコードを聞き、合っていればロックを外して続ける
+    function requirePerm(perm, then) {
+        if (lockAllows(perm)) return true;
+        const what = perm === 'settings' ? '設定を開く'
+            : perm === 'display-exit' ? 'お客様用の表示をやめる'
+            : ((LOCK_PERMS.find(x => x.id === perm) || {}).label || 'この操作');
+        askPasscode({
+            title: 'この端末は制限中です',
+            msg: `「${what}」には、パスコードが要ります。<br>入れるとロックが外れます。`,
+            onOk: () => { unlockDevice(true); if (then) setTimeout(then, 0); }
+        });
+        return false;
+    }
+    function unlockDevice(quiet) {
+        if (!uiPrefs.lock) return;
+        uiPrefs.lock.on = false;
+        saveLockPrefs();
+        logEdit('この端末のロックを外した');
+        if (!quiet) playSound();
+        showToast('ロックを外しました（設定の「この端末を制限」から、もう一度ロックできます）');
+        renderLockView();
+    }
+    function startLock() {
+        const allow = lockDraftAllow();
+        const go = (hash, salt) => {
+            uiPrefs.lock = { on: true, hash, salt, allow };
+            saveLockPrefs();
+            logEdit('この端末をロックした（' + LOCK_PERMS.filter(pm => allow[pm.id]).map(pm => pm.label).join('・') + '）');
+            playSuccess();
+            showToast('この端末をロックしました');
+            lockDraft = null;
+            showRegister();
+        };
+        // 前に決めたパスコードがあれば、そのまま使える（毎回決め直さなくてよい）
+        if (uiPrefs.lock && uiPrefs.lock.hash && lockReuse) { go(uiPrefs.lock.hash, uiPrefs.lock.salt); return; }
+        askPasscode({
+            title: 'パスコードを決める', msg: 'ロックを外す時に入れる、6けたの数字を決めます。',
+            onOk: (code1) => {
+                askPasscode({
+                    title: 'もう一度入れてください', msg: '確かめのため、同じ6けたをもう一度。', setup: true,
+                    onOk: (code2) => {
+                        if (code1 !== code2) { playError(); alert('1回目と2回目のパスコードが違います。もう一度決め直してください。'); return; }
+                        const salt = Math.random().toString(36).slice(2, 10);
+                        go(lockHash(salt + ':' + code1), salt);
+                    }
+                });
+            }, setup: true
+        });
+    }
+    // 設定の画面で選びかけの「できること」
+    let lockDraft = null, lockReuse = true;
+    function lockDraftAllow() {
+        if (!lockDraft) lockDraft = Object.assign({}, (uiPrefs.lock && uiPrefs.lock.allow) || LOCK_DEFAULT_ALLOW);
+        return lockDraft;
+    }
+    function toggleLockPerm(id) {
+        const d = lockDraftAllow();
+        d[id] = !d[id];
+        playSound(660, 0.05);
+        renderLockView();
+    }
+    function setLockReuse(v) { lockReuse = !!v; renderLockView(); }
+    function renderLockView() {
+        const box = document.getElementById('lock-perms');
+        if (!box) return;
+        const d = lockDraftAllow();
+        box.innerHTML =
+            `<button type="button" class="check-row on is-fixed" aria-checked="true" disabled>`
+            + `<i class="cr-dot" style="background:var(--accent);"></i><span class="cr-body"><span class="cr-name">会計（商品を打ってお会計）</span><span class="cr-ex">いつもできます</span></span>`
+            + `<span class="cr-check"><svg class="ic"><use href="#ic-check"/></svg></span></button>`
+            + LOCK_PERMS.map(pm => `<button type="button" class="check-row${d[pm.id] ? ' on' : ''}" data-id="${pm.id}" role="checkbox" aria-checked="${!!d[pm.id]}" onclick="toggleLockPerm('${pm.id}')">`
+                + `<i class="cr-dot" style="background:var(--line-strong);"></i><span class="cr-body"><span class="cr-name">${pm.label}</span><span class="cr-ex">${pm.ex}</span></span>`
+                + `<span class="cr-check"><svg class="ic"><use href="#ic-check"/></svg></span></button>`).join('');
+        const had = !!(uiPrefs.lock && uiPrefs.lock.hash);
+        const reuse = document.getElementById('lock-reuse-row');
+        if (reuse) {
+            reuse.style.display = had ? '' : 'none';
+            const sw = document.getElementById('lock-reuse');
+            if (sw) sw.checked = lockReuse;
+        }
+        const btn = document.getElementById('lock-start');
+        if (btn) btn.innerHTML = `<svg class="ic"><use href="#ic-lock"/></svg>${had && lockReuse ? '前と同じパスコードで制限を始める' : 'パスコードを決めて制限を始める'}`;
+    }
+    // ヘッダーの「制限中」と、下のナビの鍵の印
+    function applyLockUi() {
+        const on = isLocked();
+        const chip = document.getElementById('lock-chip');
+        if (chip) chip.style.display = on ? '' : 'none';
+        [['nav-reservations', 'reserve'], ['nav-records', 'records'], ['nav-analytics', 'analytics'], ['nav-settings', 'settings']].forEach(([id, pm]) => {
+            const el = document.getElementById(id);
+            if (el) el.classList.toggle('is-locked', !lockAllows(pm));
+        });
+        const hb = document.getElementById('header-session-btn');
+        if (hb) hb.classList.toggle('is-locked', !lockAllows('session'));
+        const rb = document.getElementById('btn-reserve');
+        if (rb) rb.classList.toggle('is-locked', !lockAllows('reserve'));
+    }
+    // 「この端末の設定」のいちばん上：制限（ロック）の入口
+    function renderLockEntry() {
+        const box = document.getElementById('lock-entry');
+        if (!box) return;
+        const l = uiPrefs.lock;
+        const sub = l && l.hash ? `前の設定：${LOCK_PERMS.filter(pm => l.allow[pm.id]).map(pm => pm.label).join('・') || '会計だけ'}` : 'できる操作を決めて、6けたのパスコードでロック';
+        box.innerHTML = menuRow('lock', 'この端末を制限する', escHtml(sub), "openPanel('settings','lock')");
+    }
+    // ヘッダーの「制限中」を押した時
+    function lockChipTap() {
+        askPasscode({ title: 'ロックを外す', msg: 'パスコードを入れると、この端末のロックが外れます。', onOk: () => unlockDevice() });
+    }
+
+    // ---- パスコードの入力（6けた）----
+    let pcState = null;   // { title, msg, onOk, setup, digits }
+    let pcFails = 0, pcBlockedUntil = 0;
+    function askPasscode(opts) {
+        pcState = Object.assign({ digits: '' }, opts);
+        const m = document.getElementById('passcode-modal');
+        if (!m) return;
+        document.getElementById('pc-title').textContent = pcState.title || 'パスコード';
+        document.getElementById('pc-msg').innerHTML = pcState.msg || '';
+        document.getElementById('pc-err').textContent = '';
+        renderPcDots();
+        m.style.display = 'flex';
+    }
+    function closePasscode() {
+        const m = document.getElementById('passcode-modal');
+        if (m) m.style.display = 'none';
+        pcState = null;
+    }
+    function renderPcDots() {
+        const box = document.getElementById('pc-dots');
+        if (!box || !pcState) return;
+        box.innerHTML = Array.from({ length: 6 }, (_, i) => `<i class="${i < pcState.digits.length ? 'on' : ''}"></i>`).join('');
+    }
+    function pcKey(k) {
+        if (!pcState) return;
+        const err = document.getElementById('pc-err');
+        if (!pcState.setup && Date.now() < pcBlockedUntil) {
+            playError();
+            err.textContent = `続けて間違えたため、あと${Math.ceil((pcBlockedUntil - Date.now()) / 1000)}秒待ってください`;
+            return;
+        }
+        if (k === 'del') { pcState.digits = pcState.digits.slice(0, -1); playSound(660, 0.04); renderPcDots(); return; }
+        if (pcState.digits.length >= 6) return;
+        pcState.digits += k;
+        playSound(880, 0.03);
+        renderPcDots();
+        if (pcState.digits.length < 6) return;
+        const code = pcState.digits;
+        const st = pcState;
+        setTimeout(() => {
+            if (pcState !== st) return;
+            if (st.setup) { closePasscode(); st.onOk(code); return; }
+            const l = uiPrefs.lock;
+            if (l && lockHash(l.salt + ':' + code) === l.hash) {
+                pcFails = 0;
+                closePasscode();
+                st.onOk(code);
+            } else {
+                pcFails++;
+                playError();
+                if (pcFails >= 5) { pcBlockedUntil = Date.now() + 30000; pcFails = 0; err.textContent = '5回間違えました。30秒待ってから入れてください'; }
+                else err.textContent = `パスコードが違います（あと${5 - pcFails}回で30秒待ち）`;
+                const dots = document.getElementById('pc-dots');
+                if (dots) { dots.classList.remove('shake'); void dots.offsetWidth; dots.classList.add('shake'); }
+                st.digits = '';
+                renderPcDots();
+            }
+        }, 120);
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     // ▼▼▼ セット割の計算（ここ1か所だけ）▼▼▼
     // セット割の決まり（組み合わせと額）を、正しい形にそろえる。
     // 種類は2つ以上・重複なし・並びは画面の順（パン→クッキー→ドリンク）。額は1〜999円の整数。
@@ -5607,22 +6043,51 @@
     // 押しただけでは決まらない（1つ目を押した瞬間に値段が変わると困る）。
     // 「このセット割にする」を押した時にだけ、決まりを入れ替える。
     let setRuleDraft = null;
+    function setDraft() {
+        if (!setRuleDraft) setRuleDraft = { needs: setRule.needs.slice(), amount: String(setRule.amount) };
+        return setRuleDraft;
+    }
     function toggleSetRuleCat(id) {
-        if (!setRuleDraft) setRuleDraft = { needs: setRule.needs.slice(), amount: setRule.amount };
-        const i = setRuleDraft.needs.indexOf(id);
-        if (i >= 0) setRuleDraft.needs.splice(i, 1); else setRuleDraft.needs.push(id);
+        const d = setDraft();
+        const i = d.needs.indexOf(id);
+        if (i >= 0) d.needs.splice(i, 1); else d.needs.push(id);
         playSound(660, 0.05);
         renderSetRuleEditor();
     }
+    function onSetAmountInput() {
+        const input = document.getElementById('set-rule-amount');
+        setDraft().amount = input ? String(input.value).trim() : '';
+        renderSetRuleEditor();
+    }
+    // −／＋：10円ずつ（10円より下は1円ずつ）
+    function stepSetAmount(dir) {
+        const d = setDraft();
+        let v = Math.floor(Number(d.amount));
+        if (!(v >= 1)) v = setRule.amount;
+        if (dir > 0) v = v < 10 ? v + 1 : v + 10;
+        else v = v > 10 ? v - 10 : v - 1;
+        v = Math.min(SET_MAX_AMOUNT, Math.max(1, v));
+        d.amount = String(v);
+        const input = document.getElementById('set-rule-amount');
+        if (input) input.value = v;
+        playSound(660, 0.05);
+        renderSetRuleEditor();
+    }
+    // 選びかけの内容が、いまの決まりと違うか
+    function setDraftChanged() {
+        if (!setRuleDraft) return false;
+        const needs = CAT_TYPES.map(c => c.id).filter(id => setRuleDraft.needs.includes(id));
+        return JSON.stringify(needs) !== JSON.stringify(setRule.needs) || String(setRuleDraft.amount) !== String(setRule.amount);
+    }
     function saveSetRule() {
-        const draft = setRuleDraft || { needs: setRule.needs.slice(), amount: setRule.amount };
+        const draft = setDraft();
         const input = document.getElementById('set-rule-amount');
         const raw = input ? String(input.value).trim() : String(draft.amount);
         const amount = Number(raw);
         const needs = CAT_TYPES.map(c => c.id).filter(id => draft.needs.includes(id));
-        if (needs.length < 2) { playError(); alert('組み合わせる種類を2つ以上選んでください。'); return; }
+        if (needs.length < 2) { playError(); alert('セットにする種類を2つ以上選んでください。'); return; }
         if (!/^\d+$/.test(raw) || !(amount >= 1) || amount > SET_MAX_AMOUNT) {
-            playError(); alert(`割引額は 1〜${SET_MAX_AMOUNT} 円の整数で入れてください。`); return;
+            playError(); alert(`引く額は 1〜${SET_MAX_AMOUNT} 円の整数で入れてください。`); return;
         }
         const next = normSetRule({ needs, amount });
         const before = setRuleText(setRule);
@@ -5631,23 +6096,60 @@
         shareSetDiscount();
         saveData();
         logEdit(`セット割を変更：${before} → ${setRuleText(setRule)}`);
-        playSound();
+        playSuccess();
         showToast(`セット割を「${setRuleText(setRule)}」にしました`);
         afterSetDiscountChange();
+    }
+    // 例に使う商品：その種類のうち、いちばん安い（いま売っている）商品
+    function setExampleProduct(type) {
+        const list = currentSession ? products : (tempSetupProducts.length ? tempSetupProducts : products);
+        return list.filter(p => p && p.type === type && p.price > 0 && p.active !== false)
+            .sort((a, b) => a.price - b.price)[0] || null;
     }
     function renderSetRuleEditor() {
         const box = document.getElementById('set-rule-cats');
         if (!box) return;
-        const d = setRuleDraft || setRule;
-        box.innerHTML = CAT_TYPES.map(c =>
-            `<button type="button" class="cat-pick${d.needs.includes(c.id) ? ' on' : ''}" style="--pick-ink:${catInk(c.id)};"
-                aria-pressed="${d.needs.includes(c.id)}" onclick="toggleSetRuleCat('${c.id}')"><i></i>${c.label}</button>`).join('');
+        const d = setRuleDraft || { needs: setRule.needs, amount: String(setRule.amount) };
+        box.innerHTML = CAT_TYPES.map(c => {
+            const on = d.needs.includes(c.id);
+            const ex = setExampleProduct(c.id);
+            const n = (currentSession ? products : (tempSetupProducts.length ? tempSetupProducts : products))
+                .filter(p => p && p.type === c.id && p.price > 0 && p.active !== false).length;
+            return `<button type="button" class="check-row${on ? ' on' : ''}" data-id="${c.id}" role="checkbox" aria-checked="${on}" onclick="toggleSetRuleCat('${c.id}')">`
+                + `<i class="cr-dot" style="background:${catInk(c.id)};"></i>`
+                + `<span class="cr-body"><span class="cr-name">${c.label}</span>`
+                + `<span class="cr-ex">${ex ? `${escHtml(ex.name)}など ${n}品` : 'いま売っている商品はありません'}</span></span>`
+                + `<span class="cr-check"><svg class="ic"><use href="#ic-check"/></svg></span></button>`;
+        }).join('');
         const input = document.getElementById('set-rule-amount');
-        if (input && document.activeElement !== input && !setRuleDraft) input.value = setRule.amount;
-        const hint = document.getElementById('set-rule-hint');
-        if (hint) {
-            const n = d.needs.length;
-            hint.textContent = n < 2 ? '2つ以上選んでください' : `${d.needs.map(id => (CAT_TYPES.find(c => c.id === id) || {}).label).join('＋')} を同じ会計で買うと割引`;
+        if (input && document.activeElement !== input) input.value = d.amount;
+        // 例：その組み合わせを1セット買うと、いくらになるか
+        const pv = document.getElementById('set-rule-preview');
+        const needs = CAT_TYPES.map(c => c.id).filter(id => d.needs.includes(id));
+        const amt = Math.floor(Number(d.amount));
+        const amountOk = /^\d+$/.test(String(d.amount).trim()) && amt >= 1 && amt <= SET_MAX_AMOUNT;
+        let msg = '', bad = false;
+        if (needs.length < 2) { bad = true; msg = `あと${2 - needs.length}つ選んでください（セットは2種類以上）。`; }
+        else if (!amountOk) { bad = true; msg = `引く額は 1〜${SET_MAX_AMOUNT} 円で入れてください。`; }
+        else {
+            const ex = needs.map(setExampleProduct);
+            const label = needs.map(id => (CAT_TYPES.find(c => c.id === id) || {}).label).join(' ＋ ');
+            if (ex.some(x => !x)) msg = `<b>${label}</b> を同じ会計で買うと <b>${amt}円引き</b>。`;
+            else {
+                const gross = ex.reduce((a, x) => a + x.price, 0);
+                msg = `<b>${label}</b> を同じ会計で買うと <b>${amt}円引き</b>。<br>例）${ex.map(x => `${escHtml(x.name)} ¥${x.price}`).join(' ＋ ')}`
+                    + ` ＝ ¥${gross} → <span class="sp-now">¥${Math.max(0, gross - amt)}</span>`;
+                if (amt >= gross) { bad = true; msg += '<br>引く額が、セットの値段以上になっています。'; }
+            }
+        }
+        if (pv) { pv.className = 'set-preview' + (bad ? ' bad' : ''); pv.innerHTML = msg; }
+        // 変えていない時は押せない（いまの内容のまま、と分かるように）
+        const save = document.getElementById('set-rule-save');
+        if (save) {
+            const changed = setDraftChanged();
+            save.disabled = !changed;
+            save.className = 'action-btn ' + (changed ? 'btn-checkout' : 'btn-secondary');
+            save.innerHTML = changed ? '<svg class="ic"><use href="#ic-check"/></svg>このセット割にする' : '<svg class="ic"><use href="#ic-check"/></svg>いまのセット割です';
         }
     }
 
@@ -5781,12 +6283,12 @@
         const row = document.getElementById('reopen-row');
         if (!row) return;
         const a = reopenableArchive();
-        row.style.display = a ? 'block' : 'none';
+        row.style.display = a ? 'flex' : 'none';
         if (a) {
             const d = new Date(a.date);
             const hhmm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
             document.getElementById('reopen-desc').innerHTML =
-                `${hhmm} に閉店した「<b>${escHtml(a.name)}</b>」（${a.customerCount}件・¥${a.totalRev.toLocaleString()}）を、閉店前の状態に戻して続きから営業できます。`;
+                `押すと ${hhmm} に閉店した「${escHtml(a.name)}」（${a.customerCount}件・¥${a.totalRev.toLocaleString()}）を、閉店前の状態に戻して続きから営業できます。`;
         }
     }
 
@@ -5874,7 +6376,7 @@
         const codeInput = document.getElementById('sync-event-code-input');
         const typedCode = sanitizeEventCode((codeInput && codeInput.value || '').trim());
         if (codeInput) codeInput.value = '';
-        // 共有するか：合流なら必ず。新しく開店するなら「ほかの端末と共有する」のスイッチしだい。
+        // 共有するか：いつも共有する（通信できない時だけ、この端末だけで開店する）。
         const wantShare = !!typedCode || shareOnOpenWanted();
         let useSync = !!(syncReady && window.FIREBASE_CONFIG && wantShare);
         let code = null, joinedProducts = null, sharedName = name, isJoining = false, joinRound = '';
@@ -6159,7 +6661,11 @@
         renderReservations();
 
         // 閉店直後は、いま閉じたばかりの販売会の集計をそのまま表示する
-        if (closedSnapshot) {
+        // （この端末がロック中で、集計を見る許可が無い時はレジのカードに戻るだけ）
+        if (!lockAllows('analytics')) {
+            if (closedSnapshot) reportViewSnapshot = closedSnapshot;
+            showRegister();
+        } else if (closedSnapshot) {
             reportViewSnapshot = closedSnapshot;
             withSnapshot(closedSnapshot, () => updateAnalytics());
             showTab('analytics');
@@ -6313,6 +6819,98 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
+    // ▼▼▼ QRコードで合流 ▼▼▼
+    // 共有中の端末にQRコードを出し、もう1台のカメラで読み取ると、このアプリが
+    // 「?join=コード」付きで開き、合流の画面がコード入りで用意される（押せば合流）。
+    // 勝手には合流しない（開いた人が、どの販売会かを見てから押す）。
+    let qrRole = 'register';
+    function joinUrl(code, role) {
+        const base = location.href.split('#')[0].split('?')[0];
+        const ev = new URLSearchParams(location.search).get('event');
+        return base + '?join=' + encodeURIComponent(code) + (role === 'display' ? '&as=display' : '') + (ev ? '&event=' + encodeURIComponent(ev) : '');
+    }
+    function qrSvg(text) {
+        if (typeof qrcode !== 'function') return '';
+        try {
+            const q = qrcode(0, 'M');
+            q.addData(text);
+            q.make();
+            return q.createSvgTag({ cellSize: 4, margin: 2, scalable: true, alt: '合流用のQRコード' });
+        } catch (e) { return ''; }
+    }
+    function setQrRole(r) { qrRole = r === 'display' ? 'display' : 'register'; playSound(660, 0.05); renderShareQr(); }
+    function renderShareQr() {
+        const box = document.getElementById('share-qr');
+        if (!box) return;
+        if (!(syncMode && syncEventCode)) { box.innerHTML = ''; return; }
+        const url = joinUrl(syncEventCode, qrRole);
+        const svg = qrSvg(url);
+        box.innerHTML = `<div class="qr-card">
+            <div class="seg-pick" role="group" aria-label="読み取った端末の使い方">
+                <button type="button" class="${qrRole === 'register' ? 'on' : ''}" onclick="setQrRole('register')"><svg class="ic"><use href="#ic-register"/></svg>レジとして</button>
+                <button type="button" class="${qrRole === 'display' ? 'on' : ''}" onclick="setQrRole('display')"><svg class="ic"><use href="#ic-users"/></svg>お客様用の表示</button>
+            </div>
+            <div class="qr-img" id="share-qr-img">${svg || '<span class="settings-hint">QRコードを作れませんでした。4けたのコードを使ってください。</span>'}</div>
+            <p class="settings-hint" style="margin:6px 0 0;">もう1台の<b>カメラで読み取る</b>と、${qrRole === 'display' ? 'お客様用の表示として' : 'レジとして'}この販売会に合流する画面が開きます。<br>ホーム画面に追加したアプリで使う端末は、4けたのコードを「合流する」で入れてください。</p>
+        </div>`;
+    }
+    // 起動した時に「?join=」が付いていたら、合流の画面をコード入りで用意する
+    function handleJoinLink() {
+        const qs = new URLSearchParams(location.search);
+        const raw = qs.get('join');
+        if (!raw) return;
+        const code = sanitizeEventCode(raw);
+        const role = qs.get('as') === 'display' ? 'display' : 'register';
+        // 読み込み直した時にもう一度動かないよう、アドレスから外しておく（商品セットの指定は残す）
+        try {
+            const keep = new URLSearchParams();
+            if (qs.get('event')) keep.set('event', qs.get('event'));
+            const q = keep.toString();
+            history.replaceState(null, '', location.pathname + (q ? '?' + q : '') + location.hash);
+        } catch (e) { /* 消せなくても動く */ }
+        if (!code) return;
+        if (customerMode) {
+            if (uiPrefs.cdCode === code) return;
+            showToast('お客様用の表示をやめてから、もう一度読み取ってください');
+            return;
+        }
+        if (currentSession) {
+            if (syncMode && syncEventCode === code) { showToast('この販売会で、もう使っています'); return; }
+            const inp = document.getElementById('sync-live-code-input');
+            if (inp) inp.value = code;
+            openPanel('settings', 'sync-add');
+            peekEventCode('live');
+            showToast('QRコードの販売会です。「合流する」を押すと、この端末の会計ごと合流します');
+            return;
+        }
+        joinRole = role;
+        const jc = document.getElementById('join-code-input');
+        if (jc) jc.value = code;
+        openPanel('session', 'open-join');
+        setJoinRoleQuiet(role);
+        peekEventCode('join');
+        showToast(role === 'display' ? 'QRコードの販売会です。「合流する」を押すと、お客様用の表示になります' : 'QRコードの販売会です。「合流する」を押してください');
+    }
+
+    // 共有コードをコピーする（メッセージで伝える時に）
+    function copyShareCode() {
+        const code = syncEventCode || '';
+        if (!code) return;
+        const done = () => { playSound(); showToast(`共有コード ${code} をコピーしました`); };
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(code).then(done, () => fallback()); return; }
+        } catch (e) { /* 下で代わりの方法を試す */ }
+        fallback();
+        function fallback() {
+            const t = document.createElement('textarea');
+            t.value = code; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+            document.body.appendChild(t); t.select();
+            let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+            t.remove();
+            if (ok) done(); else showToast(`共有コードは ${code} です`);
+        }
+    }
+
     // ▼▼▼ 営業の途中から複数端末の共有を始める／合流する ▼▼▼
     // 「1台で開店したが、混んできたので応援の端末を足したい」という運用のための機能。
     // 開店をやり直す必要はなく、この端末のここまでの会計も在庫もそのまま引き継がれる。
@@ -6438,10 +7036,19 @@
     function stopSyncMidSession() {
         if (!syncMode) return;
         if (!confirm('共有をやめて、この端末だけで営業を続けます。\n\n・ここまでの会計はこの端末に残ります。\n・この先の会計は他の端末には表示されません。\n・他の端末での会計も、この端末には表示されなくなります。\n\nよろしいですか？')) return;
+        // 共有中はカートと予約の分を在庫から引いていなかった。1台の時の数え方
+        // （カートに入れた時点で引く）にそろえるため、ここでその分を在庫から引いておく。
+        // そうしないと、あとでカートから取り消した時に在庫が実際より多く戻ってしまう。
+        const held = products.map(p => [p, heldCount(p)]);
         stopSalesSubscription();
         stopSessionDocSubscription();
         stopReservationSubscription();
         syncEventCode = null;
+        held.forEach(([p, n]) => {
+            if (!n) return;
+            p.stock -= n;
+            if (p.stock <= 0 && p.initialStock > 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
+        });
         saveData();
         init();
         updateSessionTabView();
@@ -6747,7 +7354,28 @@
                     <td class="num">${s.count}人</td>
                     <td class="num">${s.count ? yenStr(s.avg) : '—'}</td>
                 </tr>`).join('') + `</tbody></table>
-        <p class="a-note">色の付いた行が、最も売れた時間帯です。商品名は、その時間帯によく出たものです。</p>`;
+        <p class="a-note">色の付いた行が、最も売れた時間帯です。商品名は、その時間帯によく出たものです。</p>` + rushHTML(R.rush);
+    }
+    // レジの混み具合（画面）
+    function rushHTML(r) {
+        if (!r) return '';
+        const rows = [
+            ['いちばん混んだ15分', `${escHtml(r.peak.range)}<span class="sub">${r.peak.count}人（1人あたり約${r.peak.perCust}秒）</span>`],
+        ];
+        if (r.median != null) rows.push(['その間の会計の間隔', `約${r.median}秒<span class="sub">真ん中の値</span>`]);
+        let h = `<div class="a-head">レジの混み具合</div><table class="a-table"><tbody>`
+            + rows.map(x => `<tr><td>${x[0]}</td><td class="num">${x[1]}</td></tr>`).join('') + `</tbody></table>`;
+        if (r.rushSlots.length) {
+            h += `<p class="a-note"><b>レジ2台あると安心だった時間帯</b>（15分に${RUSH_PER_15}人以上＝1分半に1人より速い）：${r.rushSlots.map(x => `${escHtml(x.range)}（${x.count}人）`).join('、')}。次回はこの時間の前に、もう1台を合流させておくと待ち時間が減ります。</p>`;
+        } else {
+            h += `<p class="a-note">15分に${RUSH_PER_15}人を超える時間帯はありませんでした。レジ1台で回せる混み具合です。</p>`;
+        }
+        if (r.devices.length) {
+            h += `<table class="a-table"><thead><tr><th>端末（会計記録の記号）</th><th class="num">会計</th><th class="num" style="min-width:82px;">割合</th></tr></thead><tbody>`
+                + r.devices.map(d => `<tr><td class="nm">${escHtml(d.label)}</td><td class="num">${d.count}件</td><td class="num">${pctBar(d.pct)}<span class="sub">${d.pct}%</span></td></tr>`).join('')
+                + `</tbody></table>`;
+        }
+        return h;
     }
 
     // ▼ 売上の積み上がり：開店から閉店まで、売上がどう積み上がったか ▼
@@ -6860,6 +7488,8 @@
         <p class="a-note">割合が高い組み合わせは、並べて置いたりセットにしたりすると効きやすい組み合わせです。</p>`
             : '<div class="a-empty">2種類以上を同時に買われた会計がありませんでした。</div>';
 
+        h += setEffectHTML(R.setEffect);
+
         // 併売分析の逆：似た商品なのに一緒には買われない＝どちらか一方が選ばれている
         const sb = R.substitutes;
         h += `<div class="a-head">一緒には買われにくい組み合わせ</div>`;
@@ -6882,6 +7512,24 @@
         return h;
     }
 
+    // セット割の効果（画面）
+    function setEffectHTML(e) {
+        if (!e) return '';
+        let h = `<div class="a-head">セット割の効果<span class="a-head-sub">${escHtml(e.text)}${e.on ? '' : '（いまはオフ）'}</span></div>
+        <table class="a-table"><tbody>
+            <tr><td>セット割になった会計</td><td class="num">${e.count}件<span class="sub">全体の${e.pct}%・引いた額 ${yenStr(e.discount)}</span></td></tr>
+            <tr><td>客単価（セットで買った方）</td><td class="num">${e.count ? yenStr(e.avgSet) : '—'}</td></tr>
+            <tr><td>客単価（それ以外）</td><td class="num">${yenStr(e.avgOther)}</td></tr>
+            <tr><td>あと1種類でセットだった会計</td><td class="num">${e.near}件${e.nearTop.length ? `<span class="sub">${e.nearTop.map(x => `${escHtml(x.label)}が無い ${x.count}件`).join('・')}</span>` : ''}</td></tr>
+        </tbody></table>
+        <table class="a-table"><thead><tr><th>この種類を買った方のうち</th><th class="num">セットにした割合</th></tr></thead><tbody>`
+            + e.attach.map(a => `<tr><td class="nm">${escHtml(a.label)}<span class="sub">${a.base}人</span></td><td class="num">${pctBar(a.pct)}<span class="sub">${a.pct}%</span></td></tr>`).join('')
+            + `</tbody></table>`;
+        const tip = e.nearTop[0];
+        if (tip && e.near > 0) h += `<p class="a-note">「あと1種類でセット」の会計のうち、いちばん多かったのは<b>${escHtml(tip.label)}が無い</b>会計です。お会計の時に「${escHtml(tip.label)}もいかがですか（セットで${e.rule.amount}円引き）」と声をかけると、客単価が上がりやすくなります。</p>`;
+        return h;
+    }
+
     function secSegmentHTML() {
         const R = buildReportData();
         if (!R) return '<div class="a-empty">まだ売上データがありません。</div>';
@@ -6896,6 +7544,17 @@
         // 「後で」のまま残っている会計は「不明」として数えている。
         // どちらも同じ「不明」に入るので、内訳が分かるように件数を添える。
         if (R.summary.pendingLeft > 0) h += `<p class="a-note">「不明」${R.summary.pendingLeft}件は、まだ客属性を入力していない会計です。会計記録の画面から割り当てられます。</p>`;
+
+        // 客層ごとの人気商品
+        if (R.segmentItems.length) {
+            h += `<div class="a-head">客層ごとの人気商品</div>
+            <table class="a-table"><thead><tr><th>客層</th><th>よく買われた商品</th></tr></thead><tbody>`
+                + R.segmentItems.map(g => `<tr><td class="nm" style="white-space:nowrap;">${escHtml(g.type)}<span class="sub">${g.people}人・1人${g.avgItems}点</span></td>`
+                    + `<td>${g.top.map(t => `${escHtml(t.name)}<span style="color:var(--text-light);">×${t.count}</span>`).join('、')}`
+                    + `${g.fav ? `<span class="sub">とくに人気：${escHtml(g.fav.name)}（全体の${g.fav.lift}倍）</span>` : ''}</td></tr>`).join('')
+                + `</tbody></table>
+            <p class="a-note">「とくに人気」は、その客層の中での割合が全体の1.5倍以上の商品です。客層に合わせた呼び込みや、並べる場所の参考になります（3人未満の客層は出していません）。</p>`;
+        }
 
         h += `<div class="a-head">カテゴリ別の売上と占有率</div>
         <table class="a-table"><thead><tr><th>カテゴリ</th><th class="num">売上</th><th class="num" style="min-width:82px;">占有率</th></tr></thead><tbody>`
@@ -7720,6 +8379,112 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
+    // ▼▼▼ セット割の効果 ▼▼▼
+    // ・セット割になった会計の数と割合、引いた額
+    // ・セットで買った方と、そうでない方の客単価の違い
+    // ・「あと1種類でセットだった」会計（＝声をかければセットになったかもしれない会計）
+    // ・セットの片方を買った方のうち、もう片方も買った割合
+    // 見る決まりは、いまのセット割（オフなら、この回の会計でいちばん多く使われた決まり）。
+    function buildSetEffect(sorted) {
+        let rule = setDiscountOn ? normSetRule(setRule) : null;
+        if (!rule) {
+            const tally = {};
+            sorted.forEach(h => { const r = ruleOfRecord(h); if (r) { const k = JSON.stringify(r); tally[k] = (tally[k] || 0) + 1; } });
+            const top = Object.entries(tally).sort((a, b) => b[1] - a[1])[0];
+            rule = top ? JSON.parse(top[0]) : null;
+        }
+        if (!rule || !sorted.length) return null;
+        const label = id => (CAT_TYPES.find(c => c.id === id) || {}).label || id;
+        const has = (h, t) => (h.items || []).some(i => i && i.type === t && (Number(i.price) || 0) > 0);
+        const setRows = sorted.filter(h => (Number(h.discount) || 0) > 0);
+        const other = sorted.filter(h => !((Number(h.discount) || 0) > 0));
+        const avg = rows => rows.length ? Math.floor(rows.reduce((a, h) => a + h.total, 0) / rows.length) : 0;
+        // あと1種類でセットだった会計（割引の無かった会計のうち、組み合わせの1つだけが足りない）
+        const missing = {};
+        let near = 0;
+        other.forEach(h => {
+            const lack = rule.needs.filter(t => !has(h, t));
+            if (lack.length === 1 && rule.needs.length - lack.length >= 1) { near++; missing[lack[0]] = (missing[lack[0]] || 0) + 1; }
+        });
+        // 片方を買った方のうち、もう片方（残り全部）も買った割合
+        const attach = rule.needs.map(t => {
+            const base = sorted.filter(h => has(h, t));
+            const all = base.filter(h => rule.needs.every(u => has(h, u)));
+            return { type: t, label: label(t), base: base.length, pct: base.length ? Math.round(all.length / base.length * 100) : 0 };
+        });
+        return {
+            rule, text: setRuleText(rule), on: setDiscountOn,
+            count: setRows.length, pct: Math.round(setRows.length / sorted.length * 100),
+            discount: setRows.reduce((a, h) => a + (Number(h.discount) || 0), 0),
+            avgSet: avg(setRows), avgOther: avg(other),
+            near, nearTop: Object.entries(missing).sort((a, b) => b[1] - a[1]).map(([t, n]) => ({ label: label(t), count: n })),
+            attach
+        };
+    }
+
+    // ▼▼▼ 客層ごとの人気商品 ▼▼▼
+    // 客属性ごとに、よく買われた商品と、その客層でとくに人気の商品（全体と比べて何倍か）を出す。
+    function buildSegmentItems(sorted) {
+        const TYPES = ['学生', '教員', '職員', 'その他', '不明'];
+        const allQty = {}; let allN = 0;
+        sorted.forEach(h => (h.items || []).forEach(i => { allQty[i.name] = (allQty[i.name] || 0) + 1; allN++; }));
+        const out = [];
+        TYPES.forEach(t => {
+            const rows = sorted.filter(h => (h.customerType || '不明') === t);
+            if (rows.length < 3) return;   // 3人未満では傾向と言えない
+            const q = {}; let n = 0;
+            rows.forEach(h => (h.items || []).forEach(i => { q[i.name] = (q[i.name] || 0) + 1; n++; }));
+            const top = Object.entries(q).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name, c]) => ({ name, count: c }));
+            // とくに人気：その客層での割合が、全体での割合の1.5倍以上（3個以上売れたもの）
+            let fav = null;
+            Object.entries(q).forEach(([name, c]) => {
+                if (c < 3 || !allQty[name]) return;
+                const lift = (c / n) / (allQty[name] / allN);
+                if (lift >= 1.5 && (!fav || lift > fav.lift)) fav = { name, count: c, lift: Math.round(lift * 10) / 10 };
+            });
+            out.push({
+                type: t, people: rows.length,
+                avg: Math.floor(rows.reduce((a, h) => a + h.total, 0) / rows.length),
+                avgItems: (n / rows.length).toFixed(1),
+                top, fav
+            });
+        });
+        return out;
+    }
+
+    // ▼▼▼ レジの混み具合 ▼▼▼
+    // ・いちばん混んだ15分に何人さばいたか（1人あたり何秒）
+    // ・1台では追いつきにくかった時間帯（15分に RUSH_PER_15 人以上＝1分半に1人より速い）
+    // ・共有して使った時は、端末ごとの会計の数
+    const RUSH_PER_15 = 10;
+    function buildRush(sorted) {
+        if (sorted.length < 2) return null;
+        const SLOT = 15 * 60000;
+        const slot = {};
+        sorted.forEach(h => { const k = Math.floor(new Date(h.time).getTime() / SLOT) * SLOT; slot[k] = (slot[k] || 0) + 1; });
+        const hm = ms => { const x = new Date(Number(ms)); return `${x.getHours()}:${String(x.getMinutes()).padStart(2, '0')}`; };
+        const peak = Object.entries(slot).sort((a, b) => b[1] - a[1] || a[0] - b[0])[0];
+        const rushSlots = Object.entries(slot).filter(([, n]) => n >= RUSH_PER_15).map(([k, n]) => ({ range: `${hm(k)}〜${hm(Number(k) + SLOT)}`, count: n })).sort((a, b) => a.range.localeCompare(b.range));
+        // 会計と会計の間の時間（いちばん混んだ時間帯の中で）
+        const times = sorted.map(h => new Date(h.time).getTime());
+        const pk = Number(peak[0]);
+        const inPeak = times.filter(t => t >= pk && t < pk + SLOT);
+        const gaps = [];
+        for (let i = 1; i < inPeak.length; i++) gaps.push((inPeak[i] - inPeak[i - 1]) / 1000);
+        gaps.sort((a, b) => a - b);
+        const median = gaps.length ? Math.round(gaps[Math.floor(gaps.length / 2)]) : null;
+        // 端末ごと（共有して使った時だけ。記号が2種類以上ある時）
+        const dev = {};
+        sorted.forEach(h => { if (h.deviceLabel) dev[h.deviceLabel] = (dev[h.deviceLabel] || 0) + 1; });
+        const devices = Object.keys(dev).length >= 2
+            ? Object.entries(dev).sort((a, b) => b[1] - a[1]).map(([label, n]) => ({ label, count: n, pct: Math.round(n / sorted.length * 100) }))
+            : [];
+        return {
+            peak: { range: `${hm(pk)}〜${hm(pk + SLOT)}`, count: peak[1], perCust: Math.round(15 * 60 / peak[1]) },
+            median, rushSlots, devices
+        };
+    }
+
     // 価格帯別の売上。どの値段の商品が全体を支えたかを見る
     function buildPriceBands(itemCounts, itemRev) {
         const bands = {};
@@ -7888,7 +8653,8 @@
         'receipt': '領収書の設定',
         'archive': '過去の販売会',
         'data': 'データの書き出し',
-        'display': '画面の表示',
+        'display': 'この端末の設定',
+        'lock': 'この端末を制限',
         'reset': 'データの初期化',
         'open-name': '販売会の名前',
         'open-stock': '商品と仕入れ数',
@@ -7910,6 +8676,8 @@
 
     // ボトムナビ：そのタブを起点にして履歴をやり直す
     function navTo(section) {
+        // ロック中は、許していない画面を開く前にパスコードを聞く
+        if (VIEW_PERM[section] && !requirePerm(VIEW_PERM[section], () => navTo(section))) return;
         navStack = [{ view: section, sub: null }];
         navDir = 'forward';
         renderNav();
@@ -7917,6 +8685,10 @@
 
     // 項目を開く：履歴に積む（＝戻るボタンでここへ帰れる）
     function openPanel(view, sub) {
+        // 開店・合流を選ぶ画面は、レジの上のカードにまとめた
+        if (view === 'session' && !sub) { showStartCard(); return; }
+        // ロック中は、許していない画面を開く前にパスコードを聞く
+        if (VIEW_PERM[view] && !requirePerm(VIEW_PERM[view], () => openPanel(view, sub))) return;
         const top = navTop();
         if (top && top.view === view && (top.sub || null) === (sub || null)) { renderNav(); return; }
         navStack.push({ view, sub: sub || null });
@@ -8088,7 +8860,8 @@
             else if (sub === 'sync') renderSyncView();
             else if (sub === 'receipt') renderReceiptSettings();
             else if (sub === 'archive') renderArchiveList();
-            else if (sub === 'display') { updateFullscreenButton(); renderThemeSettings(); renderClockSettings(); }
+            else if (sub === 'display') { updateFullscreenButton(); renderThemeSettings(); renderClockSettings(); renderLockEntry(); }
+            else if (sub === 'lock') { lockDraft = null; lockReuse = true; renderLockView(); }
             else if (sub === 'manual') renderManual();
             else if (sub === 'customer') renderCustomerSettings();
             else if (sub === 'goal') renderSalesGoal();
@@ -8126,10 +8899,19 @@
     function openSettings() { openPanel('settings'); }
 
     // ヘッダー右のボタン：閉店中は開店の準備へ、営業中は閉店する
+    // 閉店中は、レジの上の「まだ開店していません」のカード（開店か合流を選ぶ所）へ戻す。
+    // 選ぶ画面は1か所だけにして、同じことを聞く画面を2つ持たない。
     function headerSessionAction() {
+        if (!requirePerm('session', headerSessionAction)) return;
         if (currentSession) { endSession(); return; }
-        prepareOpenSetup();   // いまの商品内容を編集用にコピーしてから開店の準備へ
-        openPanel('session');
+        prepareOpenSetup();   // いまの商品内容を編集用にコピーしておく（新しく開店する時に使う）
+        showStartCard();
+    }
+    function showStartCard() {
+        showRegister();
+        const card = document.getElementById('closed-card');
+        if (card) { card.classList.remove('nudge'); void card.offsetWidth; card.classList.add('nudge'); }
+        loadOpenEvents(true);
     }
 
     function updateHeaderSessionBtn() {
@@ -8182,7 +8964,7 @@
             menuRow('printer', '領収書の設定', `発行者「${escHtml(shopInfo().name)}」・但し書きの変更`, "openPanel('settings','receipt')") +
             menuRow('archive', '過去の販売会', archSub, "openPanel('settings','archive')") +
             menuRow('download', 'データの書き出し', 'バックアップの保存・端末間のコピー', "openPanel('settings','data')") +
-            menuRow('clock', '画面の表示', clockSub, "openPanel('settings','display')") +
+            menuRow('clock', 'この端末の設定', (isLocked() ? '制限中・' : '') + clockSub, "openPanel('settings','display')") +
             menuRow('trash', 'データの初期化', '不具合が直らない時の最終手段', "openPanel('settings','reset')", { danger: true });
     }
 
@@ -8423,8 +9205,8 @@
                 if (!window.FIREBASE_CONFIG) msg = 'この端末では共有が使えません。';
                 else if (!syncReady || openEventsState === 'error') msg = 'いま一覧を読めませんでした（通信を確かめてください）。<br>コードが分かれば、下の「コードで合流する」から入れます。';
                 else if (openEventsState === 'loading') msg = '探しています…';
-                else msg = 'いま開いている販売会は見つかりませんでした。<br>開店した端末で「ほかの端末と共有する」をオンにすると、ここに出ます。'
-                    + '<br>（すでに営業中なら、その端末の「設定 → 複数端末で使う → ほかの端末と共有を始める」）';
+                else msg = 'いま開いている販売会は見つかりませんでした。<br>ほかの端末で開店すると、ここに出ます（20秒ごとに探し直します）。'
+                    + '<br>開いているのに出ない時は、その端末の「設定 → 複数端末で使う → ほかの端末と共有を始める」を押してください。';
             }
             empty.style.display = msg ? '' : 'none';
             empty.innerHTML = msg ? `<svg class="ic"><use href="#ic-${openEventsState === 'loading' ? 'clock' : 'link'}"/></svg><span>${msg}</span>` : '';
@@ -8432,12 +9214,23 @@
         // 営業中の「別の販売会に合流する」画面
         const wrap = document.getElementById('live-live-wrap'), llist = document.getElementById('live-live-list');
         if (wrap && llist) { wrap.style.display = rows.length ? '' : 'none'; llist.innerHTML = html; }
-        // はじめの画面の「合流する」に、いま開いている数を出す
-        const badge = document.getElementById('start-join-badge');
-        if (badge) {
-            badge.style.display = rows.length ? '' : 'none';
-            badge.textContent = rows.length ? `いま${rows.length}件開いています` : '';
+        // レジの上のカード：開いている販売会を、押せばその場で合流できる形で並べる
+        const cta = document.getElementById('cta-live'), clist = document.getElementById('cta-live-list');
+        if (cta && clist) {
+            const show = !currentSession && rows.length > 0;
+            cta.style.display = show ? '' : 'none';
+            clist.innerHTML = show ? rows.slice(0, 3).map(r =>
+                `<button class="cc-live-row" onclick="joinQuick('${escArg(r.code)}')">`
+                + `<svg class="ic"><use href="#ic-link"/></svg>`
+                + `<span class="lr-body"><span class="lr-name">${escHtml(r.name)}</span>`
+                + `<span class="lr-sub">コード <b>${escHtml(r.code)}</b>・${hm(r.openedAt)}〜・${r.registers > 0 ? `レジ${r.registers}台` : '端末なし'}</span></span>`
+                + `<span class="lr-go">合流</span></button>`).join('') : '';
         }
+    }
+    // カードの行から：レジとして、その場で合流する
+    function joinQuick(code) {
+        joinRole = 'register';
+        return joinEvent(code);
     }
 
     // ---- 合流 ----
@@ -8466,6 +9259,7 @@
     async function joinEvent(code) {
         const c = sanitizeEventCode(code || '');
         if (!c) { playError(); return false; }
+        if (!requirePerm('session', () => joinEvent(c))) return false;
         if (!window.FIREBASE_CONFIG || !syncReady || !fbDb) {
             playError();
             alert('共有サーバーにつながっていないため、合流できません。\n電波の良い場所で、もう一度お試しください。');
@@ -8583,6 +9377,9 @@
     // 新しく開店する画面を開く
     function openNewSetup() {
         playSound();
+        // レジのカードから来た時は、いまの商品内容を編集用に写してから始める
+        // （開店の画面の中を行き来している間は、入れかけの仕入れ数を消さない）
+        if (currentView !== 'session') prepareOpenSetup();
         // 合流のために入れたコードが残っていると、開店のつもりが合流になってしまう。
         // 新しく開店する時は、コードは必ず自動で決める。
         const ci = document.getElementById('sync-event-code-input');
@@ -8590,15 +9387,10 @@
         openPanel('session', 'open-new');
     }
 
-    // 開店する時に共有するか（端末ごとに覚えておく。最初はオン）
+    // 開店する時は、いつも共有する（どの販売会もほぼ必ず複数の端末で使うため）。
+    // 共有コードは開店した時に自動で決まる。通信できない時だけ、この端末だけで開店する。
     function shareOnOpenWanted() {
-        return !!window.FIREBASE_CONFIG && uiPrefs.shareOnOpen !== false;
-    }
-    function setShareOnOpen(on) {
-        uiPrefs.shareOnOpen = !!on;
-        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
-        playSound(660, 0.05);
-        renderOpenMenu();
+        return !!window.FIREBASE_CONFIG;
     }
 
     function confirmOpenStock() {
@@ -8634,20 +9426,15 @@
             menuRow('tag', '販売会の名前', escHtml(nameInput ? nameInput.value : ''), "openPanel('session','open-name')") +
             menuRow('box', '商品と仕入れ数', `${active.length}品・合計${totalStock}個`, "openPanel('session','open-stock')") +
             menuRow('target', 'セット割・売上目標', setGoalSub(), "openPanel('settings','goal')");
-        // 共有するかどうか（共有の準備がある端末だけ）
-        const row = document.getElementById('open-share-row');
-        if (row) {
-            row.style.display = window.FIREBASE_CONFIG ? '' : 'none';
-            const sw = document.getElementById('open-share-switch');
-            if (sw) sw.checked = shareOnOpenWanted();
-            const sub = document.getElementById('open-share-sub');
-            if (sub) sub.textContent = !shareOnOpenWanted() ? 'この端末だけで開店します（あとからでも共有できます）'
-                : (syncReady ? '共有コードは自動で決まります。ほかの端末は「合流する」から選ぶだけ'
-                             : 'いまは通信できないため、この端末だけで開店します');
+        // 共有のしかた（共有の準備がある端末だけ）
+        const note = document.getElementById('open-share-note');
+        if (note) {
+            note.style.display = window.FIREBASE_CONFIG ? '' : 'none';
+            note.className = 'notice' + (syncReady ? '' : ' notice-warn');
+            note.innerHTML = syncReady
+                ? '<svg class="ic"><use href="#ic-link"/></svg><span>開店すると<b>共有コードが自動で決まります</b>。ほかの端末は「合流する」から、この販売会を選ぶだけで入れます。</span>'
+                : '<svg class="ic"><use href="#ic-alert"/></svg><span>いまは通信できないため、<b>この端末だけで開店します</b>。つながったら「設定 → 複数端末で使う」から共有を始められます。</span>';
         }
-        // はじめの画面のおまけの行
-        const extra = document.getElementById('start-extra-list');
-        if (extra) extra.innerHTML = menuRow('upload', 'データを取り込んで始める', '前回の続き・別の端末から引き継ぐ', "openPanel('session','open-import')");
         renderOpenEventLists();
         updateReopenRow();
     }
@@ -8677,7 +9464,11 @@
             box.className = 'notice notice-ok';
             // 共有コードはほかの端末で打つこともあるので、大きく読みやすく出す（長押しでコピーもできる）
             box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>「${escHtml(currentSession)}」を共有中です。<br>この端末：${escHtml(deviceDisplayName() || '名前なし')}（会計記録の記号 ${deviceLabel()}）</span>`;
-            if (codeWrap) codeWrap.innerHTML = `<div class="share-code-big"><span class="k">共有コード<br>ほかの端末は「合流する」で<br>この販売会を選ぶだけ</span><span class="v selectable" id="share-code-big">${escHtml(syncEventCode || '')}</span></div>`;
+            if (codeWrap) codeWrap.innerHTML = `<div class="share-code-big"><span class="k">共有コード<br>ほかの端末は「合流する」で<br>この販売会を選ぶだけ</span>`
+                + `<span class="v selectable" id="share-code-big">${escHtml(syncEventCode || '')}</span>`
+                + `<button class="sc-copy" onclick="copyShareCode()" aria-label="共有コードをコピー"><svg class="ic"><use href="#ic-copy"/></svg></button></div>`
+                + `<div id="share-qr"></div>`;
+            renderShareQr();
             acts.innerHTML =
                 `<button class="action-btn btn-secondary" onclick="leaveDeviceOnly()"><svg class="ic"><use href="#ic-power"/></svg>この端末の利用を終える（ほかの端末は続ける）</button>` +
                 `<button class="action-btn btn-secondary" onclick="stopSyncMidSession()"><svg class="ic"><use href="#ic-x"/></svg>共有をやめてこの端末だけで続ける</button>`;
@@ -8740,6 +9531,7 @@
     function updateClosedState() {
         const el = document.getElementById('closed-cta');
         if (el) el.classList.toggle('show', !currentSession);
+        if (!currentSession && syncReady) loadOpenEvents();   // 開いている販売会をカードに出す（15秒に1回まで）
         updateHeaderSessionBtn();
         // 営業していない間は予約も受けられないので、押せないことを見た目でも示す
         const res = document.getElementById('btn-reserve');
@@ -8875,6 +9667,9 @@
             goal: buildGoal(totalRev),
             baskets: buildBaskets(sorted),
             substitutes: buildSubstitutes(sorted),
+            setEffect: buildSetEffect(sorted),
+            segmentItems: buildSegmentItems(sorted),
+            rush: buildRush(sorted),
             priceBands: buildPriceBands(itemCounts, itemRev),
             pace: buildPace(sorted, totalRev),
             leftover: buildLeftover(itemCounts),
@@ -9027,6 +9822,31 @@
               + `</tbody></table>
               <div class="note-box"><div class="note-foot">「一緒に買う割合」は、片方を買った方のうち、もう片方も買った方の割合です。割合が高いほど、並べて置く・セットにする効果が出やすい組み合わせです。</div></div>`
             : `<div class="note-box"><div class="note-foot">同時に2種類以上買われた会計はありませんでした。</div></div>`;
+        // レジの混み具合
+        const rr = R.rush;
+        const rushBlock = !rr ? '' : `<div class="sub-heading">レジの混み具合</div>
+            <table class="rep-table"><tbody>
+                <tr><td>いちばん混んだ15分</td><td class="num">${esc(rr.peak.range)}　${rr.peak.count}人（1人あたり約${rr.peak.perCust}秒）</td></tr>
+                ${rr.median != null ? `<tr><td>その間の会計の間隔（真ん中の値）</td><td class="num">約${rr.median}秒</td></tr>` : ''}
+                ${rr.devices.map(d => `<tr><td>端末 ${esc(d.label)} の会計</td><td class="num">${d.count}件（${d.pct}%）</td></tr>`).join('')}
+            </tbody></table>
+            <div class="note-box"><div class="note-foot">${rr.rushSlots.length
+                ? `レジ2台あると安心だった時間帯（15分に${RUSH_PER_15}人以上）：${rr.rushSlots.map(x => `${esc(x.range)}（${x.count}人）`).join('、')}。`
+                : `15分に${RUSH_PER_15}人を超える時間帯はありませんでした（レジ1台で回せる混み具合）。`}</div></div>`;
+        // 客層ごとの人気商品
+        const segItemsBlock = !R.segmentItems.length ? '' : `<div class="sub-heading">客層ごとの人気商品</div>
+            <table class="rep-table"><thead><tr><th>客層</th><th class="num">人数</th><th>よく買われた商品</th><th>とくに人気（全体比）</th></tr></thead><tbody>`
+            + R.segmentItems.map(g => `<tr><td>${esc(g.type)}</td><td class="num">${g.people}人</td><td>${g.top.map(t => `${esc(t.name)}×${t.count}`).join('、')}</td><td>${g.fav ? `${esc(g.fav.name)}（${g.fav.lift}倍）` : '—'}</td></tr>`).join('')
+            + `</tbody></table>`;
+        // セット割の効果
+        const se = R.setEffect;
+        const setBlock = !se ? '' : `<div class="sub-heading">セット割の効果（${esc(se.text)}${se.on ? '' : '・いまはオフ'}）</div>
+            <table class="rep-table"><tbody>
+                <tr><td>セット割になった会計</td><td class="num">${se.count}件（全体の${se.pct}%）・引いた額 ${yen(se.discount)}</td></tr>
+                <tr><td>客単価（セットで買った方／それ以外）</td><td class="num">${se.count ? yen(se.avgSet) : '—'} ／ ${yen(se.avgOther)}</td></tr>
+                <tr><td>あと1種類でセットだった会計</td><td class="num">${se.near}件${se.nearTop.length ? `（${se.nearTop.map(x => `${esc(x.label)}が無い ${x.count}件`).join('・')}）` : ''}</td></tr>
+                ${se.attach.map(a => `<tr><td>${esc(a.label)}を買った方のうち、セットにした割合</td><td class="num">${a.pct}%（${a.base}人中）</td></tr>`).join('')}
+            </tbody></table>`;
         // 併売分析の逆（一緒には買われにくい2品）
         const sb = R.substitutes;
         const subBlock = !sb.ready
@@ -9087,6 +9907,7 @@
                         <tbody>${slotRows}</tbody>
                     </table>
                     <div class="note-box"><div class="note-foot">網かけの行が、最も売れた時間帯です。</div></div>
+                    ${rushBlock}
                 </section>
 
                 <section class="report-section report-section--long">
@@ -9129,6 +9950,8 @@
                     ${coBlock}
                     <div class="sub-heading">一緒には買われにくい商品（入れ替え・削減の候補）</div>
                     ${subBlock}
+                    ${segItemsBlock}
+                    ${setBlock}
                 </section>
 
                 <section class="report-section report-section--long">
@@ -9157,6 +9980,59 @@
     // タブレット(iPad等)で「印刷はできるが端末に保存できない」問題への対策：
     // アプリ本体は position:fixed の1画面構成で保存に回しにくいため、レシートと同じく
     // 別文書として開くことで、印刷プレビューから「PDFとして保存 / ファイルに保存」を確実に使える。
+    // ▼ 印刷用の別窓に付ける「閉じて戻る／印刷」の帯（集計のPDFと領収書で共通）▼
+    // 【なぜ】iPhone・iPad では印刷の画面を出しても、元の画面の処理は止まらない。
+    //   「印刷したら自動で閉じる」作りにすると、印刷の画面が出た直後に窓ごと消えてしまう。
+    //   自動では閉じず、帯の「✕ 閉じて戻る」で閉じる作りにそろえる。
+    //   ホーム画面から起動していると、この窓にはブラウザの「戻る」も出ないので、帯は必ず置く。
+    function printWindowBarCss() {
+        return (
+            '.rw-bar{position:sticky; top:0; z-index:9; display:flex; align-items:center; gap:10px;' +
+            ' background:#F2F3F7; margin:-16px -16px 14px; padding:12px 16px;' +
+            ' padding-top:calc(12px + env(safe-area-inset-top, 0px));}' +
+            '.rw-close{appearance:none; -webkit-appearance:none; border:none; cursor:pointer;' +
+            ' font-family:inherit; font-size:15px; font-weight:700; color:#fff; background:#0A6CE0;' +
+            ' border-radius:999px; padding:11px 20px; min-height:44px; flex-shrink:0;' +
+            ' box-shadow:0 3px 10px rgba(10,108,224,.26);}' +
+            '.rw-close:active{transform:scale(.96);}' +
+            '.rw-print{appearance:none; -webkit-appearance:none; border:none; cursor:pointer;' +
+            ' font-family:inherit; font-size:15px; font-weight:700; color:#0A5FC4; background:#fff;' +
+            ' border-radius:999px; padding:11px 20px; min-height:44px; flex-shrink:0;}' +
+            '.rw-hint{font-size:12px; color:#6B6E7A; line-height:1.45; flex:1; min-width:0;}' +
+            /* 幅の狭い端末では、2つのボタンがきちんと並ぶよう説明を畳む */
+            '@media (max-width:460px){.rw-hint{display:none;} .rw-close,.rw-print{flex:1; padding:11px 8px; text-align:center;}}' +
+            ''
+        );
+    }
+    function printWindowBarHtml(hint) {
+        return '<div class="rw-bar">' +
+            '<button class="rw-close" id="rw-close" type="button">✕ 閉じて戻る</button>' +
+            '<button class="rw-print" id="rw-print" type="button">印刷・PDF保存</button>' +
+            '<span class="rw-hint" id="rw-hint">' + escHtml(hint || '') + '</span>' +
+            '</div>';
+    }
+    // autoPrint … 開いた時に一度だけ印刷の画面を出す（閉じるのは、帯のボタンを押した時だけ）
+    function printWindowScript(autoPrint) {
+        return (
+            '<' + 'script>(function(){' +
+            'var c=document.getElementById("rw-close"),p=document.getElementById("rw-print"),h=document.getElementById("rw-hint");' +
+            'p.onclick=function(){try{window.print();}catch(e){}};' +
+            'c.onclick=function(){' +
+            '  try{window.close();}catch(e){}' +
+            // close() を断られる場合がある。その時は元のページへ戻すか、やり方を伝える
+            '  setTimeout(function(){ if(!window.closed){' +
+            '    try{ if(window.opener && !window.opener.closed){ window.opener.focus(); } }catch(e2){}' +
+            '    if(history.length>1){ history.back(); return; }' +
+            '    h.textContent="この画面は自動で閉じられません。ブラウザのタブを閉じるか、前の画面に戻ってください。";' +
+            '    h.style.color="#B3263C"; h.style.fontWeight="700";' +
+            '  }},350);' +
+            '};' +
+            (autoPrint ? 'window.onload=function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},400);};' : '') +
+            '})();<' + '/script>' +
+            ''
+        );
+    }
+
     function openReportWindow(docTitle) {
         const inner = document.getElementById('print-report').innerHTML;
         const css = (document.getElementById('report-css') || {}).textContent || '';
@@ -9178,47 +10054,16 @@
                ホーム画面から起動していると、この画面にはブラウザの「戻る」も
                タブも出ない。戻る手立てが無いと閉じ込められてしまうので、
                いちばん上に貼り付いたままの「閉じる」を必ず置く。 */
-            '.rw-bar{position:sticky; top:0; z-index:9; display:flex; align-items:center; gap:10px;' +
-            ' background:#F2F3F7; margin:-16px -16px 14px; padding:12px 16px;' +
-            ' padding-top:calc(12px + env(safe-area-inset-top, 0px));}' +
-            '.rw-close{appearance:none; -webkit-appearance:none; border:none; cursor:pointer;' +
-            ' font-family:inherit; font-size:15px; font-weight:700; color:#fff; background:#0A6CE0;' +
-            ' border-radius:999px; padding:11px 20px; min-height:44px; flex-shrink:0;' +
-            ' box-shadow:0 3px 10px rgba(10,108,224,.26);}' +
-            '.rw-close:active{transform:scale(.96);}' +
-            '.rw-print{appearance:none; -webkit-appearance:none; border:none; cursor:pointer;' +
-            ' font-family:inherit; font-size:15px; font-weight:700; color:#0A5FC4; background:#fff;' +
-            ' border-radius:999px; padding:11px 20px; min-height:44px; flex-shrink:0;}' +
-            '.rw-hint{font-size:12px; color:#6B6E7A; line-height:1.45; flex:1; min-width:0;}' +
-            /* 幅の狭い端末では、2つのボタンがきちんと並ぶよう説明を畳む */
-            '@media (max-width:460px){.rw-hint{display:none;} .rw-close,.rw-print{flex:1; padding:11px 8px; text-align:center;}}' +
+            printWindowBarCss() +
             '.report-note{background:#EAF1FD; color:#1C1D22; font-size:12.5px; padding:11px 14px; border-radius:8px; margin-bottom:16px;} ' +
             /* グラフの軸の説明は、画面と同じく左右に分けて置く（くっついて読めなくなるのを防ぐ） */
             '.chart-cap{display:flex; justify-content:space-between; gap:10px; font-size:9px; color:#6B6E7A; margin:0 2px 5px; letter-spacing:0.03em;} ' +
             '@media print{.report-note,.rw-bar{display:none;}}</style>' +
             '</head><body>' +
-            '<div class="rw-bar">' +
-            '<button class="rw-close" id="rw-close" type="button">✕ 閉じて戻る</button>' +
-            '<button class="rw-print" id="rw-print" type="button">印刷・PDF保存</button>' +
-            '<span class="rw-hint" id="rw-hint">印刷の画面が自動で開きます</span>' +
-            '</div>' +
+            printWindowBarHtml('印刷の画面が自動で開きます') +
             '<div class="report-note">印刷ダイアログを閉じてしまった場合は「印刷・PDF保存」を押すと、もう一度開けます。保存し終えたら「✕ 閉じて戻る」でレジにもどれます。</div>' +
             inner +
-            '<' + 'script>(function(){' +
-            'var c=document.getElementById("rw-close"),p=document.getElementById("rw-print"),h=document.getElementById("rw-hint");' +
-            'p.onclick=function(){try{window.print();}catch(e){}};' +
-            'c.onclick=function(){' +
-            '  try{window.close();}catch(e){}' +
-            // close() を断られる場合がある。その時は元のページへ戻すか、やり方を伝える
-            '  setTimeout(function(){ if(!window.closed){' +
-            '    try{ if(window.opener && !window.opener.closed){ window.opener.focus(); } }catch(e2){}' +
-            '    if(history.length>1){ history.back(); return; }' +
-            '    h.textContent="この画面は自動で閉じられません。ブラウザのタブを閉じるか、前の画面に戻ってください。";' +
-            '    h.style.color="#B3263C"; h.style.fontWeight="700";' +
-            '  }},350);' +
-            '};' +
-            'window.onload=function(){setTimeout(function(){try{window.focus();window.print();}catch(e){}},400);};' +
-            '})();<' + '/script>' +
+            printWindowScript(true) +
             '</body></html>'
         );
         win.document.close();
@@ -9776,6 +10621,7 @@
     // 会計済の品目・点数を修正（在庫・客数・売上に反映）
     let editingRecordIdx = null;
     function toggleEditRecord(idx) {
+        if (idx != null && !requirePerm('edit', () => toggleEditRecord(idx))) return;
         editingRecordIdx = idx;
         renderRecords();
     }
@@ -9961,10 +10807,12 @@
             return;
         }
         win.document.write(`
-            <html><head><meta charset="utf-8"><title>領収書 No.${esc(h.no || '')}</title>
+            <!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>領収書 No.${esc(h.no || '')}</title>
+            <style>${printWindowBarCss()}</style>
             <style>
                 * { box-sizing: border-box; }
-                body { font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', sans-serif; color:#222; padding:20px; max-width:380px; margin:0 auto; line-height:1.5; }
+                body { font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', sans-serif; color:#222; padding:16px; margin:0; background:#fff; line-height:1.5; }
+                .paper { max-width:380px; margin:0 auto; }
                 h1 { font-size:22px; text-align:center; margin:0 0 2px; letter-spacing:0.4em; text-indent:0.4em; }
                 .no { text-align:center; font-size:11px; color:#888; margin-bottom:14px; }
                 .to { display:flex; align-items:flex-end; gap:6px; font-size:15px; margin-bottom:14px; }
@@ -9988,9 +10836,11 @@
                 .issuer .nm { font-size:15px; font-weight:bold; }
                 .issuer .ct { color:#666; font-size:11.5px; }
                 .foot { text-align:center; font-size:11.5px; color:#888; margin-top:14px; }
-                @media print { body { padding:0; } }
+                @media print { body { padding:0; } .rw-bar { display:none; } }
             </style></head>
             <body>
+                ${printWindowBarHtml('印刷の画面が自動で開きます')}
+                <div class="paper">
                 <h1>領収書</h1>
                 <div class="no">No. ${esc(h.no || '-')}　　${dtStr}</div>
 
@@ -10014,7 +10864,8 @@
                     ${shop.contact ? `<div class="ct">${esc(shop.contact)}</div>` : ''}
                 </div>
                 <div class="foot">ありがとうございました</div>
-                <script>window.onload=function(){window.print();setTimeout(function(){window.close();},400);};<\/script>
+                </div>
+                ${printWindowScript(true)}
             </body></html>
         `);
         win.document.close();
@@ -10276,7 +11127,8 @@
         // まとめて1回で入れる（1行ずつ足すと、そのたびに全体を組み直して入力中のカーソルが外れる）
         const rows = [];
         products.forEach(p => {
-            const oversold = p.stock < 0; // 販売数>仕入数（過少入力の可能性）
+            const left = shownStock(p);   // レジのボタンと同じ残数（カート・取り置きの分を引いた数）
+            const oversold = left < 0; // 販売数>仕入数（過少入力の可能性）
             const noteVal = escHtml(p.note || '');
             const inactive = p.active === false;
             rows.push(`
@@ -10284,7 +11136,7 @@
                     <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
                         <span style="flex:1; font-size:14px; font-weight:bold; overflow-wrap:anywhere;">${escHtml(p.name)}${oversold ? ' <b style="color:var(--danger); font-size:12px;">販売&gt;仕入</b>' : ''}${inactive ? ' <span style="font-size:11px; color:var(--text-light); font-weight:normal;">(この回は販売しない)</span>' : ''}</span>
                         <span style="font-size:13px; color:var(--text-light);">残り</span>
-                        <span class="num" style="font-size:17px; font-weight:bold; min-width:38px; text-align:right; color:${oversold ? 'var(--danger)' : (p.stock <= 5 ? 'var(--low-ink)' : 'var(--text-main)')};">${p.stock}</span>
+                        <span class="num" style="font-size:17px; font-weight:bold; min-width:38px; text-align:right; color:${oversold ? 'var(--danger)' : (left <= 5 ? 'var(--low-ink)' : 'var(--text-main)')};">${left}</span>
                     </div>
                     <div class="ls-row" style="display:flex; gap:8px; align-items:center;">
                         <label style="font-size:12px; color:var(--text-light);">価格</label>
@@ -10654,6 +11506,12 @@
     }
     // 送信待ちが続いている時は、秒数が伸びていくのが見えるように定期的に描き直す
     setInterval(() => { if (syncMode) renderSyncHealth(); }, 5000);
+    // 閉店中にカード（または合流の画面）を見ている間は、開いている販売会を20秒ごとに探し直す
+    // （ほかの端末が開店したら、押さなくても一覧に出てくるように）
+    setInterval(() => {
+        if (currentSession || !syncReady || document.hidden) return;
+        if (currentView === 'register' || (currentView === 'session' && currentSub === 'open-join')) loadOpenEvents(true);
+    }, 20000);
     // 電波が戻ったら、すぐ在席を知らせ直して一覧にも復帰させる
     window.addEventListener('online', () => { if (syncMode || customerMode) { wakeSync('電波が戻った'); } });
     window.addEventListener('offline', () => {
@@ -10946,6 +11804,7 @@
             reservations = rows;
             saveData();
             renderReservations();
+            init();   // ほかの端末の予約（取り置き）も、レジの残数に反映する
             updateNavBadges();
         }, err => { console.warn('予約の購読でエラー', err); });
     }
@@ -11077,7 +11936,7 @@
             deviceLabel: deviceLabel(),
             // 会計1件を見分けるための印。取り消したあとに同じ客No.が
             // もう一度使われてもぶつからないよう、時刻も混ぜておく。
-            localId: getDeviceId() + ':' + record.no + ':' + ((record.time instanceof Date && !isNaN(record.time)) ? record.time.getTime() : Date.now()),
+            localId: record.localId || (getDeviceId() + ':' + record.no + ':' + ((record.time instanceof Date && !isNaN(record.time)) ? record.time.getTime() : Date.now())),
             roundId: syncRoundId,   // 同じコードを使い回した時に、前の回と混ざらないようにする印
             // 後から送る（同期再開時の救済）場合でも、実際に会計した時刻を保つ。
             // 時間帯別の集計と客No.の並び順が実態とずれないようにするため。
@@ -11104,6 +11963,8 @@
                 // 同期中はローカルにも控えていないため、黙っていると1件まるごと消えてしまう。
                 // 気づかず閉店してしまうのが最悪なので、必ず画面で知らせて手入力を促す。
                 console.warn('売上の同期送信に失敗', e);
+                pendingSent = pendingSent.filter(x => x.localId !== doc.localId);
+                init();
                 playError();
                 showToast('この会計を記録できませんでした');
                 const summary = record.items.map(i => i.name).join('、');
@@ -11131,13 +11992,25 @@
             const el = document.getElementById(id);
             if (el) el.innerHTML = msg;
         });
+        // ヘッダーの共有コード（共有中だけ）
+        const chip = document.getElementById('share-chip');
+        if (chip) {
+            const on = !!(syncMode && syncEventCode && currentSession && !customerMode);
+            chip.style.display = on ? '' : 'none';
+            const cc = document.getElementById('share-chip-code');
+            if (cc) cc.textContent = on ? syncEventCode : '';
+            const title = chip.parentElement;
+            if (title) title.classList.toggle('has-share', on);
+        }
         // 共有の状態画面を開いていれば作り直す
         if (currentView === 'settings' && currentSub === 'sync') renderSyncView();
         if (currentView === 'settings' && !currentSub) renderSettingsMenu();
         // 開店の画面の「共有する」の説明（つながったら「自動で決まります」に変わる）
         if (currentView === 'session' && currentSub === 'open-new') renderOpenMenu();
         // 合流の画面を開いたまま、つながった時は一覧を読み直す
-        if (syncReady && currentView === 'session' && (!currentSub || currentSub === 'open-join') && openEventsState === 'error') loadOpenEvents(true);
+        if (syncReady && !currentSession && (openEventsState === 'error' || openEventsState === 'idle')) loadOpenEvents(true);
+        // QRコードから開いた直後など、まだつながる前に調べたコードは、つながったら調べ直す
+        if (syncReady && openSyncPeek.code && openSyncPeek.state === 'unknown') peekEventCode(currentSub === 'sync-add' ? 'live' : 'join');
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -11151,6 +12024,8 @@
     initFirebase();
 
     init();
+    applyLockUi();         // この端末をロックしていれば、ヘッダーとナビに印を出す
+    handleJoinLink();      // QRコードから開かれた時は、合流の画面を用意する
 </script>
 </body>
     
