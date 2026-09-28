@@ -103,6 +103,7 @@
             /* キッチンの「持ち帰り」「店内」の色（分類の色とは別の、はっきり違う2色） */
             --dine-take: #C8660F; --dine-take-bg: #FCEBDA;
             --dine-eat: #2B8A4B;  --dine-eat-bg: #E0F2E5;
+            --ok-bg: #E0F2E5; --ok-ink: #1F7A3D;   /* 販売中（在庫の画面のステータス） */
             /* 操作の色（青1色の濃淡）。白文字を載せても、白地に文字を置いても 4.96:1 */
             --accent: #0A6CE0;
             --accent-ink: #0A5FC4;    /* 小さい文字・アイコン用にもう少し濃く */
@@ -185,6 +186,7 @@
             --btn-x8: #30241C; --cat-x8-ink: #C79B7E;
             --dine-take: #C8660F; --dine-take-bg: #3A2614;
             --dine-eat: #2B8A4B;  --dine-eat-bg: #16301F;
+            --ok-bg: #16301F; --ok-ink: #7FD69A;
             /* 操作の色。塗りボタンは白文字を載せて 4.96:1 になる濃さを選ぶ */
             --accent: #1D6FD0;
             --accent-ink: #74B6FF;    /* 暗い面の上に置く青い文字・アイコン */
@@ -562,6 +564,29 @@
         .arc-card .arc-src + .action-btn { flex: 0 0 auto; min-width: 0; padding: 8px 14px; }
         /* 開店の「商品と仕入れ数」のカードの上のスイッチ（販売する・在庫は無制限） */
         .setup-sws { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+        /* 在庫の画面：商品ごとのカードとステータス */
+        .ls-card { margin-bottom: 10px; padding: 12px 14px 12px 18px; border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow-card), inset 5px 0 0 var(--ink); }
+        .ls-card.is-over { background: var(--danger-bg); }
+        .ls-card.st-off { opacity: .55; }
+        .ls-card.st-out, .ls-card.st-stop { box-shadow: var(--shadow-card), inset 5px 0 0 var(--ink), inset 0 0 0 2px var(--danger-line, rgba(192, 40, 60, .35)); }
+        .ls-top { display: flex; align-items: flex-start; gap: 10px; }
+        .ls-name { flex: 1; min-width: 0; font-size: 15px; font-weight: 800; overflow-wrap: anywhere; }
+        .ls-meta { display: block; font-size: 12px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
+        .ls-left { display: flex; align-items: baseline; gap: 5px; font-size: 12px; color: var(--text-light); white-space: nowrap; }
+        .ls-left b { font-size: 20px; color: var(--text-main); }
+        .ls-card.st-out .ls-left b, .ls-card.st-stop .ls-left b { color: var(--danger); }
+        .ls-card.st-low .ls-left b { color: var(--low-ink); }
+        .ls-status { display: flex; align-items: center; gap: 8px; margin: 8px 0 10px; }
+        .ls-warn { color: var(--danger); font-size: 12px; }
+        .ls-chip { appearance: none; -webkit-appearance: none; border: none; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 6px 14px; border-radius: 999px; font-size: 14px; font-weight: 800; }
+        .ls-chip .ic { width: 16px; height: 16px; }
+        .ls-chip.ok { background: var(--ok-bg, #E0F2E5); color: var(--ok-ink, #1F7A3D); }
+        .ls-chip.low { background: var(--warn-bg); color: var(--warn-ink); }
+        .ls-chip.out, .ls-chip.stop { background: var(--danger-bg); color: var(--danger); }
+        .ls-chip.off { background: var(--btn-neutral); color: var(--text-light); }
+        .ls-chip:disabled { cursor: default; }
+        .ls-chip.is-sum { min-height: 28px; padding: 3px 11px; font-size: 12.5px; cursor: default; }
+        .ls-summary { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
         .ls-unl { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-light); margin-left: auto; cursor: pointer; }
         .setup-sws label { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-light); cursor: pointer; }
         .unl-box { padding: 8px; font-size: 14px; font-weight: 700; color: var(--text-light); border-radius: var(--r-sm); background: var(--sunken); text-align: center; }
@@ -833,6 +858,30 @@
             border-left: none; border-right: none; border-top: none; width: 100%;
         }
         #pending-reminder.show { display: flex; }
+        /* 支払い方法（会計の窓の上）。現金以外を選んだら、お預かりの入力は使わない */
+        .pay-seg { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+        .pay-seg button { appearance: none; -webkit-appearance: none; border: none; cursor: pointer; font-family: inherit; flex: 1 1 0; min-width: 72px; min-height: 44px; padding: 6px 10px; border-radius: var(--r-md); font-size: 14.5px; font-weight: 800; background: var(--sunken); color: var(--text-main); box-shadow: inset 0 0 0 1px var(--hairline); }
+        .pay-seg button.on { background: var(--accent); color: #fff; box-shadow: none; }
+        #checkout-right.pay-noncash .cash-display, #checkout-right.pay-noncash #cash-suggestions, #checkout-right.pay-noncash .tenkey-grid { display: none; }
+        .pay-note { display: none; text-align: center; padding: 26px 12px; border-radius: var(--r-lg); background: var(--sunken); font-size: 15px; font-weight: 700; color: var(--text-light); margin-bottom: 10px; }
+        #checkout-right.pay-noncash .pay-note { display: block; }
+        .pay-list { display: flex; flex-direction: column; gap: 8px; }
+        .pay-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow-card); }
+        .pay-row .pay-l { flex: 1; font-size: 16px; font-weight: 800; }
+        .pay-row .pay-del { appearance: none; -webkit-appearance: none; border: none; cursor: pointer; width: 40px; height: 40px; border-radius: 10px; background: var(--danger-bg); color: var(--danger); display: grid; place-items: center; }
+        .pay-row .pay-del .ic { width: 18px; height: 18px; }
+
+        /* 後で会計の窓 */
+        .later-overlay { position: fixed; inset: 0; z-index: 600; background: rgba(10, 12, 18, .45); display: flex; align-items: flex-end; justify-content: center; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); animation: backdropIn .2s ease both; }
+        @media (min-width: 600px) { .later-overlay { align-items: center; } }
+        .later-card { width: 100%; max-width: 420px; background: var(--surface); border-radius: 22px; padding: 18px; box-shadow: var(--shadow-raised, var(--shadow-card)); }
+        .later-title { font-size: 18px; font-weight: 800; }
+        .later-sub { font-size: 13px; color: var(--text-light); margin: 4px 0 14px; line-height: 1.5; }
+        .later-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .later-btns button, .later-cancel { appearance: none; -webkit-appearance: none; border: none; cursor: pointer; font-family: inherit; min-height: 60px; border-radius: 16px; font-size: 18px; font-weight: 800; color: #fff; }
+        .later-take { background: var(--dine-take); }
+        .later-eat { background: var(--dine-eat); }
+        .later-cancel { width: 100%; margin-top: 10px; min-height: 48px; font-size: 15px; background: var(--btn-neutral); color: var(--text-main); }
         #mobile-pay-bar {
             display: none; align-items: center; justify-content: center; gap: 6px; width: 100%; flex-shrink: 0;
             appearance: none; -webkit-appearance: none; border: none; cursor: pointer; font-family: inherit;
@@ -2789,7 +2838,7 @@
                 </div>
                 <div class="action-row">
                     <button class="action-btn btn-undo" onclick="undoLast()"><svg class="ic"><use href="#ic-undo"/></svg>1つ戻す</button>
-                    <button class="action-btn btn-reserve" id="btn-reserve" onclick="promptReservation()"><svg class="ic"><use href="#ic-calendar"/></svg>予約保留</button>
+                    <button class="action-btn btn-reserve" id="btn-reserve" onclick="reserveButtonAction()"><svg class="ic"><use href="#ic-calendar"/></svg>予約保留</button>
                 </div>
                 <button class="action-btn btn-checkout" onclick="openCheckout()">会計へ進む</button>
             </footer>
@@ -2898,6 +2947,11 @@
             <!-- まだ払っていないモバイルの注文（レジで会計する） -->
             <div class="sub-view" id="sub-mobile-pay" style="display:none;">
                 <div id="mobile-pay-body"></div>
+            </div>
+
+            <!-- 支払い方法 -->
+            <div class="sub-view" id="sub-pay" style="display:none;">
+                <div id="pay-body"></div>
             </div>
 
             <!-- 商品の分類 -->
@@ -3191,6 +3245,19 @@
 
 </main>
 
+<!-- 後で会計：持ち帰りか店内かを選ぶ小さな窓 -->
+<div id="later-sheet" class="later-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="later-title" onclick="if (event.target === this) closeLaterSheet()">
+    <div class="later-card">
+        <div class="later-title" id="later-title">後で会計</div>
+        <div class="later-sub">注文だけ先にキッチンへ出します。お支払いは「未会計の注文」から。</div>
+        <div class="later-btns">
+            <button type="button" class="later-take" onclick="createLaterOrder('take')">持ち帰り</button>
+            <button type="button" class="later-eat" onclick="createLaterOrder('eat')">店内</button>
+        </div>
+        <button type="button" class="later-cancel" onclick="closeLaterSheet()">やめる</button>
+    </div>
+</div>
+
 <!-- パスコード（6けた）を入れる窓。ロックを外す時と、決める時に使う -->
 <div id="passcode-modal" class="pc-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="pc-title">
     <div class="pc-card">
@@ -3237,8 +3304,11 @@
             </div>
         </div>
         
-        <div class="checkout-right">
+        <div class="checkout-right" id="checkout-right">
+            <!-- 支払い方法（設定で2つ以上オンにした時だけ出る。現金だけなら今までどおり） -->
+            <div class="pay-seg" id="pay-seg" role="group" aria-label="支払い方法" style="display:none;"></div>
             <!-- レジの表示窓：お預かりとお釣りをひとまとめにして「読むところ」だと分かるようにする -->
+            <div class="pay-note" id="pay-note"></div>
             <div class="cash-display">
                 <div class="cd-row">
                     <span class="cd-label">お預かり</span>
@@ -3672,15 +3742,18 @@
     // 送ったばかりで、まだ共有の会計に戻ってきていない会計（会計した瞬間に残数が一度増えて見えないように）
     let pendingSent = [];   // { localId, items }
     function heldCount(p) {
-        if (!syncMode || !p) return 0;
-        const same = i => i && (i.id === p.id || i.name === p.name);
-        let n = cart.filter(same).length;
-        reservations.forEach(r => { (r.items || []).forEach(i => { if (same(i)) n++; }); });
-        // まだ払っていないモバイルの注文も、作る分として残数から引いておく（レジで会計すると売上に移る）
+        if (!p) return 0;
+        let n = 0;
+        // まだ払っていない注文（モバイル・後で会計）も、作る分として残数から引いておく（レジで会計すると売上に移る）。
+        // 1台だけの時も同じ（後で会計の注文は、作った時に在庫へ戻してあるため）
         if (isKitchen()) kitchenOrders.forEach(o => {
-            if (o.channel !== 'mobile' || o.paid || o.st === 'void' || o.id === pendingMobileOrderId) return;
+            if (o.paid || o.st === 'void' || o.st === 'draft' || o.id === pendingMobileOrderId) return;
             o.items.forEach(i => { if (i.name === p.name) n += i.qty; });
         });
+        if (!syncMode) return n;
+        const same = i => i && (i.id === p.id || i.name === p.name);
+        n += cart.filter(same).length;
+        reservations.forEach(r => { (r.items || []).forEach(i => { if (same(i)) n++; }); });
         if (pendingSent.length) {
             const have = new Set(salesHistory.map(h => h.localId).filter(Boolean));
             pendingSent = pendingSent.filter(x => !have.has(x.localId) && Date.now() - x.at < 60000);
@@ -3705,12 +3778,12 @@
             const btn = document.createElement('button');
             const isPlaceholder = !(p.initialStock > 0) && p.price <= 0; // 未設定枠（例：準備中）
             const left = shownStock(p);   // カートに入れた分・取り置き分を引いた、いま売れる数
-            const isOut = left <= 0;
+            const isOut = left <= 0 || !!p.stopped;
             const oversold = left < 0; // 販売数 > 仕入数（過少入力の可能性）
 
             // 準備中の枠だけ操作不可。完売した実商品は「過少入力対策」で押せる（超過販売）
             let cls = 'product-btn';
-            if (isPlaceholder) cls += ' out-of-stock';
+            if (isPlaceholder || p.stopped) cls += ' out-of-stock';
             else if (isOut) cls += ' sold-open';
             const qty = inCart[p.id] || 0;
             nextQty[p.id] = qty;
@@ -3730,13 +3803,14 @@
 
             let badge = '';
             if (isPlaceholder) badge = `<span class="soldout-badge prep">準備中</span>`;
+            else if (p.stopped) badge = `<span class="soldout-badge">販売停止</span>`;
             else if (oversold) badge = `<span class="soldout-badge warn">超過 ${-left}</span>`;
             else if (isOut) badge = `<span class="soldout-badge">完売</span>`;
 
             // 残りわずか（1〜5個）はオレンジ、超過（在庫マイナス）は赤で強調
             const lowStock = left > 0 && left <= 5;
             const stockStyle = oversold ? 'color:var(--danger); font-weight:bold;' : (lowStock ? 'color:var(--low-ink); font-weight:bold;' : '');
-            const stockText = isUnlimited(p) ? '在庫:無制限' : (oversold ? `在庫:0（超過${-left}）` : `在庫:${left}${lowStock ? ' 残少' : ''}`);
+            const stockText = p.stopped ? '販売停止' : isUnlimited(p) ? '在庫:無制限' : (oversold ? `在庫:0（超過${-left}）` : `在庫:${left}${lowStock ? ' 残少' : ''}`);
             const qtyBadge = qty > 0
                 ? `<span class="cart-qty${qty !== (lastTileQty[p.id] || 0) ? ' pop' : ''}" aria-label="カートに${qty}個">${qty}</span>` : '';
             btn.innerHTML = `
@@ -3767,6 +3841,8 @@
         if (!currentSession) { playError(); alert('設定から先に開店してください'); return; }
         // 未設定の枠（準備中：初期在庫なし＆価格0）は販売不可
         if (!(p.initialStock > 0) && p.price <= 0) { playError(); return; }
+        // 販売停止にした商品は入れない（在庫の画面で戻せる）
+        if (p.stopped) { playError(); showToast(`${p.name}は販売停止中です（設定の「商品・在庫の調整」で戻せます）`); return; }
         // 在庫0でも登録可（開店前の在庫過少入力に備える）。在庫はマイナスまで許容し、
         // マイナス＝「販売数 > 仕入数（超過販売）」として警告表示する。
         if (shownStock(p) > 0) playSound(); else playError(); // 完売後の登録は警告音で気づけるように
@@ -4211,7 +4287,8 @@
         document.getElementById('change-amount').innerText = '0';
         renderChangeBreakdown(0);
         renderCashSuggestions(total);
-        updateCheckoutPrimary();
+        checkoutPay = defaultPay();   // 毎回、いつもの支払い方法（ふつうは現金）から始める
+        renderPaySeg();
         showNav(false); // 会計中はナビを隠して集中できるように
         document.getElementById('checkout-modal').style.display = 'flex';
         // 予約の清算では画面の合計がカートと違うので、開いた形のまますぐ送る
@@ -4338,6 +4415,11 @@
 
         btn.classList.remove('is-short');
         btn.disabled = false;
+        if (checkoutPay !== 'cash') {
+            main.textContent = `${payLabel(checkoutPay)}で受け取って完了`;
+            sub.textContent = `¥${total.toLocaleString('ja-JP')}`;
+            return;
+        }
         if (!raw) {
             main.textContent = 'ちょうど受け取って完了';
             sub.textContent = `¥${total.toLocaleString('ja-JP')} お預かり・お釣りなし`;
@@ -4355,6 +4437,8 @@
 
     // 会計を終えるボタンの動作（お預かり未入力なら「ちょうど」を補ってから記録）
     function checkoutPrimary() {
+        // 現金以外：お預かりの入力はいらない（合計をそのまま受け取ったことにする）
+        if (checkoutPay !== 'cash') { completeExactCash(); return; }
         const raw = document.getElementById('cash-input').value;
         if (!raw) { completeExactCash(); return; }
         completeTransaction();
@@ -4436,9 +4520,11 @@
         // 実際に属性を選んだ場合は「直前値」として記憶（次回の会計でワンタップ設定できる）
         if (!pending) lastCustomerType = selectedVal;
 
-        receiptCounter++;
+        // 「後で会計」の注文を払う時は、注文の時にとっておいた客No.をそのまま使う（欠番を作らない）
+        const payingLater = isKitchen() && pendingMobileOrderId ? kitchenOrders.find(o => o.id === pendingMobileOrderId && o.later && o.sno) : null;
+        if (!payingLater) receiptCounter++;
         const record = {
-            no: receiptCounter,
+            no: payingLater ? payingLater.sno : receiptCounter,
             time: new Date(),
             items: [...itemsRecorded],
             total: total,
@@ -4448,9 +4534,10 @@
             setRule: checkoutSetRule,
             customerType: selectedType,
             pendingType: pending,
-            ...(isKitchen() && pendingMobileOrderId ? { channel: 'mobile' } : {}),
-            cash: cash,
-            change: Math.max(0, cash - total)
+            ...(checkoutPay !== 'cash' ? { pay: checkoutPay, payLabel: payLabel(checkoutPay) } : {}),
+            ...(isKitchen() && pendingMobileOrderId && !payingLater ? { channel: 'mobile' } : {}),
+            cash: checkoutPay !== 'cash' ? null : cash,
+            change: checkoutPay !== 'cash' ? 0 : Math.max(0, cash - total)
         };
         if (syncMode) {
             // 同期中：Firestoreへ送信し、salesHistoryは購読の再構築に任せる（全端末で共有）
@@ -4488,9 +4575,10 @@
         renderReservations();
         // モーダルを閉じた後もお釣りの内訳が見えるようにトーストにも出す（渡しながら確認できる）。
         // 大きな表示は出さない：次のお客様の会計に、待たずにすぐ移れることを何より優先する。
-        const chgText = record.change > 0
-            ? `お釣り¥${record.change}（${changeDenoms(record.change).map(d => `${d.unit}×${d.count}`).join('・')}）`
-            : 'お釣りなし';
+        const chgText = record.pay ? record.payLabel
+            : (record.change > 0
+                ? `お釣り¥${record.change}（${changeDenoms(record.change).map(d => `${d.unit}×${d.count}`).join('・')}）`
+                : 'お釣りなし');
         showToast(`記録しました（${isKitchen() ? '番号' + (kitchenNo != null ? kitchenNo : record.no) : '客No.' + record.no} / ${chgText}）`);
         publishCustomerDone(record);   // お客様の画面に「ありがとうございました」を出す
     }
@@ -4870,6 +4958,18 @@
                 <p>共有する時は、<b>開店した端末のモードに、合流した端末もそろいます</b>（1台ずつ切り替える必要はありません）。</p>`
         },
         {
+            id: 'pay', icon: 'yen', title: '支払い方法（PayPay など）', sub: '現金以外も記録するとき',
+            body: `
+                <p><b>「設定 → 支払い方法」</b>で、使うものをオンにします（現金・PayPay・楽天ペイ・au PAY・d払い。金券などは「足す」で増やせます）。記録のためのもので、決済そのものとはつながりません。</p>
+                <ul class="man-list">
+                    <li><b>現金だけ</b>（はじめの設定）なら、会計の窓は今までとまったく同じです。</li>
+                    <li>2つ以上をオンにすると、会計の窓の上に選ぶボタンが出ます。<b>何もしなければ現金</b>です。</li>
+                    <li>PayPay などを選ぶと、お預かりの入力は出ません。お客様の支払いを確かめてから<b>「PayPayで受け取って完了」</b>を押します。</li>
+                    <li>売上集計の「売上の概要」に、支払い方法ごとの件数と金額と、<b>現金で受け取った額</b>が出ます。閉店後にレジのお金と合わせるのは、この額です。</li>
+                    <li>共有している時は、全部の端末で同じ支払い方法になります。</li>
+                </ul>`
+        },
+        {
             id: 'kitchen', icon: 'kitchen', title: 'キッチンで作る・番号で呼ぶ', sub: 'ファストフードのモード',
             kitchenOnly: true,
             body: `
@@ -4881,7 +4981,8 @@
                     <li>お客様に渡したら<b>「受け渡し完了」</b>を押します。カードは「完了」に移ります。</li>
                 </ol>
                 <ul class="man-list">
-                    <li>番号は、共有している時は<b>レジの端末ごとの文字＋数字</b>（A1、B1…）です。レジが何台あってもぶつかりません。モバイルオーダーは M1、M2…です。</li>
+                    <li>番号は、共有している時は<b>レジの端末ごとの文字＋数字</b>（A1、B1…）です。レジが何台あってもぶつかりません。モバイルオーダーは <b>M1001、M1002…</b>です。</li>
+                    <li><b>後で会計</b>…店内で食べて帰る時に払う、などの時は、カートの<b>「後で会計」</b>を押して持ち帰りか店内を選びます。お金を受け取らずに注文だけキッチンに出ます。払う時は、レジの上の<b>「未会計の注文」</b>から番号を選んで「レジで会計する」を押します（客No.は注文した時のものを使います）。</li>
                     <li>呼び出しを押し間違えた時は、↶ で調理中に戻せます。「完了」からも「呼び出しに戻す」で戻せます。</li>
                     <li>待たせている時間が<b>10分を過ぎると黄色、15分を過ぎると赤</b>になります。</li>
                     <li><b>「担当」</b>で、ドリンク係はドリンクの行だけ、のように分けて見られます（端末ごとに覚えます）。</li>
@@ -4898,13 +4999,13 @@
                 <p>お客様がQRコードを読むと、スマホで注文の画面が開きます（アプリは要りません）。<b>共有している時だけ</b>使えます。</p>
                 <ol class="man-steps">
                     <li><b>「設定 → モバイルオーダー」</b>で受付をオンにします。出てくる<b>QRコード</b>を印刷するか、画面を見せます。</li>
-                    <li>お客様は商品と<b>「持ち帰り／店内」</b>を選んで注文します。<b>M1</b> のような番号が出て、注文はすぐキッチンに「モバイル・未払い」で出ます。</li>
+                    <li>お客様は商品と<b>「持ち帰り／店内」</b>を選んで注文します。<b>M1001</b> のような4けたの番号が出て、注文はすぐキッチンに「モバイル・未払い」で出ます。</li>
                     <li>お客様の画面には<b>「あと何組」</b>が出て、呼び出すと音と画面で知らせます（その画面を開いている時）。</li>
-                    <li>受け取りに来たら、レジの上の<b>「モバイルの注文（未払い）」</b>から番号を選んで<b>「レジで会計する」</b>。中身がカートに入るので、いつもどおり会計します。</li>
+                    <li>お支払いはレジで、<b>受け取りの時</b>（店内なら<b>帰る時</b>でも）。レジの上の<b>「未会計の注文」</b>から番号を選んで<b>「レジで会計する」</b>。中身がカートに入るので、いつもどおり会計します。</li>
                 </ol>
                 <ul class="man-list">
                     <li>混んできたら受付をオフにします。お客様の画面には「止めている時のお知らせ」が出ます。</li>
-                    <li>来ない注文・いたずらの注文は、「モバイルの注文（未払い）」の<b>「取り消す」</b>で消せます。</li>
+                    <li>来ない注文・いたずらの注文は、「未会計の注文」の<b>「取り消す」</b>で消せます。</li>
                     <li>まだ払っていないモバイルの注文の分も、レジの残数から引いて数えます。</li>
                     <li>1台のスマホから同時に頼めるのは3件までです。</li>
                 </ul>`
@@ -4959,6 +5060,7 @@
                     <li><b>商品を足したい</b>…いちばん下の<b>「販売する商品を追加する」</b>を押すと、名前・価格・仕入れ数・種類を入れる欄が出ます。入れて「この内容で追加する」を押すと、すぐレジのボタンに並びます。</li>
                     <li><b>種類（ボタンの色）を変えたい</b>…各商品の<b>パン／クッキー／ドリンク</b>から選び直せます。開店前の「商品と仕入れ数」でも同じように選べます。</li>
                     <li><b>種類そのものを足したい</b>（ケーキ・サンドイッチなど）…<b>「設定 → 商品の分類」</b>で名前を入れて「足す」を押します。新しい色が付き、8つまで足せます。名前の変更や、商品の無い分類を消すのもここからです。</li>
+                    <li><b>いまの状態を見たい・一時的に止めたい</b>…各商品に<b>「販売中」「残りわずか」「売り切れ」</b>などのステータスが出ます。材料が切れた時は、ステータスを押すと<b>「販売停止」</b>になり、レジのボタンが押せなくなります（モバイルオーダーのメニューも売り切れになります）。もう一度押すと販売中に戻ります。閉店すると解けます。</li>
                     <li><b>数を数えなくてよい商品</b>（その場でいれるコーヒーなど）…<b>「在庫は無制限」</b>をオンにします（開店前の「商品と仕入れ数」、または営業中の「商品・在庫の調整」の<b>「無制限」</b>）。完売にならず、ボタンには「在庫:無制限」と出ます。消化率や次の仕入れ数の目安には入りません。</li>
                 </ul>
                 <div class="man-box">
@@ -6988,7 +7090,7 @@
         // 共有するか：いつも共有する（通信できない時だけ、この端末だけで開店する）。
         const wantShare = !!typedCode || shareOnOpenWanted();
         let useSync = !!(syncReady && window.FIREBASE_CONFIG && wantShare);
-        let code = null, joinedProducts = null, sharedName = name, isJoining = false, joinRound = '', joinedMode = null, joinedCats = null;
+        let code = null, joinedProducts = null, sharedName = name, isJoining = false, joinRound = '', joinedMode = null, joinedCats = null, joinedPay = null;
         let soloReason = (wantShare && window.FIREBASE_CONFIG && !syncReady) ? 'offline' : '';
         if (useSync && !typedCode) {
             // 新しく開店する時の共有コードは、自動で決める（打ち間違い・前のコードとの取り違えが起きない）
@@ -7019,6 +7121,7 @@
                         joinedProducts = data.products;
                         joinedMode = (data.storeMode === 'kitchen' || data.storeMode === 'retail') ? data.storeMode : null;
                         if (Array.isArray(data.categories)) joinedCats = data.categories;
+                        if (data.payCfg) joinedPay = data.payCfg;
                         sharedName = data.name || name;
                         isJoining = true;
                         joinRound = data.roundId || '';   // 動いている回に合わせる
@@ -7122,10 +7225,11 @@
             // 店舗モードも、開いている販売会にそろえる
             if (joinedMode && joinedMode !== storeMode) { storeMode = joinedMode; applyStoreMode(); }
             if (joinedCats) setCategories(joinedCats);   // 分類も、開いている販売会にそろえる
+            if (joinedPay) payCfg = normPayCfg(joinedPay);   // 支払い方法も
         } else {
             // 新規作成：編集した一時データを本番の商品データとして適用する
             products = JSON.parse(JSON.stringify(tempSetupProducts));
-            products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; });
+            products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; p.stopped = false; });
         }
 
         if (useSync && !isJoining) {
@@ -7136,7 +7240,7 @@
             acceptRound(newRoundId());
             try {
                 await fbDb.collection(EVENTS_COL).doc(code).set({
-                    name: sharedName, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(),
+                    name: sharedName, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(),
                     roundId: syncRoundId,
                     setDiscount: setDiscountOn, setRule: normSetRule(setRule) || SET_DEFAULT, setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                     openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
@@ -7265,7 +7369,7 @@
         voidCount = 0;
         operationLog = [];
         salesGoal = 0;   // 目標はその回のものなので、次の回に持ち越さない（開店時にまた決める）
-        products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; p.note = ''; });
+        products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; p.note = ''; p.stopped = false; });
 
         // 会計の途中だった場合は、開いている窓を閉じてからレジを片づける
         const co = document.getElementById('checkout-modal');
@@ -7980,7 +8084,7 @@
         acceptRound(newRoundId());
         try {
             await fbDb.collection(EVENTS_COL).doc(code).set({
-                name: currentSession, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(),
+                name: currentSession, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(),
                 roundId: syncRoundId,
                 setDiscount: setDiscountOn, setRule: normSetRule(setRule) || SET_DEFAULT, setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                 openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
@@ -8283,6 +8387,13 @@
             ${R.goal ? `<div class="stat-tile"><span class="k">目標の達成率</span><span class="v">${R.goal.pct}<span style="font-size:14px; font-weight:600;">%</span></span><span class="s">目標 ${yenStr(R.goal.goal)}${R.goal.rest > 0 ? ' / あと ' + yenStr(R.goal.rest) : ' / 達成'}</span></div>` : ''}
             ${R.pace.reliable ? `<div class="stat-tile"><span class="k">1時間あたりの売上</span><span class="v" style="font-size:20px;">${yenStr(R.pace.revPerHour)}</span><span class="s">1時間に ${R.pace.custPerHour}人</span></div>` : ''}
         </div>`;
+
+        // 支払い方法（現金以外を使った時だけ）。レジのお金と合わせるのは「現金で受け取った額」
+        if (R.pay && R.pay.nonCash) {
+            h += `<div class="a-head">支払い方法</div><table class="a-table"><thead><tr><th>支払い方法</th><th class="num">件数</th><th class="num">金額</th></tr></thead><tbody>`
+               + R.pay.rows.map(r => `<tr><td>${escHtml(r.label)}</td><td class="num">${r.n}件</td><td class="num">${yenStr(r.rev)}</td></tr>`).join('')
+               + `</tbody></table><p class="a-note">レジのお金と合わせるのは、<b>現金で受け取った額 ${yenStr(R.pay.cash)}</b> です。</p>`;
+        }
 
         const rows = [];
         if (s.discountTotal > 0) rows.push(['セット割引', `−${yenStr(s.discountTotal)}<span class="sub">${s.discountCount}件</span>`]);
@@ -9707,8 +9818,9 @@
         'manual': '操作マニュアル',
         'mode': '店舗モード',
         'cats': '商品の分類',
+        'pay': '支払い方法',
         'mobile': 'モバイルオーダー',
-        'mobile-pay': 'モバイルの注文を会計する',
+        'mobile-pay': '未会計の注文',
         'customer': 'お客様用の表示',
         'goal': 'セット割・売上目標',
         'stock': '商品・在庫の調整',
@@ -9928,6 +10040,7 @@
             else if (sub === 'archive') renderArchiveList();
             else if (sub === 'mode') renderStoreModeView();
             else if (sub === 'cats') renderCategoriesView();
+            else if (sub === 'pay') renderPayView();
             else if (sub === 'mobile') renderMobileView();
             else if (sub === 'mobile-pay') renderMobilePayView();
             else if (sub === 'pdf-import') renderPdfImport();
@@ -10032,6 +10145,7 @@
             menuRow(isKitchen() ? 'kitchen' : 'store', '店舗モード', storeModeLabel(), "openPanel('settings','mode')") +
             menuRow('sliders', '商品・在庫の調整', stockSub, "openPanel('settings','stock')", { disabled: !currentSession }) +
             menuRow('tag', '商品の分類', categories.map(c => escHtml(c.label)).join('・'), "openPanel('settings','cats')") +
+            menuRow('yen', '支払い方法', paySub(), "openPanel('settings','pay')") +
             (isKitchen() ? menuRow('qr', 'モバイルオーダー', mobileSub(), "openPanel('settings','mobile')") : '') +
             (isKitchen() ? menuRow('calendar', '予約', reservations.length ? `${reservations.length}件の予約` : '先に受けて、あとで渡す注文', "openPanel('reservations')") : '') +
             menuRow('target', 'セット割・売上目標', setGoalSub(), "openPanel('settings','goal')") +
@@ -10749,6 +10863,7 @@
             },
             abc, soldOut, inStock, oversoldItems, integrity: checkIntegrity(), slots, types, categories, copairs,
             goal: buildGoal(totalRev),
+            pay: buildPayStats(sorted),
             baskets: buildBaskets(sorted),
             substitutes: buildSubstitutes(sorted),
             setEffect: buildSetEffect(sorted),
@@ -10800,6 +10915,7 @@
                 ${R.leftover.initial > 0 ? `<div class="stat"><span class="stat-label">全体の消化率</span><span class="stat-val">${R.leftover.sellThrough}%（売れ残り ${R.leftover.leftQty}点・売価 ${yen(R.leftover.leftValue)}）</span></div>` : ''}
                 ${s.discountTotal > 0 ? `<div class="stat"><span class="stat-label">セット割引</span><span class="stat-val">−${yen(s.discountTotal)}（${s.discountCount}件）</span></div>` : ''}
                 ${s.cashKnown > 0 ? `<div class="stat"><span class="stat-label">現金 お預り／お釣り</span><span class="stat-val">${yen(s.cashTotal)} / ${yen(s.changeTotal)}</span></div>` : ''}
+                ${R.pay && R.pay.nonCash ? R.pay.rows.map(r => `<div class="stat"><span class="stat-label">支払い：${esc(r.label)}</span><span class="stat-val">${yen(r.rev)}（${r.n}件）</span></div>`).join('') : ''}
                 <div class="stat"><span class="stat-label">会計取消</span><span class="stat-val">${s.voidCount}件</span></div>
                 <div class="stat"><span class="stat-label">属性の事後入力</span><span class="stat-val">${s.typeEditedLater}件（${s.customers ? Math.round(s.typeEditedLater / s.customers * 100) : 0}%）</span></div>
                 <div class="stat"><span class="stat-label">品目の事後修正</span><span class="stat-val">${s.itemEdited}件</span></div>
@@ -11274,7 +11390,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { siteId: SITE_CFG.id, storeMode, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
+        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -11287,6 +11403,8 @@
         kitchenOrders = Array.isArray(data.orders) ? data.orders.map(normOrder).filter(Boolean) : [];
         storeMode = (data.storeMode === 'kitchen' || data.storeMode === 'retail') ? data.storeMode : SITE_CFG.mode;
         setCategories(data.categories);
+        payCfg = normPayCfg(data.payCfg);
+        payCfgBy = typeof data.payCfgBy === 'string' ? data.payCfgBy : '';
         categoriesBy = typeof data.categoriesBy === 'string' ? data.categoriesBy : '';
         kitchenLetter = typeof data.kitchenLetter === 'string' ? data.kitchenLetter : '';
         kitchenLetterCode = typeof data.kitchenLetterCode === 'string' ? data.kitchenLetterCode : '';
@@ -11517,7 +11635,7 @@
         let csv = '﻿';
         csv += `販売会,${(currentSession || '前回').replace(/,/g, ' ')}\n`;
         csv += `出力日時,${new Date().toLocaleString('ja-JP')}\n\n`;
-        csv += `客No,時刻,客属性,購入内容,点数,割引,合計,預かり,お釣り\n`;
+        csv += `客No,時刻,客属性,購入内容,点数,割引,合計,支払い方法,預かり,お釣り\n`;
         sorted.forEach((h, idx) => {
             const counts = {};
             h.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
@@ -11527,7 +11645,8 @@
             const cash = (h.cash != null) ? h.cash : '';
             const change = (h.change != null) ? h.change : '';
             const disc = (Number(h.discount) || 0) > 0 ? -Number(h.discount) : '';
-            csv += `${h.no || idx + 1},${tStr},${h.customerType || '不明'},${detail},${h.items.length},${disc},${h.total},${cash},${change}\n`;
+            const pm = String(h.pay ? (h.payLabel || payLabel(h.pay)) : '現金').replace(/,/g, ' ');
+            csv += `${h.no || idx + 1},${tStr},${h.customerType || '不明'},${detail},${h.items.length},${disc},${h.total},${pm},${cash},${change}\n`;
         });
         triggerDownload(`taizanboku_明細_${dateStamp()}.csv`, csv, 'text/csv');
     }
@@ -11652,8 +11771,8 @@
                 ? `<div class="disc-line" style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
                         <span><svg class="ic"><use href="#ic-tag"/></svg>${SET_LABEL}</span><span>−¥${h.discount}</span>
                     </div>` : '';
-            const cashStr = (h.cash != null) ? `¥${h.cash}` : '—';
-            const changeStr = (h.change != null) ? `¥${h.change}` : '—';
+            const cashStr = h.pay ? escHtml(h.payLabel || payLabel(h.pay)) : ((h.cash != null) ? `¥${h.cash}` : '—');
+            const changeStr = h.pay ? '—' : ((h.change != null) ? `¥${h.change}` : '—');
             // 操作は塗りのボタンを3つ並べず、iOSのリストと同じ「文字だけのボタン」を1列に置く。
             // カードの中が静かになり、1件ずつの区切りが目立つようになる。
             const actions = editing
@@ -11692,7 +11811,7 @@
                     <div class="rc-lines">${lines}${discLine}</div>
                     <div class="rc-sep"></div>
                     <div class="rc-total"><span>合計</span><span class="num">¥${h.total}</span></div>
-                    <div class="rc-pay"><span>お預かり ${cashStr}</span><span>お釣り ${changeStr}</span></div>
+                    <div class="rc-pay">${h.pay ? `<span>支払い ${cashStr}</span>` : `<span>お預かり ${cashStr}</span><span>お釣り ${changeStr}</span>`}</div>
                     ${actions}
                 </div>`;
         }).join('');
@@ -11899,9 +12018,11 @@
         const disc = Number(h.discount) || 0;
         const discRow = disc > 0
             ? `<tr><td>${esc(SET_LABEL)}（値引き）</td><td class="c"></td><td class="r"></td><td class="r">−${yen(disc)}</td></tr>` : '';
-        const payRows = (h.cash != null)
+        const payRows = h.pay
+            ? `<div class="pay"><span>お支払い</span><span>${esc(h.payLabel || payLabel(h.pay))}</span></div>`
+            : ((h.cash != null)
             ? `<div class="pay"><span>お預かり</span><span>${yen(h.cash)}</span></div>
-               <div class="pay"><span>お釣り</span><span>${yen(h.change || 0)}</span></div>` : '';
+               <div class="pay"><span>お釣り</span><span>${yen(h.change || 0)}</span></div>` : '');
 
         const win = window.open('', '_blank');
         // ポップアップが止められていると、別の窓が開けずに null が返る。
@@ -12237,14 +12358,18 @@
             const oversold = left < 0; // 販売数>仕入数（過少入力の可能性）
             const noteVal = escHtml(p.note || '');
             const inactive = p.active === false;
+            const st = productStatus(p);
             rows.push(`
-                <div style="margin-bottom:8px; padding:11px 13px; border-radius:var(--r-md); border:none; box-shadow:var(--shadow-card); background:${oversold ? 'var(--danger-bg)' : 'var(--surface)'}; ${inactive ? 'opacity:0.55;' : ''}">
-                    <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
-                        <span style="flex:1; font-size:14px; font-weight:bold; overflow-wrap:anywhere;">${escHtml(p.name)}${oversold ? ' <b style="color:var(--danger); font-size:12px;">販売&gt;仕入</b>' : ''}${inactive ? ' <span style="font-size:11px; color:var(--text-light); font-weight:normal;">(この回は販売しない)</span>' : ''}</span>
-                        <span style="font-size:13px; color:var(--text-light);">残り</span>
-                        <span class="num" style="font-size:17px; font-weight:bold; min-width:38px; text-align:right; color:${oversold ? 'var(--danger)' : (left <= 5 ? 'var(--low-ink)' : 'var(--text-main)')};">${isUnlimited(p) ? '無制限' : left}</span>
+                <div class="ls-card st-${st.key}${oversold ? ' is-over' : ''}" style="--ink:${catInk(p.type)};">
+                    <div class="ls-top">
+                        <span class="ls-name">${escHtml(p.name)}<span class="ls-meta">${escHtml(catLabelOf(p.type))}・¥${p.price}</span></span>
+                        <span class="ls-left"><span>残り</span><b class="num">${isUnlimited(p) ? '無制限' : left}</b></span>
                     </div>
-                    <div class="ls-row" style="display:flex; gap:8px; align-items:center;">
+                    <div class="ls-status">
+                        <button type="button" class="ls-chip ${st.key}" ${inactive ? 'disabled' : ''} onclick="toggleStopped(${p.id})" aria-label="${st.label}（押すと${p.stopped ? '販売中に戻す' : '販売停止にする'}）"><svg class="ic"><use href="#ic-${st.icon}"/></svg>${st.label}</button>
+                        ${oversold ? '<b class="ls-warn">販売&gt;仕入</b>' : ''}
+                    </div>
+                    <div class="ls-row" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                         <label style="font-size:12px; color:var(--text-light);">価格</label>
                         <input type="number" value="${p.price}" class="num ls-price" style="width:78px; padding:6px; text-align:right; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLivePrice(${p.id}, this.value)">
                         ${isUnlimited(p) ? '' : `<label style="font-size:12px; color:var(--text-light); margin-left:2px;">仕入れ数</label>
@@ -12258,7 +12383,34 @@
                 </div>
             `);
         });
+        // 上に、いまの状態の数をまとめて出す（売り切れ・停止がいくつあるか、ひと目で分かるように）
+        const cnt = {};
+        products.forEach(p => { const k = productStatus(p).key; cnt[k] = (cnt[k] || 0) + 1; });
+        const sum = [['ok', '販売中'], ['low', '残りわずか'], ['out', '売り切れ'], ['stop', '販売停止'], ['off', '販売しない']]
+            .filter(([k]) => cnt[k]).map(([k, l]) => `<span class="ls-chip ${k} is-sum">${l} ${cnt[k]}</span>`).join('');
+        rows.unshift(`<div class="ls-summary">${sum}</div><p class="settings-hint" style="margin:0 0 10px;">ステータスを押すと「販売停止」にできます（材料が切れた時など。もう一度押すと販売中に戻ります）。</p>`);
         list.innerHTML = rows.join('');
+    }
+
+    // 商品のいまの状態（在庫の画面のステータス）
+    function productStatus(p) {
+        if (p.active === false) return { key: 'off', label: 'この回は販売しない', icon: 'x' };
+        if (p.stopped) return { key: 'stop', label: '販売停止', icon: 'x' };
+        if (isUnlimited(p)) return { key: 'ok', label: '販売中', icon: 'check' };
+        const left = shownStock(p);
+        if (left <= 0) return { key: 'out', label: '売り切れ', icon: 'alert' };
+        if (left <= 5) return { key: 'low', label: '残りわずか', icon: 'alert' };   // レジのボタンの「残少」と同じ
+        return { key: 'ok', label: '販売中', icon: 'check' };
+    }
+    // 販売停止（材料切れなどで一時的に止める）。レジのボタンは押せなくなり、モバイルのメニューも売り切れになる
+    function toggleStopped(id) {
+        const p = products.find(x => x.id === id);
+        if (!p || p.active === false) return;
+        p.stopped = !p.stopped;
+        logEdit(`${p.name}を${p.stopped ? '販売停止にした' : '販売中に戻した'}`);
+        if (syncMode) syncPushProducts();
+        saveData(); init(); renderLiveStock();
+        showToast(p.stopped ? `${p.name}を販売停止にしました` : `${p.name}を販売中に戻しました`);
     }
 
     // 営業中に「在庫は無制限」を切り替える。数えるに戻す時は、いま売れた数を仕入れ数にして（残り0）から入れ直してもらう
@@ -12810,6 +12962,15 @@
                     if (currentView === 'settings' && !currentSub) renderSettingsMenu();
                 }
             }
+            // 支払い方法も全端末でそろえる
+            if (syncMode && d && d.payCfg && d.payCfgBy !== getDeviceId()
+                && JSON.stringify(normPayCfg(d.payCfg)) !== JSON.stringify(payCfg)) {
+                payCfg = normPayCfg(d.payCfg);
+                payCfgBy = d.payCfgBy || '';
+                saveData();
+                if (currentView === 'settings' && currentSub === 'pay') renderPayView();
+                if (currentView === 'settings' && !currentSub) renderSettingsMenu();
+            }
             // 店舗モードも、開店した端末にそろえる（合流した時・営業中に合流させた時）
             if (syncMode && d && (d.storeMode === 'kitchen' || d.storeMode === 'retail') && d.storeMode !== storeMode) {
                 storeMode = d.storeMode;
@@ -12858,7 +13019,7 @@
     // （以前は種類だけ変えても「同じ内容」と判断して取り込まれなかった）
     function applyRemoteProducts(remoteProducts) {
         const key = list => JSON.stringify(list.map(p => ({
-            n: p.name, p: p.price, i: p.initialStock, t: p.type || '', o: p.note || '', a: p.active !== false, u: !!p.unlimited
+            n: p.name, p: p.price, i: p.initialStock, t: p.type || '', o: p.note || '', a: p.active !== false, u: !!p.unlimited, s: !!p.stopped
         })));
         const before = key(products);
         const next = JSON.parse(JSON.stringify(remoteProducts));
@@ -13051,7 +13212,10 @@
             dine: d.dine === 'eat' ? 'eat' : 'take', items, st,
             t: { ready: Number(t.ready) || 0, done: Number(t.done) || 0, void: Number(t.void) || 0 },
             chk: [...new Set(chk)], edited: !!d.edited, dev: String(d.dev || ''), roundId: d.roundId || '',
-            channel: d.channel === 'mobile' ? 'mobile' : 'pos', paid: d.channel === 'mobile' ? !!d.paid : true,
+            channel: d.channel === 'mobile' ? 'mobile' : 'pos',
+            // 払い済みか。モバイルと「後で会計」の注文は、レジで会計するまで未払い
+            paid: d.paid === false ? false : (d.channel === 'mobile' ? !!d.paid : true),
+            later: !!d.later, sno: Number(d.sno) || 0,
             total: Number(d.total) || 0, fromDraft: !!d.fromDraft, upd: Number(d.upd) || 0, uid: String(d.uid || ''), by: String(d.by || '')
         };
     }
@@ -13077,7 +13241,7 @@
 
     // 会計が済んだ時に呼ぶ（completeTransaction から）。
     // 会計中に出していた「会計中」の注文があれば、キッチンで付けた「できた」の印を引き継いで置き換える。
-    function addKitchenOrder(record, dine) {
+    function addKitchenOrder(record, dine, extra) {
         if (!isKitchen() || !record) return null;
         const at = new Date(record.time).getTime();
         const items = groupOrderItems(record.items);
@@ -13091,6 +13255,7 @@
             edited: false, dev: syncMode ? deviceLabel() : '', by: getDeviceId(), roundId: syncRoundId,
             channel: 'pos', paid: true, total: record.total, fromDraft: !!draft, upd: Date.now(), uid: ''
         };
+        if (extra) Object.assign(o, extra);
         kitchenOrders = kitchenOrders.filter(x => x.id !== draftIdOf(getDeviceId()));
         kitchenOrders.push(o);
         pushOrder(o);
@@ -13290,7 +13455,7 @@
                 <div class="kds-head">
                     <span class="kds-no">${no}</span>
                     <span class="kds-dine">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>
-                    ${o.channel === 'mobile' ? `<span class="kds-tag">モバイル${o.paid ? '' : '・未払い'}</span>` : ''}
+                    ${o.channel === 'mobile' ? `<span class="kds-tag">モバイル${o.paid ? '' : '・未払い'}</span>` : (o.later ? `<span class="kds-tag">${o.paid ? '後で会計・払い済み' : '後で会計・未払い'}</span>` : '')}
                     <span class="kds-min">${min}分</span>
                 </div>
                 ${o.st !== 'cook' && o.st !== 'draft' ? `<div class="kds-state">${KITCHEN_ST[o.st]}</div>` : ''}
@@ -13361,6 +13526,9 @@
     // 店舗モードに合わせて、画面の出し分けを決める（起動時に1回）
     function applyStoreMode() {
         const k = isKitchen();
+        // カートの「予約保留」は、ファストフードの時は「後で会計」になる
+        const rb = document.getElementById('btn-reserve');
+        if (rb) rb.innerHTML = k ? '<svg class="ic"><use href="#ic-clock"/></svg>後で会計' : '<svg class="ic"><use href="#ic-calendar"/></svg>予約保留';
         const dine = document.getElementById('co-dine');
         if (dine) dine.style.display = k ? '' : 'none';
         // 客層を1つも決めていない施設は、客層の欄そのものを出さない
@@ -13491,6 +13659,126 @@
         return h;
     }
 
+    // ▼▼▼ 支払い方法 ▼▼▼
+    // 現金のほかに、PayPay などを使うかを設定で決める。記録用で、決済そのものとはつながない。
+    // 【会計の速さ】現金だけ（はじめの設定）なら、会計の窓は今までとまったく同じ。
+    //   2つ以上をオンにした時だけ、会計の窓の上に選ぶボタンを出す（何もしなければ現金）。
+    //   現金以外を選ぶと、お預かりの入力は出さず、1回押すだけで記録する。
+    const PAY_BUILTIN = [
+        { id: 'cash', label: '現金' },
+        { id: 'paypay', label: 'PayPay' },
+        { id: 'rakuten', label: '楽天ペイ' },
+        { id: 'aupay', label: 'au PAY' },
+        { id: 'dbarai', label: 'd払い' }
+    ];
+    const PAY_CUSTOM_MAX = 6;
+    let payCfg = { on: ['cash'], custom: [] };
+    let payCfgBy = '';
+    let checkoutPay = 'cash';
+    function normPayCfg(c) {
+        c = (c && typeof c === 'object') ? c : {};
+        const custom = (Array.isArray(c.custom) ? c.custom : []).filter(x => x && /^p[1-9]$/.test(x.id || '') && typeof x.label === 'string' && x.label.trim())
+            .slice(0, PAY_CUSTOM_MAX).map(x => ({ id: x.id, label: x.label.trim().slice(0, 12) }));
+        const ids = PAY_BUILTIN.map(b => b.id).concat(custom.map(x => x.id));
+        let on = (Array.isArray(c.on) ? c.on : ['cash']).filter(id => ids.includes(id));
+        if (!on.length) on = ['cash'];
+        return { on: [...new Set(on)], custom };
+    }
+    function allPayMethods() { return PAY_BUILTIN.concat(payCfg.custom); }
+    function payMethods() { return allPayMethods().filter(m => payCfg.on.includes(m.id)); }
+    function payLabel(id) { return (allPayMethods().find(m => m.id === id) || {}).label || (id === 'cash' || !id ? '現金' : id); }
+    function defaultPay() { const m = payMethods(); return m.some(x => x.id === 'cash') ? 'cash' : (m[0] ? m[0].id : 'cash'); }
+    function paySub() { return payMethods().map(m => escHtml(m.label)).join('・'); }
+
+    // 会計の窓：支払い方法のボタンと、現金以外の時の見た目
+    function renderPaySeg() {
+        const seg = document.getElementById('pay-seg');
+        const right = document.getElementById('checkout-right');
+        const note = document.getElementById('pay-note');
+        const list = payMethods();
+        if (!list.some(m => m.id === checkoutPay)) checkoutPay = defaultPay();
+        if (seg) {
+            seg.style.display = list.length >= 2 ? '' : 'none';
+            seg.innerHTML = list.length >= 2 ? list.map(m => `<button type="button" class="${m.id === checkoutPay ? 'on' : ''}" onclick="setCheckoutPay('${m.id}')">${escHtml(m.label)}</button>`).join('') : '';
+        }
+        const nonCash = checkoutPay !== 'cash';
+        if (right) right.classList.toggle('pay-noncash', nonCash);
+        if (note) note.textContent = nonCash ? `${payLabel(checkoutPay)}でのお支払い（お釣りはありません）` : '';
+        updateCheckoutPrimary();
+    }
+    function setCheckoutPay(id) {
+        if (!payMethods().some(m => m.id === id)) return;
+        checkoutPay = id;
+        playSound();
+        if (id !== 'cash') { document.getElementById('cash-input').value = ''; calcChange(); }
+        renderPaySeg();
+        publishCustomerDisplay();
+    }
+
+    // 設定：支払い方法
+    function renderPayView() {
+        const box = document.getElementById('pay-body');
+        if (!box) return;
+        const row = (m, custom) => `<div class="pay-row">
+                <span class="pay-l">${escHtml(m.label)}</span>
+                ${custom ? `<button type="button" class="pay-del" onclick="removePayMethod('${m.id}')" aria-label="${escHtml(m.label)}を消す"><svg class="ic"><use href="#ic-trash"/></svg></button>` : ''}
+                <input type="checkbox" class="ios-switch" ${payCfg.on.includes(m.id) ? 'checked' : ''} onchange="togglePayMethod('${m.id}', this.checked)" aria-label="${escHtml(m.label)}を使う">
+            </div>`;
+        box.innerHTML = `<p class="settings-hint">レジで使うものをオンにします。<b>2つ以上なら、会計の窓で選べます</b>（何もしなければ現金）。記録のためのもので、決済そのものとはつながりません。${syncMode ? '共有中は全部の端末で同じになります。' : ''}</p>
+            <div class="pay-list">${PAY_BUILTIN.map(m => row(m, false)).join('')}${payCfg.custom.map(m => row(m, true)).join('')}</div>
+            <div class="cat-add">
+                <input type="text" id="pay-add-input" maxlength="12" placeholder="足す（例：金券・交通系IC）" ${payCfg.custom.length >= PAY_CUSTOM_MAX ? 'disabled' : ''}>
+                <button type="button" class="action-btn btn-checkout" onclick="addPayMethod()" ${payCfg.custom.length >= PAY_CUSTOM_MAX ? 'disabled' : ''}><svg class="ic"><use href="#ic-plus"/></svg>足す</button>
+            </div>
+            <p class="settings-hint" style="margin-top:10px;">集計の「売上の概要」に、支払い方法ごとの件数と金額、<b>現金で受け取った額</b>（レジのお金と合わせる額）が出ます。</p>`;
+    }
+    function afterPayChanged(logText) {
+        payCfgBy = getDeviceId();
+        saveData();
+        if (syncMode && syncEventCode && fbDb) {
+            fbDb.collection(EVENTS_COL).doc(syncEventCode).set({ payCfg, payCfgBy }, { merge: true })
+                .catch(e => console.warn('支払い方法の共有に失敗しました', e));
+        }
+        logEdit(logText);
+        renderPayView();
+    }
+    function togglePayMethod(id, on) {
+        const next = on ? payCfg.on.concat([id]) : payCfg.on.filter(x => x !== id);
+        if (!next.length) { playError(); alert('支払い方法は、少なくとも1つはオンにしてください。'); renderPayView(); return; }
+        payCfg = normPayCfg({ on: next, custom: payCfg.custom });
+        afterPayChanged(`支払い方法「${payLabel(id)}」を${on ? '使う' : '使わない'}にした`);
+    }
+    function addPayMethod() {
+        const inp = document.getElementById('pay-add-input');
+        const label = (inp && inp.value || '').trim().slice(0, 12);
+        if (!label) { playError(); showToast('支払い方法の名前を入れてください'); return; }
+        if (allPayMethods().some(m => m.label === label)) { playError(); alert(`「${label}」はもうあります。`); return; }
+        const id = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => 'p' + n).find(x => !payCfg.custom.some(c => c.id === x));
+        if (!id || payCfg.custom.length >= PAY_CUSTOM_MAX) { playError(); return; }
+        payCfg = normPayCfg({ on: payCfg.on.concat([id]), custom: payCfg.custom.concat([{ id, label }]) });
+        afterPayChanged(`支払い方法を足した：${label}`);
+        showToast(`「${label}」を足しました`);
+    }
+    function removePayMethod(id) {
+        const m = payCfg.custom.find(x => x.id === id);
+        if (!m || !confirm(`支払い方法「${m.label}」を消しますか？\n（これまでの会計の記録には、名前のまま残ります）`)) return;
+        payCfg = normPayCfg({ on: payCfg.on.filter(x => x !== id), custom: payCfg.custom.filter(x => x.id !== id) });
+        afterPayChanged(`支払い方法を消した：${m.label}`);
+    }
+    // 集計：支払い方法ごとの件数と金額
+    function buildPayStats(list) {
+        const map = {};
+        (list || []).forEach(h => {
+            const id = h.pay || 'cash';
+            const lab = h.payLabel || payLabel(id);
+            if (!map[id]) map[id] = { id, label: lab, n: 0, rev: 0 };
+            map[id].n++; map[id].rev += Number(h.total) || 0;
+        });
+        const rows = Object.values(map).sort((a, b) => (a.id === 'cash' ? -1 : b.id === 'cash' ? 1 : b.rev - a.rev));
+        return { rows, nonCash: rows.some(r => r.id !== 'cash'), cash: (map.cash || { rev: 0 }).rev };
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     // ▼▼▼ モバイルオーダー（ファストフードの時だけ）▼▼▼
     // お客様がQRコードから order.html を開いて注文する。注文はキッチンの注文の置き場（orders）に
     // 「モバイル・未払い」で入り、すぐ調理中になる。お支払いは受け取りの時にレジで。
@@ -13583,9 +13871,9 @@
                 if (!isUnlimited(p)) {
                     left = p.stock;
                     reservations.forEach(r => (r.items || []).forEach(i => { if (i.name === p.name) left--; }));
-                    kitchenOrders.forEach(o => { if (o.channel === 'mobile' && !o.paid && o.st !== 'void') o.items.forEach(i => { if (i.name === p.name) left -= i.qty; }); });
+                    kitchenOrders.forEach(o => { if (!o.paid && o.st !== 'void' && o.st !== 'draft') o.items.forEach(i => { if (i.name === p.name) left -= i.qty; }); });
                 }
-                return { name: p.name, price: p.price, type: p.type || 'sweet', soldOut: left <= 0 };
+                return { name: p.name, price: p.price, type: p.type || 'sweet', soldOut: left <= 0 || !!p.stopped };
             });
             const doc = { items, cats: CAT_TYPES.map(c => ({ id: c.id, label: c.label })), on: mobileCfg.on };
             const key = JSON.stringify(doc);
@@ -13598,15 +13886,16 @@
     }
 
     // ---- レジ：まだ払っていないモバイルの注文 ----
-    function unpaidMobileOrders() {
-        return kitchenOrders.filter(o => o.channel === 'mobile' && !o.paid && o.st !== 'void').sort((a, b) => a.at - b.at);
+    // まだ払っていない注文（モバイルオーダーと、レジの「後で会計」）
+    function unpaidOrders() {
+        return kitchenOrders.filter(o => !o.paid && o.st !== 'void' && o.st !== 'draft').sort((a, b) => a.at - b.at);
     }
     function renderMobilePayBar() {
         const bar = document.getElementById('mobile-pay-bar');
         if (!bar) return;
-        const n = isKitchen() && currentSession ? unpaidMobileOrders().length : 0;
+        const n = isKitchen() && currentSession ? unpaidOrders().length : 0;
         bar.classList.toggle('show', n > 0);
-        if (n > 0) bar.innerHTML = `<svg class="ic"><use href="#ic-qr"/></svg>モバイルの注文（未払い ${n}件）を会計する`;
+        if (n > 0) bar.innerHTML = `<svg class="ic"><use href="#ic-clock"/></svg>未会計の注文（${n}件）を会計する`;
     }
     function onOrdersChangedForRegister() {
         renderMobilePayBar();
@@ -13618,11 +13907,11 @@
     function renderMobilePayView() {
         const box = document.getElementById('mobile-pay-body');
         if (!box) return;
-        const list = unpaidMobileOrders();
-        if (!list.length) { box.innerHTML = '<p class="settings-hint">まだ払っていないモバイルの注文はありません。</p>'; return; }
-        box.innerHTML = '<p class="settings-hint">受け取りに来たお客様の番号を選んで「レジで会計する」を押すと、その中身がカートに入り、お会計の窓が開きます。</p>'
+        const list = unpaidOrders();
+        if (!list.length) { box.innerHTML = '<p class="settings-hint">未会計の注文はありません。</p>'; return; }
+        box.innerHTML = '<p class="settings-hint">モバイルオーダーと「後で会計」の注文です。お客様の番号を選んで「レジで会計する」を押すと、その中身がカートに入り、お会計の窓が開きます（受け取りの時でも、店内なら帰る時でもかまいません）。</p>'
             + list.map(o => `<div class="mp-card dine-${o.dine}" data-id="${escHtml(o.id)}">
-                <div class="mp-head"><span class="mp-no">#${escHtml(String(o.no))}</span><span class="kds-dine" style="background:var(--dine); color:#fff; font-size:12.5px; font-weight:800; padding:2px 9px; border-radius:999px;">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span><span style="font-size:12.5px; color:var(--text-light); font-weight:700;">${KITCHEN_ST[o.st]}</span><span class="mp-total">${yenStr(o.total)}</span></div>
+                <div class="mp-head"><span class="mp-no">#${escHtml(String(o.no))}</span><span class="kds-dine" style="background:var(--dine); color:#fff; font-size:12.5px; font-weight:800; padding:2px 9px; border-radius:999px;">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span><span style="font-size:12.5px; color:var(--text-light); font-weight:700;">${o.channel === 'mobile' ? 'モバイル' : '後で会計'}・${KITCHEN_ST[o.st]}</span><span class="mp-total">${yenStr(o.total)}</span></div>
                 <div class="mp-items">${o.items.map(i => `${escHtml(i.name)}×${i.qty}`).join('、')}</div>
                 <div class="mp-acts">
                     <button class="action-btn btn-checkout" style="flex:1;" onclick="payMobileOrder(this.closest('.mp-card').dataset.id)"><svg class="ic"><use href="#ic-register"/></svg>レジで会計する</button>
@@ -13638,13 +13927,20 @@
         const missing = o.items.filter(i => !products.some(p => p.name === i.name));
         if (missing.length) { playError(); alert(`次の商品がレジの商品にないため、会計できません：${missing.map(i => i.name).join('、')}`); return; }
         cart = [];
-        o.items.forEach(i => { const p = products.find(x => x.name === i.name); for (let k = 0; k < i.qty; k++) cart.push({ ...p }); });
+        o.items.forEach(i => {
+            const p = products.find(x => x.name === i.name);
+            for (let k = 0; k < i.qty; k++) {
+                // 1台だけの時は、カートに入れた分を在庫から引く（ふだんの「商品を押す」と同じ）
+                if (!syncMode && !isUnlimited(p)) { p.stock--; if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString(); }
+                cart.push({ ...p });
+            }
+        });
         pendingMobileOrderId = o.id;
         setCheckoutDine(o.dine);
         showRegister();
         init();
         openCheckout();
-        showToast(`モバイルの注文 ${o.no} をお会計に入れました`);
+        showToast(`${o.channel === 'mobile' ? 'モバイルの注文' : '後で会計の注文'} ${o.no} をお会計に入れました`);
     }
     function markMobileOrderPaid(id, record) {
         return setKitchenOrder(id, x => { x.paid = true; x.key = orderKeyOf(record); x.total = record.total; });
@@ -13652,11 +13948,48 @@
     function cancelMobileOrder(id) {
         const o = kitchenOrders.find(x => x.id === id);
         if (!o) return;
-        if (!confirm(`モバイルの注文 ${o.no}（${o.items.map(i => i.name + '×' + i.qty).join('、')}）を取り消しますか？\nお客様の画面にも「取り消されました」と出ます。`)) return;
+        if (!confirm(`${o.channel === 'mobile' ? 'モバイルの注文' : '後で会計の注文'} ${o.no}（${o.items.map(i => i.name + '×' + i.qty).join('、')}）を取り消しますか？${o.channel === 'mobile' ? '\nお客様の画面にも「取り消されました」と出ます。' : ''}`)) return;
         setKitchenOrder(id, x => { x.st = 'void'; x.t.void = Date.now(); });
-        logEdit(`モバイルの注文を取り消した：${o.no}`);
+        logEdit(`未会計の注文を取り消した：${o.no}`);
         renderMobilePayView();
         renderMobilePayBar();
+    }
+
+    // ---- 後で会計（レジで注文だけ先に作る。店内で食べて帰る時に払う、など）----
+    // カートの「後で会計」→ 持ち帰りか店内を選ぶ → すぐキッチンに出る（未払い）。
+    // 払う時は「未会計の注文」から選ぶ。客No.は注文した時に取っておき、会計の記録もその番号にする。
+    function reserveButtonAction() {
+        if (isKitchen()) promptLaterOrder(); else promptReservation();
+    }
+    function promptLaterOrder() {
+        if (!currentSession) { playError(); alert('設定から先に開店してください'); return; }
+        if (!cart.length) { playError(); return; }
+        if (pendingMobileOrderId) { playError(); alert('いまは未会計の注文を会計している途中です。そのままお会計へ進んでください。'); return; }
+        const sheet = document.getElementById('later-sheet');
+        if (sheet) { sheet.style.display = 'flex'; playSound(); }
+    }
+    function closeLaterSheet() {
+        const sheet = document.getElementById('later-sheet');
+        if (sheet) sheet.style.display = 'none';
+    }
+    function createLaterOrder(dine) {
+        closeLaterSheet();
+        if (!currentSession || !cart.length) { playError(); return null; }
+        receiptCounter++;
+        const sno = receiptCounter;
+        const items = cart.slice();
+        const total = itemsNet(items);
+        const fake = { no: sno, time: new Date(), items, total };
+        const o = addKitchenOrder(fake, dine, { paid: false, later: true, sno });
+        // 1台だけの時は、カートに入れた時に引いた在庫をいったん戻す（未払いの注文として別に数える）
+        if (!syncMode) items.forEach(it => { if (!isUnlimited(it)) restockOne(products.find(p => p.id === it.id)); });
+        cart = [];
+        logEdit(`後で会計の注文を作った：${o ? o.no : sno}（${groupOrderItems(items).map(i => i.name + '×' + i.qty).join('、')}）`);
+        saveData();
+        init();
+        playSuccess();
+        showToast(`後で会計の注文 番号${o ? o.no : sno}（${dine === 'eat' ? '店内' : '持ち帰り'}）をキッチンに出しました`);
+        return o;
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -13752,6 +14085,7 @@
                 customerType: d.customerType || '不明',
                 pendingType: !!d.pendingType,
                 ...(d.channel === 'mobile' ? { channel: 'mobile' } : {}),
+                ...(d.pay && d.pay !== 'cash' ? { pay: d.pay, payLabel: d.payLabel || d.pay } : {}),
                 typeEditedLater: !!d.typeEditedLater,
                 edited: !!d.edited,
                 cash: (d.cash != null) ? d.cash : null,
@@ -13839,6 +14173,8 @@
             customerType: record.customerType,
             pendingType: !!record.pendingType,
             channel: record.channel === 'mobile' ? 'mobile' : 'pos',
+            pay: record.pay || 'cash',
+            payLabel: record.payLabel || '現金',
             typeEditedLater: false,
             edited: false,
             cash: record.cash,

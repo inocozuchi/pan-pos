@@ -331,7 +331,8 @@
         unlockAudio();
         sending = true; renderConfirm();
         try {
-            // 番号（M1, M2 …）は、ほかのお客様とぶつからないよう置き場で1つずつ数える
+            // 番号（M1001, M1002 …）は、ほかのお客様とぶつからないよう置き場で1つずつ数える。
+            // 4けたにして、レジの番号（A1 など）と見分けやすくする
             const seqRef = ev.collection('live').doc('mseq');
             const n = await db.runTransaction(async tx => {
                 const s = await tx.get(seqRef);
@@ -344,7 +345,7 @@
             const items = lines.map(l => ({ name: l.name, qty: l.qty, price: l.price, type: l.type || 'sweet' }));
             const total = items.reduce((t, l) => t + l.qty * l.price, 0);
             await ev.collection('orders').doc(id).set({
-                id, no: 'M' + n, at, dine, items, st: 'cook', channel: 'mobile', paid: false, total,
+                id, no: 'M' + (1000 + n), at, dine, items, st: 'cook', channel: 'mobile', paid: false, total,
                 uid, roundId: (evData && evData.roundId) || '', upd: at, chk: [], t: {}, dev: ''
             });
             mine.push(id); saveMine(mine);
