@@ -531,6 +531,27 @@
         .arc-card .arc-stats b { color: var(--accent-ink); font-size: 15px; }
         .arc-card .arc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .arc-card .arc-actions .action-btn { flex: 1; min-width: 120px; padding: 8px; font-size: 13px; }
+        .arc-card .arc-src { flex: 1 1 180px; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-light); }
+        .arc-card .arc-src .ic { width: 15px; height: 15px; flex-shrink: 0; }
+        .arc-card .arc-src + .action-btn { flex: 0 0 auto; min-width: 0; padding: 8px 14px; }
+        /* 前回の集計PDFを取り込む：読み取った数字を確かめる画面 */
+        .pdfimp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 10px; }
+        @media (max-width: 480px) { .pdfimp-grid { grid-template-columns: 1fr 1fr; } .pdfimp-grid > div:first-child { grid-column: 1 / -1; } }
+        #sub-pdf-import input[type="text"], #sub-pdf-import input[type="number"], #sub-pdf-import input[type="date"] {
+            width: 100%; box-sizing: border-box; margin: 0; padding: 10px 12px; font-size: 16px;
+            border-radius: var(--r-md); border: none; background: var(--sunken); color: var(--text-main);
+            box-shadow: inset 0 0 0 1px var(--hairline); font-family: inherit; min-height: 44px;
+            -webkit-appearance: none; appearance: none;
+        }
+        #sub-pdf-import input:focus { box-shadow: inset 0 0 0 2px var(--accent); outline: none; }
+        .pdfimp-checks { margin: 14px 0 4px; display: flex; flex-direction: column; gap: 6px; }
+        .pdfimp-checks .pc-row { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; line-height: 1.5; }
+        .pdfimp-checks .pc-row .ic { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; }
+        .pdfimp-checks .pc-row.ok .ic { color: var(--positive-ink); }
+        .pdfimp-checks .pc-row.ng { color: var(--warn-ink); font-weight: 600; }
+        .pdfimp-table td { padding: 6px 10px; }
+        .pdfimp-table td.num { width: 96px; }
+        #sub-pdf-import .pdfimp-table input[type="number"] { width: 84px; min-height: 38px; padding: 6px 10px; text-align: right; font-variant-numeric: tabular-nums; }
 
         #app-container {
             display: flex;
@@ -2762,9 +2783,16 @@
 
             <!-- 過去の販売会 -->
             <div class="sub-view" id="sub-archive" style="display:none;">
-                <p class="settings-hint">閉店するたびに、その回の記録がこの端末へ自動保存されます。</p>
+                <p class="settings-hint">閉店するたびに、その回の記録がこの端末へ自動保存されます。この端末に前回の記録が無い時は、前回の集計結果のPDFから取り込めます。</p>
+                <button class="action-btn btn-secondary" id="pdf-import-btn" style="width:100%; margin:0 0 12px;" onclick="pickReportPdf()"><svg class="ic"><use href="#ic-upload"/></svg>前回の集計PDFを取り込む</button>
                 <div id="archive-list"></div>
             </div>
+
+            <!-- 前回の集計PDFを取り込む（読み取った数字を確かめてから保存する） -->
+            <div class="sub-view" id="sub-pdf-import" style="display:none;">
+                <div id="pdf-import-body"></div>
+            </div>
+            <input type="file" id="pdf-import-file" accept="application/pdf,.pdf" style="display:none" onchange="onReportPdfChosen(event)">
 
             <!-- データの書き出し -->
             <div class="sub-view" id="sub-data" style="display:none;">
@@ -4270,6 +4298,7 @@
                     <li><b>「新しく開店する」</b>を押します。</li>
                     <li><b>「販売会の名前」</b>を確認します（例：11月1日 パン販売）。あとで集計を見分けるための名前です。直したら<b>「この名前にする」</b>を押すと前の画面に戻ります。</li>
                     <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。入れ終えたら<b>「この商品と仕入れ数にする」</b>を押します。</li>
+                    <li><b>「前回の記録」</b>に前回の販売会が出ているか見ます。出ていれば、前回比と仕入れ数の目安に使われます。<b>「ありません」と出ていたら</b>、前回の集計結果のPDFから取り込めます（「前回の記録をPDFから取り込む」を見てください）。</li>
                     <li>共有の設定はいりません。開店すると<b>共有コード（4けたの数字）が自動で決まり</b>、ほかの端末から合流できるようになります。1台だけで使う日も、そのままで大丈夫です（通信できない時だけ、この端末だけで開店します）。</li>
                     <li>いちばん下の<b>「この内容で開店する」</b>を押して完了です。</li>
                 </ol>
@@ -4520,6 +4549,23 @@
                     <div class="man-box-h">印刷の画面からレジにもどるには</div>
                     <p>PDFにする時は別の画面が開きます。保存し終えたら、その画面のいちばん上の<b>「✕ 閉じて戻る」</b>を押すとレジにもどれます。印刷の画面を閉じてしまっても、となりの<b>「印刷・PDF保存」</b>でもう一度開けます。</p>
                 </div>`
+        },
+        {
+            id: 'pdfimport', icon: 'upload', title: '前回の記録をPDFから取り込む', sub: '前回比と仕入れ数の目安のために',
+            body: `
+                <p>前回比や「前回の実績を参考に反映」は、この端末の<b>「過去の販売会」</b>にある、いちばん新しい記録を使います。端末を初期化した・別の端末で開いたなどで前回の記録が無い時は、<b>前回の「集計結果のPDF」から取り込めます</b>。</p>
+                <ol class="man-steps">
+                    <li><b>「設定 → 過去の販売会」</b>（開店の画面の<b>「前回の記録」</b>からも行けます）で、<b>「前回の集計PDFを取り込む」</b>を押します。</li>
+                    <li>前回のPDFを選びます。総売上・来店人数・商品ごとの販売数などを読み取って、<b>確かめる画面</b>が出ます。</li>
+                    <li><b>PDFと見比べます。</b>日付はPDFを作った日が入っているので、販売会の日と違えば直します。「合っています」の印が出ていれば、読み取りの漏れはありません。</li>
+                    <li><b>「前回の記録として保存する」</b>を押します。</li>
+                </ol>
+                <ul class="man-list">
+                    <li>古い版のアプリで作ったPDFでも読めます。版によっては商品ごとの売上が無く、<b>個数だけ</b>を取り込みます。</li>
+                    <li>写真やスキャンのPDF（文字の無いPDF）は読めません。その時は、総売上と来店人数を<b>手で入れて</b>保存できます。</li>
+                    <li>読み取りを間違えて保存した時は、一覧の<b>「消す」</b>で消して、取り込み直せます（消せるのは取り込んだ記録だけです）。</li>
+                    <li>次回のために、閉店したら<b>「書き出し（PDF・CSV）」の全項目のPDF</b>を残しておくと安心です。</li>
+                </ul>`
         },
         {
             id: 'lock', icon: 'lock', title: '手伝いの人に端末を渡す', sub: 'この端末を制限（ロック）',
@@ -6771,8 +6817,15 @@
         box.innerHTML = [...sessionArchive].reverse().map((a, revIdx) => {
             const idx = sessionArchive.length - 1 - revIdx;
             const d = new Date(a.date);
-            const dstr = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-            const actions = a.snapshot
+            const dstr = a.imported
+                ? `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`
+                : `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            const actions = a.imported
+                ? `<div class="arc-actions">
+                       <span class="arc-src"><svg class="ic"><use href="#ic-file"/></svg>PDFから取り込んだ記録（${(a.itemStats || []).length}品の販売数）</span>
+                       <button class="action-btn btn-secondary" onclick="deleteImportedArchive(${idx})"><svg class="ic"><use href="#ic-trash"/></svg>消す</button>
+                   </div>`
+                : a.snapshot
                 ? `<div class="arc-actions">
                        <button class="action-btn btn-accent-outline" onclick="openArchiveReport(${idx})"><svg class="ic"><use href="#ic-chart"/></svg>集計を見る</button>
                        <button class="action-btn btn-secondary" onclick="exportArchiveBackup(${idx})"><svg class="ic"><use href="#ic-download"/></svg>バックアップ保存</button>
@@ -6816,6 +6869,431 @@
         const stamp = `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
         triggerDownload(`taizanboku_backup_${stamp}.json`, JSON.stringify(a.snapshot, null, 2), 'application/json');
         showToast('バックアップファイルを保存しました');
+    }
+
+    // PDFから取り込んだ記録を消す（読み取りを間違えた時に、消して取り込み直せるように）。
+    // 閉店して自動で残った記録は、ここからは消せない。
+    function deleteImportedArchive(idx) {
+        const a = sessionArchive[idx];
+        if (!a || !a.imported) { playError(); return; }
+        if (!confirm(`PDFから取り込んだ「${a.name}」の記録を消します。\nよろしいですか？`)) return;
+        sessionArchive.splice(idx, 1);
+        // いまの販売会の比べる相手だった時は、ひとつ前の記録に戻す
+        if (comparisonBaseline && comparisonBaseline.imported && comparisonBaseline.imported.at === a.imported.at) {
+            comparisonBaseline = currentSession && sessionArchive.length ? sessionArchive[sessionArchive.length - 1] : null;
+        }
+        saveData();
+        renderArchiveList();
+        showToast(`「${a.name}」の記録を消しました`);
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 前回の集計PDFを取り込む ▼▼▼
+    // 販売会は月に1度で、そのあいだに試しの会計や初期化をすることがある。
+    // 前回の記録を端末に残し続けるのは難しいので、前回の「集計結果のPDF」から数字を読み取り、
+    // 「過去の販売会」の1件として足せるようにする（前回比と、次の仕入れ数の目安に使われる）。
+    // ・PDFの形は版によって大きく違う。どの版にもある言葉（「総売上」「来店人数」など）と、
+    //   表の並び（商品名のあとに数字）を手がかりに読む
+    // ・読み取った数字は、保存の前に必ず画面に出す。人がPDFと見比べて、直してから保存する
+    // ・PDFを読む部品（pdf.js）は大きいので、取り込む時にだけ読み込む（会計の速さには関わらない）
+    const PDFJS_DIR = 'vendor/pdfjs/';
+    const PDF_IMPORT_MAX_PAGES = 40;
+    const PDF_CUST_TYPES = ['学生', '教員', '職員', 'その他', '不明'];
+    let pdfjsLoading = null;
+    let pdfImportDraft = null;   // 読み取った内容（保存するまでの下書き）
+
+    function loadScriptOnce(src) {
+        return new Promise((resolve, reject) => {
+            const s = document.createElement('script');
+            s.src = src;
+            s.onload = () => resolve();
+            s.onerror = () => { s.remove(); reject(new Error('読み込めませんでした: ' + src)); };
+            document.head.appendChild(s);
+        });
+    }
+    // 読む処理は画面と同じところで動かす（ワーカーを使わない）。
+    // 先に pdf.worker を読んでおくと、pdf.js はそれをそのまま使う。
+    // ファイルを直接開いて使う時でも、別の仕組み（ワーカー）の読み込みで失敗しない。
+    function loadPdfjs() {
+        if (window.pdfjsLib && window.pdfjsWorker) return Promise.resolve(window.pdfjsLib);
+        if (!pdfjsLoading) {
+            pdfjsLoading = loadScriptOnce(PDFJS_DIR + 'pdf.worker.min.js')
+                .then(() => loadScriptOnce(PDFJS_DIR + 'pdf.min.js'))
+                .then(() => {
+                    if (!window.pdfjsLib) throw new Error('pdf.js が見つかりません');
+                    return window.pdfjsLib;
+                })
+                .catch(e => { pdfjsLoading = null; throw e; });
+        }
+        return pdfjsLoading;
+    }
+
+    // PDFの文字を、見た目の1行ずつの文字列にして返す
+    async function pdfTextLines(data) {
+        const lib = await loadPdfjs();
+        const doc = await lib.getDocument({
+            data, cMapUrl: PDFJS_DIR + 'cmaps/', cMapPacked: true,
+            isEvalSupported: false, disableFontFace: true
+        }).promise;
+        const out = [];
+        try {
+            const n = Math.min(doc.numPages, PDF_IMPORT_MAX_PAGES);
+            for (let i = 1; i <= n; i++) {
+                const pg = await doc.getPage(i);
+                const tc = await pg.getTextContent();
+                out.push(...textItemsToLines(tc.items));
+            }
+        } finally {
+            try { doc.destroy(); } catch (e) {}
+        }
+        return out;
+    }
+
+    // PDFの文字は「かたまり」ごとに位置つきで出てくる。同じ高さのものを左から並べて1行にする。
+    // 表のます目の間には空白を1つはさむ（「商品名 数 / 数 ¥売上」のように読めるように）。
+    function textItemsToLines(items) {
+        const its = [];
+        (items || []).forEach(t => {
+            if (!t || typeof t.str !== 'string' || !t.str.trim() || !t.transform) return;
+            its.push({ s: t.str, x: t.transform[4], y: t.transform[5], w: t.width || 0, h: Math.abs(t.transform[3]) || Math.abs(t.height) || 8 });
+        });
+        its.sort((a, b) => b.y - a.y || a.x - b.x);
+        const rows = [];
+        its.forEach(t => {
+            let r = null;
+            for (let k = rows.length - 1; k >= 0 && k >= rows.length - 4; k--) {
+                if (Math.abs(rows[k].y - t.y) < Math.max(2, Math.min(rows[k].h, t.h) * 0.45)) { r = rows[k]; break; }
+            }
+            if (r) r.items.push(t); else rows.push({ y: t.y, h: t.h, items: [t] });
+        });
+        return rows.map(r => {
+            r.items.sort((a, b) => a.x - b.x);
+            let s = '', end = null;
+            r.items.forEach(t => { if (end != null && t.x - end > r.h * 0.25) s += ' '; s += t.s; end = t.x + t.w; });
+            return s;
+        });
+    }
+
+    // 全角の数字や記号を、読み取りやすい形にそろえる（商品名の中の ① などはそのまま）
+    function pdfNormLine(s) {
+        return String(s)
+            .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+            .replace(/￥/g, '¥').replace(/，/g, ',').replace(/／/g, '/').replace(/：/g, ':')
+            .replace(/[\s　]+/g, ' ').trim();
+    }
+    function pdfNum(s) { return parseInt(String(s).replace(/,/g, ''), 10); }
+
+    // 知っている商品名（いまの商品・過去の記録）に、表記の揺れをそろえて合わせる
+    function pdfKnownNames() {
+        const map = new Map();
+        const add = n => { if (n && !map.has(pdfNormLine(n))) map.set(pdfNormLine(n), n); };
+        products.forEach(p => add(p.name));
+        (DEFAULT_PRODUCTS || []).forEach(p => add(p.name));
+        sessionArchive.forEach(a => (a.itemStats || []).forEach(i => add(i.name)));
+        return map;
+    }
+
+    // 表の1行で、商品名が長くて2行に折り返されていると、数字の行と名前の行が分かれる。
+    // その時は上下の行をつないで、知っている商品名になる組み合わせを探す。
+    function pdfRowName(lines, i, prefix, known, isDataRow) {
+        const prev = i > 0 && !isDataRow(lines[i - 1]) ? lines[i - 1] : '';
+        const next = i + 1 < lines.length && !isDataRow(lines[i + 1]) ? lines[i + 1] : '';
+        const tries = [prefix, prev + prefix, prefix + next, prev + prefix + next].map(s => s.trim()).filter(Boolean);
+        for (const t of tries) { if (known.has(t)) return known.get(t); }
+        return prefix.trim() || (prev + next).trim();
+    }
+
+    // 集計結果のPDFの文字（行の並び）から、前回の記録に使う数字を読み取る
+    function parseReportLines(rawLines) {
+        const lines = (rawLines || []).map(pdfNormLine).filter(Boolean);
+        const text = lines.join('\n');
+        // 古い版は文字を1つの箱に流し込んでいたので、言葉が行の途中で折り返されている。
+        // 行をつないだ文字列でも探す。数字どうしがくっつく時だけ空白をはさむ。
+        let flat = '';
+        lines.forEach(l => { flat += (/\d$/.test(flat) && /^\d/.test(l)) ? ' ' + l : l; });
+        const known = pdfKnownNames();
+        const canon = n => known.get(pdfNormLine(n)) || n.trim();
+        const r = { name: '', date: null, totalRev: null, customerCount: null, setDiscount: 0, items: [], recs: [], cust: {}, itemSource: '', hasText: lines.length > 0 };
+        let m;
+
+        if ((m = text.match(/販売会 ?集計結果[^\n]*\n(.+?) ?出力 ?:/))) r.name = m[1].trim();
+        else if ((m = flat.match(/【売上集計 ?: ?([^】]+)】/))) r.name = m[1].trim();
+        if ((m = flat.match(/出力(?:日時)? ?: ?(\d{4})\/(\d{1,2})\/(\d{1,2})(?: (\d{1,2}):(\d{2}))?/))) {
+            const d = new Date(+m[1], +m[2] - 1, +m[3], m[4] != null ? +m[4] : 12, m[5] != null ? +m[5] : 0);
+            if (!isNaN(d.getTime())) r.date = d.toISOString();
+        }
+        if ((m = flat.match(/総売上 ?:? ?¥ ?([\d,]+)/))) r.totalRev = pdfNum(m[1]);
+        if ((m = flat.match(/来店人数 ?:? ?([\d,]+) ?人/))) r.customerCount = pdfNum(m[1]);
+        if ((m = flat.match(/セット割引 ?[−\-–] ?¥ ?([\d,]+)/))) r.setDiscount = pdfNum(m[1]);
+
+        // 表の行の形
+        const RE_ABC = /^(.*?) ?[●◐○] ?[ABC] (\d+) ?\/ ?(\d+) (\d+)% ¥ ?([\d,]+)$/;       // 商品別（販売/仕入・売上）
+        const RE_REC = /^(.*?) ?(\d+) (\d+) (\d+) ([▲▼→]) ?([増減同]) ?(.*)$/;            // 次回の仕入れ数の目安
+        const isDataRow = l => RE_ABC.test(l) || RE_REC.test(l) || (/\d/.test(l) && /¥|%|人/.test(l));
+        const abc = [], recs = [];
+        const seenA = new Set(), seenR = new Set();
+        lines.forEach((l, i) => {
+            let a = l.match(RE_ABC);
+            if (a) {
+                const name = canon(pdfRowName(lines, i, a[1], known, isDataRow));
+                if (name && !seenA.has(name)) { seenA.add(name); abc.push({ name, qty: +a[2], initial: +a[3], rev: pdfNum(a[5]) }); }
+                return;
+            }
+            a = l.match(RE_REC);
+            // 名前の欄が数字だけの行（グラフの目盛りなど）は商品ではない
+            if (a && (!a[1] || /[^\d\s]/.test(a[1]))) {
+                const name = canon(pdfRowName(lines, i, a[1] || '', known, isDataRow));
+                if (name && !seenR.has(name)) { seenR.add(name); recs.push({ name, initial: +a[2], sold: +a[3], recommended: +a[4], reason: (a[7] || '').trim() }); }
+            }
+        });
+        // 古い版の「次回準備の参考メモ」：・商品: 今回 仕入15/販売8 → 参考 10個 ⬇ (理由)
+        // （もっと古い版は「前回 仕入15/販売8 → 推奨 10個」）
+        const reOldRec = /・([^・\n]+?) ?: ?(?:今回|前回) ?仕入 ?(\d+) ?\/ ?販売 ?(\d+) ?→ ?(?:参考|推奨) ?(\d+) ?個 ?[⬆⬇➡↑↓→]? ?(?:[(（]([^)）]*)[)）])?/g;
+        while ((m = reOldRec.exec(flat))) {
+            const name = canon(m[1]);
+            if (!seenR.has(name)) { seenR.add(name); recs.push({ name, initial: +m[2], sold: +m[3], recommended: +m[4], reason: (m[5] || '').trim() }); }
+        }
+        // いちばん古い版の「販売数ランキング」：・商品: 16個
+        const rank = [];
+        const ri = flat.indexOf('販売数ランキング');
+        if (ri >= 0) {
+            let seg = flat.slice(ri + 8);
+            const stop = seg.search(/\[|-{5,}/);
+            if (stop > 0) seg = seg.slice(0, stop);
+            const re = /・([^・:\n]+?) ?: ?(\d+) ?個/g;
+            const seen = new Set();
+            while ((m = re.exec(seg))) { const name = canon(m[1]); if (!seen.has(name)) { seen.add(name); rank.push({ name, qty: +m[2] }); } }
+        }
+
+        if (abc.length) { r.items = abc; r.itemSource = 'abc'; }
+        else if (recs.some(x => x.sold > 0)) { r.items = recs.filter(x => x.sold > 0).map(x => ({ name: x.name, qty: x.sold, initial: x.initial })); r.itemSource = 'recs'; }
+        else if (rank.length) { r.items = rank; r.itemSource = 'rank'; }
+        r.items.sort((x, y) => y.qty - x.qty);
+        r.recs = recs;
+
+        // 客層ごとの人数（「学生 9人」「・学生: 9人」）
+        PDF_CUST_TYPES.forEach(t => {
+            const re = new RegExp('(?:^|[\\n ・\\]])' + t + ' ?:? ?(\\d+) ?人');
+            const mm = text.match(re) || flat.match(re);
+            if (mm) r.cust[t] = +mm[1];
+        });
+        return r;
+    }
+
+    // 「PDFを選ぶ」ボタン
+    function pickReportPdf() {
+        const inp = document.getElementById('pdf-import-file');
+        if (!inp) return;
+        inp.value = '';
+        inp.click();
+    }
+
+    async function onReportPdfChosen(ev) {
+        const f = ev && ev.target && ev.target.files && ev.target.files[0];
+        if (!f) return;
+        if (!/\.pdf$/i.test(f.name) && f.type !== 'application/pdf') {
+            alert('PDFファイルを選んでください。');
+            return;
+        }
+        const btn = document.getElementById('pdf-import-btn');
+        if (btn) { btn.disabled = true; btn.dataset.label = btn.dataset.label || btn.innerHTML; btn.innerHTML = '読み取っています…'; }
+        try {
+            const buf = new Uint8Array(await f.arrayBuffer());
+            await startPdfImport(buf, f.name);
+        } finally {
+            if (btn) { btn.disabled = false; if (btn.dataset.label) btn.innerHTML = btn.dataset.label; }
+        }
+    }
+
+    // 読み取って、確かめる画面を開く（テストからも呼ぶ）
+    async function startPdfImport(buf, fileName) {
+        let lines;
+        try {
+            lines = await pdfTextLines(buf);
+        } catch (e) {
+            const pw = e && (e.name === 'PasswordException' || /password/i.test(e.message || ''));
+            alert(pw ? 'パスワードのかかったPDFは読めません。パスワードを外したPDFを選んでください。'
+                : 'このPDFを読み取れませんでした。\n集計結果のPDFか、ファイルが壊れていないかを確かめてください。\n\n（くわしく：' + ((e && e.message) || e) + '）');
+            return false;
+        }
+        const r = parseReportLines(lines);
+        pdfImportDraft = {
+            fileName: fileName || 'PDF',
+            parsed: r,
+            name: r.name || '前回の販売会',
+            date: r.date || new Date().toISOString(),
+            totalRev: r.totalRev,
+            customerCount: r.customerCount,
+            items: r.items.map(x => Object.assign({}, x, { qty0: x.qty, rev0: x.rev }))
+        };
+        openPanel('settings', 'pdf-import');
+        return true;
+    }
+
+    function pdfDateInputValue(iso) {
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return '';
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
+
+    function renderPdfImport() {
+        const box = document.getElementById('pdf-import-body');
+        if (!box) return;
+        const d = pdfImportDraft;
+        if (!d) {
+            box.innerHTML = `<p class="settings-hint">前回の販売会の「集計結果のPDF」を選ぶと、総売上・来店人数・商品ごとの販売数を読み取ります。</p>
+                <button class="action-btn btn-checkout" style="width:100%;" onclick="pickReportPdf()"><svg class="ic"><use href="#ic-upload"/></svg>PDFを選ぶ</button>`;
+            return;
+        }
+        const r = d.parsed;
+        const readAny = r.totalRev != null || r.customerCount != null || r.items.length > 0;
+        const head = !r.hasText
+            ? `<div class="notice notice-warn"><svg class="ic"><use href="#ic-alert"/></svg><span>このPDFには文字がありません（写真やスキャンのPDFかもしれません）。<br>数字を手で入れて保存することもできます。</span></div>`
+            : (readAny
+                ? `<div class="notice"><svg class="ic"><use href="#ic-file"/></svg><span>「${escHtml(d.fileName)}」から読み取りました。<br><b>PDFと見比べて、違うところは直してから保存してください。</b></span></div>`
+                : `<div class="notice notice-warn"><svg class="ic"><use href="#ic-alert"/></svg><span>「${escHtml(d.fileName)}」から、売上の数字を見つけられませんでした。集計結果のPDFかどうか確かめてください。数字を手で入れて保存することもできます。</span></div>`);
+        const itemRows = d.items.map((x, i) => `<tr>
+                <td class="nm">${escHtml(x.name)}${x.initial != null ? `<span class="sub">仕入れ ${x.initial}</span>` : ''}</td>
+                <td class="num"><input type="number" inputmode="numeric" min="0" class="pdfimp-qty" data-i="${i}" value="${x.qty}" oninput="onPdfImportInput()" aria-label="${escHtml(x.name)}の販売数"></td>
+            </tr>`).join('');
+        box.innerHTML = head + `
+            <label class="field-label" for="pdfimp-name">販売会の名前</label>
+            <input type="text" id="pdfimp-name" value="${escHtml(d.name)}" oninput="onPdfImportInput()">
+            <div class="pdfimp-grid">
+                <div><label class="field-label" for="pdfimp-date">販売会の日</label><input type="date" id="pdfimp-date" value="${pdfDateInputValue(d.date)}" oninput="onPdfImportInput()"></div>
+                <div><label class="field-label" for="pdfimp-total">総売上（円）</label><input type="number" inputmode="numeric" min="0" id="pdfimp-total" value="${d.totalRev != null ? d.totalRev : ''}" oninput="onPdfImportInput()"></div>
+                <div><label class="field-label" for="pdfimp-cust">来店人数（人）</label><input type="number" inputmode="numeric" min="1" id="pdfimp-cust" value="${d.customerCount != null ? d.customerCount : ''}" oninput="onPdfImportInput()"></div>
+            </div>
+            ${r.date ? '<p class="settings-hint" style="margin:6px 0 0;">日付は、PDFを作った日を入れています。販売会の日と違う時は直してください。</p>' : ''}
+            <div id="pdfimp-checks" class="pdfimp-checks" aria-live="polite"></div>
+            ${d.items.length ? `<div class="a-head">商品ごとの販売数（${d.items.length}品）</div>
+            <table class="a-table pdfimp-table"><tbody>${itemRows}</tbody></table>` : ''}
+            <button class="action-btn btn-checkout" id="pdfimp-save" style="width:100%; margin-top:14px;" onclick="savePdfImport()"><svg class="ic"><use href="#ic-check"/></svg>前回の記録として保存する</button>
+            <button class="action-btn btn-secondary" style="width:100%;" onclick="pickReportPdf()"><svg class="ic"><use href="#ic-upload"/></svg>別のPDFを選び直す</button>`;
+        renderPdfImportChecks();
+    }
+
+    // 入力欄の今の値を下書きに移す
+    function readPdfImportForm() {
+        const d = pdfImportDraft;
+        if (!d) return null;
+        const v = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+        const int = s => (String(s).trim() === '' ? null : (/^\d+$/.test(String(s).trim()) ? parseInt(s, 10) : NaN));
+        d.name = v('pdfimp-name').trim();
+        const ds = v('pdfimp-date');
+        if (/^\d{4}-\d{2}-\d{2}$/.test(ds)) {
+            // 時刻は読み取った値（無ければ昼の12時）を残す。日付だけ入れ替える
+            const old = new Date(d.date);
+            const [y, mo, da] = ds.split('-').map(Number);
+            const nd = new Date(y, mo - 1, da, isNaN(old.getTime()) ? 12 : old.getHours(), isNaN(old.getTime()) ? 0 : old.getMinutes());
+            if (!isNaN(nd.getTime())) d.date = nd.toISOString();
+        }
+        d.totalRev = int(v('pdfimp-total'));
+        d.customerCount = int(v('pdfimp-cust'));
+        document.querySelectorAll('.pdfimp-qty').forEach(el => {
+            const it = d.items[+el.dataset.i];
+            if (!it) return;
+            const q = int(el.value);
+            it.qty = q;
+            // 売上は、PDFにあった1個あたりの値段で数え直す
+            if (it.rev0 != null && it.qty0 > 0 && q != null && !isNaN(q)) it.rev = Math.round(it.rev0 / it.qty0 * q);
+        });
+        return d;
+    }
+
+    function onPdfImportInput() {
+        readPdfImportForm();
+        renderPdfImportChecks();
+    }
+
+    // 読み取った数字どうしが合っているかを見せる（PDFと見比べる手がかり）
+    function renderPdfImportChecks() {
+        const box = document.getElementById('pdfimp-checks');
+        const d = pdfImportDraft;
+        if (!box || !d) return;
+        const r = d.parsed;
+        const out = [];
+        const okMark = '<svg class="ic"><use href="#ic-check"/></svg>';
+        const ngMark = '<svg class="ic"><use href="#ic-alert"/></svg>';
+        const row = (ok, html) => out.push(`<div class="pc-row ${ok ? 'ok' : 'ng'}">${ok ? okMark : ngMark}<span>${html}</span></div>`);
+        const yen = n => '¥' + Number(n).toLocaleString();
+        const validNum = n => n != null && !isNaN(n);
+        if (!validNum(d.totalRev)) row(false, '総売上を入れてください');
+        if (!validNum(d.customerCount) || d.customerCount < 1) row(false, '来店人数を入れてください');
+        const items = d.items.filter(x => validNum(x.qty));
+        if (d.items.some(x => !validNum(x.qty))) row(false, '販売数には0以上の整数を入れてください');
+        if (!d.items.length) {
+            row(false, '商品ごとの販売数は見つかりませんでした。前回比は合計の数字だけになります');
+        } else if (validNum(d.totalRev) && r.itemSource === 'abc' && d.items.every(x => x.rev != null)) {
+            const sum = items.reduce((s, x) => s + (x.rev || 0), 0);
+            const disc = r.setDiscount || 0;
+            if (sum - disc === d.totalRev) {
+                row(true, `商品ごとの売上の合計${disc ? `（セット割 −${yen(disc)} を引いた額）` : ''}が、総売上 ${yen(d.totalRev)} と合っています`);
+            } else {
+                row(false, `商品ごとの売上の合計 ${yen(sum - disc)} と、総売上 ${yen(d.totalRev)} が合いません。読み落としがないか、PDFと見比べてください`);
+            }
+        } else {
+            row(true, `${d.items.length}品の販売数を読み取りました（合計 ${items.reduce((s, x) => s + x.qty, 0)}個）`);
+        }
+        const custKeys = Object.keys(r.cust);
+        if (custKeys.length && validNum(d.customerCount)) {
+            const cs = custKeys.reduce((s, k) => s + r.cust[k], 0);
+            if (cs === d.customerCount) row(true, `客層ごとの人数（${custKeys.map(k => `${escHtml(k)}${r.cust[k]}`).join('・')}）も、来店人数と合っています`);
+            else row(false, `客層ごとの人数の合計（${cs}人）が来店人数と合いません。客層の人数は保存しません`);
+        }
+        if (r.recs.length) row(true, `次の仕入れ数の目安（${r.recs.length}品）も読み取りました。開店の「商品と仕入れ数」で使えます`);
+        box.innerHTML = out.join('');
+    }
+
+    // 保存：「過去の販売会」に日付の順で入れる
+    function savePdfImport() {
+        const d = readPdfImportForm();
+        if (!d) return;
+        const bad = msg => { playError(); alert(msg); };
+        if (d.totalRev == null || isNaN(d.totalRev)) return bad('総売上を、0以上の整数で入れてください。');
+        if (d.customerCount == null || isNaN(d.customerCount) || d.customerCount < 1) return bad('来店人数を、1以上の整数で入れてください。');
+        if (d.items.some(x => x.qty == null || isNaN(x.qty))) return bad('販売数には、0以上の整数を入れてください。');
+        const name = d.name || '前回の販売会';
+        const r = d.parsed;
+        const custSum = Object.keys(r.cust).reduce((s, k) => s + r.cust[k], 0);
+        const entry = {
+            name,
+            date: d.date,
+            totalRev: d.totalRev,
+            customerCount: d.customerCount,
+            avgSpend: Math.round(d.totalRev / d.customerCount),
+            itemStats: d.items.filter(x => x.qty > 0)
+                .map(x => (x.rev != null ? { name: x.name, qty: x.qty, rev: x.rev } : { name: x.name, qty: x.qty }))
+                .sort((a, b) => b.qty - a.qty),
+            customerStats: custSum === d.customerCount ? Object.assign({}, r.cust) : {},
+            recommendations: r.recs.map(x => ({
+                name: x.name, sold: x.sold, initial: x.initial,
+                soldOut: x.initial > 0 && x.sold >= x.initial,
+                recommended: x.recommended, reason: x.reason || ''
+            })),
+            imported: { from: 'pdf', file: d.fileName, at: new Date().toISOString() }
+        };
+        const dup = sessionArchive.find(a => a && a.name === entry.name && a.totalRev === entry.totalRev && a.customerCount === entry.customerCount);
+        if (dup && !confirm(`「${entry.name}」（売上¥${entry.totalRev.toLocaleString()}・${entry.customerCount}人）の記録は、すでにあります。\nもう1件、足しますか？`)) return;
+        // 日付の順に入れる（いちばん新しいものが「前回」になる）
+        const t = new Date(entry.date).getTime();
+        let at = sessionArchive.length;
+        while (at > 0 && new Date(sessionArchive[at - 1].date).getTime() > t) at--;
+        if (sessionArchive.length >= 20 && at === 0) {
+            return bad('残してある記録（20件）のどれよりも古いため、足せません。');
+        }
+        sessionArchive.splice(at, 0, entry);
+        if (sessionArchive.length > 20) sessionArchive = sessionArchive.slice(-20);
+        const newest = sessionArchive[sessionArchive.length - 1] === entry;
+        // 営業中に取り込んだ時は、いまの販売会の比べる相手（前回）もこの記録にする
+        if (currentSession && newest) comparisonBaseline = entry;
+        saveData();
+        pdfImportDraft = null;
+        panelBack();
+        if (currentSub === 'archive') renderArchiveList();
+        showToast(newest
+            ? `「${name}」を前回の記録として保存しました`
+            : `「${name}」を過去の販売会に足しました（もっと新しい記録があります）`);
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -8203,9 +8681,10 @@
     }
 
     // 直近の販売会の推奨数を商品名で引ける形にして返す
+    // （PDFの形によっては目安が読み取れないことがあるので、目安のある記録のうち新しいものを使う）
     function getLatestRecommendationMap() {
-        if (sessionArchive.length === 0) return null;
-        const last = sessionArchive[sessionArchive.length - 1];
+        const last = [...sessionArchive].reverse().find(a => a && (a.recommendations || []).length);
+        if (!last) return null;
         const map = {};
         (last.recommendations || []).forEach(r => { map[r.name] = r; });
         return { sessionName: last.name, map: map };
@@ -8652,6 +9131,7 @@
         'sync-add': '別の販売会に合流する',
         'receipt': '領収書の設定',
         'archive': '過去の販売会',
+        'pdf-import': '前回の記録を取り込む',
         'data': 'データの書き出し',
         'display': 'この端末の設定',
         'lock': 'この端末を制限',
@@ -8860,6 +9340,7 @@
             else if (sub === 'sync') renderSyncView();
             else if (sub === 'receipt') renderReceiptSettings();
             else if (sub === 'archive') renderArchiveList();
+            else if (sub === 'pdf-import') renderPdfImport();
             else if (sub === 'display') { updateFullscreenButton(); renderThemeSettings(); renderClockSettings(); renderLockEntry(); }
             else if (sub === 'lock') { lockDraft = null; lockReuse = true; renderLockView(); }
             else if (sub === 'manual') renderManual();
@@ -9414,6 +9895,13 @@
         panelBack();
     }
 
+    // 開店の画面の「前回の記録」の説明。前回比と仕入れ数の目安は、ここにある記録を使う
+    function prevRecordSub() {
+        const a = sessionArchive[sessionArchive.length - 1];
+        if (!a) return 'ありません・前回の集計PDFから取り込めます';
+        return `「${escHtml(a.name || '無題')}」¥${(a.totalRev || 0).toLocaleString()}・前回比と仕入れの目安に使います`;
+    }
+
     function renderOpenMenu() {
         const box = document.getElementById('open-menu-list');
         if (!box) return;
@@ -9425,7 +9913,8 @@
         box.innerHTML =
             menuRow('tag', '販売会の名前', escHtml(nameInput ? nameInput.value : ''), "openPanel('session','open-name')") +
             menuRow('box', '商品と仕入れ数', `${active.length}品・合計${totalStock}個`, "openPanel('session','open-stock')") +
-            menuRow('target', 'セット割・売上目標', setGoalSub(), "openPanel('settings','goal')");
+            menuRow('target', 'セット割・売上目標', setGoalSub(), "openPanel('settings','goal')") +
+            menuRow('archive', '前回の記録', prevRecordSub(), "openPanel('settings','archive')");
         // 共有のしかた（共有の準備がある端末だけ）
         const note = document.getElementById('open-share-note');
         if (note) {
