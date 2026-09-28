@@ -451,25 +451,6 @@
         .share-chip .ic { width: 15px; height: 15px; }
         .share-chip:active { transform: scale(0.96); }
 
-        /* 会計が済んだ時のカード（押せない。約3秒で消え、次の商品を押すとすぐ消える） */
-        .done-card {
-            position: fixed; left: 50%; top: 42%; z-index: 1500; pointer-events: none;
-            transform: translate(-50%, -50%); width: min(340px, calc(100vw - 32px));
-            background: var(--display-face); color: #fff; border-radius: var(--r-lg);
-            box-shadow: 0 18px 50px rgba(0,0,0,.28); padding: 18px 20px 14px; text-align: center;
-            animation: dcIn .26s cubic-bezier(.32,.72,0,1) both;
-        }
-        @keyframes dcIn { from { opacity: 0; transform: translate(-50%, -46%) scale(.96); } to { opacity: 1; transform: translate(-50%, -50%); } }
-        .done-card .dc-top { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; color: #7FE0A8; }
-        .done-card .dc-top .ic { width: 18px; height: 18px; stroke-width: 2.4; }
-        .done-card .dc-no { font-size: 15px; font-weight: 700; color: var(--on-display-sub); margin-top: 2px; }
-        .done-card .dc-no b { font-size: 46px; font-weight: 900; color: #fff; margin-left: 4px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
-        .done-card .dc-change { font-size: 24px; font-weight: 900; color: var(--on-dark); font-variant-numeric: tabular-nums; }
-        .done-card .dc-denoms { font-size: 13px; color: var(--on-display-sub); margin-top: 2px; min-height: 1em; }
-        .done-card .dc-bar { height: 4px; border-radius: 2px; background: var(--on-display-chip); margin-top: 12px; overflow: hidden; }
-        .done-card .dc-bar i { display: block; height: 100%; background: #7FE0A8; transform-origin: left; animation: dcBar var(--dc-ms, 2800ms) linear both; }
-        @keyframes dcBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
-
         /* この端末をロックしている時の印 */
         .lock-chip {
             display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer;
@@ -2957,15 +2938,6 @@
 
 </main>
 
-<!-- 会計が済んだ時に、客No.とお釣りを大きく出す（押せない・次の商品を押すとすぐ消える） -->
-<div id="done-card" class="done-card" role="status" aria-live="polite" style="display:none;">
-    <div class="dc-top"><svg class="ic"><use href="#ic-check"/></svg>記録しました</div>
-    <div class="dc-no">客No.<b id="dc-no"></b></div>
-    <div class="dc-change" id="dc-change"></div>
-    <div class="dc-denoms" id="dc-denoms"></div>
-    <div class="dc-bar"><i></i></div>
-</div>
-
 <!-- パスコード（6けた）を入れる窓。ロックを外す時と、決める時に使う -->
 <div id="passcode-modal" class="pc-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="pc-title">
     <div class="pc-card">
@@ -3458,7 +3430,6 @@
             if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
         }
         cart.push({...p});
-        hideDoneCard();   // 次のお客様の商品を打ち始めたら、前の会計のカードはすぐ消す
         // 残りわずか／完売のしきい値アラート（残数がその値に「到達した瞬間」に1回だけ通知）
         const left = shownStock(p);
         if (left === 0) {
@@ -4022,32 +3993,13 @@
         saveData();
         init();
         renderReservations();
-        // モーダルを閉じた後も、客No.とお釣りの内訳を大きく見せる（渡しながら確かめられる）
-        showDoneCard(record);
+        // モーダルを閉じた後もお釣りの内訳が見えるようにトーストにも出す（渡しながら確認できる）。
+        // 大きな表示は出さない：次のお客様の会計に、待たずにすぐ移れることを何より優先する。
+        const chgText = record.change > 0
+            ? `お釣り¥${record.change}（${changeDenoms(record.change).map(d => `${d.unit}×${d.count}`).join('・')}）`
+            : 'お釣りなし';
+        showToast(`記録しました（客No.${record.no} / ${chgText}）`);
         publishCustomerDone(record);   // お客様の画面に「ありがとうございました」を出す
-    }
-
-    // ▼ 会計が済んだ時のカード ▼
-    // 押せない（下の商品ボタンはそのまま押せる）ので、行列を止めない。
-    const DONE_CARD_MS = 2800;
-    let doneCardTimer = null;
-    function showDoneCard(record) {
-        const el = document.getElementById('done-card');
-        if (!el || !record) return;
-        document.getElementById('dc-no').textContent = record.no;
-        const chg = Number(record.change) || 0;
-        document.getElementById('dc-change').textContent = chg > 0 ? `お釣り ¥${chg.toLocaleString('ja-JP')}` : 'お釣りなし';
-        document.getElementById('dc-denoms').textContent = chg > 0
-            ? changeDenoms(chg).map(d => `${d.unit >= 1000 ? d.unit + '円札' : d.unit + '円'}×${d.count}`).join('・') : '';
-        el.style.setProperty('--dc-ms', DONE_CARD_MS + 'ms');
-        el.style.display = 'none'; void el.offsetWidth; el.style.display = '';
-        if (doneCardTimer) clearTimeout(doneCardTimer);
-        doneCardTimer = setTimeout(hideDoneCard, DONE_CARD_MS);
-    }
-    function hideDoneCard() {
-        if (doneCardTimer) { clearTimeout(doneCardTimer); doneCardTimer = null; }
-        const el = document.getElementById('done-card');
-        if (el) el.style.display = 'none';
     }
 
     // 予約の番号。共有していると2台が同じ瞬間に予約を受けることがあるので、
@@ -4353,7 +4305,7 @@
                     <li><b>「会計へ進む」</b>（青い大きなボタン）を押します。</li>
                     <li>お預かりした金額を、<b>テンキー</b>か<b>候補ボタン</b>で入れます。候補にはお釣りの額も小さく出ています。</li>
                     <li>黒い表示窓に<b>お釣りと、その内訳</b>（例：100円×3）が出るので、その通りにお釣りを渡します。</li>
-                    <li>いちばん下の<b>「完了・記録」</b>を押して会計終了です。画面の真ん中に<b>客No.とお釣り（何円玉を何枚）</b>が大きく出るので、見ながらお釣りを渡します（約3秒で消えます。次の商品を押せばすぐ消えます）。</li>
+                    <li>いちばん下の<b>「完了・記録」</b>を押して会計終了です。下に<b>客No.とお釣り（何円玉を何枚）</b>が小さく出るので、見ながらお釣りを渡せます。そのまま次のお客様の商品を押して大丈夫です。</li>
                 </ol>
                 <div class="man-box tip">
                     <div class="man-box-h">速く会計するコツ</div>
@@ -8769,7 +8721,6 @@
 
         setPageActive(reg, onRegister);
         setPageActive(panel, !onRegister);
-        if (!onRegister) hideDoneCard();   // 会計のカードはレジの画面の上だけ
 
         if (!onRegister) {
             PANEL_VIEWS.forEach(v => {
