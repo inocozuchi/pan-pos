@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>モバイルオーダー</title>
-    <meta name="theme-color" content="#F2F3F7">
+    <meta name="theme-color" content="#F2F3F7" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0E1015" media="(prefers-color-scheme: dark)">
+    <meta name="color-scheme" content="light dark">
     <link rel="icon" href="icons/icon-192.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <!--
@@ -46,7 +48,9 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
             font-size: 16px; line-height: 1.5; -webkit-text-size-adjust: 100%;
-            padding: calc(12px + env(safe-area-inset-top, 0px)) 16px calc(110px + env(safe-area-inset-bottom, 0px));
+            /* いちばん上にいる時は、端末の時刻の帯の下の「ぼかし」に文字がかからないよう、少し下げて始める
+               （スクロールした時にぼける分はそのまま） */
+            padding: calc(30px + env(safe-area-inset-top, 0px)) 16px calc(110px + env(safe-area-inset-bottom, 0px));
             max-width: 640px; margin: 0 auto;
         }
         h1 { font-size: 20px; margin: 4px 0 2px; }
@@ -515,6 +519,7 @@
     window.showConfirm = function () {
         if (!cartLines().length) return;
         $('menu').classList.add('hide'); $('bar').classList.add('hide');
+        $('my').classList.add('hide');       // 新しい注文を確かめている間は、前の注文の番号を出さない
         $('confirm').classList.remove('hide');
         renderConfirm();
         window.scrollTo(0, 0);
@@ -650,8 +655,9 @@
         unlockAudio();
         sending = true; renderConfirm();
         try {
-            // 番号（M1001, M1002 …）は、ほかのお客様とぶつからないよう置き場で1つずつ数える。
-            // 4けたにして、レジの番号（A1 など）と見分けやすくする
+            // 番号は 持ち帰りなら M・店内なら T ＋ 4けた（千の位の 0 がモバイルの印。M0001、T0002 …）。
+            // ほかのお客様とぶつからないよう、置き場で1つずつ数える。
+            // （レジは E・O ＋ 千の位がレジの番号。E1001、O2003 … なので、見ただけでどこの注文か分かる）
             const seqRef = ev.collection('live').doc('mseq');
             const n = await db.runTransaction(async tx => {
                 const s = await tx.get(seqRef);
@@ -673,7 +679,7 @@
             // 選んだ時刻が、もう過ぎそうなら「できしだい」にする
             const pickupAt = (cfg().pick && pickAt > at + 5 * 60000) ? pickAt : 0;
             const doc = {
-                id, no: 'M' + (1000 + n), at, dine, items, st: 'cook', channel: 'mobile', paid: false, total,
+                id, no: (dine === 'eat' ? 'T' : 'M') + String(n % 1000).padStart(4, '0'), at, dine, items, st: 'cook', channel: 'mobile', paid: false, total,
                 uid, roundId: (evData && evData.roundId) || '', upd: at, chk: [], t: {}, dev: ''
             };
             if (discount > 0) doc.discount = discount;
@@ -697,10 +703,28 @@
         }
     };
 
+    // 受け取りが済んだ注文は、お礼を少しだけ出してから、この端末の一覧から消す（はじめの画面に戻る）。
+    // 前の注文の番号が残っていると、次に注文した時や、別のお店で買った時に、どの番号か分からなくなるため。
+    const DONE_SHOW_MS = 15000;
+    const doneSeenAt = {};
+    function dropFinished() {
+        const now = Date.now();
+        const keep = mine.filter(id => {
+            const o = orders.find(x => x.id === id);
+            if (!o) return true;          // まだ届いていない（送った直後など）注文は消さない
+            if (o.st !== 'done' && o.st !== 'void') return true;
+            if (!doneSeenAt[id]) doneSeenAt[id] = now;
+            // 取り消された注文は、気づけるように長めに残す
+            return now - doneSeenAt[id] < (o.st === 'void' ? 10 * 60000 : DONE_SHOW_MS);
+        });
+        if (keep.length !== mine.length) { mine = keep; saveMine(mine); }
+    }
+    setInterval(() => { const before = mine.length; dropFinished(); if (mine.length !== before) render(); }, 3000);
     function renderMine() {
         const box = $('my');
-        const list = mine.map(id => orders.find(o => o.id === id)).filter(Boolean).filter(o => o.st !== 'done' || Date.now() - ((o.t && o.t.done) || 0) < 30 * 60000);
-        if (!list.length) { box.classList.add('hide'); box.innerHTML = ''; return; }
+        dropFinished();
+        const list = mine.map(id => orders.find(o => o.id === id)).filter(Boolean);
+        if (!list.length || !$('confirm').classList.contains('hide')) { box.classList.add('hide'); box.innerHTML = ''; return; }
         box.classList.remove('hide');
         let anyReady = false;
         const now = Date.now();
@@ -717,7 +741,7 @@
             else { st = 'お作りしています'; sub = (ahead ? `あと ${ahead} 組` : 'まもなくできあがります') + (pk ? `（受け取り ${hm(pk)}ごろ）` : ''); }
             const items = (o.items || []).map(i => `${esc(i.name)}${i.opt ? '（' + esc(i.opt) + '）' : ''}×${i.qty}`).join('、');
             return `<div class="card ${cls}">
-                <div class="k">ご注文の番号</div>
+                <div class="k">${esc(shopName() || '')}${shopName() ? ' の' : ''}ご注文の番号</div>
                 <div class="no">${esc(String(o.no || '') + (o.seat ? '-' + o.seat : ''))}</div>
                 <div class="st">${st}</div>
                 ${sub ? `<div class="ahead">${sub}</div>` : ''}
