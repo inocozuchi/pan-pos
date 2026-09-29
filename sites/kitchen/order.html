@@ -15,8 +15,10 @@
       ・メニューと品切れは、レジの端末が書く live/menu を読む
       ・注文は orders に「モバイル・未払い」で書く。キッチンの画面にすぐ出る
       ・注文したあとは、その注文の状態と「あと何組」を見続け、呼び出されたら音と画面で知らせる
-      ・お店が決めた「いまの待ち時間」を出す。お店が許していれば、受け取り時間も選べる
-        （選んだ注文は、受け取りの何分か前にキッチンの画面へ出る）
+      ・お店が決めた「いまの待ち時間」と、いま待っている組の数を出す。お店が許していれば、受け取り時間も選べる
+        （選んだ注文は、受け取りの何分前かにKDへ出る）
+      ・流れ：QRコード → お店を選ぶ（?e= が無い時） → 商品 → 持ち帰り／店内 → 席番号（席から注文の時だけ） → 注文
+      ・特注（氷少なめ など）も付けられる（お店が許している時）
     -->
     <script src="data/site.js"></script>
     <script src="data/firebase-config.js"></script>
@@ -100,13 +102,49 @@
         .pick label { display: block; font-size: 13px; font-weight: 800; color: var(--sub); margin-bottom: 6px; }
         .pick select { width: 100%; min-height: 48px; font-size: 17px; font-weight: 700; font-family: inherit; border-radius: 12px; border: none; padding: 0 12px; background: var(--sunken); color: var(--text); box-shadow: inset 0 0 0 1px var(--hair); }
         .pick .sub { margin-top: 6px; }
+        /* お店の見出し（アイコンと名前） */
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; box-shadow: var(--shadow); }
+        .brand h1 { margin: 0; }
+        /* お店を選ぶ */
+        .shops { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+        .shop { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; text-align: left; display: flex; align-items: center; gap: 14px; background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 14px 16px; color: var(--text); cursor: pointer; min-height: 72px; }
+        .shop .ico { width: 52px; height: 52px; border-radius: 12px; background: var(--sunken); flex-shrink: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 800; color: var(--sub); }
+        .shop .ico img { width: 100%; height: 100%; object-fit: cover; }
+        .shop .nm { flex: 1; min-width: 0; font-size: 17px; font-weight: 800; }
+        .shop .nm small { display: block; font-size: 13px; font-weight: 600; color: var(--sub); margin-top: 2px; }
+        .shop .go { font-size: 15px; font-weight: 800; color: var(--accent-ink); }
+        /* 席番号 */
+        .seatbox { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 12px 14px; margin: 10px 0; display: flex; align-items: center; gap: 10px; }
+        .seatbox b { font-size: 20px; }
+        .seatbox .sp { flex: 1; }
+        .seatbox button { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; font-size: 14px; font-weight: 800; color: var(--accent-ink); background: var(--accent-soft); border-radius: 999px; padding: 8px 14px; cursor: pointer; }
+        .sheet { position: fixed; inset: 0; background: rgba(10, 12, 18, .45); display: flex; align-items: flex-end; justify-content: center; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 50; }
+        .sheet .card2 { width: 100%; max-width: 420px; background: var(--surface); border-radius: 22px; padding: 18px; }
+        .sheet h2 { margin: 0 0 4px; font-size: 20px; }
+        .sheet input { width: 100%; min-height: 60px; font-size: 30px; font-weight: 800; text-align: center; font-family: inherit; border-radius: 14px; border: none; background: var(--sunken); color: var(--text); box-shadow: inset 0 0 0 1px var(--hair); margin: 12px 0; letter-spacing: .08em; }
+        /* 特注 */
+        .lines .ln { display: block; padding: 8px 0; }
+        .lines .ln .row { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+        .lines .ln .opt { display: block; font-size: 13px; font-weight: 800; color: var(--danger); margin-top: 2px; }
+        .lines .ln .ob { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; font-size: 12.5px; font-weight: 800; background: var(--sunken); color: var(--text); box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; padding: 5px 10px; margin-left: 8px; cursor: pointer; }
+        .optp { background: var(--sunken); border-radius: 12px; padding: 10px; margin-top: 8px; }
+        .optp .g { margin-bottom: 8px; }
+        .optp .g b { display: block; font-size: 12px; color: var(--sub); margin-bottom: 4px; }
+        .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .chips button { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; font-size: 14px; font-weight: 700; min-height: 38px; padding: 0 14px; border-radius: 999px; background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--hair); cursor: pointer; }
+        .chips button.on { background: var(--accent); color: #fff; box-shadow: none; }
+        .optp input { width: 100%; min-height: 40px; font-size: 16px; font-family: inherit; border-radius: 10px; border: none; padding: 0 10px; background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--hair); }
     </style>
 </head>
 <body>
-    <header>
-        <div class="sub" id="shop"></div>
-        <h1 id="title">モバイルオーダー</h1>
+    <header class="brand">
+        <img id="brand-icon" class="hide" alt="">
+        <div><div class="sub" id="shop"></div><h1 id="title">モバイルオーダー</h1></div>
     </header>
+
+    <!-- お店を選ぶ（QRコードにお店が入っていない時） -->
+    <section id="shops" class="hide"></section>
 
     <!-- 読み込み中・使えない時の知らせ -->
     <div id="msg" class="notice">読み込んでいます…</div>
@@ -127,16 +165,36 @@
             <button type="button" class="take" id="d-take" onclick="pickDine('take')">持ち帰り</button>
             <button type="button" class="eat" id="d-eat" onclick="pickDine('eat')">店内</button>
         </div>
+        <div class="seatbox hide" id="c-seat"></div>
         <div class="lines" id="c-lines"></div>
         <div class="pick hide" id="c-pick-box">
             <label for="c-pick">受け取り時間</label>
             <select id="c-pick" onchange="pickTime(this.value)"></select>
             <div class="sub" id="c-pick-sub"></div>
         </div>
+        <div class="pick hide" id="c-coupon-box">
+            <label for="c-coupon">クーポンコード（お持ちの方）</label>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="c-coupon" maxlength="20" autocomplete="off" autocapitalize="characters" placeholder="例：FES2026" style="flex:1; min-width:0; min-height:48px; font-size:17px; font-family:inherit; border-radius:12px; border:none; padding:0 12px; background:var(--sunken); color:var(--text); box-shadow:inset 0 0 0 1px var(--hair); text-transform:uppercase;">
+                <button type="button" class="btn" style="min-height:48px; padding:0 18px;" onclick="useCoupon()">使う</button>
+            </div>
+            <div class="sub" id="c-coupon-sub"></div>
+        </div>
         <div class="notice">お支払いは、受け取りの時にレジでお願いします。注文すると番号が出ます。</div>
         <button class="btn full" id="c-send" onclick="sendOrder()" disabled>注文する</button>
         <button class="btn sec full" style="margin-top:8px;" onclick="showMenu()">メニューに戻る</button>
     </section>
+
+    <!-- 席番号を入れる（席から注文の時、店内を選んだら出る） -->
+    <div class="sheet hide" id="seat-sheet" role="dialog" aria-modal="true" aria-labelledby="seat-title">
+        <div class="card2">
+            <h2 id="seat-title">席番号を入れてください</h2>
+            <div class="sub">テーブルに貼ってある番号です。できあがったら、この番号の席あてにお呼びします。</div>
+            <input type="text" id="seat-input" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="例：12">
+            <button class="btn full" onclick="saveSeat()">この席で注文する</button>
+            <button class="btn sec full" style="margin-top:8px;" onclick="cancelSeat()">持ち帰りにもどす</button>
+        </div>
+    </div>
 
     <!-- 下の合計 -->
     <div class="bar hide" id="bar">
@@ -154,19 +212,23 @@
     const $ = id => document.getElementById(id);
     const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const yen = n => '¥' + Number(n || 0).toLocaleString('ja-JP');
-    const code = (new URLSearchParams(location.search).get('e') || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 32);
+    let code = (new URLSearchParams(location.search).get('e') || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 32);
     const INK = { sweet: '#4A6FA5', savory: '#14837E', drink: '#5D5BC4', x1: '#A86A12', x2: '#B83A5E', x3: '#3E8A3A', x4: '#B85420', x5: '#8A3E96', x6: '#6F7A1E', x7: '#1F7FA6', x8: '#7A5238' };
 
     let db = null, uid = '', ev = null, evData = null, menu = null, orders = [];
     const qty = {};          // 商品名 → 個数
     let dine = '';           // 'take' / 'eat'
     let pickAt = 0;          // 選んだ受け取り時間（0 はできしだい）
+    let seat = '';           // 席番号（席から注文の時）
+    let coupon = null;       // 使うクーポン { id, name, kind, amount, note }
+    const optSel = {};       // 商品名 → 特注の選んだもの
+    let optOpen = '';        // 特注の欄を開いている商品名
     let sending = false;
     let audio = null;
     const seenReady = new Set();
-    const MINE_KEY = PRE + 'mo_orders:' + code;
-    function loadMine() { try { return JSON.parse(localStorage.getItem(MINE_KEY) || '[]') || []; } catch (e) { return []; } }
-    function saveMine(list) { try { localStorage.setItem(MINE_KEY, JSON.stringify(list.slice(-10))); } catch (e) {} }
+    const mineKey = () => PRE + 'mo_orders:' + code;
+    function loadMine() { try { return JSON.parse(localStorage.getItem(mineKey()) || '[]') || []; } catch (e) { return []; } }
+    function saveMine(list) { try { localStorage.setItem(mineKey(), JSON.stringify(list.slice(-10))); } catch (e) {} }
     let mine = loadMine();
 
     function say(text, warn) {
@@ -186,7 +248,6 @@
     }
 
     async function start() {
-        if (!code) { say('QRコードを読み直してください（お店のコードが入っていません）。', true); return; }
         if (!window.FIREBASE_CONFIG) { say('このお店は、モバイルオーダーの準備ができていません。店頭でご注文ください。', true); return; }
         try {
             if (!window.firebase || !window.firebase.firestore) await loadSdk();
@@ -199,8 +260,49 @@
             say('つながりませんでした。電波の良い所で、ページを読み込み直してください。', true);
             return;
         }
+        if (!code) { listShops(db); return; }
         attach(db);
     }
+
+    // ---- お店を選ぶ（いま受付中のお店だけを並べる）----
+    async function listShops(database, userId) {
+        db = database; if (userId) uid = userId;
+        say('お店を探しています…');
+        let rows = [];
+        try {
+            const snap = await db.collection(COL).where('status', '==', 'open').get();
+            const now = Date.now();
+            snap.forEach(d => {
+                const v = d.data() || {};
+                if (!v.mobile || v.mobile.on !== true || !Array.isArray(v.products)) return;
+                if ((Number(v.openedAt) || 0) < now - 24 * 3600000) return;     // 前の日から開いたままのものは出さない
+                rows.push({ code: d.id, name: String(v.mobile.shop || v.name || 'お店'), icon: typeof v.mobile.icon === 'string' && v.mobile.icon.startsWith('data:image/') ? v.mobile.icon : '', wait: Number(v.mobile.wait) || 0 });
+            });
+        } catch (e) { say('お店の一覧を読めませんでした。電波の良い所で、ページを読み込み直してください。', true); return; }
+        rows.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+        const box = $('shops');
+        if (!rows.length) { say('いま、スマホから注文できるお店はありません。店頭でご注文ください。', true); box.classList.add('hide'); return; }
+        say('');
+        $('title').textContent = 'お店を選んでください';
+        box.classList.remove('hide');
+        box.innerHTML = `<div class="shops">${rows.map(r => `<button type="button" class="shop" data-c="${esc(r.code)}">
+                <span class="ico">${r.icon ? `<img src="${r.icon}" alt="">` : esc(r.name.slice(0, 1))}</span>
+                <span class="nm">${esc(r.name)}${r.wait ? `<small>いまの待ち時間 約${r.wait}分</small>` : ''}</span>
+                <span class="go">注文する</span></button>`).join('')}</div>`;
+        box.querySelectorAll('.shop').forEach(b => b.onclick = () => chooseShop(b.dataset.c));
+    }
+    window.__attachOrderList = listShops;
+    function chooseShop(c) {
+        code = String(c || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 32);
+        if (!code) return;
+        try { history.pushState(null, '', location.pathname + '?e=' + encodeURIComponent(code)); } catch (e) {}
+        $('shops').classList.add('hide');
+        mine = loadMine();
+        window.scrollTo(0, 0);
+        attach(db);
+    }
+    // 戻る操作で、お店を選ぶ画面に戻る
+    window.addEventListener('popstate', () => { if (!new URLSearchParams(location.search).get('e')) location.reload(); });
 
     // テストや、ほかの入口からも使えるように、つなぐ部分を分けておく
     function attach(database, userId) {
@@ -213,6 +315,7 @@
             snap.forEach(d => { const v = d.data() || {}; if (v && v.id) rows.push(v); });
             orders = rows;
             renderMine();
+            renderWait();
         }, () => {});
     }
     window.__attachOrderPage = attach;
@@ -223,7 +326,7 @@
     function cfg() {
         const m = (evData && evData.mobile) || {};
         const int = (v, lo, hi, def) => { const n = parseInt(v, 10); return Number.isFinite(n) && n >= lo && n <= hi ? n : def; };
-        return { wait: int(m.wait, 0, 180, 0), pick: m.pick === true, lead: int(m.lead, 1, 120, 10), ahead: int(m.ahead, 30, 720, 120) };
+        return { wait: int(m.wait, 0, 180, 0), pick: m.pick === true, lead: int(m.lead, 1, 120, 10), ahead: int(m.ahead, 30, 720, 120), seat: m.seat === true, opt: m.opt !== false };
     }
     const hm = ms => { const d = new Date(ms); return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); };
     function pickupOf(o) {
@@ -248,16 +351,25 @@
         return out;
     }
 
+    function shopName() { return (evData && ((evData.mobile && evData.mobile.shop) || evData.name)) || ''; }
+    // いま作っている（待っている）組の数
+    function waitingGroups() { const now = Date.now(); return orders.filter(o => o.st === 'cook' && !heldNow(o, now)).length; }
     function render() {
         const shop = $('shop');
-        if (evData && evData.name) { shop.textContent = evData.name; document.title = evData.name + '｜モバイルオーダー'; }
+        if (evData) {
+            const nm = shopName();
+            $('title').textContent = nm || 'モバイルオーダー';
+            shop.textContent = nm ? 'モバイルオーダー' : '';
+            document.title = (nm ? nm + '｜' : '') + 'モバイルオーダー';
+            const icon = evData.mobile && evData.mobile.icon;
+            const im = $('brand-icon');
+            if (typeof icon === 'string' && icon.startsWith('data:image/')) { im.src = icon; im.classList.remove('hide'); } else im.classList.add('hide');
+        }
         const note = $('note');
         const noteText = evData && evData.mobile && evData.mobile.note;
         note.classList.toggle('hide', !noteText || !accepting());
         if (noteText) note.textContent = noteText;
-        const w = $('wait'), wm = cfg().wait;
-        w.classList.toggle('hide', !wm || !accepting());
-        if (wm) w.innerHTML = `<span>いまの待ち時間</span><b>約${wm}分</b>`;
+        renderWait();
         if (!evData) { say('このお店の注文は受け付けていません（QRコードをもう一度お確かめください）。', true); hideOrdering(); renderMine(); return; }
         if (!open()) { say('本日の受付は終了しました。ありがとうございました。', true); hideOrdering(); renderMine(); return; }
         if (!accepting()) {
@@ -269,6 +381,13 @@
         say('');
         renderMenu();
         renderMine();
+    }
+    // いまの待ち時間（お店が決めた目安）と、いま待っている組の数
+    function renderWait() {
+        const w = $('wait'), wm = cfg().wait, g = waitingGroups();
+        const show = !!evData && accepting();
+        w.classList.toggle('hide', !show);
+        if (show) w.innerHTML = `<span>いま <b>${g}</b> 組待ち</span>${wm ? `<span>待ち時間 <b>約${wm}分</b></span>` : ''}`;
     }
     function hideOrdering() { $('menu').classList.add('hide'); $('bar').classList.add('hide'); $('confirm').classList.add('hide'); }
 
@@ -305,8 +424,40 @@
     function cartLines() {
         return Object.keys(qty).filter(n => qty[n] > 0).map(n => {
             const it = menu.items.find(i => i.name === n);
-            return it ? { name: n, qty: qty[n], price: it.price, type: it.type } : null;
+            return it ? { name: n, qty: qty[n], price: it.price, type: it.type, opt: cfg().opt ? buildOpt(optSel[n]) : '' } : null;
         }).filter(Boolean);
+    }
+    // ---- 特注（index.html の OPT_GROUPS と同じ言葉。お客様には「追加」は出さない）----
+    const OPT_GROUPS = [
+        { id: 'order', label: '出すタイミング', multi: true, items: ['後出し'] },
+        { id: 'ice', label: '氷', pre: '氷', items: ['抜き', '少なめ', '多め'] },
+        { id: 'fill', label: '具材', pre: '具材', items: ['抜き', '少なめ', '多め'] },
+        { id: 'sauce', label: 'ソース', pre: 'ソース', items: ['抜き', '少なめ', '多め'] }
+    ];
+    function buildOpt(sel) {
+        if (!sel) return '';
+        const parts = [];
+        (sel.order || []).forEach(x => parts.push(x));
+        OPT_GROUPS.slice(1).forEach(g => { if (sel[g.id]) parts.push(g.pre + sel[g.id]); });
+        const other = String(sel.other || '').replace(/[・<>]/g, ' ').trim().slice(0, 20);
+        if (other) parts.push(other);
+        return parts.join('・').slice(0, 60);
+    }
+    function optOf(name) { return optSel[name] || (optSel[name] = { order: [], ice: '', fill: '', sauce: '', other: '' }); }
+    // 商品名は data-n に入れて渡す（名前に記号が入っていても壊れないように）
+    function bindOptButtons() {
+        const box = $('c-lines');
+        box.querySelectorAll('[data-optp]').forEach(b => b.onclick = () => { optOpen = optOpen === b.dataset.optp ? '' : b.dataset.optp; renderConfirm(); });
+        box.querySelectorAll('[data-og]').forEach(b => b.onclick = () => {
+            const sel = optOf(b.dataset.n), g = b.dataset.og, it = b.dataset.oi;
+            const o = document.getElementById('opt-other-in'); if (o) sel.other = o.value;
+            if (g === 'order') sel.order = sel.order.includes(it) ? sel.order.filter(x => x !== it) : sel.order.concat([it]);
+            else sel[g] = sel[g] === it ? '' : it;
+            renderConfirm();
+        });
+        const o = document.getElementById('opt-other-in');
+        if (o) o.oninput = () => { optOf(o.dataset.n).other = o.value.slice(0, 20); };
+        if (o) o.onchange = () => renderConfirm();
     }
     function renderBar() {
         const lines = cartLines();
@@ -335,15 +486,69 @@
         $('confirm').classList.add('hide');
         render();
     };
-    window.pickDine = function (d) { dine = d === 'eat' ? 'eat' : 'take'; renderConfirm(); };
+    window.pickDine = function (d) {
+        dine = d === 'eat' ? 'eat' : 'take';
+        // 席から注文：店内を選んだら、席番号を入れてもらう
+        if (dine === 'eat' && cfg().seat && !seat) { openSeat(); return; }
+        renderConfirm();
+    };
+    function openSeat() {
+        const sh = $('seat-sheet'), inp = $('seat-input');
+        inp.value = seat;
+        sh.classList.remove('hide');
+        setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
+    }
+    window.openSeat = openSeat;
+    window.saveSeat = function () {
+        const v = String($('seat-input').value || '').replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[^0-9A-Za-z-]/g, '').slice(0, 8);
+        if (!v) { $('seat-input').focus(); return; }
+        seat = v;
+        $('seat-sheet').classList.add('hide');
+        renderConfirm();
+    };
+    window.cancelSeat = function () {
+        $('seat-sheet').classList.add('hide');
+        if (!seat) dine = 'take';
+        renderConfirm();
+    };
     window.pickTime = function (v) { pickAt = Number(v) || 0; renderConfirm(); };
+    // ---- クーポン（index.html の couponHash と同じ作り方の印で比べる。コードそのものは置き場に無い）----
+    function couponHash(code) {
+        const t = String(code || '').toUpperCase().replace(/[^0-9A-Z]/g, '');
+        if (!t) return '';
+        const fnv = seed => { let h = seed >>> 0; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h.toString(16).padStart(8, '0'); };
+        return fnv(2166136261) + fnv(0x9747b28c ^ t.length);
+    }
+    function codeCoupons() { return ((evData && Array.isArray(evData.coupons)) ? evData.coupons : []).filter(c => c && c.on !== false && c.codeHash); }
+    window.useCoupon = function () {
+        const h = couponHash($('c-coupon').value);
+        const c = h ? codeCoupons().find(x => x.codeHash === h) : null;
+        if (!c) { coupon = null; $('c-coupon-sub').textContent = 'そのコードのクーポンはありません。'; renderConfirm(); return; }
+        coupon = { id: String(c.id), name: String(c.name || 'クーポン'), kind: c.kind === 'pct' ? 'pct' : 'yen', amount: Number(c.amount) || 0, note: String(c.note || '') };
+        renderConfirm();
+    };
     function renderConfirm() {
         const lines = cartLines();
         $('d-take').classList.toggle('on', dine === 'take');
         $('d-eat').classList.toggle('on', dine === 'eat');
         const tot = lines.reduce((t, l) => t + l.qty * l.price, 0);
-        $('c-lines').innerHTML = lines.map(l => `<div><span>${esc(l.name)} ×${l.qty}</span><span>${yen(l.qty * l.price)}</span></div>`).join('')
+        const c0 = cfg();
+        $('c-lines').innerHTML = lines.map(l => {
+            const sel = optSel[l.name] || {};
+            const n = esc(l.name);
+            const panel = c0.opt && optOpen === l.name ? `<div class="optp">${OPT_GROUPS.map(g => `<div class="g"><b>${g.label}</b><div class="chips">${g.items.map(it => {
+                    const on = g.multi ? (sel.order || []).includes(it) : sel[g.id] === it;
+                    return `<button type="button" class="${on ? 'on' : ''}" data-n="${n}" data-og="${g.id}" data-oi="${it}">${it}</button>`;
+                }).join('')}</div></div>`).join('')}<div class="g"><b>そのほか（20文字まで）</b><input type="text" id="opt-other-in" data-n="${n}" maxlength="20" value="${esc(sel.other || '')}" placeholder="例：からし抜き"></div></div>` : '';
+            return `<div class="ln"><div class="row"><span>${n} ×${l.qty}${c0.opt ? `<button type="button" class="ob" data-optp="${n}">${optOpen === l.name ? '閉じる' : '特注'}</button>` : ''}</span><span>${yen(l.qty * l.price)}</span></div>${l.opt ? `<span class="opt">${esc(l.opt)}</span>` : ''}${panel}</div>`;
+        }).join('')
             + `<div class="t"><span>合計</span><span>${yen(tot)}</span></div>`;
+        bindOptButtons();
+        // 席番号（席から注文で、店内の時）
+        const sb = $('c-seat');
+        const needSeat = dine === 'eat' && c0.seat;
+        sb.classList.toggle('hide', !needSeat || !seat);
+        if (needSeat && seat) sb.innerHTML = `<span>席番号</span><b>${esc(seat)}</b><span class="sp"></span><button type="button" onclick="openSeat()">変える</button>`;
         // 受け取り時間（お店が許している時だけ）。時間がたって選べなくなった時刻は、できしだいに戻す
         const c = cfg(), box = $('c-pick-box');
         box.classList.toggle('hide', !c.pick);
@@ -361,9 +566,20 @@
             if (sel.value !== String(pickAt)) sel.value = String(pickAt);
             $('c-pick-sub').textContent = pickAt ? `${hm(pickAt)}ごろにお渡しできるよう、少し前から作り始めます。` : 'できあがったら、この画面でお知らせします。';
         } else pickAt = 0;
+        // クーポン（お店がコード付きのクーポンを出している時だけ）
+        const cb = $('c-coupon-box');
+        const hasCp = codeCoupons().length > 0;
+        cb.classList.toggle('hide', !hasCp);
+        if (!hasCp) coupon = null;
+        if (coupon) {
+            const off = coupon.kind === 'pct' ? `${coupon.amount}%引き` : `${coupon.amount}円引き`;
+            const est = coupon.kind === 'pct' ? Math.floor(tot * coupon.amount / 100) : Math.min(coupon.amount, tot);
+            $('c-coupon-sub').textContent = `「${coupon.name}」（${off}）を使います。お支払いの時にレジで引きます（目安：${yen(Math.max(0, tot - est))}）。${coupon.note ? coupon.note : ''}`;
+        }
         const send = $('c-send');
-        send.disabled = !dine || !lines.length || sending;
-        send.textContent = sending ? '送っています…' : (dine ? '注文する' : 'お召し上がりを選んでください');
+        const seatMissing = dine === 'eat' && c0.seat && !seat;
+        send.disabled = !dine || !lines.length || sending || seatMissing;
+        send.textContent = sending ? '送っています…' : (!dine ? 'お召し上がりを選んでください' : (seatMissing ? '席番号を入れてください' : '注文する'));
     }
 
     // 音は、ボタンを押した時にしか鳴らせない（スマホの決まり）。注文を押した時に準備しておく
@@ -391,6 +607,7 @@
         if (sending) return;
         const lines = cartLines();
         if (!dine || !lines.length || !accepting()) return;
+        if (dine === 'eat' && cfg().seat && !seat) { openSeat(); return; }
         if (activeMine().length >= MAX_ACTIVE) { alert(`一度に注文できるのは${MAX_ACTIVE}件までです。受け取ってから、次の注文をしてください。`); return; }
         unlockAudio();
         sending = true; renderConfirm();
@@ -406,7 +623,11 @@
             });
             const at = Date.now();
             const id = 'm-' + (uid || 'x').slice(0, 10) + '-' + at;
-            const items = lines.map(l => ({ name: l.name, qty: l.qty, price: l.price, type: l.type || 'sweet' }));
+            const items = lines.map(l => {
+                const it = { name: l.name, qty: l.qty, price: l.price, type: l.type || 'sweet' };
+                if (l.opt) it.opt = l.opt;
+                return it;
+            });
             const total = items.reduce((t, l) => t + l.qty * l.price, 0);
             // 選んだ時刻が、もう過ぎそうなら「できしだい」にする
             const pickupAt = (cfg().pick && pickAt > at + 5 * 60000) ? pickAt : 0;
@@ -415,10 +636,15 @@
                 uid, roundId: (evData && evData.roundId) || '', upd: at, chk: [], t: {}, dev: ''
             };
             if (pickupAt) doc.pickupAt = pickupAt;
+            if (dine === 'eat' && cfg().seat && seat) doc.seat = seat;
+            if (coupon) doc.coupon = { id: coupon.id, name: coupon.name };
             await ev.collection('orders').doc(id).set(doc);
             mine.push(id); saveMine(mine);
             Object.keys(qty).forEach(k => delete qty[k]);
-            dine = ''; pickAt = 0;
+            dine = ''; pickAt = 0; optOpen = ''; coupon = null;
+            if ($('c-coupon')) $('c-coupon').value = '';
+            if ($('c-coupon-sub')) $('c-coupon-sub').textContent = '';
+            Object.keys(optSel).forEach(k => delete optSel[k]);
             $('confirm').classList.add('hide');
             window.scrollTo(0, 0);
         } catch (e) {
@@ -447,10 +673,10 @@
             else if (o.st === 'void') { cls = 'void'; st = 'この注文は取り消されました'; sub = 'くわしくは店頭でお尋ねください'; }
             else if (heldNow(o, now)) { st = `受け取り ${hm(pk)}ごろ`; sub = `ご注文を受け付けました。${hm(myStart)}ごろから作り始めます`; }
             else { st = 'お作りしています'; sub = (ahead ? `あと ${ahead} 組` : 'まもなくできあがります') + (pk ? `（受け取り ${hm(pk)}ごろ）` : ''); }
-            const items = (o.items || []).map(i => `${esc(i.name)}×${i.qty}`).join('、');
+            const items = (o.items || []).map(i => `${esc(i.name)}${i.opt ? '（' + esc(i.opt) + '）' : ''}×${i.qty}`).join('、');
             return `<div class="card ${cls}">
                 <div class="k">ご注文の番号</div>
-                <div class="no">${esc(o.no)}</div>
+                <div class="no">${esc(String(o.no || '') + (o.seat ? '-' + o.seat : ''))}</div>
                 <div class="st">${st}</div>
                 ${sub ? `<div class="ahead">${sub}</div>` : ''}
                 <span class="dn ${o.dine === 'eat' ? 'eat' : ''}">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>
