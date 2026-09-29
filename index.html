@@ -698,7 +698,6 @@
         .bill-acts .row2 .action-btn.slip-btn { flex: 0 0 auto; width: auto; padding-left: 16px; padding-right: 16px; }
         @media (min-width: 769px) {
             #bill-body, #tables-body .bill-find { max-width: 640px; margin-left: auto; margin-right: auto; }
-            #page-panel[data-sub="bill"] > .panel-head { max-width: 672px; width: 100%; margin-left: auto; margin-right: auto; box-sizing: border-box; }
         }
         /* ▼ 商品の画像：レジのボタンの背景。文字が読めるよう、下ほど濃いベールを重ねる ▼ */
         :root { --img-veil: rgba(255,255,255,.9); --img-veil-top: rgba(255,255,255,.42); }
@@ -768,7 +767,9 @@
         .res-card .rc-memo { display: flex; align-items: flex-start; gap: 6px; width: 100%; margin: 2px 0 4px; padding: 7px 10px; border: none; border-radius: var(--r-sm);
             background: var(--sunken); color: var(--text-main); font: inherit; font-size: 13px; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
         .res-card .rc-memo .ic { width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px; color: var(--text-light); }
-        .res-card .rc-memo.empty { background: none; color: var(--accent); font-weight: 700; padding: 4px 2px; }
+        .res-card .rc-memo { min-height: 40px; align-items: center; }
+        .res-card .rc-memo .ic { margin-top: 0; }
+        .res-card .rc-memo.empty { background: none; color: var(--accent-ink); font-weight: 700; padding: 4px 2px; }
         /* まとめて登録 */
         .bulk-open { width: 100%; margin: 0 0 8px; }
         #bulk-text { width: 100%; box-sizing: border-box; min-height: 150px; font-size: 16px; line-height: 1.6; resize: vertical; font-family: inherit; }
@@ -1016,11 +1017,11 @@
             background: color-mix(in srgb, var(--surface) 86%, transparent);
             backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             box-shadow: 0 4px 16px rgba(0,0,0,.18), 0 0 0 .5px rgba(0,0,0,.06);
-            opacity: 0; transform: translate3d(0, 10px, 0) scale(.8); pointer-events: none;
-            transition: opacity .2s ease, transform .3s cubic-bezier(.32,.72,0,1);
+            opacity: 0; transform: translate3d(0, 10px, 0) scale(.9); pointer-events: none; visibility: hidden;
+            transition: opacity .2s ease, transform .3s cubic-bezier(.32,.72,0,1), visibility 0s linear .3s;
         }
         #grid-top-btn .ic { width: 22px; height: 22px; stroke-width: 2.4; }
-        #grid-top-btn.show { opacity: 1; transform: none; pointer-events: auto; }
+        #grid-top-btn.show { opacity: 1; transform: none; pointer-events: auto; visibility: visible; transition: opacity .2s ease, transform .3s cubic-bezier(.32,.72,0,1), visibility 0s; }
         #grid-top-btn:active { transform: scale(.9); }
         .product-btn {
             position: relative;
@@ -2083,9 +2084,8 @@
             /* 設定は、広い画面で横いっぱいに伸ばすと1行が長すぎて読みにくい。
                読みやすい幅にして、まん中に置く（見出しと「戻る」も同じ幅にそろえる） */
             #view-settings > .sub-view { max-width: 760px; margin-left: auto; margin-right: auto; }
+            /* 見出しと「戻る」は、どの画面でも左上の同じ位置に置く（中身だけを読みやすい幅にする） */
             #view-settings > #sub-settings-menu { max-width: 1000px; }
-            #page-panel[data-view="settings"] > .panel-head { max-width: 792px; width: 100%; margin-left: auto; margin-right: auto; box-sizing: border-box; }
-            #page-panel[data-view="settings"][data-sub=""] > .panel-head { max-width: 1032px; }
         }
         /* スマホでは項目を詰めて、メニュー全体がスクロールなしで収まるようにする */
         @media (max-width: 768px) {
@@ -5790,6 +5790,7 @@
                         <li><b>2セット以上買っても、引くのは1会計1回ぶん</b>です（コーヒー2杯＋クッキー2枚でも10円引き）。</li>
                         <li>ほかの種類の商品がいっしょに入っていても、組み合わせがそろえば割引になります。</li>
                         <li><b>組み合わせと割引額は変えられます。</b>「設定 → セット割・クーポン」で、① セットにする種類（パン・クッキー・ドリンク）に<b>2つ以上チェック</b>を付け、② 引き方を<b>固定額（円）</b>か<b>割引率（％）</b>から選び、引く額を<b>−／＋</b>か数字で決めます（割引率は、組み合わせ1セットぶんの値段にかけ、1円未満は切り捨て）。下に<b>実際の商品でいくらになるかの例</b>が出るので、確かめてから<b>「このセット割にする」</b>を押します。押すまでは変わりません。</li>
+                        <li><b>商品どうしのセットにもできます。</b>① の上の<b>「分類で決める／商品で決める」</b>で<b>「商品で決める」</b>を選ぶと、商品の一覧が出ます（例：メロンパン＋コーヒーで30円引き）。決めた商品を同じ会計で買った時だけ引きます。</li>
                         <li>やめる時・また始める時は、同じ画面の<b>「セット割をする」</b>のスイッチで切り替えます。共有中は全部の端末がいっしょに変わります。</li>
                         <li>会計した後で決まりを変えても、<b>済んだ会計の金額は変わりません</b>。会計記録の修正も、予約の清算も、<b>その時の決まり</b>のまま計算されます。</li>
                     </ul>
@@ -5913,7 +5914,13 @@
                     <li>1円も払っていない伝票は「伝票を取り消す」で消せます（KDの注文も取り消されます）。</li>
                     <li>閉店の時に、まだ会計していない伝票があると、枚数と番号を見せて確かめます。</li>
                     <li>伝票は、ハンディ2台が同じテーブルに同じ瞬間に注文しても、<b>1枚にまとまります</b>（伝票番号も重なりません）。</li>
-                </ul>`
+                </ul>
+                <h4>伝票を渡さない（テーブル番号で会計）</h4>
+                <p><b>「設定 → テーブルと伝票」</b>の伝票の渡し方で<b>「渡さない」</b>を選ぶと、伝票の紙も番号の札も出さず、お帰りの時にレジで<b>テーブル番号</b>を入れて会計します。テーブルが少なく、お客様の入れ替わりを見ていられるお店向けです。</p>
+                <div class="man-box warn">
+                    <div class="man-box-h">気を付けること</div>
+                    <p>前のお客様の会計が済む前に同じテーブルへ次のお客様を通すと、注文が前の伝票に混ざります。<b>会計が済んでからご案内</b>してください。レジでは、伝票の注文と時間をお客様に確かめてから会計してください。混み合う日や、席を詰めて使う日は「印刷した紙」か「番号の札」をおすすめします。</p>
+                </div>`
         },
         {
             id: 'mobile', icon: 'qr', title: 'モバイルオーダー', sub: 'お客様のスマホから注文',
@@ -5965,7 +5972,9 @@
                     <p>会計が12件を超えると、上に<b>さがす欄</b>が出ます。<b>客No.・商品名・金額</b>のどれでも引けます（「あんぱん 学生」のように空白で区切ると、両方に当てはまるものだけ出ます）。</p>
                     <p>カードは<b>番号の順（新しい会計が上）</b>に並びます。客属性が未入力のカードも並べ替えずにその場所に置き、赤い帯で目立たせます。ファストフードの時は、上の<b>「会計済」「未会計」</b>で、まだ払っていない注文の一覧に切り替えられます。</p>
                     <p>カードは<b>新しい順に60件ずつ</b>出ます。古いものを見たい時は、いちばん下の<b>「もっと見る」</b>を押してください。何百件になっても画面が重くならないようにしています。</p>
-                </div>`
+                </div>
+                <h4>会計にメモを残す</h4>
+                <p>会計記録のカードの<b>「メモを残す」</b>を押すと、その会計に一言を残せます（例：「袋をあとで渡した」「予約の方」）。もう一度押すと直せます。空にすると消えます。共有中は全部の端末に出ます。会計記録の検索でも引けて、会計明細CSVにも出ます。</p>`
         },
         {
             id: 'coupon', icon: 'tag', title: 'クーポン', sub: '割引券を作って、会計で使う',
@@ -6026,7 +6035,74 @@
                 <div class="man-box">
                     <div class="man-box-h">売り切れたら</div>
                     <p>商品ボタンに「完売」と出ます。押せば登録はできますが、その場合は<b>仕入れ数を超えた販売</b>として記録され、集計で注意が出ます。基本はお客様に売り切れをお伝えください。</p>
-                </div>`
+                </div>
+                <h4>商品をさがす・並べて見る</h4>
+                <p>いちばん上の欄に名前の一部（ひらがなでも）を入れると、その商品だけが出ます。その下の<b>登録順・安い順・高い順・名前順・残りの少ない順・残りの多い順</b>で見る順番を変えられます（見え方だけで、レジのボタンの順番は変わりません。レジもその順にしたい時は<b>「この並びをレジにも」</b>）。</p>
+                <h4>レジのボタンの順番を変える</h4>
+                <ol class="man-steps">
+                    <li><b>「レジの並びを変える」</b>を押します。短い行の一覧になります。</li>
+                    <li>行を<b>長押し</b>すると持ち上がるので、そのまま指で動かして離します（右の<b>三本線</b>は、押したらすぐつまめます）。</li>
+                    <li>何品かまとめて動かす時は、左の<b>丸</b>を押して選び、<b>「いちばん上・1つ上・1つ下・いちばん下」</b>を押します。<b>「パンを選ぶ」</b>などで分類ごと選べます。選んだ行をつまんで動かすと、選んだ全部がそこへ移ります。</li>
+                    <li><b>「分類の順にまとめる」</b>を押すと、分類ごとに並びます。</li>
+                    <li>終わったら<b>「完了」</b>。レジのボタンがこの順に並びます（共有中は全部の端末）。</li>
+                </ol>
+                <h4>商品に写真を付ける（レジのボタンの背景）</h4>
+                <p>各商品の左の<b>四角</b>を押して写真を選ぶと、レジのボタンの背景になります。写真はこの端末の中で小さく（1枚10KBほどに）縮めるので、会計の速さは変わりません。文字が読めるよう、上に白い（暗い配色では黒い）ベールを重ねます。外す時は四角の角の<b>×</b>。名前ごとに残るので、次の販売会でも同じ名前の商品には付いたままです。共有中はほかの端末のボタンにも出ます。開店前の「商品と仕入れ数」でも付けられます。</p>
+                <p>メモから<b>まとめて追加</b>もできます（「メモを貼り付けて、まとめて登録」を見てください）。</p>`
+        },
+        {
+            id: 'bulk', icon: 'clipboard', title: 'メモを貼り付けて、まとめて登録', sub: '商品を一度に入れる',
+            body: `
+                <p>メモ帳などに書いた商品の一覧を、コピーして貼り付けるだけで、まとめて登録できます。開店前は<b>「商品と仕入れ数」</b>の上の<b>「メモを貼り付けて、まとめて登録」</b>、営業中は<b>「設定 → 商品・在庫の調整」</b>のいちばん下の<b>「メモを貼り付けて、まとめて追加」</b>から開きます。</p>
+                <p>1行に1品、<b>名前・値段・仕入れ数</b>の順に書いてあれば、書き方はばらばらでも読み取ります。</p>
+                <table class="man-qa">
+                    <thead><tr><th>書き方の例</th><th>読み取り</th></tr></thead>
+                    <tbody>
+                        <tr><td>メロンパン 180円 20個</td><td>メロンパン・¥180・20個</td></tr>
+                        <tr><td>・クリームパン　¥１６０　15</td><td>クリームパン・¥160・15個（全角もOK）</td></tr>
+                        <tr><td>チーズパン,150,30</td><td>チーズパン・¥150・30個</td></tr>
+                        <tr><td>ベーグル 価格:220 在庫:12</td><td>ベーグル・¥220・12個</td></tr>
+                        <tr><td>クッキー(3枚入り) 300 10</td><td>名前の中の数字はそのまま名前</td></tr>
+                        <tr><td>【ドリンク】</td><td>この下の品は「ドリンク」の分類</td></tr>
+                    </tbody>
+                </table>
+                <ol class="man-steps">
+                    <li>貼り付けると、すぐ下に<b>読み取った結果</b>が出ます。読めなかった行は赤く出ます（見出しなど）。</li>
+                    <li>分類がちがう時は、その行の<b>分類のボタン</b>を押すと次の分類に替わります。</li>
+                    <li>開店前は<b>「いまの商品に足す」</b>か<b>「全部入れ替える」</b>を選びます。同じ名前の商品がある時は、値段・仕入れ数を上書きします。</li>
+                    <li><b>「◯品を登録する」</b>を押して完了です。</li>
+                </ol>`
+        },
+        {
+            id: 'tax', icon: 'percent', title: '消費税と税務用の資料', sub: '初期設定は「なし」',
+            body: `
+                <p>はじめは<b>消費税なし</b>です（いまの販売会は消費税なしで販売しているため）。消費税をかける販売会では、<b>「設定 → 消費税」</b>で<b>「消費税を計算する」</b>をオンにします。</p>
+                <ul class="man-list">
+                    <li>値段は<b>税込み</b>（総額表示）のまま使います。<b>合計の金額は変わりません。</b>合計のうち消費税がいくらかを計算します。</li>
+                    <li>分類ごとに<b>8%（軽減税率：食べ物・飲み物の持ち帰り）</b>か<b>10%</b>を選びます。ファストフード・レストランでは、<b>店内で食べる会計は10%</b>にできます（初期はそうします）。</li>
+                    <li>端数は、1回の会計の税率ごとに1回だけ切り捨てます。セット割・クーポンは、税率ごとの金額の割合で分けて引きます。</li>
+                    <li>会計した時の税率がその会計に残るので、あとで税率を変えても、前の会計の消費税は変わりません。</li>
+                    <li>インボイスの<b>登録番号</b>（T＋13けた）を入れると、レシートと領収書に印字されます。登録していなければ空欄のままで。</li>
+                </ul>
+                <p>レシートと領収書には、<b>「10%対象 ¥◯◯ 内消費税 ¥◯」</b>のように税率ごとの内訳が出ます。軽減税率の商品には<b>※</b>が付きます。</p>
+                <h4>税務用の資料</h4>
+                <p>同じ画面の<b>「表を印刷・PDF」</b>で、この端末に残っている販売会の売上を<b>税率ごと・月ごと・販売会ごと・支払い方法ごと</b>の白黒の表にまとめます。<b>「会計ごとのCSV」</b>は、1件ずつの税込み金額と消費税の一覧です（帳簿付けの元に）。年ごとに絞ることもできます。消費税なしで記録した会計は「消費税なし」の欄に入ります。</p>`
+        },
+        {
+            id: 'consign', icon: 'box', title: '委託商品', sub: 'ほかの人から預かって売る',
+            body: `
+                <p>作家さんやほかの団体から預かって売る商品です。既製品の販売のモードで、<b>「設定 → 委託商品」</b>をオンにすると使えます（はじめはオフ）。</p>
+                <ol class="man-steps">
+                    <li><b>手数料</b>（お店がいただく割合）を選びます。いらなければ0%のまま。</li>
+                    <li><b>「設定 → 商品・在庫の調整」</b>（開店前は「商品と仕入れ数」）で、預かった商品の<b>「委託先」</b>に名前を入れます。自分の店の商品は空欄のまま。</li>
+                    <li>あとはふつうに会計するだけです。</li>
+                </ol>
+                <ul class="man-list">
+                    <li><b>会計記録</b>のいちばん上に<b>「受託合計」</b>（預かった売上の合計）と、委託先ごとの金額が出ます。1件ずつのカードにも「うち委託 ¥◯◯」と出ます。</li>
+                    <li><b>売上集計の「売上の概要」</b>と全項目のPDFに、委託先ごとの<b>点数・受託額・手数料・お渡しする額</b>が出ます。</li>
+                    <li>受託額は<b>商品の値段</b>で数えます。セット割・クーポンの値引きはお店の負担として、受託額からは引きません。</li>
+                    <li>会計した時の委託先がその会計に残ります。あとで委託先を変えたりオフにしたりしても、前の会計の受託額は変わりません。</li>
+                </ul>`
         },
         {
             id: 'sync', icon: 'link', title: '複数の端末で同時に会計する', sub: '2台以上でさばくとき',
@@ -6116,7 +6192,14 @@
                         <li>レジが2台あるときは、<b>いま打っている方</b>の内容が映ります。</li>
                         <li>明細は上から、金額は下に並びます。レジで<b>「会計へ進む」</b>を押すと、<b>合計点数・合計・お預かり（はじめは0円）・不足・お釣り</b>が出ます。PayPay などの時は、お預かりの代わりに支払い方法が出ます。</li>
                     </ul>
-                </div>`
+                </div>
+                <h4>お礼の長さ・広告の形（設定 → CD）</h4>
+                <ul class="man-list">
+                    <li><b>お礼を出しておく長さ</b>…会計が済んだ時の「ありがとうございました」を出す長さです（はじめは3秒。2・3・5・8・15秒から）。次のお客様の商品を打てば、すぐ次の会計に変わります。</li>
+                    <li><b>広告の枠の形</b>…<b>A4縦</b>（はじめ）・<b>A4横</b>・<b>横長 16:9</b>。A4で作った広告は、枠をA4にすると画面の中でいちばん大きく出ます（おすすめは横1240×縦1754ほど）。</li>
+                    <li>金額の画面の空いている所には、<b>セット割まであと何を足せばよいか</b>と、使える支払い方法が出ます。待っている間の画面には時計も出ます。</li>
+                    <li><b>ハンディ</b>でテーブルの注文を打っている間は、CDには何も出ません（CDはレジの会計だけを映します）。</li>
+                </ul>`
         },
         {
             id: 'close', icon: 'power', title: '③ 閉店する', sub: '1日の終わりに1回だけ',
@@ -6156,7 +6239,10 @@
                 <div class="man-box">
                     <div class="man-box-h">印刷の画面からレジにもどるには</div>
                     <p>PDFにする時は別の画面が開きます。保存し終えたら、その画面のいちばん上の<b>「✕ 閉じて戻る」</b>を押すとレジにもどれます。印刷の画面を閉じてしまっても、となりの<b>「印刷・PDF保存」</b>でもう一度開けます。</p>
-                </div>`
+                </div>
+                <h4>全項目のPDFと、発表用のまとめ</h4>
+                <p><b>全項目のPDF</b>には、画面の集計のすべて（概要・商品別・時間帯・ペース・在庫の減り方・客層とカテゴリ・完売と売り逃し・次回の仕入れ数・注文と提供時間・委託商品・消費税・販売会ごとの推移・操作の履歴）が入ります（使っていない項目は出ません）。</p>
+                <p><b>発表用のまとめ</b>は、白黒で印刷して配るレジュメ向けに、色や棒を使わない<b>表だけ</b>の形です。</p>`
         },
         {
             id: 'pdfimport', icon: 'upload', title: '前回の記録をPDFから取り込む', sub: '前回比と仕入れ数の目安のために',
@@ -12026,7 +12112,7 @@
             menuRow('ticket', 'セット割・クーポン', discountSub(), "openPanel('settings','coupon')") +
             menuRow('yen', '支払い方法', paySub(), "openPanel('settings','pay')") +
             menuRow('percent', '消費税', taxSub(), "openPanel('settings','tax')") +
-            (!isKitchen() ? menuRow('users', '委託商品', consignSub(), "openPanel('settings','consign')") : '') +
+            (!isKitchen() ? menuRow('box', '委託商品', consignSub(), "openPanel('settings','consign')") : '') +
             (isRestaurant() ? menuRow('table', 'テーブルと伝票', restSub(), "openPanel('settings','rest')") : '') +
             (isKitchen() ? menuRow('qr', 'モバイルオーダー', mobileSub(), "openPanel('settings','mobile')") : '') +
             menuRow('target', '売上目標', setGoalSub(), "openPanel('settings','goal')") +
@@ -17230,7 +17316,7 @@
         { id: 'a4l', label: 'A4横', ar: '297 / 210', size: '横1754×縦1240' },
         { id: 'wide', label: '横長 16:9', ar: '16 / 9', size: '横1600×縦900' }
     ];
-    let cdCfg = { theme: 'dark', pay: true, ads: [], adSec: 6 };
+    let cdCfg = { theme: 'dark', pay: true, ads: [], adSec: 6, doneSec: 3, adShape: 'a4p' };
     let cdCfgBy = '';
     function normCdCfg(c) {
         c = (c && typeof c === 'object') ? c : {};
