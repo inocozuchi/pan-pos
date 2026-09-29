@@ -660,6 +660,10 @@
         .kds-card.st-done .kds-state { color: var(--text-light); }
         .kds-card.warn .kds-min { color: var(--warn-ink); }
         .kds-card.late .kds-min { color: var(--danger); }
+        /* 受け取り時間を指定した注文：時刻の札と、まだ作らない「時間指定」 */
+        .kds-card .kds-tag.kds-pick { color: var(--text-main); box-shadow: inset 0 0 0 1.5px var(--text-light); }
+        .kds-card.held { opacity: .78; }
+        .kds-card.held .kds-min { color: var(--text-light); font-size: 13px; }
         .kds-card.late { box-shadow: var(--shadow-card), inset 6px 0 0 var(--dine), inset 0 0 0 2px var(--danger); }
         .kds-card .kds-edit { font-size: 11.5px; font-weight: 700; color: var(--warn-ink); padding: 6px 14px 0 20px; }
         /* 会計中（レジのカート）：点滅させて、まだ会計が済んでいないことを示す */
@@ -1810,6 +1814,15 @@
             padding: 10px 4px; min-height: 44px; font-size: 13.5px; font-weight: 600; color: var(--text-light); white-space: nowrap;
         }
         .seg-pick button .ic { width: 18px; height: 18px; }
+        /* 役割が4つある時（ファストフード）は2列2段にする（スマホの幅でも文字が切れないように） */
+        .seg-pick.four { display: grid; grid-template-columns: 1fr 1fr; }
+        /* 小さな選択肢を横に並べる（待ち時間など。押せば、その場で決まる） */
+        .chip-pick { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 4px; }
+        .chip-pick button {
+            border: none; background: var(--surface); color: var(--text-main); font-family: inherit; box-shadow: var(--shadow-card);
+            font-size: 14px; font-weight: 700; min-height: 40px; padding: 0 14px; border-radius: 999px; cursor: pointer;
+        }
+        .chip-pick button.on { background: var(--accent); color: #fff; }
         .seg-pick button.on {
             background: var(--surface); color: var(--text-main); font-weight: 700;
             box-shadow: 0 1px 3px rgba(28,29,34,.14), 0 0 0 .5px rgba(28,29,34,.04);
@@ -2191,6 +2204,9 @@
         #customer-display .cd-done .ic { width: 46px; height: 46px; color: #35C77E; stroke-width: 2.6; }
         #customer-display .cd-done-t { font-size: var(--cd-head); font-weight: 700; margin-top: 16px; letter-spacing: 0.04em; }
         #customer-display .cd-done-s { font-size: 17px; color: #9AA0B0; margin-top: 10px; }
+        /* ファストフードの時：呼び出しの番号を大きく（この番号で呼ばれると分かるように） */
+        #customer-display .cd-done-no { margin-top: 14px; font-size: 18px; font-weight: 700; color: #C9CEDA; }
+        #customer-display .cd-done-no b { display: block; font-size: clamp(56px, 14vmin, 120px); font-weight: 900; color: #fff; line-height: 1.05; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
         /* お礼の表示が、あとどれくらい出ているかを細い線で示す（急かさない太さ） */
         #customer-display .cd-done-bar {
             width: 120px; height: 3px; border-radius: 2px; margin: 18px auto 0;
@@ -3111,11 +3127,17 @@
                 <div id="goal-state" class="notice notice-accent" style="display:none; margin-top:12px;"></div>
             </div>
 
+            <!-- この端末の役割：レジ／キッチン／お会計の表示／呼び出し番号 を一覧から選ぶ -->
+            <div class="sub-view" id="sub-role" style="display:none;">
+                <p class="settings-hint" style="margin-top:0;">この端末を何に使うかを選びます。押すとすぐ切り替わります。</p>
+                <div class="menu-list" id="role-list"></div>
+                <div id="role-note" class="notice" style="margin-top:12px;"></div>
+            </div>
+
             <!-- お客様用の表示（カスタマーディスプレイ）：いまの状態と、戻し方の案内 -->
             <div class="sub-view" id="sub-customer" style="display:none;">
                 <p class="settings-hint">レジが打っている内容を、大きな文字でそのまま映します。<b>会計はできません</b>（左下の×で戻せます）。</p>
                 <div id="cd-state" class="notice"></div>
-                <div id="cd-call-opt"></div>
                 <div id="cd-actions" class="btn-stack" style="margin-top:12px;"></div>
 
             </div>
@@ -3195,10 +3217,7 @@
             <!-- 開いている販売会に合流する -->
             <div class="sub-view" id="sub-open-join" style="display:none;">
                 <label class="field-label" style="margin-top:0;">この端末の使い方</label>
-                <div class="seg-pick" id="join-role" role="group" aria-label="この端末の使い方">
-                    <button type="button" id="join-role-register" class="on" onclick="setJoinRole('register')"><svg class="ic"><use href="#ic-register"/></svg>レジとして使う</button>
-                    <button type="button" id="join-role-display" onclick="setJoinRole('display')"><svg class="ic"><use href="#ic-users"/></svg>お客様用の表示</button>
-                </div>
+                <div class="seg-pick" id="join-role" role="group" aria-label="この端末の使い方"></div>
                 <div class="list-head">
                     <label class="field-label">いま開いている販売会</label>
                     <button class="link-btn" onclick="loadOpenEvents(true)"><svg class="ic"><use href="#ic-refresh"/></svg>探し直す</button>
@@ -3250,7 +3269,7 @@
 <div id="later-sheet" class="later-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="later-title" onclick="if (event.target === this) closeLaterSheet()">
     <div class="later-card">
         <div class="later-title" id="later-title">後で会計</div>
-        <div class="later-sub">注文だけ先にキッチンへ出します。お支払いは「未会計の注文」から。</div>
+        <div class="later-sub">注文だけ先にキッチンへ出します。お支払いは受け取りの時に「未会計の注文」から（払うまで渡せません）。</div>
         <div class="later-btns">
             <button type="button" class="later-take" onclick="createLaterOrder('take')">持ち帰り</button>
             <button type="button" class="later-eat" onclick="createLaterOrder('eat')">店内</button>
@@ -3431,6 +3450,7 @@
         <div class="cd-done" id="cd-done" style="display:none;">
             <div class="cd-done-mark"><svg class="ic"><use href="#ic-check"/></svg></div>
             <div class="cd-done-t">ありがとうございました</div>
+            <div class="cd-done-no" id="cd-done-no" style="display:none;"></div>
             <div class="cd-done-s" id="cd-done-s"></div>
             <div class="cd-done-bar" id="cd-done-bar"><i></i></div>
         </div>
@@ -4581,7 +4601,8 @@
                 ? `お釣り¥${record.change}（${changeDenoms(record.change).map(d => `${d.unit}×${d.count}`).join('・')}）`
                 : 'お釣りなし');
         showToast(`記録しました（${isKitchen() ? '番号' + (kitchenNo != null ? kitchenNo : record.no) : '客No.' + record.no} / ${chgText}）`);
-        publishCustomerDone(record);   // お客様の画面に「ありがとうございました」を出す
+        // お客様の画面に「ありがとうございました」を出す（ファストフードの時は、呼び出しの番号も）
+        publishCustomerDone(record, isKitchen() && kitchenNo != null ? String(kitchenNo) : null);
     }
 
     // 予約の番号。共有していると2台が同じ瞬間に予約を受けることがあるので、
@@ -4983,15 +5004,38 @@
                 </ol>
                 <ul class="man-list">
                     <li>番号は、共有している時は<b>レジの端末ごとの文字＋数字</b>（A1、B1…）です。レジが何台あってもぶつかりません。モバイルオーダーは <b>M1001、M1002…</b>です。</li>
-                    <li><b>後で会計</b>…店内で食べて帰る時に払う、などの時は、カートの<b>「後で会計」</b>を押して持ち帰りか店内を選びます。お金を受け取らずに注文だけキッチンに出ます。払う時は、レジの上の<b>「未会計の注文」</b>から番号を選んで「レジで会計する」を押します（客No.は注文した時のものを使います）。</li>
+                    <li><b>後で会計</b>…先に作り始めて、お金は受け取りの時にもらう時は、カートの<b>「後で会計」</b>を押して持ち帰りか店内を選びます。お金を受け取らずに注文だけキッチンに出ます。払う時は、レジの上の<b>「未会計の注文」</b>から番号を選んで「レジで会計する」を押します（客No.は注文した時のものを使います）。</li>
+                    <li><b>まだ払っていない注文は、渡せません。</b>「呼び出し」まではできますが、「受け渡し完了」はレジで会計が済むまで押せません（カードに「未会計」と出ます）。</li>
                     <li>呼び出しを押し間違えた時は、↶ で調理中に戻せます。「完了」からも「呼び出しに戻す」で戻せます。</li>
                     <li>待たせている時間が<b>10分を過ぎると黄色、15分を過ぎると赤</b>になります。</li>
                     <li><b>「担当」</b>で、ドリンク係はドリンクの行だけ、のように分けて見られます（端末ごとに覚えます）。</li>
                     <li>レジで会計を取り消すと、キッチンのカードも消えます。会計の中身を直すと、カードにも「直されました」と出ます。</li>
                     <li>キッチンで何を押しても、<b>売上の記録は変わりません</b>（お金の記録とは別に置いています）。</li>
-                    <li>キッチンを別の端末にする時は、その端末で販売会に<b>合流</b>して、下の「キッチン」を開いておきます。番号を映す端末は、合流の時に<b>「お客様用の表示」</b>を選びます。受け取り口に置く画面は、「設定 → 複数端末で使う → お客様用の表示」で<b>「呼び出し番号だけを映す」</b>をオンにします。</li>
+                    <li>キッチンを別の端末にする時は、その端末で合流する時に<b>「キッチン」</b>を選びます（あとからでも<b>「設定 → この端末の役割」</b>で選べます）。レジの画面は出なくなり、キッチンの画面だけになります。受け取り口に番号を映す端末は<b>「呼び出し番号」</b>を選びます（下の「端末の置き方」）。</li>
+                    <li>モバイルオーダーで<b>受け取り時間を指定した注文</b>は、それまで<b>「時間指定」</b>に入っていて、受け取りの少し前（設定で決めた分だけ前）に「調理中」へ出てきて音が鳴ります。早く作りたい時は「時間指定」から<b>「いま作り始める」</b>を押します。</li>
                     <li>売上集計の<b>「注文と提供時間」</b>で、呼び出すまでに何分かかったかが見られます。</li>
                 </ul>`
+        },
+        {
+            id: 'roles', icon: 'device', title: '端末の置き方と、払うタイミング', sub: 'ファストフードの時',
+            kitchenOnly: true,
+            body: `
+                <p>ファストフードでは、店の側の画面が4種類あります。<b>「設定 → この端末の役割」</b>の一覧から、端末ごとに1つ選びます（押せばその場で切り替わり、コードの入れ直しは要りません）。</p>
+                <ul class="man-list">
+                    <li><b>レジ</b>…商品を打って会計する（ふだんの使い方）。キッチンの画面も見られます。</li>
+                    <li><b>キッチン</b>…注文のカードだけを出す。レジの画面は出ません（打ち間違いで会計しないように）。</li>
+                    <li><b>お会計の表示</b>…レジの横でお客様に向ける。打った商品・合計・お釣りが大きく出て、会計が済むと<b>「ありがとうございました」と呼び出しの番号</b>が出ます。</li>
+                    <li><b>呼び出し番号</b>…受け取り口に置く。「お作りしています」と「できあがり」の番号だけを出し、呼び出すと音が鳴ります。</li>
+                </ul>
+                <p>1台で「お会計の表示」と「呼び出し番号」の両方は映しません。端末が足りない時は、キッチンはレジの端末の「キッチン」の画面で見れば十分です。</p>
+                <h4>お金を受け取るタイミング</h4>
+                <ul class="man-list">
+                    <li><b>店頭で持ち帰り</b>…その場で会計します（いつもどおり）。会計が済むと番号が付き、キッチンに出ます。</li>
+                    <li><b>店頭で店内飲食</b>…その場で払ってもらうか、カートの<b>「後で会計」</b>で注文だけ出して、<b>受け取りの時</b>に「未会計の注文」から会計します。</li>
+                    <li><b>モバイルオーダー</b>…注文の時点では払っていません（「モバイル・未払い」）。<b>受け取りの時</b>に「未会計の注文」から番号を選んで会計します。</li>
+                    <li>まだ払っていない注文は、キッチンで<b>「受け渡し完了」を押せません</b>。渡す前に必ずレジで会計します。</li>
+                </ul>
+                <p>閉店の前に<b>「未会計の注文」が0件</b>になっているかを確かめてください（払わずに帰った注文がないか）。</p>`
         },
         {
             id: 'mobile', icon: 'qr', title: 'モバイルオーダー', sub: 'お客様のスマホから注文',
@@ -5000,11 +5044,13 @@
                 <p>お客様がQRコードを読むと、スマホで注文の画面が開きます（アプリは要りません）。<b>共有している時だけ</b>使えます。</p>
                 <ol class="man-steps">
                     <li><b>「設定 → モバイルオーダー」</b>で受付をオンにします。出てくる<b>QRコード</b>を印刷するか、画面を見せます。</li>
-                    <li>お客様は商品と<b>「持ち帰り／店内」</b>を選んで注文します。<b>M1001</b> のような4けたの番号が出て、注文はすぐキッチンに「モバイル・未払い」で出ます。</li>
+                    <li>お客様は商品と<b>「持ち帰り／店内」</b>を選んで注文します。<b>M1001</b> のような4けたの番号が出て、注文はすぐキッチンに「モバイル・未払い」で出ます。受け取り時間を選べるようにしている時は、<b>「できしだい」か時刻</b>を選んでもらいます。</li>
                     <li>お客様の画面には<b>「あと何組」</b>が出て、呼び出すと音と画面で知らせます（その画面を開いている時）。</li>
-                    <li>お支払いはレジで、<b>受け取りの時</b>（店内なら<b>帰る時</b>でも）。レジの上の<b>「未会計の注文」</b>から番号を選んで<b>「レジで会計する」</b>。中身がカートに入るので、いつもどおり会計します。</li>
+                    <li>お支払いはレジで、<b>受け取りの時</b>（払うまで、キッチンは「受け渡し完了」を押せません）。レジの上の<b>「未会計の注文」</b>から番号を選んで<b>「レジで会計する」</b>。中身がカートに入るので、いつもどおり会計します。</li>
                 </ol>
                 <ul class="man-list">
+                    <li><b>いまの待ち時間</b>…「設定 → モバイルオーダー」で<b>約5分〜約60分</b>から選ぶと、お客様の注文の画面のいちばん上に出ます。混み具合に合わせて選び直してください（「出さない」もあります）。</li>
+                    <li><b>受け取り時間の指定</b>…オンにすると、お客様が<b>10分ごとの時刻</b>から受け取り時間を選べます。その注文は、受け取りの<b>何分前にキッチンへ出すか</b>（5〜60分前）と、<b>何時間先まで選べるか</b>（1〜4時間）を決めておきます。お客様の画面には「◯時◯分ごろから作り始めます」と出ます。</li>
                     <li>混んできたら受付をオフにします。お客様の画面には「止めている時のお知らせ」が出ます。</li>
                     <li>来ない注文・いたずらの注文は、「未会計の注文」の<b>「取り消す」</b>で消せます。</li>
                     <li>まだ払っていないモバイルの注文の分も、レジの残数から引いて数えます。</li>
@@ -5091,7 +5137,7 @@
                 </div>
                 <h4>QRコードで合流する</h4>
                 <p>共有している端末の<b>「設定 → 複数端末で使う」</b>（画面の上の共有コードを押しても開きます）に<b>QRコード</b>が出ます。もう1台の<b>カメラで読み取る</b>と、このアプリが開き、合流の画面がコード入りで用意されます。<b>「『◯◯』に合流する」を押せば合流</b>です（読み取っただけでは合流しません）。</p>
-                <p>QRコードの上で<b>「レジとして」「お客様用の表示」</b>を選べます。「お客様用の表示」のQRコードを読み取った端末は、合流するとそのまま金額表示になります。</p>
+                <p>QRコードの上で、読み取った端末の<b>役割</b>を選べます（既製品の販売では「レジ」「お客様用の表示」、ファストフードでは「レジ」「キッチン」「お会計の表示」「呼び出し番号」）。読み取った端末は、合流するとそのままその役割になります。</p>
                 <p>※カメラで読み取るとブラウザで開きます。<b>ホーム画面に追加したアプリで使う端末</b>は、4けたのコードを「合流する」で入れてください（ブラウザとホーム画面のアプリは、中身が別々のため）。</p>
                 <h4>途中から共有したくなった</h4>
                 <p>開店し直す必要はありません。<b>「設定 → 複数端末で使う」</b>の<b>「ほかの端末と共有を始める」</b>を押すと、共有コードが自動で決まり、ここまでの会計も在庫もそのまま引き継がれます。ほかの端末は、いつもどおり<b>「合流する」</b>の一覧から選ぶだけです。</p>
@@ -5133,8 +5179,8 @@
                 </ol>
                 <div class="man-box tip">
                     <div class="man-box-h">すでに共有している端末なら、1回で切り替わります</div>
-                    <p>その端末がもう同じ販売会で会計しているなら、<b>コードを入れ直す必要も、共有をやめる必要もありません</b>。<b>「設定 → 複数端末で使う → お客様用の表示」</b>を開いて<b>「この端末をお客様用の表示にする」</b>を押すだけです。</p>
-                    <p>戻す時も同じ画面の<b>「ふだんのレジに戻す」</b>1回で、<b>そのまま同じ販売会の続きから会計できます</b>。行列の具合に合わせて、レジを増やしたり表示に回したりを何度でも切り替えられます。</p>
+                    <p>その端末がもう同じ販売会で会計しているなら、<b>コードを入れ直す必要も、共有をやめる必要もありません</b>。<b>「設定 → この端末の役割」</b>を開いて<b>「お客様用の表示」</b>を押すだけです。</p>
+                    <p>戻す時は、表示の左上の×か、同じ一覧の<b>「レジ」</b>1回で、<b>そのまま同じ販売会の続きから会計できます</b>。行列の具合に合わせて、レジを増やしたり表示に回したりを何度でも切り替えられます。</p>
                 </div>
                 <p>商品を打つたびに<b>明細と合計</b>が1行ずつ増えていきます。レジで<b>「会計へ進む」</b>を押すと合計の文字が大きくなり、お預かりを入れると<b>お釣り</b>も出ます。会計が終わると<b>「ありがとうございました」</b>に変わり、約18秒そのまま出ています（次のお客様の商品を1点打てば、すぐ次の会計の画面に変わります）。</p>
                 <p>端末を<b>横向きに寝かせても、明細はそのまま出ます</b>（左に買うもの、右に金額の2段組みになります）。</p>
@@ -5451,7 +5497,7 @@
     //   長くしても行列が止まることはない。
     const CD_DONE_MS = 18000;
 
-    function publishCustomerDone(record) {
+    function publishCustomerDone(record, callNo) {
         if (!syncMode || !syncEventCode || !fbDb || customerMode) return;
         if (cdPushTimer) { clearTimeout(cdPushTimer); cdPushTimer = null; }
         if (cdDoneTimer) { clearTimeout(cdDoneTimer); cdDoneTimer = null; }
@@ -5462,6 +5508,7 @@
             cash: record && record.cash != null ? record.cash : null,
             change: record && record.change != null ? record.change : null,
             no: record ? record.no : null,
+            callNo: callNo || null,
             doneMs: CD_DONE_MS,
             at: Date.now(), by: getDeviceId()
         };
@@ -5497,6 +5544,7 @@
         const code = knownShareCode();
         customerMode = false;
         uiPrefs.role = 'register';
+        if (opts && opts.as) uiPrefs.kitchenOnly = opts.as === 'kitchen';
         try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
         applyCustomerMode();
         // もう一度コードを入れ直させない。
@@ -5514,7 +5562,7 @@
             // 閉店中なら、合流の画面にコードを入れたところまで用意する
             const jc = document.getElementById('join-code-input');
             if (jc) jc.value = code;
-            joinRole = 'register';
+            joinRole = (isKitchen() && uiPrefs.kitchenOnly) ? 'kitchen' : 'register';
             openPanel('session', 'open-join');
             peekEventCode('join');
         } else {
@@ -5567,11 +5615,63 @@
         return ok;
     }
 
-    // 役割の切り替え本体（'register' / 'customer'）
+    // ▼▼▼ この端末の役割（一覧から選ぶ）▼▼▼
+    //   レジ          … 商品を打って会計する（ふだんの使い方）
+    //   キッチン      … ファストフードの時だけ。注文を見て作り、呼び出す画面だけを出す（会計はしない）
+    //   お会計の表示  … お客様に金額とおつりを大きく見せる（映すだけ）
+    //   呼び出し番号  … ファストフードの時だけ。受け取り口に、できあがった番号を映す（映すだけ）
+    // 「キッチン」はレジと同じく販売会のデータを持つ端末で、レジの画面を出さないだけ。
+    // 「お会計の表示」と「呼び出し番号」は、どちらもお客様用の表示で、映すものだけが違う。
+    const ROLE_INFO = {
+        register: { icon: 'register', sub: '商品を打って会計する' },
+        kitchen: { icon: 'kitchen', sub: '注文を見て作り、できたら呼び出す（会計はしない）' },
+        display: { icon: 'users', sub: 'お客様に金額とおつりを大きく見せる（映すだけ）' },
+        call: { icon: 'bolt', sub: '受け取り口に、できあがった番号を映す（映すだけ）' }
+    };
+    function roleTitle(r) {
+        if (r === 'kitchen') return 'キッチン';
+        if (r === 'display') return isKitchen() ? 'お会計の表示' : 'お客様用の表示';
+        if (r === 'call') return '呼び出し番号';
+        return 'レジ';
+    }
+    function deviceRole() {
+        if (customerMode) return (isKitchen() && uiPrefs.cdCallOnly) ? 'call' : 'display';
+        if (isKitchen() && uiPrefs.kitchenOnly) return 'kitchen';
+        return 'register';
+    }
+    function roleChoices() { return isKitchen() ? ['register', 'kitchen', 'display', 'call'] : ['register', 'display']; }
+    function storeUiPrefs() {
+        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) { /* 保存できなくても動く */ }
+    }
+    // キッチン用の端末として、いまレジの画面を隠すか（営業中だけ。閉店中は合流のカードを出すため）
+    function kitchenOnlyNow() {
+        return !customerMode && deviceRole() === 'kitchen' && !!currentSession;
+    }
+    // 役割に合わせて、レジのタブを出すかどうかと、最初に開く画面を決める
+    function applyDeviceRole() {
+        const k = kitchenOnlyNow();
+        document.body.classList.toggle('role-kitchen', k);
+        const nr = document.getElementById('nav-register');
+        if (nr) nr.style.display = k ? 'none' : '';
+        if (k && currentView === 'register') navTo('kitchen');
+    }
+
+    // 役割の切り替え本体（'register' / 'kitchen' / 'display' / 'call'。前の版の 'customer' は 'display'）
     async function switchDeviceRole(role) {
-        if (!window.FIREBASE_CONFIG) { playError(); alert('この端末では共有機能が使えないため、役割は変えられません。'); return; }
-        if (role === 'customer') {
-            if (customerMode) return;
+        if (role === 'customer') role = 'display';
+        if (!ROLE_INFO[role] || !roleChoices().includes(role)) return;
+        if (role === deviceRole()) return;
+        if (role !== 'register' && !window.FIREBASE_CONFIG) { playError(); alert('この端末では共有機能が使えないため、役割は変えられません。'); return; }
+        if (role === 'display' || role === 'call') {
+            const callOnly = role === 'call';
+            if (customerMode) {
+                // 映す端末どうしの切り替え：つなぎ直さずに、映すものだけを変える
+                uiPrefs.cdCallOnly = callOnly;
+                storeUiPrefs();
+                applyCustomerMode();
+                showToast(`${roleTitle(role)}にしました`);
+                return;
+            }
             const code = knownShareCode();
             if (!code) {
                 showToast('先に共有コードを入れてください');
@@ -5582,13 +5682,76 @@
             if (cart.length > 0 && !confirm('いま打ちかけの商品があります。\nお客様用の表示にすると、この端末では会計できなくなります。\n\n打ちかけの内容を取り消して切り替えますか？')) return;
             cart = [];
             const wasSyncing = syncMode;
+            const wasKitchen = !!uiPrefs.kitchenOnly;
+            uiPrefs.cdCallOnly = callOnly;
+            uiPrefs.kitchenOnly = false;
             pauseRegisterSync();
-            if (!enterCustomerMode(code) && wasSyncing) resumeRegisterSync();   // だめだった時は元に戻す
+            if (!enterCustomerMode(code)) {       // だめだった時は元に戻す
+                uiPrefs.kitchenOnly = wasKitchen;
+                storeUiPrefs();
+                if (wasSyncing) resumeRegisterSync();
+            }
+            applyDeviceRole();
             renderSyncRoleList();
             return;
         }
-        if (!customerMode) return;
-        await exitCustomerMode({ quiet: true });
+        // レジ・キッチン（どちらも販売会のデータを持つ端末）
+        const kitchen = role === 'kitchen';
+        if (kitchen && !customerMode && currentSession && !syncMode) {
+            playError();
+            alert('キッチン用にすると、この端末では会計しません。\n先に「複数端末で使う」でレジの端末と共有してから切り替えてください。');
+            return;
+        }
+        if (kitchen && cart.length > 0) {
+            if (!confirm('いま打ちかけの商品があります。\nキッチン用にすると、この端末では会計しません。\n\n打ちかけの内容を取り消して切り替えますか？')) return;
+            if (!syncMode) cart.forEach(item => restockOne(products.find(p => p.id === item.id)));
+            cart = [];
+            saveData();
+            init();
+        }
+        if (customerMode) {
+            await exitCustomerMode({ quiet: true, as: role });
+            if (customerMode) return;          // パスコードで止められた
+        }
+        uiPrefs.kitchenOnly = kitchen;
+        storeUiPrefs();
+        applyDeviceRole();
+        if (kitchen && currentSession) navTo('kitchen');
+        if (!kitchen && currentView === 'kitchen') showRegister();
+        beatPresence();
+        showToast(`${roleTitle(role)}にしました`);
+        renderSyncRoleList();
+        if (currentView === 'settings' && currentSub === 'role') renderRoleView();
+    }
+
+    // 設定の「この端末の役割」：役割の一覧（押せばその場で切り替わる）
+    function roleRowsHTML() {
+        const now = deviceRole();
+        const noShare = !window.FIREBASE_CONFIG;
+        return roleChoices().map(r => menuRow(ROLE_INFO[r].icon, roleTitle(r),
+            r === now ? '◯ いまこの役割です' : ROLE_INFO[r].sub,
+            r === now ? 'playSound(660,0.05)' : `switchDeviceRole('${r}')`,
+            { disabled: noShare && r !== 'register' })).join('');
+    }
+    function roleSub() { return roleTitle(deviceRole()); }
+    function renderRoleView() {
+        const box = document.getElementById('role-list');
+        if (box) box.innerHTML = roleRowsHTML();
+        const note = document.getElementById('role-note');
+        if (!note) return;
+        const code = knownShareCode();
+        if (!window.FIREBASE_CONFIG) {
+            note.className = 'notice notice-warn';
+            note.innerHTML = '<svg class="ic"><use href="#ic-alert"/></svg><span>この端末では共有機能が使えないため、レジとしてだけ使えます。</span>';
+        } else if (!code) {
+            note.className = 'notice';
+            note.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span>レジ以外の役割は、レジと<b>同じ販売会に入っている</b>ことが前提です。先に「開店・合流」から合流してください。</span>';
+        } else {
+            note.className = 'notice';
+            note.innerHTML = `<svg class="ic"><use href="#ic-link"/></svg><span>共有コード<b>「${escHtml(code)}」</b>の販売会のまま切り替わります（コードの入れ直しは要りません）。`
+                + (isKitchen() ? '<br>お会計の表示と呼び出し番号は、お客様に向けて置く端末です。1台で両方は映しません。' : '')
+                + '</span>';
+        }
     }
 
     // いまの役割にあわせて、画面とデータの受け取りを切り替える
@@ -5643,13 +5806,15 @@
             const d = doc.exists ? (doc.data() || {}) : null;
             const hadEvent = cdSawEvent;
             if (d) cdSawEvent = true;
+            // 受け取り時間の何分前に作り始めるか（呼び出し番号の「お作りしています」に時間指定の注文を混ぜないため）
+            if (d) mobileCfg = normMobileCfg(d.mobile);
             // 映している販売会の店舗モードにそろえる（ファストフードなら呼び出し番号を受け取る）
             if (d && (d.storeMode === 'kitchen' || d.storeMode === 'retail') && d.storeMode !== storeMode) {
                 storeMode = d.storeMode;
                 saveData();
                 applyStoreMode();
             }
-            if (isKitchen() && !cdOrdersUnsub) startCallBoardSubscription(code);
+            if (deviceRole() === 'call' && !cdOrdersUnsub) startCallBoardSubscription(code);
             // 閉店した、または（さっきまであった）置き場が片づけられた
             if ((d && d.status === 'closed') || (!d && hadEvent)) {
                 if (cdEnded) return;
@@ -5678,6 +5843,7 @@
         if (cdWatchTimer) clearInterval(cdWatchTimer);
         cdWatchTimer = setInterval(() => {
             if (!customerMode) { clearInterval(cdWatchTimer); cdWatchTimer = null; return; }
+            if (deviceRole() === 'call') renderCallBoard();   // 予約の注文が作り始める時刻になったら、お待ちの番号に出す
             if (cdLastSeen && Date.now() - cdLastSeen > 90000) {
                 const linkEl = document.getElementById('cd-link');
                 if (linkEl && !linkEl.classList.contains('lost')) renderCustomerView(null, 'lost');
@@ -5709,11 +5875,12 @@
         }
 
         let state = (d && d.state) || 'idle';
-        // キッチンの時：待ち受けの代わりに呼び出し番号を出す。
-        // 「呼び出し番号だけ」にした端末（受け取り口に置く画面）は、会計中も番号のまま。
-        if (isKitchen() && uiPrefs.cdCallOnly) state = 'idle';
+        // 役割が「呼び出し番号」の端末（受け取り口に置く画面）は、いつも番号だけを出す。
+        // 「お会計の表示」は金額だけ（待ち受けは「いらっしゃいませ」）。1台で両方は映さない。
+        const callRole = deviceRole() === 'call';
+        if (callRole) state = 'idle';
         const call = document.getElementById('cd-call');
-        const showCall = isKitchen() && state === 'idle' && !cdEnded;
+        const showCall = callRole && !cdEnded;
         idle.style.display = state === 'idle' && !showCall ? '' : 'none';
         if (call) call.style.display = showCall ? '' : 'none';
         if (showCall) renderCallBoard();
@@ -5769,6 +5936,12 @@
             if (d && d.total != null) bits.push('お買い上げ ' + yenStr(d.total));
             if (d && d.change != null && d.change > 0) bits.push('お釣り ' + yenStr(d.change));
             document.getElementById('cd-done-s').textContent = bits.join('　／　');
+            const noEl = document.getElementById('cd-done-no');
+            if (noEl) {
+                const cn = d && d.callNo ? String(d.callNo) : '';
+                noEl.style.display = cn ? '' : 'none';
+                noEl.innerHTML = cn ? `お呼び出しの番号<b>${escHtml(cn)}</b>` : '';
+            }
             // 残り時間の細い線を、レジ側が決めた長さで引き直す
             const bar = document.getElementById('cd-done-bar');
             if (bar) {
@@ -5891,7 +6064,7 @@
         const code = customerMode ? uiPrefs.cdCode : syncEventCode;
         if (!code || !fbDb || !syncReady) return;
         presenceRef(code).set({
-            label: deviceLabel(), name: deviceDisplayName(), role: myPresenceRole(),
+            label: deviceLabel(), name: deviceDisplayName(), role: myPresenceRole(), kind: deviceRole(),
             roundId: syncRoundId,   // 同じコードを使い回した時、前の回の端末を出さない
             // 【重要】left を必ず false に戻す。
             // 以前は「抜けました」の印（left: true）を書いたあと、
@@ -6016,7 +6189,7 @@
         // この端末は必ず一覧に出す。知らせがまだ往復していない間も
         // 「自分すら出てこない」という不安な見え方にならないようにする。
         if (!rows.some(r => r.__id === getDeviceId())) {
-            rows.unshift({ __id: getDeviceId(), name: deviceDisplayName(), label: deviceLabel(), role: myPresenceRole(), at: now });
+            rows.unshift({ __id: getDeviceId(), name: deviceDisplayName(), label: deviceLabel(), role: myPresenceRole(), kind: deviceRole(), at: now });
         }
         box.innerHTML = rows.map(r => {
             const gap = Math.max(0, now - (r.at || 0));
@@ -6025,7 +6198,9 @@
             const when = gap < 30000 ? 'たったいま'
                 : gap < 3600000 ? `${Math.round(gap / 60000)}分前`
                 : `${Math.round(gap / 3600000)}時間前`;
-            const roleLabel = r.role === 'display' ? 'お客様用の表示' : '会計する端末';
+            // 役割の名前（前の版は kind を書かないので、role から決める）
+            const kind = ROLE_INFO[r.kind] ? r.kind : (r.role === 'display' ? 'display' : 'register');
+            const roleLabel = kind === 'register' ? '会計する端末' : roleTitle(kind);
             // 名前を付けていれば名前を、付けていなければ役割そのものを見出しにする。
             // （端末IDから作った2文字だけでは、どれがどの端末か人には分からないため）
             const named = (r.name && String(r.name).trim()) || '';
@@ -6034,7 +6209,7 @@
             if (named) bits.push(roleLabel);
             bits.push(online ? '通信あり' : '最後の通信 ' + when);
             if (r.label) bits.push(`会計記録の記号 ${escHtml(r.label)}`);
-            const roleIcon = r.role === 'display' ? 'ic-users' : 'ic-register';
+            const roleIcon = 'ic-' + ROLE_INFO[kind].icon;
             return `<div class="dev-row${online ? '' : ' off'}">
                 <span class="dev-dot"></span>
                 <svg class="ic dev-ic"><use href="#${roleIcon}"/></svg>
@@ -6118,25 +6293,19 @@
         }
         if (customerMode) {
             box.className = 'notice notice-ok';
-            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>いまこの端末は<b>お客様用の表示</b>です（コード: ${escHtml(uiPrefs.cdCode || '')}）。<br>レジに戻すと、そのまま同じ販売会で会計できます。</span>`;
-            if (acts) acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="switchDeviceRole('register')"><svg class="ic"><use href="#ic-register"/></svg>ふだんのレジに戻す</button>`;
+            box.innerHTML = `<svg class="ic"><use href="#ic-check"/></svg><span>いまこの端末は<b>${roleTitle(deviceRole())}</b>です（コード: ${escHtml(uiPrefs.cdCode || '')}）。<br>レジに戻すと、そのまま同じ販売会で会計できます。</span>`;
+            if (acts) acts.innerHTML = `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="switchDeviceRole('register')"><svg class="ic"><use href="#ic-register"/></svg>ふだんのレジに戻す</button>`
+                + `<button class="action-btn btn-secondary" onclick="openPanel('settings','role')"><svg class="ic"><use href="#ic-device"/></svg>ほかの役割を選ぶ</button>`;
             return;
         }
         // レジのまま。すでにコードが分かっているなら、入れ直さずにそのまま切り替えられる。
         const code = knownShareCode();
         box.className = 'notice';
-        // キッチンの時：映すものを選べる（受け取り口に置く画面は、呼び出し番号だけにする）
-        const callOpt = document.getElementById('cd-call-opt');
-        if (callOpt && isKitchen()) {
-            callOpt.innerHTML = `<div class="sw-row">
-                    <div class="sw-text"><b>呼び出し番号だけを映す</b><span>受け取り口に置く画面に。オフなら、会計中は金額、それ以外は呼び出し番号</span></div>
-                    <input type="checkbox" class="ios-switch" id="opt-cd-call-only" onchange="setCallOnly(this.checked)"${uiPrefs.cdCallOnly ? ' checked' : ''}>
-                </div>`;
-        }
         if (code) {
             box.innerHTML = `<svg class="ic"><use href="#ic-users"/></svg><span>いまこの端末は<b>ふだんのレジ</b>です。<br>共有コード<b>「${escHtml(code)}」</b>のまま、お客様用の表示に切り替えられます（<b>コードの入れ直しも、共有をやめる必要もありません</b>）。<br>戻す時もこの画面から1回で戻せます。</span>`;
             if (acts) acts.innerHTML =
                 `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="switchDeviceRole('customer')"><svg class="ic"><use href="#ic-users"/></svg>この端末をお客様用の表示にする</button>` +
+                (isKitchen() ? `<button class="action-btn btn-secondary" onclick="switchDeviceRole('call')"><svg class="ic"><use href="#ic-bolt"/></svg>呼び出し番号の画面にする</button>` : '') +
                 `<button class="action-btn btn-secondary" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-link"/></svg>別の共有コードを入れる</button>`;
         } else {
             box.innerHTML = '<svg class="ic"><use href="#ic-users"/></svg><span>いまこの端末は<b>ふだんのレジ</b>です。お客様用にするには、レジ役の端末が使っている<b>共有コード</b>を入れてください。</span>';
@@ -6301,6 +6470,7 @@
                     deviceName: typeof d.deviceName === 'string' ? d.deviceName.slice(0, 20) : '',
                     lock: normLock(d.lock),
                     cdCallOnly: !!d.cdCallOnly,
+                    kitchenOnly: !!d.kitchenOnly,
                     kdsStation: typeof d.kdsStation === 'string' ? d.kdsStation : 'all'
                 };
             }
@@ -7308,6 +7478,13 @@
                 + confirmMsg;
         }
         if (cart.length > 0) confirmMsg = `【！】カートに${cart.length}点の打ちかけが残っています。このまま閉店すると破棄されます。\n\n` + confirmMsg;
+        // まだ払っていない注文（モバイル・後で会計）は、閉店すると売上に入らないまま終わる。
+        // 来なかった注文もあるので止めはしないが、必ず件数と番号を見せて確かめる。
+        const unpaid = isKitchen() ? unpaidOrders() : [];
+        if (unpaid.length) {
+            confirmMsg = `【！】まだ払っていない注文が${unpaid.length}件あります（${unpaid.slice(0, 8).map(o => o.no).join('、')}${unpaid.length > 8 ? ' ほか' : ''}）。\n`
+                + 'このまま閉店すると、その分は売上に入りません。受け取りに来なかった注文なら、そのまま閉店してかまいません。\n\n' + confirmMsg;
+        }
         if (!confirm(confirmMsg)) return;
 
         // 同期中：共有販売会そのものを「閉店済み」にする（同じコードの使い回し事故を防ぐ）。
@@ -7984,7 +8161,7 @@
     function joinUrl(code, role) {
         const base = location.href.split('#')[0].split('?')[0];
         const ev = new URLSearchParams(location.search).get('event');
-        return base + '?join=' + encodeURIComponent(code) + (role === 'display' ? '&as=display' : '') + (ev ? '&event=' + encodeURIComponent(ev) : '');
+        return base + '?join=' + encodeURIComponent(code) + (role && role !== 'register' ? '&as=' + role : '') + (ev ? '&event=' + encodeURIComponent(ev) : '');
     }
     function qrSvg(text) {
         if (typeof qrcode !== 'function') return '';
@@ -7995,20 +8172,28 @@
             return q.createSvgTag({ cellSize: 4, margin: 2, scalable: true, alt: '合流用のQRコード' });
         } catch (e) { return ''; }
     }
-    function setQrRole(r) { qrRole = r === 'display' ? 'display' : 'register'; playSound(660, 0.05); renderShareQr(); }
+    // 読み取った端末を何として入れるか（ファストフードの時は、キッチンと呼び出し番号も選べる）
+    function pickRole(r) { return roleChoices().includes(r) ? r : 'register'; }
+    function setQrRole(r) { qrRole = pickRole(r); playSound(660, 0.05); renderShareQr(); }
+    // 役割の切り替えボタンの並び（合流の画面とQRコードで同じものを使う）
+    function roleSegHTML(cur, fn, idPrefix) {
+        const short = { register: 'レジ', kitchen: 'キッチン', display: isKitchen() ? 'お会計の表示' : 'お客様用の表示', call: '呼び出し番号' };
+        return roleChoices().map(r => `<button type="button"${idPrefix ? ` id="${idPrefix}${r}"` : ''} class="${cur === r ? 'on' : ''}" aria-pressed="${cur === r}" onclick="${fn}('${r}')"><svg class="ic"><use href="#ic-${ROLE_INFO[r].icon}"/></svg>${short[r]}</button>`).join('');
+    }
+    function roleAsText(r) {
+        return r === 'kitchen' ? 'キッチン用の端末として' : (r === 'display' ? (isKitchen() ? 'お会計の表示として' : 'お客様用の表示として') : (r === 'call' ? '呼び出し番号の画面として' : 'レジとして'));
+    }
     function renderShareQr() {
         const box = document.getElementById('share-qr');
         if (!box) return;
         if (!(syncMode && syncEventCode)) { box.innerHTML = ''; return; }
+        qrRole = pickRole(qrRole);
         const url = joinUrl(syncEventCode, qrRole);
         const svg = qrSvg(url);
         box.innerHTML = `<div class="qr-card">
-            <div class="seg-pick" role="group" aria-label="読み取った端末の使い方">
-                <button type="button" class="${qrRole === 'register' ? 'on' : ''}" onclick="setQrRole('register')"><svg class="ic"><use href="#ic-register"/></svg>レジとして</button>
-                <button type="button" class="${qrRole === 'display' ? 'on' : ''}" onclick="setQrRole('display')"><svg class="ic"><use href="#ic-users"/></svg>お客様用の表示</button>
-            </div>
+            <div class="seg-pick${isKitchen() ? ' four' : ''}" role="group" aria-label="読み取った端末の使い方">${roleSegHTML(qrRole, 'setQrRole')}</div>
             <div class="qr-img" id="share-qr-img">${svg || '<span class="settings-hint">QRコードを作れませんでした。4けたのコードを使ってください。</span>'}</div>
-            <p class="settings-hint" style="margin:6px 0 0;">もう1台の<b>カメラで読み取る</b>と、${qrRole === 'display' ? 'お客様用の表示として' : 'レジとして'}この販売会に合流する画面が開きます。<br>ホーム画面に追加したアプリで使う端末は、4けたのコードを「合流する」で入れてください。</p>
+            <p class="settings-hint" style="margin:6px 0 0;">もう1台の<b>カメラで読み取る</b>と、${roleAsText(qrRole)}この販売会に合流する画面が開きます。<br>ホーム画面に追加したアプリで使う端末は、4けたのコードを「合流する」で入れてください。</p>
         </div>`;
     }
     // 起動した時に「?join=」が付いていたら、合流の画面をコード入りで用意する
@@ -8017,7 +8202,9 @@
         const raw = qs.get('join');
         if (!raw) return;
         const code = sanitizeEventCode(raw);
-        const role = qs.get('as') === 'display' ? 'display' : 'register';
+        // as=display / call / kitchen（キッチンと呼び出し番号は、ファストフードの販売会だけで意味がある）
+        const as = qs.get('as');
+        const role = ['display', 'call', 'kitchen'].includes(as) ? as : 'register';
         // 読み込み直した時にもう一度動かないよう、アドレスから外しておく（商品セットの指定は残す）
         try {
             const keep = new URLSearchParams();
@@ -8046,7 +8233,7 @@
         openPanel('session', 'open-join');
         setJoinRoleQuiet(role);
         peekEventCode('join');
-        showToast(role === 'display' ? 'QRコードの販売会です。「合流する」を押すと、お客様用の表示になります' : 'QRコードの販売会です。「合流する」を押してください');
+        showToast(role === 'register' ? 'QRコードの販売会です。「合流する」を押してください' : `QRコードの販売会です。「合流する」を押すと、${roleAsText(role).replace(/として$/, '')}になります`);
     }
 
     // 共有コードをコピーする（メッセージで伝える時に）
@@ -9823,6 +10010,7 @@
         'mobile': 'モバイルオーダー',
         'mobile-pay': '未会計の注文',
         'customer': 'お客様用の表示',
+        'role': 'この端末の役割',
         'goal': 'セット割・売上目標',
         'stock': '商品・在庫の調整',
         'sync': '複数端末で使う',
@@ -9890,6 +10078,8 @@
 
     // いまの履歴の先頭にあわせて画面を描く
     function renderNav() {
+        // キッチン用の端末は、営業中はレジの画面を出さずにキッチンの画面を出す
+        if (navTop().view === 'register' && kitchenOnlyNow()) navStack = [{ view: 'kitchen', sub: null }];
         const top = navTop();
         currentView = top.view;
         currentSub = top.sub;
@@ -10049,6 +10239,7 @@
             else if (sub === 'lock') { lockDraft = null; lockReuse = true; renderLockView(); }
             else if (sub === 'manual') renderManual();
             else if (sub === 'customer') renderCustomerSettings();
+            else if (sub === 'role') renderRoleView();
             else if (sub === 'goal') renderSalesGoal();
             if (sub === 'sync-add' || sub === 'sync') updateSyncUi();
             if (sub === 'sync-add') { peekEventCode('live'); loadOpenEvents(); }
@@ -10144,6 +10335,7 @@
         box.innerHTML =
             menuRow('book', '操作マニュアル', 'はじめての人向けの使い方（PDFにも出せます）', "openPanel('settings','manual')") +
             menuRow(isKitchen() ? 'kitchen' : 'store', '店舗モード', storeModeLabel(), "openPanel('settings','mode')") +
+            menuRow('device', 'この端末の役割', roleSub(), "openPanel('settings','role')") +
             menuRow('sliders', '商品・在庫の調整', stockSub, "openPanel('settings','stock')", { disabled: !currentSession }) +
             menuRow('tag', '商品の分類', categories.map(c => escHtml(c.label)).join('・'), "openPanel('settings','cats')") +
             menuRow('yen', '支払い方法', paySub(), "openPanel('settings','pay')") +
@@ -10210,7 +10402,8 @@
             code, name: d.name || '無題',
             state: (now - lastAt > EVENT_STALE_MS) ? 'stale' : 'open',
             openedAt: Number(d.openedAt) || 0, lastAt,
-            registers, displays: active.length - registers
+            registers, displays: active.length - registers,
+            storeMode: d.storeMode === 'kitchen' ? 'kitchen' : 'retail'
         };
     }
     // 販売会の様子を調べる。state は open（合流できる）/ closed / stale（長く使われていない）/ none / unknown（通信できない）
@@ -10419,18 +10612,21 @@
     }
     // カードの行から：レジとして、その場で合流する
     function joinQuick(code) {
-        joinRole = 'register';
+        joinRole = uiPrefs.kitchenOnly ? 'kitchen' : 'register';   // キッチン用の端末は、キッチンのまま入る
         return joinEvent(code);
     }
 
     // ---- 合流 ----
-    let joinRole = 'register';     // この端末を レジ / お客様用の表示 のどちらとして使うか
+    // この端末を レジ / キッチン / お会計の表示 / 呼び出し番号 のどれとして使うか
+    // （キッチンと呼び出し番号は、ファストフードの販売会の時だけ選べる）
+    let joinRole = 'register';
+    function joinChoices() {
+        const k = isKitchen() || openSyncPeek.storeMode === 'kitchen';
+        return k ? ['register', 'kitchen', 'display', 'call'] : ['register', 'display'];
+    }
     function setJoinRole(r) {
-        joinRole = r === 'display' ? 'display' : 'register';
-        ['register', 'display'].forEach(k => {
-            const b = document.getElementById('join-role-' + k);
-            if (b) { b.classList.toggle('on', joinRole === k); b.setAttribute('aria-pressed', joinRole === k); }
-        });
+        joinRole = ['register', 'kitchen', 'display', 'call'].includes(r) ? r : 'register';
+        setJoinRoleQuiet(joinRole);
         playSound(660, 0.05);
         renderJoinPeek();
     }
@@ -10470,13 +10666,18 @@
             loadOpenEvents(true);
             return false;
         }
-        if (joinRole === 'display') {
-            // お客様用の表示：映すだけなので、この端末の売上データには触らない
+        if (joinRole === 'display' || joinRole === 'call') {
+            // お客様用の表示（お会計の表示・呼び出し番号）：映すだけなので、この端末の売上データには触らない
+            uiPrefs.cdCallOnly = joinRole === 'call' && info.storeMode === 'kitchen';
+            uiPrefs.kitchenOnly = false;
             if (!enterCustomerMode(c)) return false;
             navTo('register');
             return true;
         }
-        openSyncPeek = { code: c, state: 'open', name: info.name };
+        // キッチン：レジと同じように合流して、キッチンの画面だけを出す
+        uiPrefs.kitchenOnly = joinRole === 'kitchen' && info.storeMode === 'kitchen';
+        storeUiPrefs();
+        openSyncPeek = { code: c, state: 'open', name: info.name, storeMode: info.storeMode };
         const codeInput = document.getElementById('sync-event-code-input');
         if (codeInput) codeInput.value = c;
         const nameInput = document.getElementById('session-name-input');
@@ -10502,6 +10703,8 @@
                 note: `<b>「${nm}」</b>が開いています（${who}）。<br>`
                     + (live ? 'この端末の会計もその販売会に合わせ、売上・在庫・商品がひとつになります。'
                             : (!live && joinRole === 'display' ? 'この端末に、その販売会の金額を大きく映します。'
+                            : !live && joinRole === 'call' ? 'この端末に、その販売会の呼び出し番号を映します。'
+                            : !live && joinRole === 'kitchen' ? 'この端末に、その販売会の注文を出します（この端末では会計しません）。'
                                 : '合流すると、その販売会の商品と売上がこの端末に出ます。')),
                 btn: `「${nm}」に合流する`, icoBtn: 'link' };
         }
@@ -10536,6 +10739,7 @@
     }
 
     function renderJoinPeek() {
+        setJoinRoleQuiet(joinRole);     // 販売会がファストフードと分かったら、キッチンと呼び出し番号も出す
         paintPeek('join-peek', 'join-code-btn', false);
     }
 
@@ -10558,10 +10762,16 @@
         renderJoinPeek();
     }
     function setJoinRoleQuiet(r) {
-        ['register', 'display'].forEach(k => {
-            const b = document.getElementById('join-role-' + k);
-            if (b) { b.classList.toggle('on', r === k); b.setAttribute('aria-pressed', r === k); }
-        });
+        const box = document.getElementById('join-role');
+        if (!box) return;
+        const list = joinChoices();
+        // まだ販売会の店舗モードが分からない間は、選んだ役割を消さずに近いほうを光らせておく
+        // （合流する時に、ファストフードでなければ キッチン→レジ、呼び出し番号→お会計の表示 になる）
+        const cur = list.includes(r) ? r : (r === 'call' ? 'display' : 'register');
+        const kitchenLike = list.length > 2;
+        const short = { register: 'レジとして使う', kitchen: 'キッチン', display: kitchenLike ? 'お会計の表示' : 'お客様用の表示', call: '呼び出し番号' };
+        box.className = 'seg-pick' + (kitchenLike ? ' four' : '');
+        box.innerHTML = list.map(k => `<button type="button" id="join-role-${k}" class="${cur === k ? 'on' : ''}" aria-pressed="${cur === k}" onclick="setJoinRole('${k}')"><svg class="ic"><use href="#ic-${ROLE_INFO[k].icon}"/></svg>${short[k]}</button>`).join('');
     }
 
     // 新しく開店する画面を開く
@@ -10680,24 +10890,12 @@
         }
     }
 
-    // 「この端末の役割」。ふだんのレジか、お客様に向ける金額表示か。
-    // 共有の画面の中に置いている（どちらも「複数の端末で使う」話なので、探す場所が同じになる）
-    // 「この端末の役割」。ふだんのレジか、お客様に向ける金額表示か。
-    // どちらの役割からでも、その場で選び直せる（コードを入れ直さない）。
+    // 「この端末の役割」。共有の画面の中にも同じ一覧を置く（どちらも「複数の端末で使う」話なので）。
+    // どの役割からでも、その場で選び直せる（コードを入れ直さない）。
     function renderSyncRoleList() {
         const box = document.getElementById('sync-role-list');
-        if (!box) return;
-        const off = !window.FIREBASE_CONFIG;
-        const code = knownShareCode();
-        box.innerHTML =
-            menuRow('register', 'ふだんのレジ',
-                customerMode ? 'この端末でも商品を打つ' : '◯ いまこの役割です',
-                customerMode ? "switchDeviceRole('register')" : "openPanel('settings','customer')",
-                { disabled: off }) +
-            menuRow('users', 'お客様用の表示',
-                customerMode ? '◯ いまこの役割です' : (code ? `コード「${escHtml(code)}」で金額を映す` : '先に共有コードを入れてください'),
-                "openPanel('settings','customer')",
-                { disabled: off });
+        if (box) box.innerHTML = roleRowsHTML();
+        if (currentView === 'settings' && currentSub === 'role') renderRoleView();
     }
 
     function setActiveNav(section) {
@@ -10734,6 +10932,7 @@
         // 営業していない間は予約も受けられないので、押せないことを見た目でも示す
         const res = document.getElementById('btn-reserve');
         if (res) res.disabled = !currentSession;
+        applyDeviceRole();     // キッチン用の端末は、開店・合流したらキッチンの画面へ
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -12959,6 +13158,7 @@
                 if (JSON.stringify(mc) !== JSON.stringify(mobileCfg)) {
                     mobileCfg = mc;
                     if (currentView === 'settings' && currentSub === 'mobile') renderMobileView();
+                    if (currentView === 'kitchen') renderKitchen();   // 受け取り何分前に出すかが変わった
                     publishMobileMenu();
                     if (currentView === 'settings' && !currentSub) renderSettingsMenu();
                 }
@@ -13150,6 +13350,7 @@
     let kitchenSeen = new Set();    // すでに画面に出した注文（新しく来た注文だけ動かす）
     let pendingMobileOrderId = null; // レジでいま会計しているモバイルの注文（あれば）
     let kitchenTick = null;
+    let kitchenHeldPrev = null;     // 前に描いた時の「時間指定」の注文（そこから出てきた時に鳴らすため）
 
     function ordersCol(code) {
         return fbDb.collection(EVENTS_COL).doc(code).collection('orders');
@@ -13217,9 +13418,27 @@
             // 払い済みか。モバイルと「後で会計」の注文は、レジで会計するまで未払い
             paid: d.paid === false ? false : (d.channel === 'mobile' ? !!d.paid : true),
             later: !!d.later, sno: Number(d.sno) || 0,
-            total: Number(d.total) || 0, fromDraft: !!d.fromDraft, upd: Number(d.upd) || 0, uid: String(d.uid || ''), by: String(d.by || '')
+            total: Number(d.total) || 0, fromDraft: !!d.fromDraft, upd: Number(d.upd) || 0, uid: String(d.uid || ''), by: String(d.by || ''),
+            // お客様が選んだ受け取り時間（モバイル。無い・おかしな値なら「できしだい」）と、早めに作り始めた時刻
+            pickupAt: pickupOk(d.pickupAt, Number(d.at) || 0), rel: Number(d.rel) || 0
         };
     }
+    function pickupOk(v, at) {
+        const n = Number(v) || 0;
+        return (n > at && n - at < 13 * 3600000) ? n : 0;
+    }
+    // その注文を作り始める時刻（受け取り時間を選んだ注文は、その何分か前。早めに出した時はその時刻）
+    function orderStartAt(o) {
+        let s = o.pickupAt ? Math.max(o.at, o.pickupAt - (mobileCfg.lead || 0) * 60000) : o.at;
+        if (o.rel && o.rel < s) s = Math.max(o.at, o.rel);
+        return s;
+    }
+    // まだキッチンに出さずに取っておく注文か（受け取り時間が先の「時間指定」）
+    // （「いま作り始める」を押した注文は、端末の時計が少しずれていても、もう取っておかない）
+    function orderHeld(o, now) {
+        return o.st === 'cook' && !!o.pickupAt && !o.rel && (now || Date.now()) < orderStartAt(o);
+    }
+    function hmOf(ms) { const d = new Date(ms); return `${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`; }
     // 会計の商品（1個ずつの並び）を、商品ごとの個数にまとめる（打った順を保つ）
     function groupOrderItems(items) {
         const out = [];
@@ -13349,6 +13568,12 @@
         }
         const next = KITCHEN_NEXT[o.st];
         if (!next) return;
+        // まだ払っていない注文（モバイル・後で会計）は、レジで会計が済むまで渡さない
+        if (next === 'done' && !o.paid) {
+            playError();
+            showToast(`${o.no} はまだ会計していません。レジの「未会計の注文」で会計してから渡してください`);
+            return;
+        }
         playSound(next === 'ready' ? 988 : 880, 0.07);
         setKitchenOrder(id, x => { x.st = next; x.t[next] = Date.now(); });
     }
@@ -13394,10 +13619,11 @@
 
     function liveDraft(o, now) { return o.st !== 'draft' || (now - (o.upd || o.at)) < KITCHEN_DRAFT_STALE_MS; }
     function kitchenCounts(pred) {
-        const c = { active: 0, cook: 0, ready: 0, done: 0 };
+        const c = { active: 0, cook: 0, ready: 0, done: 0, held: 0 };
         const now = Date.now();
         kitchenOrders.forEach(o => {
             if (o.st === 'void' || !liveDraft(o, now) || (pred && !pred(o))) return;
+            if (orderHeld(o, now)) { c.held++; return; }     // 時間指定の注文はまだ作らないので、ほかには数えない
             if (o.st === 'draft' || o.st === 'cook') c.cook++;
             else c[o.st]++;
             if (o.st !== 'done') c.active++;
@@ -13407,7 +13633,7 @@
 
     function kitchenMinutes(o, now) {
         const end = o.st === 'done' ? (o.t.done || now) : now;
-        return Math.max(0, Math.floor((end - o.at) / 60000));
+        return Math.max(0, Math.floor((end - orderStartAt(o)) / 60000));
     }
 
     function renderKitchen() {
@@ -13418,46 +13644,65 @@
         const mine = o => stn === 'all' || o.items.some(x => x.type === stn);
         const c = kitchenCounts(mine);
         const tabs = [['active', '全て'], ['cook', '調理中'], ['ready', '呼び出し中'], ['done', '完了']];
+        // 受け取り時間を選べる時（または時間指定の注文が残っている時）だけ「時間指定」を出す
+        // （「予約」は、設定から開く予約の機能と取り違えるので使わない）
+        if (mobileCfg.pick || c.held) tabs.push(['held', '時間指定']);
+        else if (kitchenFilter === 'held') kitchenFilter = 'active';
         fil.innerHTML = tabs.map(([k, label]) =>
             `<button type="button" class="${kitchenFilter === k ? 'on' : ''}" onclick="setKitchenFilter('${k}')">${label}<b>${c[k]}</b></button>`).join('');
         const stBox = document.getElementById('kds-station');
         if (stBox) stBox.innerHTML = '<span>担当</span>' + [['all', '全部']].concat(CAT_TYPES.map(x => [x.id, x.label])).map(([k, label]) =>
             `<button type="button" class="${stn === k ? 'on' : ''}" ${k !== 'all' ? `style="--ink:${catInk(k)};"` : ''} onclick="setKitchenStation('${k}')">${k !== 'all' ? '<i></i>' : ''}${escHtml(label)}</button>`).join('');
         const now = Date.now();
+        // 時間指定から出てきた注文は、新しい注文と同じように光らせて鳴らす
+        const heldNow = new Set(kitchenOrders.filter(o => orderHeld(o, now)).map(o => o.id));
+        const released = kitchenHeldPrev ? kitchenOrders.filter(o => kitchenHeldPrev.has(o.id) && !heldNow.has(o.id) && o.st === 'cook') : [];
+        released.forEach(o => kitchenSeen.delete(o.id));
+        kitchenHeldPrev = heldNow;
+        if (released.length && currentView === 'kitchen') kitchenChime();
         let rows = kitchenOrders.filter(o => o.st !== 'void' && liveDraft(o, now) && mine(o));
+        if (kitchenFilter === 'held') rows = rows.filter(o => heldNow.has(o.id));
+        else rows = rows.filter(o => !heldNow.has(o.id));
         if (kitchenFilter === 'active') rows = rows.filter(o => o.st !== 'done');
         else if (kitchenFilter === 'cook') rows = rows.filter(o => o.st === 'cook' || o.st === 'draft');
-        else rows = rows.filter(o => o.st === kitchenFilter);
+        else if (kitchenFilter !== 'held') rows = rows.filter(o => o.st === kitchenFilter);
         if (kitchenFilter === 'done') rows = rows.sort((a, b) => (b.t.done || 0) - (a.t.done || 0)).slice(0, KITCHEN_DONE_SHOW);
-        else rows = rows.sort((a, b) => a.at - b.at);
+        else rows = rows.sort((a, b) => orderStartAt(a) - orderStartAt(b));
         if (!rows.length) {
             grid.innerHTML = `<div class="kds-empty">${!currentSession
                 ? '開店すると、レジで受けた注文がここに出ます。'
-                : (kitchenFilter === 'active' ? 'いま作る注文はありません。<br><span>レジで商品を打つと、会計が終わる前からここに出ます。</span>' : 'この状態の注文はありません。')}</div>`;
+                : (kitchenFilter === 'active' ? 'いま作る注文はありません。<br><span>レジで商品を打つと、会計が終わる前からここに出ます。</span>'
+                    : (kitchenFilter === 'held' ? `受け取り時間を指定した注文はありません。<br><span>指定された注文は、受け取りの${mobileCfg.lead}分前に「調理中」へ出ます。</span>` : 'この状態の注文はありません。'))}</div>`;
             return;
         }
         grid.innerHTML = rows.map(o => {
+            const held = heldNow.has(o.id);
             const min = kitchenMinutes(o, now);
             const left = orderLeft(o);
             const cls = ['kds-card', 'st-' + o.st, 'dine-' + o.dine];
-            if (o.st !== 'done' && min >= KITCHEN_LATE_MIN) cls.push('late');
+            if (held) cls.push('held');
+            else if (o.st !== 'done' && min >= KITCHEN_LATE_MIN) cls.push('late');
             else if (o.st !== 'done' && min >= KITCHEN_WARN_MIN) cls.push('warn');
             if (!kitchenSeen.has(o.id)) cls.push('fresh');
-            const canTap = o.st === 'cook' || o.st === 'draft';
+            const canTap = !held && (o.st === 'cook' || o.st === 'draft');
             const items = o.items.map(x => (stn !== 'all' && x.type !== stn) ? '' : `<li class="${o.chk.includes(x.name) ? 'done' : ''}" style="--ink:${catInk(x.type)};">
                     <button type="button" ${canTap ? '' : 'disabled'} data-name="${escHtml(x.name)}" onclick="kitchenCheck(this, this.dataset.name)"><span class="kds-mi" aria-label="${o.chk.includes(x.name) ? 'できた' : 'まだ'}">未</span><span class="qty">${x.qty}</span><span class="nm">${escHtml(x.name)}</span></button></li>`).join('');
             const no = o.st === 'draft' ? '会計中' : '#' + escHtml(String(o.no));
             let foot;
-            if (o.st === 'draft') foot = `<div class="kds-wait">レジで会計しています</div>`;
+            if (held) foot = `<button type="button" class="kds-go" onclick="kitchenRelease(this)"><svg class="ic"><use href="#ic-bolt"/></svg>いま作り始める</button>`;
+            else if (o.st === 'draft') foot = `<div class="kds-wait">レジで会計しています</div>`;
             else if (o.st === 'cook') foot = `<button type="button" class="kds-go" ${left ? 'disabled' : ''} onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-bolt"/></svg>${left ? `呼び出し（未 ${left}）` : '呼び出し'}</button>`;
-            else if (o.st === 'ready') foot = `<button type="button" class="kds-undo" onclick="kitchenBack(this)" aria-label="調理中に戻す"><svg class="ic"><use href="#ic-undo"/></svg></button><button type="button" class="kds-go" onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-check"/></svg>受け渡し完了</button>`;
+            else if (o.st === 'ready') foot = `<button type="button" class="kds-undo" onclick="kitchenBack(this)" aria-label="調理中に戻す"><svg class="ic"><use href="#ic-undo"/></svg></button>`
+                + (o.paid ? `<button type="button" class="kds-go" onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-check"/></svg>受け渡し完了</button>`
+                    : `<button type="button" class="kds-go" disabled><svg class="ic"><use href="#ic-alert"/></svg>未会計（会計してから渡す）</button>`);
             else foot = `<button type="button" class="kds-go" onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-undo"/></svg>呼び出しに戻す</button>`;
             return `<article class="${cls.join(' ')}" data-id="${escHtml(o.id)}">
                 <div class="kds-head">
                     <span class="kds-no">${no}</span>
                     <span class="kds-dine">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>
                     ${o.channel === 'mobile' ? `<span class="kds-tag">モバイル${o.paid ? '' : '・未払い'}</span>` : (o.later ? `<span class="kds-tag">${o.paid ? '後で会計・払い済み' : '後で会計・未払い'}</span>` : '')}
-                    <span class="kds-min">${min}分</span>
+                    ${o.pickupAt ? `<span class="kds-tag kds-pick">受取 ${hmOf(o.pickupAt)}</span>` : ''}
+                    <span class="kds-min">${held ? `${hmOf(orderStartAt(o))}に出ます` : `${min}分`}</span>
                 </div>
                 ${o.st !== 'cook' && o.st !== 'draft' ? `<div class="kds-state">${KITCHEN_ST[o.st]}</div>` : ''}
                 ${o.edited ? '<div class="kds-edit">レジで中身が直されました</div>' : ''}
@@ -13468,13 +13713,21 @@
         rows.forEach(o => kitchenSeen.add(o.id));
     }
 
-    // キッチンの画面を開いている間だけ、経過時間を30秒ごとに書き直す
+    // キッチンの画面を開いている間だけ、経過時間を書き直す（予約が出てくる時刻も、ここで見る）
     function startKitchenTick() {
         if (kitchenTick) return;
         kitchenTick = setInterval(() => {
             if (currentView !== 'kitchen') { clearInterval(kitchenTick); kitchenTick = null; return; }
             renderKitchen();
-        }, 30000);
+            updateNavBadges();
+        }, 15000);
+    }
+    // 時間指定の注文を、受け取り時間を待たずにいま作り始める
+    function kitchenRelease(btn) {
+        const card = btn.closest('.kds-card');
+        if (!card) return;
+        playSound(880, 0.06);
+        setKitchenOrder(card.dataset.id, x => { x.rel = Date.now(); });
     }
 
     function kitchenChime() {
@@ -13502,7 +13755,8 @@
             rows.sort((a, b) => a.at - b.at);
             const before = new Set(kitchenOrders.map(o => o.id));
             // 新しい注文が来たら音で知らせる（会計中のカートが出た時と、モバイルの注文。会計が済んで置き換わった時は鳴らさない）
-            const arrived = rows.some(r => !before.has(r.id) && (r.st === 'draft' || (r.st === 'cook' && !r.fromDraft)) && r.by !== getDeviceId());
+            // （受け取り時間が先の注文は、ここでは鳴らさない。キッチンに出てくる時に鳴らす）
+            const arrived = rows.some(r => !before.has(r.id) && (r.st === 'draft' || (r.st === 'cook' && !r.fromDraft && !orderHeld(r))) && r.by !== getDeviceId());
             if (JSON.stringify(rows) === JSON.stringify(kitchenOrders)) return;
             kitchenOrders = rows;
             saveData();
@@ -13547,6 +13801,7 @@
         if (!k && currentView === 'kitchen') showRegister();
         renderAnalyticsMenu();
         updateNavBadges();
+        applyDeviceRole();     // キッチン用の端末は、ファストフードの時だけレジの画面を隠す
     }
 
     // ---- 設定：店舗モード ----
@@ -13598,14 +13853,15 @@
             return { n: a.length, avg: a.reduce((t, x) => t + x, 0) / a.length, med: mid, max: a[a.length - 1] };
         };
         const served = orders.filter(o => o.t.ready > 0);
-        const total = stat(served.map(o => mins(o.t.ready - o.at)));
+        // 受け取り時間を指定した注文は、作り始めた時刻から数える（時間指定で待っていた時間は含めない）
+        const total = stat(served.map(o => mins(Math.max(0, o.t.ready - orderStartAt(o)))));
         const pickup = stat(orders.filter(o => o.t.ready > 0 && o.t.done > 0).map(o => mins(o.t.done - o.t.ready)));
         const channel = { pos: orders.filter(o => o.channel !== 'mobile').length, mobile: orders.filter(o => o.channel === 'mobile').length };
-        const slow = served.map(o => ({ no: o.no, min: mins(o.t.ready - o.at), items: o.items }))
+        const slow = served.map(o => ({ no: o.no, min: mins(Math.max(0, o.t.ready - orderStartAt(o))), items: o.items }))
             .sort((a, b) => b.min - a.min).slice(0, 5);
         // 30分ごとの、呼び出すまでの平均（混んだ時間にどれだけ遅れたか）
         const SLOT = 30 * 60000, slots = {};
-        served.forEach(o => { const k = Math.floor(o.at / SLOT) * SLOT; (slots[k] = slots[k] || []).push(mins(o.t.ready - o.at)); });
+        served.forEach(o => { const s0 = orderStartAt(o); const k = Math.floor(s0 / SLOT) * SLOT; (slots[k] = slots[k] || []).push(mins(Math.max(0, o.t.ready - s0))); });
         const bySlot = Object.keys(slots).map(Number).sort((a, b) => a - b).map(k => {
             const d = new Date(k), e = new Date(k + SLOT);
             const hm = x => `${x.getHours()}:${String(x.getMinutes()).padStart(2, '0')}`;
@@ -13785,11 +14041,22 @@
     // 「モバイル・未払い」で入り、すぐ調理中になる。お支払いは受け取りの時にレジで。
     // ・受付中／停止中とお知らせは、販売会の文書（events/{コード}.mobile）に置いて全端末でそろえる
     // ・メニューと品切れは、レジの端末が live/menu に書く（お客様のページはそれだけを読む）
-    let mobileCfg = { on: false, stopMsg: '', note: '' };
+    // ・wait  … お客様の画面に出す「いまの待ち時間」（分。0なら出さない）。店が混み具合を見て選ぶ
+    // ・pick  … お客様が受け取り時間を選べるか
+    // ・lead  … 受け取り時間の何分前にキッチンの画面へ出すか
+    // ・ahead … 何分先の受け取りまで選べるか
+    let mobileCfg = { on: false, stopMsg: '', note: '', wait: 0, pick: false, lead: 10, ahead: 120 };
+    const MOBILE_WAITS = [0, 5, 10, 15, 20, 30, 45, 60];
+    const MOBILE_LEADS = [5, 10, 15, 20, 30, 45, 60];
+    const MOBILE_AHEADS = [60, 120, 180, 240];
     function normMobileCfg(m) {
         m = (m && typeof m === 'object') ? m : {};
         const str = (v, n) => typeof v === 'string' ? v.slice(0, n) : '';
-        return { on: m.on === true, stopMsg: str(m.stopMsg, 200), note: str(m.note, 300) };
+        const int = (v, lo, hi, def) => { const n = parseInt(v, 10); return Number.isFinite(n) && n >= lo && n <= hi ? n : def; };
+        return {
+            on: m.on === true, stopMsg: str(m.stopMsg, 200), note: str(m.note, 300),
+            wait: int(m.wait, 0, 180, 0), pick: m.pick === true, lead: int(m.lead, 1, 120, 10), ahead: int(m.ahead, 30, 720, 120)
+        };
     }
     function mobileSub() {
         if (!currentSession) return '開店してから使えます';
@@ -13822,6 +14089,22 @@
             <label class="field-label" for="mo-note">注文の画面のいちばん上に出す説明（空なら出しません）</label>
             <textarea id="mo-note" maxlength="300" placeholder="例：お支払いは受け取りの時にレジでお願いします。">${escHtml(mobileCfg.note)}</textarea>
             <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="saveMobileTexts()"><svg class="ic"><use href="#ic-check"/></svg>お知らせを保存する</button>
+            <label class="field-label sec">いまの待ち時間</label>
+            <div class="chip-pick" role="group" aria-label="いまの待ち時間">${MOBILE_WAITS.map(w =>
+                `<button type="button" class="${mobileCfg.wait === w ? 'on' : ''}" aria-pressed="${mobileCfg.wait === w}" onclick="setMobileWait(${w})">${w ? `約${w}分` : '出さない'}</button>`).join('')}</div>
+            <p class="settings-hint">お客様の注文の画面に「いまの待ち時間 約◯分」と出します。混んできたら長く、空いたら短く選び直してください。</p>
+            <label class="field-label sec">受け取り時間の指定</label>
+            <div class="sw-row">
+                <div class="sw-text"><b>お客様が受け取り時間を選べる</b><span>「できしだい」か、10分ごとの時間から選んでもらいます</span></div>
+                <input type="checkbox" class="ios-switch" id="opt-mobile-pick" ${mobileCfg.pick ? 'checked' : ''} onchange="setMobilePick(this.checked)">
+            </div>
+            ${mobileCfg.pick ? `<label class="field-label">キッチンの画面に出すのは、受け取り時間の</label>
+            <div class="chip-pick" role="group" aria-label="キッチンに出す時間">${MOBILE_LEADS.map(v =>
+                `<button type="button" class="${mobileCfg.lead === v ? 'on' : ''}" aria-pressed="${mobileCfg.lead === v}" onclick="setMobileLead(${v})">${v}分前</button>`).join('')}</div>
+            <label class="field-label">選べるのは、いまから</label>
+            <div class="chip-pick" role="group" aria-label="選べる時間">${MOBILE_AHEADS.map(v =>
+                `<button type="button" class="${mobileCfg.ahead === v ? 'on' : ''}" aria-pressed="${mobileCfg.ahead === v}" onclick="setMobileAhead(${v})">${v / 60}時間先まで</button>`).join('')}</div>
+            <p class="settings-hint">時間を指定した注文は、それまでキッチンの<b>「時間指定」</b>に入っていて、受け取りの${mobileCfg.lead}分前に「調理中」へ出てきます（音でお知らせ）。早く作りたい時は「時間指定」から「いま作り始める」を押してください。</p>` : ''}
             <div class="mo-qr">
                 <div class="qr-img">${qrSvg(url)}</div>
                 <div class="mo-url selectable">${escHtml(url)}</div>
@@ -13833,9 +14116,9 @@
             <div class="a-head">注文から受け取りまで</div>
             <ol class="mo-flow">
                 <li>お客様がこのQRコードを読むと、注文の画面が開きます（アプリは要りません）。</li>
-                <li>商品と「持ち帰り／店内」を選んで注文すると、<b>M1</b> のような番号が出ます。注文はすぐキッチンの画面に「モバイル・未払い」で出ます。</li>
+                <li>商品と「持ち帰り／店内」を選んで注文すると、<b>M1001</b> のような番号が出ます。注文はすぐキッチンの画面に「モバイル・未払い」で出ます（受け取り時間を指定した注文は、その少し前に出ます）。</li>
                 <li>お客様の画面には「あと何組」が出て、呼び出すと音と画面で知らせます（画面を開いたままの時）。</li>
-                <li>受け取りの時に、レジの上の<b>「モバイルの注文」</b>から番号を選んで会計します。</li>
+                <li>受け取りの時に、レジの上の<b>「未会計の注文」</b>から番号を選んで会計します。</li>
             </ol>`;
     }
     function copyText(text, msg) {
@@ -13854,6 +14137,24 @@
     function setMobileOn(on) {
         writeMobileCfg(Object.assign({}, mobileCfg, { on: !!on }), on ? 'モバイルオーダーの受付を始めた' : 'モバイルオーダーの受付を止めた');
         showToast(on ? 'モバイルオーダーの受付を始めました' : 'モバイルオーダーの受付を止めました');
+    }
+    function setMobileWait(w) {
+        if (!MOBILE_WAITS.includes(w)) return;
+        writeMobileCfg(Object.assign({}, mobileCfg, { wait: w }), w ? `モバイルオーダーの待ち時間を約${w}分にした` : 'モバイルオーダーの待ち時間を出さないようにした');
+        showToast(w ? `待ち時間を約${w}分にしました` : '待ち時間を出さないようにしました');
+    }
+    function setMobilePick(on) {
+        writeMobileCfg(Object.assign({}, mobileCfg, { pick: !!on }), on ? '受け取り時間を選べるようにした' : '受け取り時間を選べないようにした');
+        showToast(on ? 'お客様が受け取り時間を選べるようにしました' : '受け取り時間の指定をやめました（できしだいのみ）');
+    }
+    function setMobileLead(v) {
+        if (!MOBILE_LEADS.includes(v)) return;
+        writeMobileCfg(Object.assign({}, mobileCfg, { lead: v }), `受け取り時間の${v}分前にキッチンへ出すようにした`);
+        if (currentView === 'kitchen') renderKitchen();
+    }
+    function setMobileAhead(v) {
+        if (!MOBILE_AHEADS.includes(v)) return;
+        writeMobileCfg(Object.assign({}, mobileCfg, { ahead: v }), `受け取り時間を${v / 60}時間先まで選べるようにした`);
     }
     function saveMobileTexts() {
         const v = id => (document.getElementById(id) || {}).value || '';
@@ -13910,9 +14211,9 @@
         if (!box) return;
         const list = unpaidOrders();
         if (!list.length) { box.innerHTML = '<p class="settings-hint">未会計の注文はありません。</p>'; return; }
-        box.innerHTML = '<p class="settings-hint">モバイルオーダーと「後で会計」の注文です。お客様の番号を選んで「レジで会計する」を押すと、その中身がカートに入り、お会計の窓が開きます（受け取りの時でも、店内なら帰る時でもかまいません）。</p>'
+        box.innerHTML = '<p class="settings-hint">モバイルオーダーと「後で会計」の注文です。お客様の番号を選んで「レジで会計する」を押すと、その中身がカートに入り、お会計の窓が開きます（受け取りの時に会計します。会計が済むまで、キッチンは「受け渡し完了」を押せません）。</p>'
             + list.map(o => `<div class="mp-card dine-${o.dine}" data-id="${escHtml(o.id)}">
-                <div class="mp-head"><span class="mp-no">#${escHtml(String(o.no))}</span><span class="kds-dine" style="background:var(--dine); color:#fff; font-size:12.5px; font-weight:800; padding:2px 9px; border-radius:999px;">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span><span style="font-size:12.5px; color:var(--text-light); font-weight:700;">${o.channel === 'mobile' ? 'モバイル' : '後で会計'}・${KITCHEN_ST[o.st]}</span><span class="mp-total">${yenStr(o.total)}</span></div>
+                <div class="mp-head"><span class="mp-no">#${escHtml(String(o.no))}</span><span class="kds-dine" style="background:var(--dine); color:#fff; font-size:12.5px; font-weight:800; padding:2px 9px; border-radius:999px;">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span><span style="font-size:12.5px; color:var(--text-light); font-weight:700;">${o.channel === 'mobile' ? 'モバイル' : '後で会計'}・${orderHeld(o) ? '時間指定' : KITCHEN_ST[o.st]}${o.pickupAt ? `・受取 ${hmOf(o.pickupAt)}` : ''}</span><span class="mp-total">${yenStr(o.total)}</span></div>
                 <div class="mp-items">${o.items.map(i => `${escHtml(i.name)}×${i.qty}`).join('、')}</div>
                 <div class="mp-acts">
                     <button class="action-btn btn-checkout" style="flex:1;" onclick="payMobileOrder(this.closest('.mp-card').dataset.id)"><svg class="ic"><use href="#ic-register"/></svg>レジで会計する</button>
@@ -13922,6 +14223,7 @@
     }
     // モバイルの注文の中身をカートに入れて、お会計の窓を開く
     function payMobileOrder(id) {
+        if (deviceRole() === 'kitchen') { playError(); alert('この端末はキッチン用です。会計はレジの端末でしてください。'); return; }
         const o = kitchenOrders.find(x => x.id === id);
         if (!o || o.paid || o.st === 'void') { playError(); renderMobilePayView(); return; }
         if (cart.length && !confirm('いまカートに入っている商品を取り消して、この注文の会計にしますか？')) return;
@@ -13956,7 +14258,7 @@
         renderMobilePayBar();
     }
 
-    // ---- 後で会計（レジで注文だけ先に作る。店内で食べて帰る時に払う、など）----
+    // ---- 後で会計（レジで注文だけ先に作り、お金は受け取りの時にもらう）----
     // カートの「後で会計」→ 持ち帰りか店内を選ぶ → すぐキッチンに出る（未払い）。
     // 払う時は「未会計の注文」から選ぶ。客No.は注文した時に取っておき、会計の記録もその番号にする。
     function reserveButtonAction() {
@@ -14004,7 +14306,8 @@
     }
     function startCallBoardSubscription(code) {
         stopCallBoardSubscription();
-        if (!isKitchen() || !syncReady || !code || !fbDb) return;
+        // 呼び出し番号を映す端末だけが受け取る（お会計の表示では番号を出さないし、鳴らさない）
+        if (!isKitchen() || deviceRole() !== 'call' || !syncReady || !code || !fbDb) return;
         cdReadySeen = null;
         cdOrdersUnsub = ordersCol(code).onSnapshot(snap => {
             const rows = [];
@@ -14021,7 +14324,8 @@
         const ready = document.getElementById('cdc-ready'), wait = document.getElementById('cdc-wait'), wn = document.getElementById('cdc-wait-n');
         if (!ready || !wait) return;
         const rd = cdOrders.filter(o => o.st === 'ready').sort((a, b) => (a.t.ready || 0) - (b.t.ready || 0));
-        const wt = cdOrders.filter(o => o.st === 'cook').sort((a, b) => a.at - b.at);
+        const now = Date.now();
+        const wt = cdOrders.filter(o => o.st === 'cook' && !orderHeld(o, now)).sort((a, b) => orderStartAt(a) - orderStartAt(b));
         const seen = cdReadySeen || new Set(rd.map(o => o.id));   // 最初に映した時は鳴らさない
         const fresh = rd.filter(o => !seen.has(o.id));
         ready.innerHTML = rd.length
