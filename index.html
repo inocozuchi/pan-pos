@@ -755,6 +755,20 @@
         .ro-row .ro-h .ic { width: 20px; height: 20px; }
         /* セット割を商品で決める時は、商品が多いので一覧を箱の中でスクロールする */
         #set-rule-cats.by-item { max-height: 330px; overflow-y: auto; border-radius: var(--r-md); padding: 2px; }
+        /* 委託商品 */
+        .cs-field { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+        .cs-field label { font-size: 12px; font-weight: 700; color: var(--text-light); white-space: nowrap; }
+        .cs-field input { flex: 1; min-width: 0; margin: 0; padding: 7px 10px; font-size: 16px; }
+        .res-card .rc-consign { font-size: 12.5px; font-weight: 700; color: var(--accent-ink); padding: 2px 0 4px; }
+        #records-consign { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 0 0 10px; padding: 11px 14px; border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow-card); }
+        #records-consign b { font-size: 18px; font-variant-numeric: tabular-nums; }
+        #records-consign .rcs-k { font-size: 12.5px; font-weight: 800; color: var(--text-light); }
+        #records-consign .rcs-by { flex-basis: 100%; font-size: 12.5px; color: var(--text-light); font-weight: 700; }
+        /* 会計記録のメモ */
+        .res-card .rc-memo { display: flex; align-items: flex-start; gap: 6px; width: 100%; margin: 2px 0 4px; padding: 7px 10px; border: none; border-radius: var(--r-sm);
+            background: var(--sunken); color: var(--text-main); font: inherit; font-size: 13px; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
+        .res-card .rc-memo .ic { width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px; color: var(--text-light); }
+        .res-card .rc-memo.empty { background: none; color: var(--accent); font-weight: 700; padding: 4px 2px; }
         /* まとめて登録 */
         .bulk-open { width: 100%; margin: 0 0 8px; }
         #bulk-text { width: 100%; box-sizing: border-box; min-height: 150px; font-size: 16px; line-height: 1.6; resize: vertical; font-family: inherit; }
@@ -3496,6 +3510,7 @@
         <div class="panel-view" id="view-records">
             <div class="seg-pick kds-kind" id="records-kind" role="group" aria-label="会計済と未会計" style="display:none;"></div>
             <div id="records-notice" style="display:none;"></div>
+            <div id="records-consign" style="display:none;"></div>
             <!-- 件数が増えてくると、目で追うのは無理になる。
                  客No.・商品名・金額のどれでも引けるようにしておく。 -->
             <div id="records-search-wrap" style="display:none;">
@@ -3731,6 +3746,8 @@
 
             <!-- レストラン：テーブルの数・伝票の渡し方・テーブルのQR -->
             <div class="sub-view" id="sub-rest" style="display:none;"><div id="rest-body"></div></div>
+            <!-- 委託商品（ほかの人から預かって売る商品）と、預かった売上 -->
+            <div class="sub-view" id="sub-consign" style="display:none;"><div id="consign-body"></div></div>
             <!-- メモのコピペで、商品をまとめて登録する -->
             <div class="sub-view" id="sub-bulk" style="display:none;"><div id="bulk-body"></div></div>
             <!-- 消費税（初期はなし）と、税務用の資料 -->
@@ -5541,6 +5558,7 @@
                         <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
                     </div>
                     ${catPicker(p.type, `updateTempProduct(${p.id}, 'type', '%T%')`)}
+                    ${consignOn() ? `<div class="cs-field"><label>委託先</label><input type="text" list="consign-names" maxlength="20" value="${escHtml(p.consign || '')}" placeholder="空欄＝自分の店の商品" onchange="setProductConsign(${p.id}, this.value, 'setup')"></div>` : ''}
                     <div style="display:flex; gap:5px; margin-top:5px;">
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">価格</div>
@@ -5561,6 +5579,7 @@
                 </div>
             `);
         });
+        if (consignOn()) cards.push(consignDatalist());
         cards.push(`<button class="setup-add-btn btn-positive" onclick="addTempProduct()" style="padding:10px; border:none; border-radius:var(--r-sm); font-weight:bold; cursor:pointer; color:var(--text-main); font-family:inherit;">＋ 追加</button>`);
         list.innerHTML = cards.join('');
     }
@@ -8902,7 +8921,7 @@
             acceptRound(newRoundId());
             try {
                 await fbDb.collection(EVENTS_COL).doc(code).set({
-                    name: sharedName, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
+                    name: sharedName, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), consign: consignCfg, consignBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
                     roundId: syncRoundId,
                     setDiscount: setDiscountOn, setRule: setRuleForDoc(setRule), setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                     openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
@@ -9774,7 +9793,7 @@
         acceptRound(newRoundId());
         try {
             await fbDb.collection(EVENTS_COL).doc(code).set({
-                name: currentSession, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
+                name: currentSession, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), consign: consignCfg, consignBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
                 roundId: syncRoundId,
                 setDiscount: setDiscountOn, setRule: setRuleForDoc(setRule), setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                 openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
@@ -10083,6 +10102,15 @@
             h += `<div class="a-head">支払い方法</div><table class="a-table"><thead><tr><th>支払い方法</th><th class="num">件数</th><th class="num">金額</th></tr></thead><tbody>`
                + R.pay.rows.map(r => `<tr><td>${escHtml(r.label)}</td><td class="num">${r.n}件</td><td class="num">${yenStr(r.rev)}</td></tr>`).join('')
                + `</tbody></table><p class="a-note">レジのお金と合わせるのは、<b>現金で受け取った額 ${yenStr(R.pay.cash)}</b> です。</p>`;
+        }
+
+        // 委託商品（売れている時だけ）
+        const cons = consignSummary(salesHistory);
+        if (cons.n) {
+            h += `<div class="a-head">委託商品（受託額）</div><table class="a-table"><thead><tr><th>委託先</th><th class="num">点数</th><th class="num">受託額</th><th class="num">お渡しする額</th></tr></thead><tbody>`
+               + cons.rows.map(r => `<tr><td>${escHtml(r.name)}</td><td class="num">${r.n}点</td><td class="num">${yenStr(r.amt)}</td><td class="num">${yenStr(r.pay)}</td></tr>`).join('')
+               + `<tr><td class="nm">合計</td><td class="num">${cons.n}点</td><td class="num nm">${yenStr(cons.total)}</td><td class="num nm">${yenStr(cons.pay)}</td></tr></tbody></table>`
+               + `<p class="a-note">お店の売上は、総売上から受託額を引いた <b>${yenStr(s.totalRev - cons.total)}</b> です${consignCfg.rate ? `（ほかに手数料 ${yenStr(cons.fee)}）` : ''}。</p>`;
         }
 
         const rows = [];
@@ -10600,6 +10628,18 @@
                 <table class="rep-table"><thead><tr><th>番号</th><th>中身</th><th class="num">呼び出しまで</th></tr></thead><tbody>
                     ${k.slow.map(r => `<tr><td>${esc(String(r.no))}</td><td>${r.items.map(i => `${esc(i.name)}×${i.qty}`).join('、')}</td><td class="num">${m(r.min)}</td></tr>`).join('')}
                 </tbody></table>` : ''}
+            </section>`;
+        }
+        const cons = consignSummary(salesHistory);
+        if (cons.n) {
+            n++;
+            out += `<section class="report-section">
+                <div class="report-heading">${n}. 委託商品（受託額）</div>
+                <table class="rep-table"><thead><tr><th>委託先</th><th class="num">点数</th><th class="num">受託額</th><th class="num">手数料（${consignCfg.rate}%）</th><th class="num">お渡しする額</th></tr></thead><tbody>
+                    ${cons.rows.map(r => `<tr><td>${esc(r.name)}</td><td class="num">${r.n}点</td><td class="num">${yen(r.amt)}</td><td class="num">${yen(r.fee)}</td><td class="num">${yen(r.pay)}</td></tr>`).join('')}
+                    <tr class="peak-row"><td>合計</td><td class="num">${cons.n}点</td><td class="num">${yen(cons.total)}</td><td class="num">${yen(cons.fee)}</td><td class="num">${yen(cons.pay)}</td></tr>
+                </tbody></table>
+                <div class="note-box"><div class="note-foot">受託額は商品の値段（定価）で数えています。セット割・クーポンの値引きはお店の負担として、受託額からは引いていません。</div></div>
             </section>`;
         }
         const tx = taxSummary(salesHistory);
@@ -11592,6 +11632,7 @@
         'rest': 'テーブルと伝票',
         'tax': '消費税',
         'bulk': 'まとめて登録',
+        'consign': '委託商品',
         'customer': 'CD',
         'role': 'この端末の役割',
         'cd': 'CD（お客様用の画面）',
@@ -11872,6 +11913,7 @@
             else if (sub === 'rest') renderRestView();
             else if (sub === 'tax') renderTaxView();
             else if (sub === 'bulk') renderBulkView();
+            else if (sub === 'consign') renderConsignView();
             else if (sub === 'pdf-import') renderPdfImport();
             else if (sub === 'display') { updateFullscreenButton(); renderThemeSettings(); renderClockSettings(); renderLockEntry(); }
             else if (sub === 'lock') { lockDraft = null; lockReuse = true; renderLockView(); }
@@ -11984,6 +12026,7 @@
             menuRow('ticket', 'セット割・クーポン', discountSub(), "openPanel('settings','coupon')") +
             menuRow('yen', '支払い方法', paySub(), "openPanel('settings','pay')") +
             menuRow('percent', '消費税', taxSub(), "openPanel('settings','tax')") +
+            (!isKitchen() ? menuRow('users', '委託商品', consignSub(), "openPanel('settings','consign')") : '') +
             (isRestaurant() ? menuRow('table', 'テーブルと伝票', restSub(), "openPanel('settings','rest')") : '') +
             (isKitchen() ? menuRow('qr', 'モバイルオーダー', mobileSub(), "openPanel('settings','mobile')") : '') +
             menuRow('target', '売上目標', setGoalSub(), "openPanel('settings','goal')") +
@@ -13253,7 +13296,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, cdCfg, cdCfgBy, mobileKeep, coupons, couponsBy, couponCodes, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, bills, billSeqLocal, restCfg, taxCfg, taxCfgBy, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
+        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, cdCfg, cdCfgBy, mobileKeep, coupons, couponsBy, couponCodes, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, bills, billSeqLocal, restCfg, taxCfg, taxCfgBy, consignCfg, consignBy, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -13269,6 +13312,8 @@
         restCfg = normRestCfg(data.restCfg);
         taxCfg = normTaxCfg(data.taxCfg);
         taxCfgBy = typeof data.taxCfgBy === 'string' ? data.taxCfgBy : '';
+        consignCfg = normConsignCfg(data.consignCfg);
+        consignBy = typeof data.consignBy === 'string' ? data.consignBy : '';
         storeMode = validStoreMode(data.storeMode) || SITE_CFG.mode;
         setCategories(data.categories);
         payCfg = normPayCfg(data.payCfg);
@@ -13514,7 +13559,7 @@
         let csv = '﻿';
         csv += `販売会,${(currentSession || '前回').replace(/,/g, ' ')}\n`;
         csv += `出力日時,${new Date().toLocaleString('ja-JP')}\n\n`;
-        csv += `客No,時刻,客属性,購入内容,点数,割引,合計,支払い方法,預かり,お釣り\n`;
+        csv += `客No,時刻,客属性,購入内容,点数,割引,合計,支払い方法,預かり,お釣り,うち委託,メモ\n`;
         sorted.forEach((h, idx) => {
             const counts = {};
             h.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
@@ -13525,7 +13570,9 @@
             const change = (h.change != null) ? h.change : '';
             const disc = (Number(h.discount) || 0) > 0 ? -Number(h.discount) : '';
             const pm = String(h.pay ? (h.payLabel || payLabel(h.pay)) : '現金').replace(/,/g, ' ');
-            csv += `${h.no || idx + 1},${tStr},${h.customerType || '不明'},${detail},${h.items.length},${disc},${h.total},${pm},${cash},${change}\n`;
+            const cs = saleConsign(h);
+            const memo = String(h.memo || '').replace(/[,\r\n"]/g, ' ');
+            csv += `${h.no || idx + 1},${tStr},${h.customerType || '不明'},${detail},${h.items.length},${disc},${h.total},${pm},${cash},${change},${cs.n ? cs.total : ''},${memo}\n`;
         });
         triggerDownload(`taizanboku_明細_${dateStamp()}.csv`, csv, 'text/csv');
     }
@@ -13587,8 +13634,8 @@
         const hay = [
             '客No.' + (h.no || ''), String(h.no || ''),
             String(h.total || ''), '¥' + String(h.total || ''),
-            h.customerType || '', h.deviceLabel || '',
-            ...(h.items || []).map(i => i.name || '')
+            h.customerType || '', h.deviceLabel || '', h.memo || '',
+            ...(h.items || []).map(i => (i.name || '') + ' ' + (i.consign || ''))
         ].join(' ').toLowerCase();
         return q.toLowerCase().split(/\s+/).filter(Boolean).every(w => hay.includes(w));
     }
@@ -13624,12 +13671,14 @@
         }
         if (recordsKind === 'unpaid') {
             renderRecordsNotice(0);
+            renderRecordsConsign();
             updateRecordsSearchBox(0, 0);
             list.innerHTML = unpaid.length ? unpaidCardsHtml(unpaid)
                 : '<p style="color:var(--text-light); text-align:center; margin-top:20px;">未会計の注文はありません。</p>';
             return;
         }
         renderRecordsNotice(salesHistory.filter(h => h.pendingType).length);
+        renderRecordsConsign();
         if (salesHistory.length === 0) {
             updateRecordsSearchBox(0, 0);
             list.innerHTML = '<p style="color:var(--text-light); text-align:center; margin-top:20px;">まだ会計済のデータはありません。</p>';
@@ -13724,7 +13773,11 @@
                     <div class="rc-lines">${lines}${discLine}</div>
                     <div class="rc-sep"></div>
                     <div class="rc-total"><span>合計</span><span class="num">¥${h.total}</span></div>
+                    ${(() => { const c = saleConsign(h); return c.n ? `<div class="rc-consign">うち委託 ¥${c.total}（${Object.keys(c.by).map(k => `${escHtml(k)} ¥${c.by[k].amt}`).join('・')}）</div>` : ''; })()}
                     <div class="rc-pay">${h.pay ? `<span>支払い ${cashStr}</span>` : `<span>お預かり ${cashStr}</span><span>お釣り ${changeStr}</span>`}</div>
+                    ${editing ? '' : (h.memo
+                        ? `<button type="button" class="rc-memo" onclick="editRecordMemo(${idx})" aria-label="メモを直す"><svg class="ic"><use href="#ic-pencil"/></svg><span>${escHtml(h.memo)}</span></button>`
+                        : `<button type="button" class="rc-memo empty" onclick="editRecordMemo(${idx})"><svg class="ic"><use href="#ic-plus"/></svg>メモを残す</button>`)}
                     ${actions}
                 </div>`;
         }).join('');
@@ -14352,6 +14405,148 @@
         playSound(880, 0.04);
         const moved = products.find(p => p.id === d.id);
         applyProductOrder(arr, `レジの並びを変えた（${moved ? moved.name : ''}${stockSel.has(d.id) && stockSel.size > 1 ? `ほか${stockSel.size - 1}品` : ''}を動かした）`);
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 委託商品 ▼▼▼
+    // ほかの人（作家さん・ほかの団体）から預かって売る商品。既製品の販売の時に、設定でオンにして使う。
+    // 商品ごとに「委託先」を入れると、その商品の売上は委託先ごとに分けて数える（受託額＝預かった売上）。
+    // 会計の明細に、その時の委託先を残す（あとで商品の委託先を変えても、前の会計は変わらない）。
+    // 手数料（お店がもらう割合）を決めると、委託先にお渡しする額も出す。
+    // 受託額は、商品の値段（定価）で数える。セット割・クーポンの値引きはお店の負担として、受託額からは引かない。
+    let consignCfg = { on: false, rate: 0 };
+    let consignBy = '';
+    const CONSIGN_RATES = [0, 5, 10, 15, 20, 25, 30, 35, 40];
+    function normConsignCfg(c) {
+        c = (c && typeof c === 'object') ? c : {};
+        const r = Math.round(Number(c.rate));
+        return { on: c.on === true, rate: Number.isFinite(r) && r >= 0 && r <= 90 ? r : 0 };
+    }
+    function normConsignName(v) { return String(v == null ? '' : v).normalize('NFKC').replace(/\s+/g, ' ').trim().slice(0, 20); }
+    function consignOn() { return consignCfg.on && !isKitchen(); }
+    function consignSub() {
+        if (!consignCfg.on) return 'オフ（使わない）';
+        const names = consignNames();
+        return `オン・${names.length ? names.length + '件の委託先' : '委託先はまだありません'}${consignCfg.rate ? `・手数料${consignCfg.rate}%` : ''}`;
+    }
+    // いまの商品・会計に出てくる委託先の名前
+    function consignNames() {
+        const set = new Set();
+        products.forEach(p => { if (p.consign) set.add(p.consign); });
+        (tempSetupProducts || []).forEach(p => { if (p && p.consign) set.add(p.consign); });
+        salesHistory.forEach(h => (h.items || []).forEach(i => { if (i.consign) set.add(i.consign); }));
+        return [...set].sort((a, b) => a.localeCompare(b, 'ja'));
+    }
+    function consignDatalist() { return `<datalist id="consign-names">${consignNames().map(n => `<option value="${escHtml(n)}"></option>`).join('')}</datalist>`; }
+    function consignFee(amt) { return Math.floor(amt * consignCfg.rate / 100); }
+    // 1回の会計のうち、委託商品の分：{ total, n, by: { 委託先: { amt, n } } }
+    function saleConsign(h) {
+        const out = { total: 0, n: 0, by: {} };
+        ((h && h.items) || []).forEach(i => {
+            const c = normConsignName(i && i.consign);
+            if (!c) return;
+            const pr = Number(i.price) || 0;
+            out.total += pr; out.n++;
+            const b = out.by[c] || (out.by[c] = { amt: 0, n: 0 });
+            b.amt += pr; b.n++;
+        });
+        return out;
+    }
+    function consignSummary(sales) {
+        const out = { total: 0, n: 0, sales: 0, by: {} };
+        (sales || []).forEach(h => {
+            if (!h || h.voided) return;
+            const c = saleConsign(h);
+            if (!c.n) return;
+            out.total += c.total; out.n += c.n; out.sales++;
+            Object.keys(c.by).forEach(k => { const b = out.by[k] || (out.by[k] = { amt: 0, n: 0 }); b.amt += c.by[k].amt; b.n += c.by[k].n; });
+        });
+        out.rows = Object.keys(out.by).sort((a, b) => out.by[b].amt - out.by[a].amt).map(k => ({ name: k, amt: out.by[k].amt, n: out.by[k].n, fee: consignFee(out.by[k].amt), pay: out.by[k].amt - consignFee(out.by[k].amt) }));
+        out.fee = out.rows.reduce((a, r) => a + r.fee, 0);
+        out.pay = out.total - out.fee;
+        return out;
+    }
+    function writeConsignCfg(next, logText) {
+        consignCfg = normConsignCfg(next);
+        consignBy = getDeviceId();
+        saveData();
+        if (syncMode && syncEventCode && fbDb) {
+            fbDb.collection(EVENTS_COL).doc(syncEventCode).set({ consign: consignCfg, consignBy }, { merge: true })
+                .catch(e => { console.warn('委託商品の設定の共有に失敗しました', e); showToast('共有に失敗しました。電波を確かめてください'); });
+        }
+        if (logText) logEdit(logText);
+        playSound(660, 0.05);
+        renderConsignView();
+    }
+    function setConsignOn(on) { writeConsignCfg(Object.assign({}, consignCfg, { on: !!on }), on ? '委託商品を使うようにした' : '委託商品を使わないようにした'); }
+    function setConsignRate(r) { writeConsignCfg(Object.assign({}, consignCfg, { rate: r }), `委託の手数料を${r}%にした`); }
+    function setProductConsign(id, v, list) {
+        const name = normConsignName(v);
+        if (list === 'setup') {
+            const p = tempSetupProducts.find(x => x.id === id);
+            if (p) { if (name) p.consign = name; else delete p.consign; }
+            return;
+        }
+        const p = products.find(x => x.id === id);
+        if (!p || (p.consign || '') === name) return;
+        if (name) p.consign = name; else delete p.consign;
+        logEdit(name ? `${p.name}を「${name}」の委託商品にした` : `${p.name}を自分の店の商品にした`);
+        syncPushProducts();
+        saveData();
+        init();
+        showToast(name ? `${p.name}：委託先「${name}」` : `${p.name}：自分の店の商品`);
+    }
+    function renderConsignView() {
+        const box = document.getElementById('consign-body');
+        if (!box) return;
+        const on = consignCfg.on;
+        const sum = consignSummary(salesHistory);
+        const items = products.filter(p => p.consign);
+        box.innerHTML = `<p class="settings-hint" style="margin-top:0;">ほかの人から預かって売る商品です。商品ごとに<b>委託先</b>を入れると、その商品の売上を委託先ごとに分けて数えます。会計記録と集計に、<b>受託額（預かった売上）</b>と、委託先にお渡しする額が出ます。${syncMode ? '共有中は全部の端末で同じになります。' : ''}</p>
+            <div class="sw-row">
+                <div class="sw-text"><b>委託商品を使う</b><span>${on ? '商品・在庫の調整と開店の準備で、委託先を入れられます' : 'いまは使っていません'}</span></div>
+                <input type="checkbox" class="ios-switch" ${on ? 'checked' : ''} onchange="setConsignOn(this.checked)" aria-label="委託商品を使う">
+            </div>
+            ${on ? `<label class="field-label sec">手数料（お店がいただく割合）</label>
+            <div class="chip-pick" role="group" aria-label="手数料">${CONSIGN_RATES.map(r => `<button type="button" class="${consignCfg.rate === r ? 'on' : ''}" aria-pressed="${consignCfg.rate === r}" onclick="setConsignRate(${r})">${r}%</button>`).join('')}</div>
+            <p class="settings-hint">お渡しする額＝受託額−手数料（1円未満は切り捨て）。受託額は商品の値段で数えます（セット割・クーポンの値引きはお店の負担）。</p>
+            <label class="field-label sec">いまの委託商品（${items.length}品）</label>
+            ${items.length ? `<div class="bulk-rows">${items.map(p => `<div class="bulk-row" style="--ink:${catInk(p.type)};"><span class="br-main"><span class="br-n">${escHtml(p.name)}</span><span class="br-s">委託先：${escHtml(p.consign)}</span></span><span class="br-v">¥${p.price}</span></div>`).join('')}</div>`
+                : '<p class="settings-hint">まだありません。「商品・在庫の調整」で、商品ごとに委託先を入れてください。</p>'}
+            <button type="button" class="action-btn btn-secondary" style="width:100%;" onclick="openPanel('settings','stock')" ${currentSession ? '' : 'disabled'}><svg class="ic"><use href="#ic-sliders"/></svg>商品・在庫の調整で委託先を入れる</button>` : ''}
+            ${sum.n ? `<label class="field-label sec">この販売会の受託額</label>
+            <table class="a-table"><thead><tr><th>委託先</th><th class="num">点数</th><th class="num">受託額</th><th class="num">お渡しする額</th></tr></thead><tbody>
+                ${sum.rows.map(r => `<tr><td>${escHtml(r.name)}</td><td class="num">${r.n}点</td><td class="num">${yenStr(r.amt)}</td><td class="num">${yenStr(r.pay)}</td></tr>`).join('')}
+                <tr><td class="nm">合計</td><td class="num">${sum.n}点</td><td class="num nm">${yenStr(sum.total)}</td><td class="num nm">${yenStr(sum.pay)}</td></tr>
+            </tbody></table>` : ''}`;
+    }
+    // 会計記録のいちばん上：受託額の合計（委託商品が売れている時だけ）
+    function renderRecordsConsign() {
+        const box = document.getElementById('records-consign');
+        if (!box) return;
+        const sum = consignSummary(salesHistory);
+        if (!sum.n || recordsKind === 'unpaid') { box.style.display = 'none'; box.innerHTML = ''; return; }
+        box.style.display = '';
+        box.innerHTML = `<span class="rcs-k">受託合計</span><b>${yenStr(sum.total)}</b><span class="rcs-k">${sum.n}点・${sum.sales}件の会計</span>
+            ${consignCfg.rate ? `<span class="rcs-k">お渡しする額 ${yenStr(sum.pay)}（手数料${consignCfg.rate}%）</span>` : ''}
+            <span class="rcs-by">${sum.rows.map(r => `${escHtml(r.name)} ${yenStr(r.amt)}（${r.n}点）`).join('　')}</span>`;
+    }
+
+    // ---- 会計記録のメモ ----
+    // 1件の会計に、あとから一言を残す（「おつりを後で渡した」「予約の方」など）。共有中は全部の端末に出る。
+    function editRecordMemo(idx) {
+        const h = salesHistory[idx];
+        if (!h) return;
+        const v = prompt(`客No.${h.no || ''} の会計のメモ（100文字まで。空にすると消します）`, h.memo || '');
+        if (v === null) return;
+        const memo = String(v).replace(/\s+/g, ' ').trim().slice(0, 100);
+        if ((h.memo || '') === memo) return;
+        if (memo) h.memo = memo; else delete h.memo;
+        if (syncMode && h.remoteId) syncUpdateSale(h.remoteId, { memo }, h.remoteCode);
+        logEdit(memo ? `客No.${h.no || ''} にメモ：${memo}` : `客No.${h.no || ''} のメモを消した`);
+        saveData();
+        renderRecords();
+        showToast(memo ? 'メモを残しました' : 'メモを消しました');
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -15401,6 +15596,7 @@
                         <label class="ls-unl"><span>無制限</span><input class="ios-switch" type="checkbox" ${isUnlimited(p) ? 'checked' : ''} onchange="setLiveUnlimited(${p.id}, this.checked)"></label>
                     </div>
                     ${catPicker(p.type, `setLiveType(${p.id}, '%T%')`)}
+                    ${consignOn() ? `<div class="cs-field"><label>委託先</label><input type="text" list="consign-names" maxlength="20" value="${escHtml(p.consign || '')}" placeholder="空欄＝自分の店の商品" onchange="setProductConsign(${p.id}, this.value, 'live')"></div>` : ''}
                     ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:6px; padding:6px; font-size:12px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" onchange="setProductNote(${p.id}, this.value)">` : ''}
                 </div>
             `);
@@ -15410,6 +15606,7 @@
         products.forEach(p => { const k = productStatus(p).key; cnt[k] = (cnt[k] || 0) + 1; });
         const sum = [['ok', '販売中'], ['low', '残りわずか'], ['out', '売り切れ'], ['stop', '販売停止'], ['off', '販売しない']]
             .filter(([k]) => cnt[k]).map(([k, l]) => `<span class="ls-chip ${k} is-sum">${l} ${cnt[k]}</span>`).join('');
+        if (consignOn()) rows.push(consignDatalist());
         rows.unshift(`<div class="ls-summary">${sum}</div><p class="settings-hint" style="margin:0 0 10px;">ステータスを押すと「販売停止」にできます（材料が切れた時など。もう一度押すと販売中に戻ります）。</p>`);
         list.innerHTML = rows.join('');
     }
@@ -16008,6 +16205,18 @@
                 if (currentView === 'settings' && currentSub === 'pay') renderPayView();
                 if (currentView === 'settings' && !currentSub) renderSettingsMenu();
             }
+            // 委託商品を使うか・手数料も全端末でそろえる
+            if (syncMode && d && d.consign && d.consignBy !== getDeviceId()
+                && JSON.stringify(normConsignCfg(d.consign)) !== JSON.stringify(consignCfg)) {
+                consignCfg = normConsignCfg(d.consign);
+                consignBy = d.consignBy || '';
+                saveData();
+                init();
+                if (currentView === 'settings' && currentSub === 'consign') renderConsignView();
+                if (currentView === 'settings' && currentSub === 'stock') renderLiveStock();
+                if (currentView === 'settings' && !currentSub) renderSettingsMenu();
+                if (currentView === 'records') renderRecords();
+            }
             // 消費税の設定も全端末でそろえる（端末ごとに違うと、同じ会計でも消費税の額が変わってしまう）
             if (syncMode && d && d.tax && d.taxBy !== getDeviceId()
                 && JSON.stringify(normTaxCfg(d.tax)) !== JSON.stringify(taxCfg)) {
@@ -16084,7 +16293,7 @@
     // （以前は種類だけ変えても「同じ内容」と判断して取り込まれなかった）
     function applyRemoteProducts(remoteProducts) {
         const key = list => JSON.stringify(list.map(p => ({
-            n: p.name, p: p.price, i: p.initialStock, t: p.type || '', o: p.note || '', a: p.active !== false, u: !!p.unlimited, s: !!p.stopped
+            n: p.name, p: p.price, i: p.initialStock, t: p.type || '', o: p.note || '', a: p.active !== false, u: !!p.unlimited, s: !!p.stopped, c: p.consign || ''
         })));
         const before = key(products);
         const next = JSON.parse(JSON.stringify(remoteProducts));
@@ -18638,6 +18847,7 @@
                 customerType: d.customerType || '不明',
                 pendingType: !!d.pendingType,
                 ...(normSaleTax(d.tax) ? { tax: normSaleTax(d.tax) } : {}),
+                ...(typeof d.memo === 'string' && d.memo.trim() ? { memo: d.memo.trim().slice(0, 100) } : {}),
                 ...(d.channel === 'mobile' ? { channel: 'mobile' } : {}),
                 ...(d.channel === 'table' ? { channel: 'table', billNo: String(d.billNo || '').slice(0, 8), table: normTable(d.table) } : {}),
                 ...(d.pay && d.pay !== 'cash' ? { pay: d.pay, payLabel: d.payLabel || d.pay } : {}),
@@ -18719,7 +18929,12 @@
             // 時間帯別の集計と客No.の並び順が実態とずれないようにするため。
             createdAt: (record.time instanceof Date && !isNaN(record.time)) ? record.time.getTime() : Date.now(),
             time: firebase.firestore.FieldValue.serverTimestamp(),
-            items: record.items.map(i => i.opt ? ({ id: i.id, name: i.name, price: i.price, type: i.type || '', opt: normOpt(i.opt) }) : ({ id: i.id, name: i.name, price: i.price, type: i.type || '' })),
+            items: record.items.map(i => {
+                const o = { id: i.id, name: i.name, price: i.price, type: i.type || '' };
+                if (i.opt) o.opt = normOpt(i.opt);
+                if (i.consign) o.consign = normConsignName(i.consign);   // 委託商品：どこから預かった品か
+                return o;
+            }),
             total: record.total,
             // セット割（前の版で記録した会計には無いので、必ず値を入れて送る）
             discount: Number(record.discount) || 0,
