@@ -753,6 +753,8 @@
         .ro-row .ro-n small { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-light); }
         .ro-row .ro-h { flex-shrink: 0; width: 40px; height: 40px; display: grid; place-items: center; color: var(--text-light); touch-action: none; cursor: grab; }
         .ro-row .ro-h .ic { width: 20px; height: 20px; }
+        /* セット割を商品で決める時は、商品が多いので一覧を箱の中でスクロールする */
+        #set-rule-cats.by-item { max-height: 330px; overflow-y: auto; border-radius: var(--r-md); padding: 2px; }
         /* まとめて登録 */
         .bulk-open { width: 100%; margin: 0 0 8px; }
         #bulk-text { width: 100%; box-sizing: border-box; min-height: 150px; font-size: 16px; line-height: 1.6; resize: vertical; font-family: inherit; }
@@ -3746,7 +3748,8 @@
                 </div>
                 <!-- セットの中身を変える：①種類にチェック → ②引く額 → 例で確かめて「このセット割にする」 -->
                 <div class="set-editor" id="set-editor">
-                    <div class="se-step"><span class="se-num">1</span>セットにする種類<small>2つ以上にチェック</small></div>
+                    <div class="se-step"><span class="se-num">1</span>セットにする組み合わせ<small>2つ以上にチェック</small></div>
+                    <div class="seg-pick" id="set-rule-by" role="group" aria-label="組み合わせの決め方"></div>
                     <div class="check-list" id="set-rule-cats" role="group" aria-label="セットにする種類"></div>
                     <div class="se-step"><span class="se-num">2</span>1会計で引く額<small>何セット買っても1回だけ</small></div>
                     <div class="seg-pick" id="set-rule-kind" role="group" aria-label="引き方"></div>
@@ -4906,7 +4909,7 @@
         const users = categoryUsers(id);
         if (users.length) { playError(); alert(`「${c.label}」の商品があるため消せません。\n先に、次の商品を別の分類にしてください。\n\n${users.map(n => '・' + n).join('\n')}`); return; }
         const r = normSetRule(setRule);
-        if (r && r.needs.includes(id)) { playError(); alert(`「${c.label}」はセット割の組み合わせに入っているため消せません。\n先に「セット割・クーポン」で組み合わせを変えてください。`); return; }
+        if (r && r.by !== 'item' && r.needs.includes(id)) { playError(); alert(`「${c.label}」はセット割の組み合わせに入っているため消せません。\n先に「セット割・クーポン」で組み合わせを変えてください。`); return; }
         if (!confirm(`分類「${c.label}」を消しますか？`)) return;
         setCategories(categories.filter(x => x.id !== id));
         afterCategoriesChanged(`分類を消した：${c.label}`);
@@ -6421,10 +6424,10 @@
         const rule = currentSetRule();
         if (!rule || !items.length) return '';
         if (discount > 0) return `セット割（${setRuleText(rule)}）が付いています`;
-        const have = new Set(items.map(i => i.type));
-        const missing = rule.needs.filter(t => !have.has(t));
+        const have = new Set(items.map(i => setKeyOf(i, rule)));
+        const missing = rule.needs.filter(t => !have.has(t)).map(k => setKeyLabel(k, rule));
         if (!missing.length || missing.length === rule.needs.length) return '';
-        return `あと${missing.map(catLabelOf).join('と')}を1つ足すと、セット割（${setRuleText(rule)}）`;
+        return `あと${missing.join("と")}を1つ足すと、セット割（${setRuleText(rule)}）`;
     }
 
     function publishCustomerDone(record, callNo) {
@@ -7923,8 +7926,19 @@
     // セット割の決まり（組み合わせと額）を、正しい形にそろえる。
     // 種類は2つ以上・重複なし・並びは画面の順（パン→クッキー→ドリンク）。額は1〜999円の整数。
     // 形がおかしい時は null（＝セット割なし）を返す。お金の計算なので、あいまいな値は通さない。
+    // セット割の組み合わせは「分類」（パン＋ドリンク など）か「商品」（メロンパン＋コーヒー など）で決める。
+    // 商品で決めた時は needs に商品の名前が入る（名前で見るので、端末をまたいでも同じ商品を指す）。
+    function setKeyOf(item, r) { return r && r.by === 'item' ? String((item && item.name) || '') : (item && item.type); }
+    function setKeyLabel(k, r) { return r && r.by === 'item' ? String(k) : ((CAT_TYPES.find(c => c.id === k) || {}).label || k); }
     function normSetRule(r) {
         if (!r || typeof r !== 'object') return null;
+        if (r.by === 'item') {
+            const names = [...new Set((Array.isArray(r.needs) ? r.needs : []).map(x => String(x == null ? '' : x).trim().slice(0, 40)).filter(Boolean))].slice(0, 8);
+            const amt = Math.floor(Number(r.amount));
+            const pc = r.kind === 'pct';
+            if (names.length < 2 || !(amt >= 1) || amt > (pc ? SET_MAX_PCT : SET_MAX_AMOUNT)) return null;
+            return pc ? { by: 'item', needs: names, amount: amt, kind: 'pct' } : { by: 'item', needs: names, amount: amt };
+        }
         const ids = CAT_TYPES.map(c => c.id);
         const want = Array.isArray(r.needs) ? r.needs : [];
         const needs = ids.filter(id => want.includes(id));
@@ -7949,7 +7963,7 @@
     function setRuleText(r) {
         const rule = normSetRule(r);
         if (!rule) return 'なし';
-        const names = rule.needs.map(id => (CAT_TYPES.find(c => c.id === id) || {}).label || id);
+        const names = rule.needs.map(k => setKeyLabel(k, rule));
         return rule.kind === 'pct' ? `${names.join('＋')}で${rule.amount}%引き` : `${names.join('＋')}で${rule.amount}円引き`;
     }
     // items … 商品の並び（カート・予約・会計記録の明細。それぞれ type を持つ）
@@ -7960,11 +7974,11 @@
             : (rule === true ? normSetRule(setRule) : (rule ? normSetRule(rule) : null));
         if (!r || !Array.isArray(items) || !items.length) return 0;
         // 0円の商品（準備中の枠など）ではセットにしない
-        const has = t => items.some(i => i && i.type === t && (Number(i.price) || 0) > 0);
+        const has = t => items.some(i => i && setKeyOf(i, r) === t && (Number(i.price) || 0) > 0);
         if (!r.needs.every(has)) return 0;
         if (r.kind !== 'pct') return r.amount;
-        // 割引率：組み合わせ1セットぶん（それぞれの種類で、いちばん安い1品ずつ）の合計の◯％。1円未満は切り捨て
-        const base = r.needs.reduce((sum, t) => sum + Math.min(...items.filter(i => i && i.type === t && (Number(i.price) || 0) > 0).map(i => Number(i.price))), 0);
+        // 割引率：組み合わせ1セットぶん（それぞれの種類（商品）で、いちばん安い1品ずつ）の合計の◯％。1円未満は切り捨て
+        const base = r.needs.reduce((sum, t) => sum + Math.min(...items.filter(i => i && setKeyOf(i, r) === t && (Number(i.price) || 0) > 0).map(i => Number(i.price))), 0);
         return Math.floor(base * r.amount / 100);
     }
     function itemsGross(items) { return (items || []).reduce((s, i) => s + (Number(i.price) || 0), 0); }
@@ -8244,10 +8258,16 @@
 
     // 共有中は、全部の端末で同じ値段になるようにそろえる
     // （同じカゴなのに端末によって10円違う、ということが起きないように）
+    // 置き場へ書くセット割の形。merge で書くと、置き場の中の決まりは項目ごとに混ぜられてしまう
+    // （割引率→固定額に変えても kind:'pct' が残る、など）。書く項目をいつも全部そろえて上書きする。
+    function setRuleForDoc(r) {
+        const x = normSetRule(r) || SET_DEFAULT;
+        return { by: x.by === 'item' ? 'item' : 'cat', needs: x.needs.slice(), amount: x.amount, kind: x.kind === 'pct' ? 'pct' : 'yen' };
+    }
     function shareSetDiscount() {
         if (!(syncMode && syncEventCode && fbDb)) return;
         fbDb.collection(EVENTS_COL).doc(syncEventCode)
-            .set({ setDiscount: setDiscountOn, setRule: normSetRule(setRule) || SET_DEFAULT,
+            .set({ setDiscount: setDiscountOn, setRule: setRuleForDoc(setRule),
                    setDiscountAt: Date.now(), setDiscountBy: getDeviceId() }, { merge: true })
             .catch(e => console.warn('セット割の設定の共有に失敗しました', e));
     }
@@ -8276,7 +8296,7 @@
     // 「このセット割にする」を押した時にだけ、決まりを入れ替える。
     let setRuleDraft = null;
     function setDraft() {
-        if (!setRuleDraft) setRuleDraft = { needs: setRule.needs.slice(), amount: String(setRule.amount), kind: setRule.kind === 'pct' ? 'pct' : 'yen' };
+        if (!setRuleDraft) setRuleDraft = draftOfRule(setRule);
         return setRuleDraft;
     }
     // 引き方：決めた額（円）か、割引率（％）か
@@ -8290,6 +8310,47 @@
         if (input) input.value = d.amount;
         playSound(660, 0.05);
         renderSetRuleEditor();
+    }
+    function draftOfRule(r) {
+        const item = r && r.by === 'item';
+        return { by: item ? 'item' : 'cat', needs: item ? SET_DEFAULT.needs.slice() : r.needs.slice(), items: item ? r.needs.slice() : [],
+                 amount: String(r.amount), kind: r.kind === 'pct' ? 'pct' : 'yen' };
+    }
+    // 分類で決めるか、商品で決めるか
+    function setSetBy(v) {
+        const d = setDraft();
+        const next = v === 'item' ? 'item' : 'cat';
+        if (d.by === next) return;
+        d.by = next;
+        playSound(660, 0.05);
+        renderSetRuleEditor();
+    }
+    function toggleSetRuleItem(i) {
+        const d = setDraft();
+        const name = setItemChoices(d)[i];
+        if (name == null) return;
+        const k = d.items.indexOf(name);
+        if (k >= 0) d.items.splice(k, 1); else d.items.push(name);
+        playSound(660, 0.05);
+        renderSetRuleEditor();
+    }
+    // 商品で決める時に選べる商品（いま売っている、値段のある商品）。選んだまま消えた商品も残して、外せるようにする
+    function setRuleProducts() {
+        return (currentSession ? products : (tempSetupProducts.length ? tempSetupProducts : products)).filter(p => p && p.name && p.price > 0 && p.active !== false);
+    }
+    function setItemChoices(d) {
+        const names = setRuleProducts().map(p => p.name);
+        (d.items || []).forEach(n => { if (!names.includes(n)) names.push(n); });
+        return names;
+    }
+    // 下書きから、決まりの形（needs は並びをそろえる）を作る
+    function ruleOfDraft(d, amount) {
+        if (d.by === 'item') {
+            const order = setItemChoices(d);
+            const needs = order.filter(n => d.items.includes(n));
+            return { by: 'item', needs, amount, kind: d.kind };
+        }
+        return { needs: CAT_TYPES.map(c => c.id).filter(id => d.needs.includes(id)), amount, kind: d.kind };
     }
     function toggleSetRuleCat(id) {
         const d = setDraft();
@@ -8323,8 +8384,9 @@
     // 選びかけの内容が、いまの決まりと違うか
     function setDraftChanged() {
         if (!setRuleDraft) return false;
-        const needs = CAT_TYPES.map(c => c.id).filter(id => setRuleDraft.needs.includes(id));
-        return JSON.stringify(needs) !== JSON.stringify(setRule.needs) || String(setRuleDraft.amount) !== String(setRule.amount)
+        const r = ruleOfDraft(setRuleDraft, setRuleDraft.amount);
+        return (r.by === 'item') !== (setRule.by === 'item')
+            || JSON.stringify(r.needs) !== JSON.stringify(setRule.needs) || String(setRuleDraft.amount) !== String(setRule.amount)
             || (setRuleDraft.kind || 'yen') !== (setRule.kind === 'pct' ? 'pct' : 'yen');
     }
     function saveSetRule() {
@@ -8332,13 +8394,13 @@
         const input = document.getElementById('set-rule-amount');
         const raw = input ? String(input.value).trim() : String(draft.amount);
         const amount = Number(raw);
-        const needs = CAT_TYPES.map(c => c.id).filter(id => draft.needs.includes(id));
-        if (needs.length < 2) { playError(); alert('セットにする種類を2つ以上選んでください。'); return; }
+        const needs = ruleOfDraft(draft, amount).needs;
+        if (needs.length < 2) { playError(); alert(draft.by === 'item' ? 'セットにする商品を2つ以上選んでください。' : 'セットにする種類を2つ以上選んでください。'); return; }
         const pct = draft.kind === 'pct';
         if (!/^\d+$/.test(raw) || !(amount >= 1) || amount > (pct ? SET_MAX_PCT : SET_MAX_AMOUNT)) {
             playError(); alert(pct ? `割引率は 1〜${SET_MAX_PCT} ％の整数で入れてください。` : `引く額は 1〜${SET_MAX_AMOUNT} 円の整数で入れてください。`); return;
         }
-        const next = normSetRule({ needs, amount, kind: draft.kind });
+        const next = normSetRule(ruleOfDraft(draft, amount));
         const before = setRuleText(setRule);
         setRule = next;
         setRuleDraft = null;
@@ -8358,13 +8420,26 @@
     function renderSetRuleEditor() {
         const box = document.getElementById('set-rule-cats');
         if (!box) return;
-        const d = setRuleDraft || { needs: setRule.needs, amount: String(setRule.amount), kind: setRule.kind === 'pct' ? 'pct' : 'yen' };
+        const d = setRuleDraft || draftOfRule(setRule);
         const pct = d.kind === 'pct';
+        const byItem = d.by === 'item';
+        const byBox = document.getElementById('set-rule-by');
+        if (byBox) byBox.innerHTML = `<button type="button" class="${!byItem ? 'on' : ''}" aria-pressed="${!byItem}" onclick="setSetBy('cat')">分類で決める</button><button type="button" class="${byItem ? 'on' : ''}" aria-pressed="${byItem}" onclick="setSetBy('item')">商品で決める</button>`;
         const kindBox = document.getElementById('set-rule-kind');
         if (kindBox) kindBox.innerHTML = `<button type="button" class="${!pct ? 'on' : ''}" aria-pressed="${!pct}" onclick="setSetKind('yen')">固定額（円）</button><button type="button" class="${pct ? 'on' : ''}" aria-pressed="${pct}" onclick="setSetKind('pct')">割引率（％）</button>`;
         const unit = document.getElementById('set-rule-unit');
         if (unit) unit.textContent = pct ? '%引き' : '円引き';
-        box.innerHTML = CAT_TYPES.map(c => {
+        const plist = setRuleProducts();
+        box.classList.toggle('by-item', byItem);
+        box.innerHTML = byItem ? setItemChoices(d).map((name, i) => {
+            const on = d.items.includes(name);
+            const pr = plist.find(p => p.name === name);
+            return `<button type="button" class="check-row${on ? ' on' : ''}" role="checkbox" aria-checked="${on}" onclick="toggleSetRuleItem(${i})">`
+                + `<i class="cr-dot" style="background:${pr ? catInk(pr.type) : 'var(--line-strong)'};"></i>`
+                + `<span class="cr-body"><span class="cr-name">${escHtml(name)}</span>`
+                + `<span class="cr-ex">${pr ? `${escHtml(catLabelOf(pr.type))}・¥${pr.price}` : 'いまは売っていない商品'}</span></span>`
+                + `<span class="cr-check"><svg class="ic"><use href="#ic-check"/></svg></span></button>`;
+        }).join('') : CAT_TYPES.map(c => {
             const on = d.needs.includes(c.id);
             const ex = setExampleProduct(c.id);
             const n = (currentSession ? products : (tempSetupProducts.length ? tempSetupProducts : products))
@@ -8379,16 +8454,16 @@
         if (input && document.activeElement !== input) input.value = d.amount;
         // 例：その組み合わせを1セット買うと、いくらになるか
         const pv = document.getElementById('set-rule-preview');
-        const needs = CAT_TYPES.map(c => c.id).filter(id => d.needs.includes(id));
+        const needs = ruleOfDraft(d, 0).needs;
         const amt = Math.floor(Number(d.amount));
         const amountOk = /^\d+$/.test(String(d.amount).trim()) && amt >= 1 && amt <= (pct ? SET_MAX_PCT : SET_MAX_AMOUNT);
         let msg = '', bad = false;
         const off = pct ? `${amt}%引き` : `${amt}円引き`;
-        if (needs.length < 2) { bad = true; msg = `あと${2 - needs.length}つ選んでください（セットは2種類以上）。`; }
+        if (needs.length < 2) { bad = true; msg = `あと${2 - needs.length}つ選んでください（セットは${byItem ? '2品' : '2種類'}以上）。`; }
         else if (!amountOk) { bad = true; msg = pct ? `割引率は 1〜${SET_MAX_PCT} ％で入れてください。` : `引く額は 1〜${SET_MAX_AMOUNT} 円で入れてください。`; }
         else {
-            const ex = needs.map(setExampleProduct);
-            const label = needs.map(id => (CAT_TYPES.find(c => c.id === id) || {}).label).join(' ＋ ');
+            const ex = byItem ? needs.map(n => plist.find(p => p.name === n) || null) : needs.map(setExampleProduct);
+            const label = needs.map(k => escHtml(setKeyLabel(k, { by: byItem ? 'item' : 'cat' }))).join(' ＋ ');
             if (ex.some(x => !x)) msg = `<b>${label}</b> を同じ会計で買うと <b>${off}</b>。`;
             else {
                 const gross = ex.reduce((a, x) => a + x.price, 0);
@@ -8829,7 +8904,7 @@
                 await fbDb.collection(EVENTS_COL).doc(code).set({
                     name: sharedName, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
                     roundId: syncRoundId,
-                    setDiscount: setDiscountOn, setRule: normSetRule(setRule) || SET_DEFAULT, setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
+                    setDiscount: setDiscountOn, setRule: setRuleForDoc(setRule), setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                     openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
                 });
             } catch (e) {
@@ -9701,7 +9776,7 @@
             await fbDb.collection(EVENTS_COL).doc(code).set({
                 name: currentSession, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
                 roundId: syncRoundId,
-                setDiscount: setDiscountOn, setRule: normSetRule(setRule) || SET_DEFAULT, setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
+                setDiscount: setDiscountOn, setRule: setRuleForDoc(setRule), setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                 openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
             });
         } catch (e) {
@@ -11253,8 +11328,8 @@
             rule = top ? JSON.parse(top[0]) : null;
         }
         if (!rule || !sorted.length) return null;
-        const label = id => (CAT_TYPES.find(c => c.id === id) || {}).label || id;
-        const has = (h, t) => (h.items || []).some(i => i && i.type === t && (Number(i.price) || 0) > 0);
+        const label = id => setKeyLabel(id, rule);
+        const has = (h, t) => (h.items || []).some(i => i && setKeyOf(i, rule) === t && (Number(i.price) || 0) > 0);
         const setRows = sorted.filter(h => setPartOf(h) > 0);
         const other = sorted.filter(h => !(setPartOf(h) > 0));
         const avg = rows => rows.length ? Math.floor(rows.reduce((a, h) => a + h.total, 0) / rows.length) : 0;

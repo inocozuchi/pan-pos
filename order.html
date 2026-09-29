@@ -373,13 +373,14 @@
         const amount = Math.floor(Number(r.amount));
         const pct = r.kind === 'pct';
         if (needs.length < 2 || !(amount >= 1) || amount > (pct ? 90 : 999)) return null;
-        return { needs, amount, pct };
+        return { needs, amount, pct, item: r.by === 'item' };
     }
     // lines … { type, price, qty } の並び
     function setDiscOf(lines) {
         const r = setRuleNow();
         if (!r || !lines.length) return 0;
-        const of = t => lines.filter(l => l.type === t && (Number(l.price) || 0) > 0 && (Number(l.qty) || 0) > 0);
+        // 分類で決めたセットは分類（type）、商品で決めたセットは商品の名前で見る
+        const of = t => lines.filter(l => (r.item ? l.name : l.type) === t && (Number(l.price) || 0) > 0 && (Number(l.qty) || 0) > 0);
         if (!r.needs.every(t => of(t).length)) return 0;
         if (!r.pct) return r.amount;
         const base = r.needs.reduce((sum, t) => sum + Math.min(...of(t).map(l => Number(l.price))), 0);
