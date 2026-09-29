@@ -15,6 +15,8 @@
       ・メニューと品切れは、レジの端末が書く live/menu を読む
       ・注文は orders に「モバイル・未払い」で書く。キッチンの画面にすぐ出る
       ・注文したあとは、その注文の状態と「あと何組」を見続け、呼び出されたら音と画面で知らせる
+      ・お店が決めた「いまの待ち時間」を出す。お店が許していれば、受け取り時間も選べる
+        （選んだ注文は、受け取りの何分か前にキッチンの画面へ出る）
     -->
     <script src="data/site.js"></script>
     <script src="data/firebase-config.js"></script>
@@ -92,6 +94,12 @@
         .hide { display: none !important; }
         .center { text-align: center; }
         .foot { font-size: 12px; color: var(--sub); margin-top: 16px; text-align: center; }
+        .wait { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; background: var(--accent-soft); color: var(--accent-ink); border-radius: var(--r); padding: 12px 16px; margin: 12px 0; font-weight: 700; }
+        .wait b { font-size: 22px; font-variant-numeric: tabular-nums; }
+        .pick { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 12px 14px; margin: 10px 0; }
+        .pick label { display: block; font-size: 13px; font-weight: 800; color: var(--sub); margin-bottom: 6px; }
+        .pick select { width: 100%; min-height: 48px; font-size: 17px; font-weight: 700; font-family: inherit; border-radius: 12px; border: none; padding: 0 12px; background: var(--sunken); color: var(--text); box-shadow: inset 0 0 0 1px var(--hair); }
+        .pick .sub { margin-top: 6px; }
     </style>
 </head>
 <body>
@@ -103,6 +111,7 @@
     <!-- 読み込み中・使えない時の知らせ -->
     <div id="msg" class="notice">読み込んでいます…</div>
     <div id="note" class="notice hide"></div>
+    <div id="wait" class="wait hide"></div>
 
     <!-- 注文した後：番号と状態 -->
     <section id="my" class="hide"></section>
@@ -119,6 +128,11 @@
             <button type="button" class="eat" id="d-eat" onclick="pickDine('eat')">店内</button>
         </div>
         <div class="lines" id="c-lines"></div>
+        <div class="pick hide" id="c-pick-box">
+            <label for="c-pick">受け取り時間</label>
+            <select id="c-pick" onchange="pickTime(this.value)"></select>
+            <div class="sub" id="c-pick-sub"></div>
+        </div>
         <div class="notice">お支払いは、受け取りの時にレジでお願いします。注文すると番号が出ます。</div>
         <button class="btn full" id="c-send" onclick="sendOrder()" disabled>注文する</button>
         <button class="btn sec full" style="margin-top:8px;" onclick="showMenu()">メニューに戻る</button>
@@ -146,6 +160,7 @@
     let db = null, uid = '', ev = null, evData = null, menu = null, orders = [];
     const qty = {};          // 商品名 → 個数
     let dine = '';           // 'take' / 'eat'
+    let pickAt = 0;          // 選んだ受け取り時間（0 はできしだい）
     let sending = false;
     let audio = null;
     const seenReady = new Set();
@@ -204,6 +219,34 @@
 
     function open() { return !!(evData && evData.status === 'open'); }
     function accepting() { return open() && !!(evData.mobile && evData.mobile.on) && !!(menu && menu.on !== false); }
+    // お店の設定（index.html の normMobileCfg と同じ決まりで読む）
+    function cfg() {
+        const m = (evData && evData.mobile) || {};
+        const int = (v, lo, hi, def) => { const n = parseInt(v, 10); return Number.isFinite(n) && n >= lo && n <= hi ? n : def; };
+        return { wait: int(m.wait, 0, 180, 0), pick: m.pick === true, lead: int(m.lead, 1, 120, 10), ahead: int(m.ahead, 30, 720, 120) };
+    }
+    const hm = ms => { const d = new Date(ms); return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); };
+    function pickupOf(o) {
+        const n = Number(o.pickupAt) || 0, at = Number(o.at) || 0;
+        return (n > at && n - at < 13 * 3600000) ? n : 0;
+    }
+    // その注文を作り始める時刻（キッチンの画面と同じ決まり）
+    function startOf(o) {
+        const at = Number(o.at) || 0, p = pickupOf(o), rel = Number(o.rel) || 0;
+        let s = p ? Math.max(at, p - cfg().lead * 60000) : at;
+        if (rel && rel < s) s = Math.max(at, rel);
+        return s;
+    }
+    function heldNow(o, now) { return o.st === 'cook' && !!pickupOf(o) && !(Number(o.rel) > 0) && now < startOf(o); }
+    // 選べる受け取り時間（10分ごと）。いちばん早いのは、作る時間と待ち時間を見込んだ時刻
+    const SLOT = 10 * 60000;
+    function pickSlots(now) {
+        const c = cfg();
+        const first = Math.ceil((now + Math.max(c.lead, c.wait, 10) * 60000) / SLOT) * SLOT;
+        const out = [];
+        for (let t = first; t <= now + c.ahead * 60000 && out.length < 72; t += SLOT) out.push(t);
+        return out;
+    }
 
     function render() {
         const shop = $('shop');
@@ -212,6 +255,9 @@
         const noteText = evData && evData.mobile && evData.mobile.note;
         note.classList.toggle('hide', !noteText || !accepting());
         if (noteText) note.textContent = noteText;
+        const w = $('wait'), wm = cfg().wait;
+        w.classList.toggle('hide', !wm || !accepting());
+        if (wm) w.innerHTML = `<span>いまの待ち時間</span><b>約${wm}分</b>`;
         if (!evData) { say('このお店の注文は受け付けていません（QRコードをもう一度お確かめください）。', true); hideOrdering(); renderMine(); return; }
         if (!open()) { say('本日の受付は終了しました。ありがとうございました。', true); hideOrdering(); renderMine(); return; }
         if (!accepting()) {
@@ -290,6 +336,7 @@
         render();
     };
     window.pickDine = function (d) { dine = d === 'eat' ? 'eat' : 'take'; renderConfirm(); };
+    window.pickTime = function (v) { pickAt = Number(v) || 0; renderConfirm(); };
     function renderConfirm() {
         const lines = cartLines();
         $('d-take').classList.toggle('on', dine === 'take');
@@ -297,6 +344,23 @@
         const tot = lines.reduce((t, l) => t + l.qty * l.price, 0);
         $('c-lines').innerHTML = lines.map(l => `<div><span>${esc(l.name)} ×${l.qty}</span><span>${yen(l.qty * l.price)}</span></div>`).join('')
             + `<div class="t"><span>合計</span><span>${yen(tot)}</span></div>`;
+        // 受け取り時間（お店が許している時だけ）。時間がたって選べなくなった時刻は、できしだいに戻す
+        const c = cfg(), box = $('c-pick-box');
+        box.classList.toggle('hide', !c.pick);
+        if (c.pick) {
+            const slots = pickSlots(Date.now());
+            if (pickAt && !slots.includes(pickAt)) pickAt = 0;
+            const sel = $('c-pick');
+            // 選んでいる最中に閉じてしまわないよう、選択肢が変わった時だけ作り直す
+            const key = c.wait + '|' + slots.join(',');
+            if (sel.dataset.k !== key) {
+                sel.dataset.k = key;
+                sel.innerHTML = `<option value="0">できしだい${c.wait ? `（約${c.wait}分）` : ''}</option>`
+                    + slots.map(t => `<option value="${t}">${hm(t)}ごろ</option>`).join('');
+            }
+            if (sel.value !== String(pickAt)) sel.value = String(pickAt);
+            $('c-pick-sub').textContent = pickAt ? `${hm(pickAt)}ごろにお渡しできるよう、少し前から作り始めます。` : 'できあがったら、この画面でお知らせします。';
+        } else pickAt = 0;
         const send = $('c-send');
         send.disabled = !dine || !lines.length || sending;
         send.textContent = sending ? '送っています…' : (dine ? '注文する' : 'お召し上がりを選んでください');
@@ -344,13 +408,17 @@
             const id = 'm-' + (uid || 'x').slice(0, 10) + '-' + at;
             const items = lines.map(l => ({ name: l.name, qty: l.qty, price: l.price, type: l.type || 'sweet' }));
             const total = items.reduce((t, l) => t + l.qty * l.price, 0);
-            await ev.collection('orders').doc(id).set({
+            // 選んだ時刻が、もう過ぎそうなら「できしだい」にする
+            const pickupAt = (cfg().pick && pickAt > at + 5 * 60000) ? pickAt : 0;
+            const doc = {
                 id, no: 'M' + (1000 + n), at, dine, items, st: 'cook', channel: 'mobile', paid: false, total,
                 uid, roundId: (evData && evData.roundId) || '', upd: at, chk: [], t: {}, dev: ''
-            });
+            };
+            if (pickupAt) doc.pickupAt = pickupAt;
+            await ev.collection('orders').doc(id).set(doc);
             mine.push(id); saveMine(mine);
             Object.keys(qty).forEach(k => delete qty[k]);
-            dine = '';
+            dine = ''; pickAt = 0;
             $('confirm').classList.add('hide');
             window.scrollTo(0, 0);
         } catch (e) {
@@ -367,13 +435,18 @@
         if (!list.length) { box.classList.add('hide'); box.innerHTML = ''; return; }
         box.classList.remove('hide');
         let anyReady = false;
+        const now = Date.now();
         box.innerHTML = list.slice().reverse().map(o => {
-            const ahead = orders.filter(x => x.st === 'cook' && (Number(x.at) || 0) < (Number(o.at) || 0)).length;
+            // 「あと何組」は、いま作っている注文のうち、先に作り始めた注文の数（予約で待っている注文は数えない）
+            const myStart = startOf(o);
+            const ahead = orders.filter(x => x.st === 'cook' && !heldNow(x, now) && startOf(x) < myStart).length;
+            const pk = pickupOf(o);
             let cls = '', st = '', sub = '';
             if (o.st === 'ready') { cls = 'ready'; st = 'できあがりました！'; sub = '受け取り口へお越しください'; anyReady = true; }
             else if (o.st === 'done') { st = 'お受け取りありがとうございました'; }
             else if (o.st === 'void') { cls = 'void'; st = 'この注文は取り消されました'; sub = 'くわしくは店頭でお尋ねください'; }
-            else { st = 'お作りしています'; sub = ahead ? `あと ${ahead} 組` : 'まもなくできあがります'; }
+            else if (heldNow(o, now)) { st = `受け取り ${hm(pk)}ごろ`; sub = `ご注文を受け付けました。${hm(myStart)}ごろから作り始めます`; }
+            else { st = 'お作りしています'; sub = (ahead ? `あと ${ahead} 組` : 'まもなくできあがります') + (pk ? `（受け取り ${hm(pk)}ごろ）` : ''); }
             const items = (o.items || []).map(i => `${esc(i.name)}×${i.qty}`).join('、');
             return `<div class="card ${cls}">
                 <div class="k">ご注文の番号</div>
@@ -401,6 +474,13 @@
             $('bar').classList.toggle('hide', full);
         }
     }
+
+    // 受け取り時間を待っている注文は、作り始める時刻になったら「お作りしています」に変える。
+    // 受け取り時間の選択肢も、時間がたつと選べなくなるので作り直す
+    setInterval(() => {
+        if (orders.length) renderMine();
+        if (!$('confirm').classList.contains('hide') && menu) renderConfirm();
+    }, 30000);
 
     if (!window.__ORDER_PAGE_TEST) start();
 })();
