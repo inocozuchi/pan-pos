@@ -700,6 +700,73 @@
             #bill-body, #tables-body .bill-find { max-width: 640px; margin-left: auto; margin-right: auto; }
             #page-panel[data-sub="bill"] > .panel-head { max-width: 672px; width: 100%; margin-left: auto; margin-right: auto; box-sizing: border-box; }
         }
+        /* ▼ 商品の画像：レジのボタンの背景。文字が読めるよう、下ほど濃いベールを重ねる ▼ */
+        :root { --img-veil: rgba(255,255,255,.9); --img-veil-top: rgba(255,255,255,.42); }
+        :root[data-theme="dark"] { --img-veil: rgba(24,25,30,.88); --img-veil-top: rgba(24,25,30,.4); }
+        .product-btn.has-img {
+            background-image: linear-gradient(var(--cat-bar, transparent), var(--cat-bar, transparent)),
+                linear-gradient(to top, var(--img-veil) 0%, var(--img-veil) 52%, var(--img-veil-top) 100%), var(--img);
+            background-size: 100% 4px, 100% 100%, cover;
+            background-position: top left, center, center;
+            background-repeat: no-repeat;
+        }
+        .product-btn.has-img.out-of-stock, .product-btn.has-img.sold-open { --img-veil: rgba(236,237,241,.94); --img-veil-top: rgba(236,237,241,.78); }
+        :root[data-theme="dark"] .product-btn.has-img.out-of-stock, :root[data-theme="dark"] .product-btn.has-img.sold-open { --img-veil: rgba(30,31,36,.94); --img-veil-top: rgba(30,31,36,.8); }
+        /* 在庫の画面の、画像を選ぶ小さな四角 */
+        .pimg { position: relative; flex-shrink: 0; width: 48px; height: 48px; border-radius: 12px; border: none; padding: 0; cursor: pointer;
+            background: var(--sunken) center / cover no-repeat; color: var(--text-light); display: grid; place-items: center; box-shadow: inset 0 0 0 1px var(--hairline); }
+        .pimg .ic { width: 20px; height: 20px; }
+        .pimg.on { box-shadow: none; }
+        .pimg.on .ic { display: none; }
+        .pimg-x { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; border: none; padding: 0; cursor: pointer;
+            background: var(--text-main); color: var(--bg); display: grid; place-items: center; font-size: 13px; font-weight: 900; line-height: 1; }
+        /* ▼ 在庫の画面：さがす・並び・並べ替え ▼ */
+        .st-tools { position: sticky; top: -14px; z-index: 4; margin: 0 -16px 8px; padding: 8px 16px 6px; background: var(--bg); }
+        .st-tools input[type="search"] { width: 100%; box-sizing: border-box; margin: 0; font-size: 16px; }
+        .chip-pick.st-sorts { flex-wrap: nowrap; overflow-x: auto; margin: 8px -16px 0; padding: 0 16px 2px; scrollbar-width: none; }
+        .chip-pick.st-sorts::-webkit-scrollbar { display: none; }
+        .chip-pick.st-sorts button { flex-shrink: 0; }
+        .ro-bar .ro-top { display: flex; align-items: center; gap: 8px; }
+        .ro-bar .ro-top .ro-count { flex: 1; min-width: 0; }
+        .ro-bar .ro-top .action-btn { margin: 0; width: auto; flex: 0 0 auto; padding: 8px 16px; font-size: 14px; }
+        .st-acts { display: flex; gap: 8px; margin: 0 0 10px; }
+        .st-acts .action-btn { margin: 0; flex: 1; padding-top: 9px; padding-bottom: 9px; font-size: 14px; }
+        .ro-bar { display: flex; flex-direction: column; gap: 6px; }
+        .ro-bar .ro-count { font-size: 13px; font-weight: 800; color: var(--text-light); }
+        .ro-moves { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+        .ro-moves button { border: none; border-radius: 12px; padding: 9px 4px; background: var(--btn-neutral); color: var(--text-main); font: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+        .ro-moves button .ic { width: 18px; height: 18px; }
+        .ro-moves button:disabled { opacity: .4; cursor: default; }
+        .ro-list { display: flex; flex-direction: column; gap: 6px; }
+        .ro-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card), inset 5px 0 0 var(--ink);
+            padding: 7px 8px 7px 14px; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+            transition: transform .2s cubic-bezier(.32,.72,0,1), box-shadow .2s ease, background .2s ease; }
+        .ro-row.sel { background: var(--accent-soft); }
+        .ro-row.dragging { transition: none; z-index: 5; position: relative; box-shadow: 0 14px 34px rgba(0,0,0,.24), inset 5px 0 0 var(--ink); transform: scale(1.03); }
+        .ro-row.carried { opacity: .45; }
+        .ro-row .ro-chk { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: none; padding: 0; cursor: pointer; background: none; box-shadow: inset 0 0 0 2px var(--line-strong); display: grid; place-items: center; color: #fff; }
+        .ro-row.sel .ro-chk { background: var(--accent); box-shadow: none; }
+        .ro-row .ro-chk .ic { width: 15px; height: 15px; stroke-width: 3; opacity: 0; }
+        .ro-row.sel .ro-chk .ic { opacity: 1; }
+        .ro-row .ro-th { flex-shrink: 0; width: 34px; height: 34px; border-radius: 9px; background: var(--sunken) center / cover no-repeat; }
+        .ro-row .ro-n { flex: 1; min-width: 0; font-weight: 800; font-size: 14.5px; overflow-wrap: anywhere; }
+        .ro-row .ro-n small { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-light); }
+        .ro-row .ro-h { flex-shrink: 0; width: 40px; height: 40px; display: grid; place-items: center; color: var(--text-light); touch-action: none; cursor: grab; }
+        .ro-row .ro-h .ic { width: 20px; height: 20px; }
+        /* まとめて登録 */
+        .bulk-open { width: 100%; margin: 0 0 8px; }
+        #bulk-text { width: 100%; box-sizing: border-box; min-height: 150px; font-size: 16px; line-height: 1.6; resize: vertical; font-family: inherit; }
+        .bulk-rows { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+        .bulk-row { display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card); padding: 9px 12px 9px 10px; border-left: 5px solid var(--ink, var(--line-strong)); animation: riseIn .26s cubic-bezier(.32,.72,0,1) both; }
+        .bulk-row .br-main { flex: 1; min-width: 0; }
+        .bulk-row .br-n { display: block; font-weight: 800; overflow-wrap: anywhere; }
+        .bulk-row .br-s { display: block; font-size: 12px; font-weight: 700; color: var(--text-light); }
+        .bulk-row .br-s.upd { color: var(--warn-ink); }
+        .bulk-row .br-v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 800; }
+        .bulk-row .br-v small { display: block; font-size: 12px; color: var(--text-light); }
+        .bulk-row .br-t { flex-shrink: 0; border: none; border-radius: 999px; padding: 6px 10px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; background: var(--btn-neutral); color: var(--text-main); }
+        .bulk-row.bad { border-left-color: var(--danger); opacity: .8; }
+        .bulk-row.bad .br-s { color: var(--danger); }
         /* 消費税の設定：分類ごとの税率 */
         .tax-cats { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 4px; }
         .tax-cat { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card); padding: 8px 10px 8px 14px; }
@@ -926,6 +993,19 @@
             overflow-y: auto;
         }
 
+        /* 商品の並びを下まで送った時の「いちばん上へ」。商品の並びの右下に浮かべる */
+        #grid-top-btn {
+            position: absolute; z-index: 5; width: 46px; height: 46px; border-radius: 50%; border: none; padding: 0;
+            display: grid; place-items: center; cursor: pointer; color: var(--accent);
+            background: color-mix(in srgb, var(--surface) 86%, transparent);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 4px 16px rgba(0,0,0,.18), 0 0 0 .5px rgba(0,0,0,.06);
+            opacity: 0; transform: translate3d(0, 10px, 0) scale(.8); pointer-events: none;
+            transition: opacity .2s ease, transform .3s cubic-bezier(.32,.72,0,1);
+        }
+        #grid-top-btn .ic { width: 22px; height: 22px; stroke-width: 2.4; }
+        #grid-top-btn.show { opacity: 1; transform: none; pointer-events: auto; }
+        #grid-top-btn:active { transform: scale(.9); }
         .product-btn {
             position: relative;
             /* カートの個数の印を角からはみ出させて置くので、中身は切り取らない
@@ -3229,6 +3309,10 @@
   <symbol id="ic-pay-ic" viewBox="0 0 24 24"><rect x="3" y="4" width="10.5" height="16" rx="2"/><path d="M6.5 8h3.5"/><path d="M16.5 9a4.5 4.5 0 0 1 0 6M19 6.8a8 8 0 0 1 0 10.4"/></symbol>
   <symbol id="ic-pay-other" viewBox="0 0 24 24"><path d="M3.5 8.5h16a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-14a2 2 0 0 1-2-2z"/><path d="M3.5 8.5 15 4.5v4"/><circle cx="16.8" cy="14" r="1.3"/></symbol>
   <symbol id="ic-ticket" viewBox="0 0 24 24"><path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h14a1.5 1.5 0 0 1 1.5 1.5V10a2 2 0 0 0 0 4v2.5A1.5 1.5 0 0 1 19 18H5a1.5 1.5 0 0 1-1.5-1.5V14a2 2 0 0 0 0-4z"/><path d="M14.5 6.5v11" stroke-dasharray="1.6 2"/></symbol>
+  <symbol id="ic-grip" viewBox="0 0 24 24"><path d="M5 8h14M5 12h14M5 16h14"/></symbol>
+  <symbol id="ic-top" viewBox="0 0 24 24"><path d="M6 5h12M12 19V9M7.5 13.5 12 9l4.5 4.5"/></symbol>
+  <symbol id="ic-bottom" viewBox="0 0 24 24"><path d="M6 19h12M12 5v10M7.5 10.5 12 15l4.5-4.5"/></symbol>
+  <symbol id="ic-image" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4.5 4 3.5 3-2.5 4 3.5"/></symbol>
   <symbol id="ic-percent" viewBox="0 0 24 24"><path d="M18.5 5.5l-13 13"/><circle cx="7" cy="7" r="2.4"/><circle cx="17" cy="17" r="2.4"/></symbol>
   <symbol id="ic-tag" viewBox="0 0 24 24"><path d="M11 3.5H20v9l-8.5 8.5L3 12.5z"/><circle cx="16.5" cy="7.5" r="1.3"/></symbol>
   <symbol id="ic-clipboard" viewBox="0 0 24 24"><path d="M9 4.5h6v2.5H9z"/><path d="M8 6H5.5v15h13V6H16"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4"/></symbol>
@@ -3293,6 +3377,8 @@
 <section id="page-register" class="page">
     <div id="app-container">
         <main id="product-grid"></main>
+        <!-- 商品の並びを下まで送った時だけ出る「いちばん上へ」 -->
+        <button type="button" id="grid-top-btn" aria-label="いちばん上へ" onclick="gridToTop()"><svg class="ic"><use href="#ic-up"/></svg></button>
 
         <!-- 閉店中に表示：はじめの一手はここだけ（「新しく開店する」か「合流する」）。
              ヘッダーの「開店・合流」を押しても、ここに来る（同じ選択の画面を2つ持たない）。 -->
@@ -3498,9 +3584,12 @@
             <!-- 商品・在庫の調整 -->
             <div class="sub-view" id="sub-stock" style="display:none;">
                 <p class="settings-hint" id="stock-hint"></p>
+                <div id="live-stock-tools"></div>
                 <div id="live-stock-list"></div>
+                <input type="file" id="prod-img-file" accept="image/*" style="display:none" onchange="onProductImageChosen(event)">
                 <!-- 営業中に商品を足すところ。押すまでは畳んでおき、一覧のじゃまをしない -->
                 <button class="action-btn btn-positive" id="live-add-open" style="width:100%; margin-top:10px;" onclick="toggleLiveAdd(true)"><svg class="ic"><use href="#ic-plus"/></svg>販売する商品を追加する</button>
+                <button class="action-btn btn-secondary" id="live-bulk-open" style="width:100%; margin-top:8px;" onclick="openBulk('live')"><svg class="ic"><use href="#ic-clipboard"/></svg>メモを貼り付けて、まとめて追加</button>
                 <div class="add-card" id="live-add-form" style="display:none;">
                     <div class="add-head"><svg class="ic"><use href="#ic-plus"/></svg>販売する商品を追加</div>
                     <label class="field-label">商品名</label>
@@ -3640,6 +3729,8 @@
 
             <!-- レストラン：テーブルの数・伝票の渡し方・テーブルのQR -->
             <div class="sub-view" id="sub-rest" style="display:none;"><div id="rest-body"></div></div>
+            <!-- メモのコピペで、商品をまとめて登録する -->
+            <div class="sub-view" id="sub-bulk" style="display:none;"><div id="bulk-body"></div></div>
             <!-- 消費税（初期はなし）と、税務用の資料 -->
             <div class="sub-view" id="sub-tax" style="display:none;"><div id="tax-body"></div></div>
 
@@ -4503,6 +4594,9 @@
                 <span class="price">¥${p.price}</span>
                 <span class="stock${lowStock && !oversold ? ' is-low' : ''}" style="${stockStyle}">${stockText}</span>
             `;
+            // 画像を付けた商品は、ボタンの背景にする（文字は読めるように、上にベールを重ねる）
+            const iu = productImgUrl(p.name);
+            if (iu) { btn.classList.add('has-img'); btn.style.setProperty('--img', `url("${iu}")`); }
             btn.onclick = () => addToCart(p);
             grid.appendChild(btn);
         });
@@ -5413,6 +5507,7 @@
         if (applyBox) {
             applyBox.innerHTML =
                 (latest ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:8px; padding:10px; background:var(--accent-soft); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--accent-ink); display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="ic"><use href="#ic-bulb"/></svg>前回「${escHtml(latest.sessionName)}」の実績を参考に反映</button>` : '')
+                + `<button class="action-btn btn-secondary bulk-open" onclick="openBulk('setup')"><svg class="ic"><use href="#ic-clipboard"/></svg>メモを貼り付けて、まとめて登録</button>`
                 + `<button class="link-btn" style="margin:0 0 8px;" onclick="openPanel('settings','cats')"><svg class="ic"><use href="#ic-tag"/></svg>分類を足す・名前を変える</button>`
                 + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:var(--btn-neutral); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="ic"><use href="#ic-undo"/></svg>商品リストを「${escHtml(ACTIVE_EVENT_SET.label)}」の既定に戻す</button>`;
         }
@@ -5437,7 +5532,8 @@
                             <input class="ios-switch" type="checkbox" ${p.unlimited ? 'checked' : ''} onchange="updateTempProduct(${p.id}, 'unlimited', this.checked)">
                         </label>
                     </div>
-                    <div style="display:flex; gap:5px; align-items:center;">
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        ${pimgHtml(p, 'setup')}
                         <input type="text" value="${escHtml(p.name)}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
                         <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
                     </div>
@@ -11420,6 +11516,7 @@
         'bill': '伝票',
         'rest': 'テーブルと伝票',
         'tax': '消費税',
+        'bulk': 'まとめて登録',
         'customer': 'CD',
         'role': 'この端末の役割',
         'cd': 'CD（お客様用の画面）',
@@ -11472,6 +11569,9 @@
         if (VIEW_PERM[view] && !requirePerm(VIEW_PERM[view], () => openPanel(view, sub))) return;
         const top = navTop();
         if (top && top.view === view && (top.sub || null) === (sub || null)) { renderNav(); return; }
+        // 戻ってきた時に、押す前の場所から続けられるよう、いまのスクロール位置を覚えておく
+        const cur = navTop();
+        if (cur && cur.view !== 'register') cur.scroll = document.getElementById('panel-body').scrollTop;
         navStack.push({ view, sub: sub || null });
         navDir = 'forward';
         renderNav();
@@ -11492,6 +11592,29 @@
     }
 
     let panelEnterTimer = null;
+    // ▼ レジ：商品の並びの「いちばん上へ」▼
+    // 商品が多い時に、下まで送ったあと指で戻すのは手間なので、下の方にいる時だけ丸いボタンを出す。
+    function placeGridTopBtn() {
+        const g = document.getElementById('product-grid'), b = document.getElementById('grid-top-btn');
+        if (!g || !b) return;
+        const show = g.scrollTop > 160 && g.offsetParent !== null;
+        if (show) {
+            b.style.left = (g.offsetLeft + g.clientWidth - 58) + 'px';
+            b.style.top = (g.offsetTop + g.clientHeight - 58) + 'px';
+        }
+        b.classList.toggle('show', show);
+    }
+    function gridToTop() {
+        const g = document.getElementById('product-grid');
+        if (!g) return;
+        try { g.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { g.scrollTop = 0; }
+        playSound(660, 0.04);
+    }
+    function initGridTop() {
+        const g = document.getElementById('product-grid');
+        if (g) g.addEventListener('scroll', () => requestAnimationFrame(placeGridTopBtn), { passive: true });
+        window.addEventListener('resize', placeGridTopBtn);
+    }
     // いまの履歴の先頭にあわせて画面を描く
     function renderNav() {
         // キッチン用の端末は、営業中はレジの画面を出さずにキッチンの画面を出す
@@ -11538,6 +11661,9 @@
                 : (currentSub ? (SUB_TITLES[currentSub] || '') : (VIEW_TITLES[currentView] || ''));
             document.getElementById('panel-body').scrollTop = 0;
         }
+        // 「戻る」（左端からなぞった時も）で戻ってきた画面は、進む前に見ていた場所まで戻す
+        const backTo = !onRegister && navDir === 'back' && top.scroll > 0 ? top.scroll : 0;
+        delete top.scroll;
         // 戻るボタンは「ひとつ前があるか」だけで決まる（どの画面でも同じ位置・同じ意味）
         const backBtn = document.getElementById('panel-back');
         const canBack = navStack.length > 1;
@@ -11545,6 +11671,11 @@
         document.querySelector('.panel-head').classList.toggle('no-back', !canBack);
         setActiveNav(currentView === 'session' ? null : (currentView === 'kitchen' ? 'register' : currentView));
         if (!onRegister) refreshView(currentView, currentSub);
+        if (backTo) {
+            const body = document.getElementById('panel-body');
+            body.scrollTop = backTo;
+            requestAnimationFrame(() => { if (navTop() === top) body.scrollTop = backTo; });
+        }
         updateKdFull();
     }
 
@@ -11665,6 +11796,7 @@
             else if (sub === 'mobile-pay') renderMobilePayView();
             else if (sub === 'rest') renderRestView();
             else if (sub === 'tax') renderTaxView();
+            else if (sub === 'bulk') renderBulkView();
             else if (sub === 'pdf-import') renderPdfImport();
             else if (sub === 'display') { updateFullscreenButton(); renderThemeSettings(); renderClockSettings(); renderLockEntry(); }
             else if (sub === 'lock') { lockDraft = null; lockReuse = true; renderLockView(); }
@@ -11887,7 +12019,7 @@
     //  ・開き直されている（閉店になっていない／別の回になっている）
     //  ・まだ閉店を受け取っていないレジ役の端末がいる（その端末が閉店を受け取って、自分の集計を残すまで待つ）
     //    → その端末が閉店を受け取った時に、あらためて片づける
-    const PURGE_SUBCOLS = ['sales', 'reservations', 'orders', 'bills', 'tables', 'devices', 'live'];
+    const PURGE_SUBCOLS = ['sales', 'reservations', 'orders', 'bills', 'tables', 'devices', 'live', 'img'];
     async function purgeClosedEvent(code, opts) {
         const c = sanitizeEventCode(code || '');
         if (!c || !fbDb || !syncReady) return false;
@@ -13717,6 +13849,617 @@
         showToast('領収書の設定を保存しました');
     }
 
+    // ▼▼▼ 商品の画像（レジのボタンの背景）▼▼▼
+    // 写真を選ぶと、この端末の中で小さく（160×160 の JPEG、1枚 10KB 前後）縮めてから使う。
+    // 商品の名前ごとにこの端末に残すので、次の販売会でも同じ名前の商品にはそのまま付く。
+    // 共有中は置き場（img）にも置いて、ほかの端末のボタンにも出す。
+    // 商品のデータそのものには入れない（会計の記録や、共有する商品の一覧が重くならないように）。
+    const IMG_KEY = sk('taizanboku_pos_img');
+    const IMG_MAX = 150;
+    let productImgs = {};        // { 名前: { d: 画像, at: 付けた時刻 } }
+    const imgUrlCache = {};      // 画像 → 表示用の短いURL（描き直しのたびに長い文字列を渡さない）
+    function loadProductImgs() {
+        try { const o = JSON.parse(localStorage.getItem(IMG_KEY) || '{}'); productImgs = (o && typeof o === 'object' && !Array.isArray(o)) ? o : {}; }
+        catch (e) { productImgs = {}; }
+    }
+    function saveProductImgs() {
+        const keys = Object.keys(productImgs);
+        if (keys.length > IMG_MAX) keys.sort((a, b) => (productImgs[a].at || 0) - (productImgs[b].at || 0)).slice(0, keys.length - IMG_MAX).forEach(k => delete productImgs[k]);
+        try { localStorage.setItem(IMG_KEY, JSON.stringify(productImgs)); return true; }
+        catch (e) { showToast('画像をしまう場所が足りません。使っていない画像を外してください'); return false; }
+    }
+    function productImgUrl(name) {
+        const e = productImgs[name];
+        if (!e || typeof e.d !== 'string' || !e.d.startsWith('data:image/')) return '';
+        const c = imgUrlCache[name];
+        if (c && c.d === e.d) return c.url;
+        let url = e.d;
+        try {
+            const i = e.d.indexOf(',');
+            const mime = (e.d.slice(0, i).match(/data:([^;]+)/) || [])[1] || 'image/jpeg';
+            const bin = atob(e.d.slice(i + 1));
+            const arr = new Uint8Array(bin.length);
+            for (let k = 0; k < bin.length; k++) arr[k] = bin.charCodeAt(k);
+            url = URL.createObjectURL(new Blob([arr], { type: mime }));
+        } catch (err) { url = e.d; }
+        imgUrlCache[name] = { d: e.d, url };
+        return url;
+    }
+    // 写真を小さく縮める（真ん中を正方形に切り取る）。大きさが目安を超えたら、もう一段小さく・粗くする
+    function compressImage(file) {
+        return new Promise((resolve, reject) => {
+            const fr = new FileReader();
+            fr.onerror = () => reject(new Error('read'));
+            fr.onload = () => {
+                const img = new Image();
+                img.onerror = () => reject(new Error('decode'));
+                img.onload = () => {
+                    const out = (size, q) => {
+                        const cv = document.createElement('canvas');
+                        cv.width = size; cv.height = size;
+                        const g = cv.getContext('2d');
+                        const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height, m = Math.min(w, h);
+                        g.fillStyle = '#fff';
+                        g.fillRect(0, 0, size, size);
+                        g.imageSmoothingEnabled = true;
+                        g.imageSmoothingQuality = 'high';
+                        g.drawImage(img, (w - m) / 2, (h - m) / 2, m, m, 0, 0, size, size);
+                        return cv.toDataURL('image/jpeg', q);
+                    };
+                    let d = out(160, 0.72);
+                    if (d.length > 18000) d = out(144, 0.6);
+                    if (d.length > 18000) d = out(120, 0.5);
+                    resolve(d);
+                };
+                img.src = fr.result;
+            };
+            fr.readAsDataURL(file);
+        });
+    }
+    function pimgHtml(p, list) {
+        const u = productImgUrl(p.name);
+        return `<button type="button" class="pimg${u ? ' on' : ''}" ${u ? `style="background-image:url('${u}')"` : ''} onclick="pickProductImage(${p.id}, '${list}')" aria-label="${escHtml(p.name || '商品')}の画像を${u ? '替える' : '選ぶ'}"><svg class="ic"><use href="#ic-image"/></svg>${u ? `<span class="pimg-x" role="button" aria-label="画像を外す" onclick="event.stopPropagation(); removeProductImage(${p.id}, '${list}')">×</span>` : ''}</button>`;
+    }
+    let imgTarget = null;        // { name, list }
+    function pickProductImage(id, list) {
+        const p = (list === 'setup' ? tempSetupProducts : products).find(x => x.id === id);
+        if (!p || !String(p.name || '').trim()) { playError(); showToast('先に商品名を入れてください'); return; }
+        imgTarget = { name: p.name, list };
+        const f = document.getElementById('prod-img-file');
+        if (f) { f.value = ''; f.click(); }
+    }
+    async function onProductImageChosen(ev) {
+        const file = ev && ev.target && ev.target.files && ev.target.files[0];
+        const t = imgTarget;
+        imgTarget = null;
+        if (!file || !t) return;
+        if (!/^image\//.test(file.type || 'image/')) { playError(); alert('画像のファイルを選んでください。'); return; }
+        let d;
+        try { d = await compressImage(file); }
+        catch (e) { playError(); alert('この画像は読み込めませんでした。別の画像（JPEG・PNG）でお試しください。'); return; }
+        productImgs[t.name] = { d, at: Date.now() };
+        if (!saveProductImgs()) { delete productImgs[t.name]; return; }
+        pushProductImg(t.name);
+        logEdit(`「${t.name}」に画像を付けた（${Math.round(d.length * 0.75 / 1024)}KB）`);
+        playSound(880, 0.06);
+        showToast(`「${t.name}」の画像を付けました`);
+        afterImgChanged();
+    }
+    function removeProductImage(id, list) {
+        const p = (list === 'setup' ? tempSetupProducts : products).find(x => x.id === id);
+        if (!p || !productImgs[p.name]) return;
+        delete productImgs[p.name];
+        saveProductImgs();
+        pushProductImg(p.name);
+        logEdit(`「${p.name}」の画像を外した`);
+        showToast(`「${p.name}」の画像を外しました`);
+        afterImgChanged();
+    }
+    function afterImgChanged() {
+        init();
+        if (currentView === 'settings' && currentSub === 'stock') renderLiveStock();
+        if (currentView === 'session' && currentSub === 'open-stock') renderInventorySetup();
+    }
+    // 共有：置き場の img に1品ずつ置く（外した時は「外した」印を置く＝ほかの端末からも消える）
+    let fbImgUnsub = null;
+    function imgDocId(name) {
+        let h = 0;
+        const str = String(name);
+        for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+        return 'i' + h.toString(36) + '-' + str.length;
+    }
+    function pushProductImg(name) {
+        if (!syncMode || !syncEventCode || !fbDb) return;
+        const e = productImgs[name];
+        fbDb.collection(EVENTS_COL).doc(syncEventCode).collection('img').doc(imgDocId(name))
+            .set({ name: String(name), d: e ? e.d : '', at: e ? e.at : Date.now(), by: getDeviceId() })
+            .catch(err => console.warn('画像の共有に失敗しました', err));
+    }
+    function startImgSubscription(code) {
+        stopImgSubscription();
+        if (!fbDb || !code) return;
+        let first = true;
+        fbImgUnsub = fbDb.collection(EVENTS_COL).doc(code).collection('img').onSnapshot(snap => {
+            let changed = false;
+            const seen = new Set();
+            snap.forEach(doc => {
+                const v = doc.data() || {};
+                const name = String(v.name || '');
+                if (!name) return;
+                seen.add(name);
+                const at = Number(v.at) || 0;
+                const cur = productImgs[name];
+                if (!v.d) { if (cur && (cur.at || 0) < at) { delete productImgs[name]; changed = true; } return; }
+                if (typeof v.d !== 'string' || !v.d.startsWith('data:image/') || v.d.length > 60000) return;
+                if (!cur || (cur.at || 0) < at) { productImgs[name] = { d: v.d, at }; changed = true; }
+            });
+            // はじめて受け取った時：この端末にだけある画像（前の販売会で付けたものなど）を置き場へ置く
+            if (first) {
+                first = false;
+                products.forEach(p => { if (productImgs[p.name] && !seen.has(p.name)) pushProductImg(p.name); });
+            }
+            if (changed) { saveProductImgs(); afterImgChanged(); }
+        }, err => console.warn('画像の共有を受け取れませんでした', err));
+    }
+    function stopImgSubscription() {
+        if (fbImgUnsub) { try { fbImgUnsub(); } catch (e) {} fbImgUnsub = null; }
+    }
+    loadProductImgs();
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 在庫の画面：さがす・並び・並べ替え ▼▼▼
+    // 並び（安い順など）は、この画面の見え方だけを変える。レジのボタンの順番は「登録順」。
+    // レジの順番を変える時は「並べ替え」：長押し（または右の三本線）でつまんで動かす。
+    // 何品かを選んで、まとめて上・下へ動かしたり、分類ごとにまとめたりもできる。
+    let stockQuery = '';
+    let stockSort = 'reg';
+    let stockReorder = false;
+    let stockSel = new Set();
+    const STOCK_SORTS = [['reg', '登録順'], ['cheap', '安い順'], ['dear', '高い順'], ['name', '名前順'], ['few', '残りの少ない順'], ['many', '残りの多い順']];
+    function kanaFold(v) { return String(v || '').normalize('NFKC').toLowerCase().replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60)); }
+    function stockView(noQuery) {
+        let list = products.slice();
+        const q = noQuery ? '' : kanaFold(stockQuery).trim();
+        if (q) list = list.filter(p => { const hay = kanaFold([p.name, catLabelOf(p.type), p.consign || ''].join(' ')); return q.split(/\s+/).every(w => hay.includes(w)); });
+        const left = p => isUnlimited(p) ? 1e9 : shownStock(p);
+        const cmp = {
+            cheap: (a, b) => a.price - b.price, dear: (a, b) => b.price - a.price,
+            name: (a, b) => String(a.name).localeCompare(String(b.name), 'ja'),
+            few: (a, b) => left(a) - left(b), many: (a, b) => left(b) - left(a)
+        }[stockSort];
+        if (cmp) list.sort((a, b) => cmp(a, b) || (products.indexOf(a) - products.indexOf(b)));
+        return list;
+    }
+    function renderStockTools() {
+        const box = document.getElementById('live-stock-tools');
+        if (!box) return;
+        if (!currentSession) { box.innerHTML = ''; return; }
+        if (stockReorder) {
+            const n = stockSel.size;
+            box.innerHTML = `<div class="st-tools"><div class="ro-bar">
+                <div class="ro-top">
+                    <span class="ro-count">${n ? `${n}品を選んでいます` : '長押しか三本線でつまんで動かします'}</span>
+                    <button type="button" class="action-btn btn-checkout" onclick="setStockReorder(false)"><svg class="ic"><use href="#ic-check"/></svg>完了</button>
+                </div>
+                <div class="chip-pick st-sorts" style="margin-top:0;">
+                    <button type="button" onclick="selectAllStock()">${n === products.length ? '選ぶのをやめる' : '全部選ぶ'}</button>
+                    ${categories.map(c => `<button type="button" class="${products.some(p => p.type === c.id) && products.filter(p => p.type === c.id).every(p => stockSel.has(p.id)) ? 'on' : ''}" onclick="selectStockCat('${c.id}')">${escHtml(c.label)}を選ぶ</button>`).join('')}
+                    <button type="button" onclick="groupStockByCategory()">分類の順にまとめる</button>
+                </div>
+                <div class="ro-moves">
+                    <button type="button" ${n ? '' : 'disabled'} onclick="moveStockSel('top')"><svg class="ic"><use href="#ic-top"/></svg>いちばん上</button>
+                    <button type="button" ${n ? '' : 'disabled'} onclick="moveStockSel('up')"><svg class="ic"><use href="#ic-up"/></svg>1つ上</button>
+                    <button type="button" ${n ? '' : 'disabled'} onclick="moveStockSel('down')"><svg class="ic"><use href="#ic-down"/></svg>1つ下</button>
+                    <button type="button" ${n ? '' : 'disabled'} onclick="moveStockSel('bottom')"><svg class="ic"><use href="#ic-bottom"/></svg>いちばん下</button>
+                </div>
+            </div></div>`;
+            return;
+        }
+        // 入力中に描き直すと文字が消えるので、さがす欄はそのまま残し、並びのボタンだけ替える
+        const had = document.getElementById('stock-search');
+        const sorts = `<div class="chip-pick st-sorts" id="stock-sorts" role="group" aria-label="並び">${STOCK_SORTS.map(([k, l]) => `<button type="button" class="${stockSort === k ? 'on' : ''}" aria-pressed="${stockSort === k}" onclick="setStockSort('${k}')">${l}</button>`).join('')}</div>`;
+        const acts = `<div class="st-acts" id="stock-acts">
+                <button type="button" class="action-btn btn-secondary" onclick="setStockReorder(true)"><svg class="ic"><use href="#ic-grip"/></svg>レジの並びを変える</button>
+                ${stockSort !== 'reg' ? `<button type="button" class="action-btn btn-secondary" onclick="applySortToRegister()"><svg class="ic"><use href="#ic-check"/></svg>この並びをレジにも</button>` : ''}
+            </div>`;
+        if (had && box.contains(had)) {
+            document.getElementById('stock-sorts').outerHTML = sorts;
+            document.getElementById('stock-acts').outerHTML = acts;
+            return;
+        }
+        box.innerHTML = `<div class="st-tools">
+            <input type="search" id="stock-search" placeholder="商品をさがす（名前・分類）" autocomplete="off" value="${escHtml(stockQuery)}" oninput="onStockSearch(this.value)">
+            ${sorts}</div>${acts}`;
+    }
+    let stockSearchTimer = null;
+    function onStockSearch(v) {
+        stockQuery = String(v || '');
+        clearTimeout(stockSearchTimer);
+        stockSearchTimer = setTimeout(renderLiveStock, 120);
+    }
+    function setStockSort(k) { stockSort = STOCK_SORTS.some(x => x[0] === k) ? k : 'reg'; playSound(660, 0.04); renderLiveStock(); }
+    function setStockReorder(on) {
+        stockReorder = !!on;
+        stockSel = new Set();
+        if (on) { stockSort = 'reg'; stockQuery = ''; }
+        const box = document.getElementById('live-stock-tools');
+        if (box) box.innerHTML = '';
+        playSound(660, 0.05);
+        renderLiveStock();
+    }
+    // 並びを決める（レジのボタンの順番になる。共有中は全部の端末へ）
+    function applyProductOrder(arr, logText) {
+        if (arr.length !== products.length || arr.every((p, i) => p === products[i])) { renderLiveStock(); return; }
+        products = arr;
+        if (logText) logEdit(logText);
+        syncPushProducts();
+        saveData();
+        init();
+        renderLiveStock();
+    }
+    function applySortToRegister() {
+        const label = (STOCK_SORTS.find(x => x[0] === stockSort) || [])[1] || '';
+        if (!confirm(`レジのボタンの並びを「${label}」にします。よろしいですか？`)) return;
+        applyProductOrder(stockView(true), `レジの並びを「${label}」にした`);
+        stockSort = 'reg';
+        showToast(`レジの並びを「${label}」にしました`);
+        renderLiveStock();
+    }
+    function toggleStockSel(id) {
+        if (stockSel.has(id)) stockSel.delete(id); else stockSel.add(id);
+        playSound(700, 0.03);
+        renderLiveStock();
+    }
+    function selectAllStock() {
+        stockSel = stockSel.size === products.length ? new Set() : new Set(products.map(p => p.id));
+        renderLiveStock();
+    }
+    function selectStockCat(type) {
+        const ids = products.filter(p => p.type === type).map(p => p.id);
+        const all = ids.length && ids.every(id => stockSel.has(id));
+        ids.forEach(id => { if (all) stockSel.delete(id); else stockSel.add(id); });
+        playSound(700, 0.03);
+        renderLiveStock();
+    }
+    function moveStockSel(where) {
+        const sel = products.filter(p => stockSel.has(p.id));
+        if (!sel.length) return;
+        let arr = products.slice();
+        if (where === 'top') arr = sel.concat(arr.filter(p => !stockSel.has(p.id)));
+        else if (where === 'bottom') arr = arr.filter(p => !stockSel.has(p.id)).concat(sel);
+        else if (where === 'up') { for (let i = 1; i < arr.length; i++) if (stockSel.has(arr[i].id) && !stockSel.has(arr[i - 1].id)) [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]]; }
+        else if (where === 'down') { for (let i = arr.length - 2; i >= 0; i--) if (stockSel.has(arr[i].id) && !stockSel.has(arr[i + 1].id)) [arr[i + 1], arr[i]] = [arr[i], arr[i + 1]]; }
+        playSound(660, 0.04);
+        applyProductOrder(arr, `レジの並びを変えた（${sel.map(p => p.name).join('、').slice(0, 80)}を${{ top: 'いちばん上', up: '1つ上', down: '1つ下', bottom: 'いちばん下' }[where]}へ）`);
+    }
+    function groupStockByCategory() {
+        const ord = categories.map(c => c.id);
+        const rank = t => { const i = ord.indexOf(t); return i < 0 ? ord.length : i; };
+        const arr = products.slice().sort((a, b) => (rank(a.type) - rank(b.type)) || (products.indexOf(a) - products.indexOf(b)));
+        playSound(660, 0.04);
+        applyProductOrder(arr, 'レジの並びを分類の順にまとめた');
+    }
+    function renderReorderList() {
+        const list = document.getElementById('live-stock-list');
+        if (!list) return;
+        if (roDrag) { roDirty = true; return; }      // つまんでいる間は描き直さない（離した後に描く）
+        list.innerHTML = `<div class="ro-list" id="ro-list">${products.map(p => {
+            const u = productImgUrl(p.name);
+            return `<div class="ro-row${stockSel.has(p.id) ? ' sel' : ''}${p.active === false ? ' off' : ''}" data-id="${p.id}" style="--ink:${catInk(p.type)};">
+                <button type="button" class="ro-chk" aria-label="${escHtml(p.name)}を選ぶ" onclick="toggleStockSel(${p.id})"><svg class="ic"><use href="#ic-check"/></svg></button>
+                ${u ? `<span class="ro-th" style="background-image:url('${u}')"></span>` : ''}
+                <span class="ro-n">${escHtml(p.name)}<small>${escHtml(catLabelOf(p.type))}・¥${p.price}${p.active === false ? '・この回は販売しない' : ''}</small></span>
+                <span class="ro-h" aria-label="つまんで動かす"><svg class="ic"><use href="#ic-grip"/></svg></span>
+            </div>`; }).join('')}</div>`;
+        bindReorderList();
+    }
+    // ---- 長押しでつまんで動かす ----
+    // 行を長押し（0.35秒）すると持ち上がり、指について動く。右の三本線は押したらすぐつまめる。
+    // 選んでいる行をつまんだ時は、選んでいる全部をまとめてそこへ動かす。
+    let roDrag = null;
+    let roDirty = false;
+    function bindReorderList() {
+        const box = document.getElementById('ro-list');
+        if (!box || box.dataset.bound) return;
+        box.dataset.bound = '1';
+        box.addEventListener('pointerdown', roDown);
+        box.addEventListener('touchmove', e => { if (roDrag && roDrag.on && e.cancelable) e.preventDefault(); }, { passive: false });
+        box.addEventListener('contextmenu', e => { if (roDrag) e.preventDefault(); });
+    }
+    function roDown(e) {
+        if (e.button > 0 || roDrag) return;
+        const row = e.target.closest('.ro-row');
+        if (!row || e.target.closest('.ro-chk')) return;
+        const handle = !!e.target.closest('.ro-h');
+        roDrag = { row, id: Number(row.dataset.id), y0: e.clientY, x0: e.clientX, y: e.clientY, on: false, pid: e.pointerId, timer: null, off: 0 };
+        const start = () => {
+            if (!roDrag || roDrag.on) return;
+            roDrag.on = true;
+            try { row.setPointerCapture(roDrag.pid); } catch (err) {}
+            row.classList.add('dragging');
+            if (stockSel.has(roDrag.id) && stockSel.size > 1) document.querySelectorAll('#ro-list .ro-row.sel').forEach(r => { if (r !== row) r.classList.add('carried'); });
+            try { navigator.vibrate && navigator.vibrate(12); } catch (err) {}
+            playSound(700, 0.03);
+            roDrag.scroll = setInterval(roAutoScroll, 16);
+        };
+        if (handle) { if (e.cancelable) e.preventDefault(); start(); }
+        else roDrag.timer = setTimeout(start, 350);
+        window.addEventListener('pointermove', roMove, { passive: false });
+        window.addEventListener('pointerup', roUp);
+        window.addEventListener('pointercancel', roCancel);
+    }
+    function roMove(e) {
+        const d = roDrag;
+        if (!d || e.pointerId !== d.pid) return;
+        d.y = e.clientY;
+        if (!d.on) {
+            // 長押しの前に指が動いた＝スクロールしたいので、つまむのをやめる
+            if (Math.abs(e.clientY - d.y0) > 8 || Math.abs(e.clientX - d.x0) > 8) roEnd(false);
+            return;
+        }
+        if (e.cancelable) e.preventDefault();
+        roFollow();
+    }
+    // 指の位置に行を合わせ、となりの行の真ん中を越えたら入れ替える
+    function roFollow() {
+        const d = roDrag;
+        if (!d) return;
+        const row = d.row;
+        row.style.transform = '';
+        const rect = row.getBoundingClientRect();
+        const center = d.y;
+        let sib = row.previousElementSibling;
+        while (sib) {
+            const r = sib.getBoundingClientRect();
+            if (center < r.top + r.height / 2) { roFlip(() => row.parentNode.insertBefore(row, sib), [sib]); sib = row.previousElementSibling; }
+            else break;
+        }
+        sib = row.nextElementSibling;
+        while (sib) {
+            const r = sib.getBoundingClientRect();
+            if (center > r.top + r.height / 2) { const s2 = sib; roFlip(() => row.parentNode.insertBefore(row, s2.nextElementSibling), [s2]); sib = row.nextElementSibling; }
+            else break;
+        }
+        const now = row.getBoundingClientRect();
+        row.style.transform = `translate3d(0, ${Math.round(d.y - (now.top + now.height / 2))}px, 0) scale(1.03)`;
+    }
+    // 入れ替わった行が、ぱっと飛ばずにすっと動く（元の位置から新しい位置へ）
+    function roFlip(mutate, els) {
+        const before = els.map(el => el.getBoundingClientRect().top);
+        mutate();
+        els.forEach((el, i) => {
+            const dy = before[i] - el.getBoundingClientRect().top;
+            if (!dy) return;
+            el.style.transition = 'none';
+            el.style.transform = `translate3d(0, ${dy}px, 0)`;
+            requestAnimationFrame(() => { el.style.transition = ''; el.style.transform = ''; });
+        });
+    }
+    function roAutoScroll() {
+        const d = roDrag;
+        if (!d || !d.on) return;
+        const body = document.getElementById('panel-body');
+        if (!body) return;
+        const r = body.getBoundingClientRect();
+        let v = 0;
+        if (d.y < r.top + 70) v = -Math.ceil((r.top + 70 - d.y) / 6);
+        else if (d.y > r.bottom - 70) v = Math.ceil((d.y - (r.bottom - 70)) / 6);
+        if (v) { body.scrollTop += v; roFollow(); }
+    }
+    function roUp(e) { if (roDrag && e.pointerId === roDrag.pid) roEnd(roDrag.on); }
+    function roCancel(e) { if (roDrag && e.pointerId === roDrag.pid) roEnd(roDrag.on); }
+    function roEnd(commit) {
+        const d = roDrag;
+        if (!d) return;
+        clearTimeout(d.timer);
+        clearInterval(d.scroll);
+        window.removeEventListener('pointermove', roMove);
+        window.removeEventListener('pointerup', roUp);
+        window.removeEventListener('pointercancel', roCancel);
+        roDrag = null;
+        if (!commit) { if (roDirty) { roDirty = false; renderLiveStock(); } return; }
+        d.row.classList.remove('dragging');
+        d.row.style.transform = '';
+        // いまの画面の並びから、新しい順番を作る
+        const ids = [...document.querySelectorAll('#ro-list .ro-row')].map(r => Number(r.dataset.id));
+        let order = ids;
+        if (stockSel.has(d.id) && stockSel.size > 1) {
+            // 選んでいる全部を、つまんだ行の所へまとめて動かす（元の並びの順のまま）
+            const group = products.filter(p => stockSel.has(p.id)).map(p => p.id);
+            const others = ids.filter(id => !stockSel.has(id) || id === d.id);
+            const at = others.indexOf(d.id);
+            others.splice(at, 1, ...group);
+            order = others;
+        }
+        const arr = order.map(id => products.find(p => p.id === id)).filter(Boolean);
+        roDirty = false;
+        if (arr.length !== products.length) { renderLiveStock(); return; }
+        playSound(880, 0.04);
+        const moved = products.find(p => p.id === d.id);
+        applyProductOrder(arr, `レジの並びを変えた（${moved ? moved.name : ''}${stockSel.has(d.id) && stockSel.size > 1 ? `ほか${stockSel.size - 1}品` : ''}を動かした）`);
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ メモのコピペで、商品をまとめて登録 ▼▼▼
+    // 1行に1品。「名前・値段・仕入れ数」の順に並んでいれば、区切り（空白・カンマ・タブ・全角）や
+    // 書き方（¥180／180円／×20／20個／価格:180 在庫:20）がばらばらでも読む。
+    // 数字の無い行で、分類の名前だけが書いてある行（【ドリンク】など）があると、その下の品はその分類にする。
+    // 読み取った結果を必ず見せてから登録する（まちがって読んだまま登録されないように）。
+    const BULK_SEP_RE = /^[\s,、，;；:：|/\\\-–—~〜=・()（）\[\]【】]*(?:(?:価格|値段|単価|売価|金額|在庫数?|仕入れ?数?|仕入|数量|個数|数)[\s:：=]*)?[\s,、，;；:：|/\\\-–—~〜=・()（）\[\]【】]*$/;
+    const BULK_YEN_UNITS = ['円', 'えん', 'yen', 'jpy'];
+    function bulkGuessType(name) {
+        const n = String(name || '');
+        const byLabel = categories.find(c => c.label && n.includes(c.label));
+        if (byLabel) return byLabel.id;
+        const drink = categories.find(c => c.id === 'drink');
+        if (drink && TASTE_DRINK.some(k => n.includes(k))) return drink.id;
+        return (categories[0] || { id: 'sweet' }).id;
+    }
+    function parseProductMemo(text) {
+        const out = [];
+        let curType = '';
+        String(text || '').replace(/\r\n?/g, '\n').split('\n').forEach((raw, ln) => {
+            let s = String(raw).normalize('NFKC').replace(/\s+/g, ' ').trim();
+            // 行の頭の記号・番号（・ - * ● 1. 1) (1)）を外す
+            s = s.replace(/^[・•●○◯◆◇■□▪▶►→*\->#\s]+/, '').replace(/^[(]?\d{1,3}[.)、:]\s*(?=\D)/, '').trim();
+            if (!s) return;
+            if (!/\d/.test(s)) {
+                // 数字の無い行：分類の見出し（【パン】など）なら、その下の品の分類にする。ほかの行は読まない
+                const head = s.replace(/[【】\[\]「」『』()《》<>〈〉:：■◆●]/g, '').trim();
+                const c = categories.find(x => head === x.label || head === x.total || (head.includes(x.label) && head.length <= x.label.length + 4));
+                if (c) { curType = c.id; return; }
+                out.push({ line: ln + 1, raw: String(raw).trim(), bad: '値段が書いてありません' });
+                return;
+            }
+            const re = /([¥$@×xX*])?\s*(\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?\s*(円|えん|yen|jpy|個|こ|コ|ヶ|ケ|つ|枚|本|袋|点|箱|食|杯|皿|pcs|pc)?/gi;
+            const toks = [];
+            let m;
+            while ((m = re.exec(s))) {
+                if (m[0] === '') { re.lastIndex++; continue; }
+                toks.push({ i: m.index, end: re.lastIndex, n: parseInt(m[2].replace(/,/g, ''), 10), pre: m[1] || '', unit: (m[3] || '').toLowerCase() });
+            }
+            // 行の終わりから、区切りだけをはさんで並んでいる数字（最大2つ）を「値段・仕入れ数」とみる。
+            // それより前の数字は、名前の一部（「3枚入り」など）
+            let k = toks.length;
+            while (k > 0 && toks.length - k < 2) {
+                const after = s.slice(toks[k - 1].end, k < toks.length ? toks[k].i : s.length);
+                if (!BULK_SEP_RE.test(after)) break;
+                k--;
+            }
+            const tail = toks.slice(k);
+            if (!tail.length) { out.push({ line: ln + 1, raw: String(raw).trim(), bad: '値段が読み取れません（行の終わりに数字を）' }); return; }
+            const isYen = t => t.pre === '¥' || t.pre === '$' || t.pre === '@' || BULK_YEN_UNITS.includes(t.unit);
+            const isCnt = t => /^[×xX*]$/.test(t.pre) || (!!t.unit && !BULK_YEN_UNITS.includes(t.unit));
+            let price = null, stock = null;
+            const restT = [];
+            tail.forEach(t => {
+                if (price == null && isYen(t)) price = t.n;
+                else if (stock == null && isCnt(t)) stock = t.n;
+                else restT.push(t);
+            });
+            restT.forEach(t => { if (price == null) price = t.n; else if (stock == null) stock = t.n; });
+            let name = s.slice(0, tail[0].i)
+                .replace(/[\s,、，;；:：|/\\\-–—~〜=・(（\[【]*(?:価格|値段|単価|売価|金額)?[\s:：=]*$/, '')
+                .replace(/[\s,、，;；:：|/\\\-–—~〜=・]+$/, '').trim().slice(0, 40);
+            if (!name) { out.push({ line: ln + 1, raw: String(raw).trim(), bad: '名前が読み取れません' }); return; }
+            if (price == null || price > MAX_PRICE) { out.push({ line: ln + 1, raw: String(raw).trim(), bad: price > MAX_PRICE ? `値段が大きすぎます（${MAX_PRICE.toLocaleString()}円まで）` : '値段が読み取れません' }); return; }
+            if (stock != null && stock > MAX_STOCK) { out.push({ line: ln + 1, raw: String(raw).trim(), bad: `仕入れ数が大きすぎます（${MAX_STOCK.toLocaleString()}個まで）` }); return; }
+            if (out.some(r => !r.bad && r.name === name)) { out.push({ line: ln + 1, raw: String(raw).trim(), bad: `「${name}」は上の行と同じ名前です` }); return; }
+            out.push({ line: ln + 1, name, price, stock: stock == null ? 0 : stock, noStock: stock == null, type: curType || bulkGuessType(name) });
+        });
+        return out;
+    }
+    let bulkTarget = 'setup';    // setup（開店の準備）／live（営業中の在庫の調整）
+    let bulkMode = 'add';        // add（足す・同じ名前は上書き）／replace（全部入れ替える：開店の準備の時だけ）
+    let bulkText = '';
+    let bulkRows = [];
+    let bulkTimer = null;
+    function openBulk(target) {
+        if (target === 'live' && !currentSession) { playError(); alert('開店してから追加してください。'); return; }
+        bulkTarget = target === 'live' ? 'live' : 'setup';
+        bulkMode = 'add';
+        bulkText = '';
+        bulkRows = [];
+        openPanel('settings', 'bulk');
+    }
+    function bulkList() { return bulkTarget === 'live' ? products : tempSetupProducts; }
+    function onBulkInput(v) {
+        bulkText = String(v || '');
+        clearTimeout(bulkTimer);
+        bulkTimer = setTimeout(() => { bulkRows = parseProductMemo(bulkText); renderBulkRows(); }, 220);
+    }
+    function setBulkMode(m) { bulkMode = m === 'replace' ? 'replace' : 'add'; playSound(660, 0.05); renderBulkRows(); }
+    // 分類を押すたびに、次の分類へ替える
+    function cycleBulkType(i) {
+        const r = bulkRows[i];
+        if (!r || r.bad) return;
+        const ids = categories.map(c => c.id);
+        r.type = ids[(ids.indexOf(r.type) + 1) % ids.length];
+        playSound(660, 0.04);
+        renderBulkRows();
+    }
+    function renderBulkView() {
+        const box = document.getElementById('bulk-body');
+        if (!box) return;
+        box.innerHTML = `<p class="settings-hint" style="margin-top:0;">メモ帳などに書いた商品の一覧を、そのまま貼り付けてください。1行に1品、<b>名前・値段・仕入れ数</b>の順です。区切りや書き方はばらばらでも読み取ります。</p>
+            <textarea id="bulk-text" placeholder="例）&#10;メロンパン 180円 20個&#10;・クリームパン　¥160　15&#10;チーズパン,150,30&#10;【ドリンク】&#10;コーヒー 100 50" oninput="onBulkInput(this.value)">${escHtml(bulkText)}</textarea>
+            <p class="settings-hint">分類だけを書いた行（【ドリンク】など）があると、その下の品はその分類になります。無い時は名前から見当を付けます（読み取った後に、分類を押して替えられます）。</p>
+            <div id="bulk-result"></div>`;
+        renderBulkRows();
+    }
+    function renderBulkRows() {
+        const box = document.getElementById('bulk-result');
+        if (!box) return;
+        const list = bulkList();
+        const good = bulkRows.filter(r => !r.bad);
+        const bad = bulkRows.filter(r => r.bad);
+        if (!bulkRows.length) { box.innerHTML = ''; return; }
+        const upd = good.filter(r => bulkMode === 'add' && list.some(x => x.name === r.name)).length;
+        box.innerHTML = `<label class="field-label sec">読み取った結果（${good.length}品${bad.length ? `・読めない行 ${bad.length}` : ''}）</label>
+            ${bulkTarget === 'setup' ? `<div class="seg-pick" role="group" aria-label="登録のしかた">
+                <button type="button" class="${bulkMode === 'add' ? 'on' : ''}" aria-pressed="${bulkMode === 'add'}" onclick="setBulkMode('add')">いまの商品に足す</button>
+                <button type="button" class="${bulkMode === 'replace' ? 'on' : ''}" aria-pressed="${bulkMode === 'replace'}" onclick="setBulkMode('replace')">全部入れ替える</button>
+            </div>
+            <p class="settings-hint">${bulkMode === 'replace' ? `いまの一覧（${list.length}品）を消して、この${good.length}品にします。` : '同じ名前の商品がある時は、値段・仕入れ数・分類を上書きします。'}</p>` : `<p class="settings-hint" style="margin-top:0;">同じ名前の商品がある時は、値段と仕入れ数を上書きします（売れた数はそのまま）。${syncMode ? '共有中の全端末に反映されます。' : ''}</p>`}
+            <div class="bulk-rows">${bulkRows.map((r, i) => r.bad
+                ? `<div class="bulk-row bad"><span class="br-main"><span class="br-n">${escHtml(r.raw)}</span><span class="br-s">${r.line}行目：${escHtml(r.bad)}</span></span></div>`
+                : `<div class="bulk-row" style="--ink:${catInk(r.type)};">
+                    <span class="br-main"><span class="br-n">${escHtml(r.name)}</span>
+                    <span class="br-s${bulkMode === 'add' && list.some(x => x.name === r.name) ? ' upd' : ''}">${bulkMode === 'add' && list.some(x => x.name === r.name) ? '同じ名前あり：上書き' : '新しく足す'}${r.noStock ? '・仕入れ数なし（0）' : ''}</span></span>
+                    <button type="button" class="br-t" onclick="cycleBulkType(${i})" aria-label="分類を替える">${escHtml(catLabelOf(r.type))}</button>
+                    <span class="br-v">¥${r.price.toLocaleString()}<small>${r.stock}個</small></span>
+                </div>`).join('')}</div>
+            <button type="button" class="action-btn btn-checkout" style="width:100%;" ${good.length ? '' : 'disabled'} onclick="applyBulk()"><svg class="ic"><use href="#ic-check"/></svg>${good.length}品を${bulkTarget === 'live' ? '追加' : '登録'}する${upd ? `（うち上書き${upd}）` : ''}</button>`;
+    }
+    function applyBulk() {
+        const good = bulkRows.filter(r => !r.bad);
+        if (!good.length) return;
+        if (bulkTarget === 'setup') {
+            if (bulkMode === 'replace') {
+                if (tempSetupProducts.length && !confirm(`いまの商品（${tempSetupProducts.length}品）を消して、読み取った${good.length}品に入れ替えます。よろしいですか？`)) return;
+                const base = Date.now();
+                tempSetupProducts = good.map((r, i) => ({ id: base + i, name: r.name, price: r.price, stock: r.stock, initialStock: r.stock, type: r.type, cost: null }));
+            } else {
+                let base = Date.now();
+                good.forEach(r => {
+                    const e = tempSetupProducts.find(x => x.name === r.name);
+                    if (e) { e.price = r.price; e.initialStock = r.stock; e.stock = r.stock; e.type = r.type; e.unlimited = false; e.active = true; }
+                    else tempSetupProducts.push({ id: base++, name: r.name, price: r.price, stock: r.stock, initialStock: r.stock, type: r.type, cost: null });
+                });
+            }
+            playSuccess();
+            showToast(`${good.length}品を登録しました`);
+            bulkRows = []; bulkText = '';
+            panelBack();
+            return;
+        }
+        // 営業中：在庫の調整から
+        if (!currentSession) { playError(); alert('開店してから追加してください。'); return; }
+        let nextId = products.reduce((mx, x) => Math.max(mx, x.id || 0), 0) + 1;
+        let added = 0, updated = 0;
+        good.forEach(r => {
+            const e = products.find(x => x.name === r.name);
+            if (e) {
+                e.price = r.price;
+                if (!isUnlimited(e)) { const d = r.stock - (e.initialStock || 0); e.initialStock = r.stock; if (!syncMode) e.stock = (e.stock || 0) + d; reconcileSoldOut(e); }
+                updated++;
+            } else {
+                products.push({ id: nextId++, name: r.name, price: r.price, type: r.type, initialStock: r.stock, stock: r.stock, cost: null, soldOutTime: null, active: true, note: '' });
+                added++;
+            }
+        });
+        logEdit(`メモからまとめて追加：${added}品を追加${updated ? `・${updated}品を上書き` : ''}（${good.map(r => r.name).join('、').slice(0, 120)}）`);
+        if (syncMode) recomputeStockFromSales();
+        syncPushProducts();
+        saveData();
+        init();
+        playSuccess();
+        showToast(`${added}品を追加しました${updated ? `（${updated}品を上書き）` : ''}`);
+        bulkRows = []; bulkText = '';
+        panelBack();
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     // ▼▼▼ 消費税 ▼▼▼
     // 【考え方】値段は「税込み」（総額表示）のまま使う。合計に消費税を足すことはしない（会計の金額は変わらない）。
     // 合計のうち消費税がいくらかを、税率ごとに計算して、レシート・領収書・税務用の資料に出す。
@@ -14549,9 +15292,14 @@
         const hint = document.getElementById('stock-hint');
         if (hint) hint.textContent = '追加で搬入したら「仕入れ数」を増やしてください。残数と消化率は自動で計算し直されます。'
             + (syncMode ? '変更は共有中の全端末に反映されます。' : '');
+        renderStockTools();
+        // 並べ替えの間は、つまんで動かせる短い行の一覧にする
+        if (stockReorder) { renderReorderList(); return; }
         // まとめて1回で入れる（1行ずつ足すと、そのたびに全体を組み直して入力中のカーソルが外れる）
         const rows = [];
-        products.forEach(p => {
+        const shownList = stockView();
+        if (!shownList.length) rows.push(`<p class="settings-hint" style="text-align:center; margin:18px 0;">「${escHtml(stockQuery)}」に合う商品はありません。</p>`);
+        shownList.forEach(p => {
             const left = shownStock(p);   // レジのボタンと同じ残数（カート・取り置きの分を引いた数）
             const oversold = left < 0; // 販売数>仕入数（過少入力の可能性）
             const noteVal = escHtml(p.note || '');
@@ -14560,6 +15308,7 @@
             rows.push(`
                 <div class="ls-card st-${st.key}${oversold ? ' is-over' : ''}" style="--ink:${catInk(p.type)};">
                     <div class="ls-top">
+                        ${pimgHtml(p, 'live')}
                         <span class="ls-name">${escHtml(p.name)}<span class="ls-meta">${escHtml(catLabelOf(p.type))}・¥${p.price}</span></span>
                         <span class="ls-left"><span>残り</span><b class="num">${isUnlimited(p) ? '無制限' : left}</b></span>
                     </div>
@@ -15316,6 +16065,7 @@
     function startReservationSubscription(code) {
         if (!syncReady || !code || !fbDb) return;
         stopReservationSubscription();
+        startImgSubscription(code);   // 商品の画像も全端末で見えるようにする
         let firstSnapshot = true;
         fbResUnsub = reservationsCol(code).onSnapshot(snap => {
             const rows = [];
@@ -15362,6 +16112,7 @@
     }
 
     function stopReservationSubscription() {
+        stopImgSubscription();
         if (fbResUnsub) { try { fbResUnsub(); } catch (e) {} fbResUnsub = null; }
         stopOrdersSubscription();
     }
@@ -17979,6 +18730,7 @@
     updateSessionTabView();
     renderAnalyticsMenu();
     initEdgeSwipe();       // 左端からなぞって戻れるようにする
+    initGridTop();         // レジの商品の並びの「いちばん上へ」
     initFirebase();
 
     applyStoreMode();      // 店舗モード（キッチンの時だけ、キッチンのタブと「持ち帰り／店内」を出す）
