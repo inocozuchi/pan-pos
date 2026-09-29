@@ -4663,7 +4663,7 @@
             playSound(1046, 0.09); // 残りわずかの高音
             showToast(`${p.name} 残り${LOW_STOCK_ALERT}個`);
         }
-        saveData();
+        saveDataSoon();
         init();
     }
 
@@ -4744,7 +4744,7 @@
             const product = products.find(p => p.id === removed.id);
             restockOne(product);
         }
-        saveData();
+        saveDataSoon();
         init();
     }
 
@@ -5214,7 +5214,7 @@
     // ▲▲▲ ここまで ▲▲▲
 
     function calcChange() {
-        const total = parseInt(document.getElementById('modal-total').innerText);
+        const total = parseInt(document.getElementById('modal-total').textContent);
         const cash = parseInt(document.getElementById('cash-input').value) || 0;
         const change = Math.max(0, cash - total);
         const changeEl = document.getElementById('change-amount');
@@ -5237,7 +5237,7 @@
         if (!btn) return;
         const main = btn.querySelector('.cp-main');
         const sub = btn.querySelector('.cp-sub');
-        const total = parseInt(document.getElementById('modal-total').innerText) || 0;
+        const total = parseInt(document.getElementById('modal-total').textContent) || 0;
         const raw = document.getElementById('cash-input').value;
         const cash = parseInt(raw) || 0;
 
@@ -5274,7 +5274,7 @@
 
     function setCashExact() {
         playSound();
-        const total = parseInt(document.getElementById('modal-total').innerText);
+        const total = parseInt(document.getElementById('modal-total').textContent);
         document.getElementById('cash-input').value = total;
         calcChange();
     }
@@ -5317,7 +5317,7 @@
         // 会計対象が無い状態（画面を開かずに呼ばれた等）も念のため弾く
         if (cart.length === 0 && processingReservationId === null) return;
 
-        const total = parseInt(document.getElementById('modal-total').innerText);
+        const total = parseInt(document.getElementById('modal-total').textContent);
         const cash = parseInt(document.getElementById('cash-input').value) || 0;
         // お預かり不足はまだ記録が成立していないので、番号は消費しない（入れ直して再実行できる）
         if (cash < total) { playError(); alert('お預かり金額が足りません'); return; }
@@ -6503,7 +6503,7 @@
         if (inCheckout) {
             base.state = 'checkout';
             // お会計画面では、画面に出ている合計をそのまま使う（お客様と店の金額を必ずそろえる）
-            const shown = parseInt(document.getElementById('modal-total').innerText) || 0;
+            const shown = parseInt(document.getElementById('modal-total').textContent) || 0;
             if (shown > 0) base.total = shown;
             // 「会計へ進む」を押したら、お預かりを入れる前から 合計点数・合計・お預かり（0円）・不足・お釣り を出す
             const raw = document.getElementById('cash-input').value;
@@ -7028,7 +7028,7 @@
             totalEl.textContent = yenStr(d.total || 0);
             // 金額が変わった時だけ弾ませる（同じ値で毎回動くとうるさい）
             if (cdLastTotal !== d.total) {
-                totalEl.classList.remove('bump'); void totalEl.offsetWidth; totalEl.classList.add('bump');
+                popAnim(totalEl);
                 cdLastTotal = d.total;
             }
             const pay = document.getElementById('cd-pay');
@@ -8767,9 +8767,20 @@
         if (el.dataset.prev === next) return;
         el.dataset.prev = next;
         const target = el.closest('.total-amount, .chg-amount') || el;
-        target.classList.remove('bump');
-        void target.offsetWidth;      // アニメーションをやり直させる
-        target.classList.add('bump');
+        popAnim(target);
+    }
+    // 数字を軽く弾ませる。
+    // 【速さ】前は「クラスを外す→ offsetWidth を読む→付け直す」でやり直していたが、offsetWidth を読むと
+    //   画面全体の組み直しをその場で待つことになる（商品が200品あると1回20ms以上）。
+    //   会計のたびに何度も通るので、組み直しを待たない Web Animations で動かす。
+    const REDUCE_MOTION = (() => { try { return window.matchMedia('(prefers-reduced-motion: reduce)'); } catch (e) { return null; } })();
+    function popAnim(target) {
+        if (!target || (REDUCE_MOTION && REDUCE_MOTION.matches) || typeof target.animate !== 'function') return;
+        try {
+            if (target.__pop) target.__pop.cancel();
+            target.__pop = target.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.07)', offset: .35 }, { transform: 'scale(1)' }],
+                { duration: 280, easing: 'cubic-bezier(.32,.72,0,1)' });
+        } catch (e) { /* 動かせなくても数字は出ている */ }
     }
 
     function dismissCheckoutOnBackdrop(ev) {
@@ -13264,7 +13275,19 @@
 
     let lastSavedSnapshot = null; // 直近で保存に成功したJSON（保存失敗時の巻き戻し用）
 
-   function saveData() {
+   // カートに入れる・減らす時の保存は、少し待ってまとめて行う（商品を続けて押す間に、毎回全データを書かない）。
+    // 会計の確定・取り消しなど、お金の記録は saveData() ですぐ保存する（その時にこの待ちも済ませる）。
+    // アプリを閉じる・裏に回す時は、待っている分をすぐ書く。
+    let saveSoonTimer = null;
+    function saveDataSoon() {
+        if (saveSoonTimer) return;
+        saveSoonTimer = setTimeout(() => { saveSoonTimer = null; saveData(); }, 600);
+    }
+    function flushSaveSoon() { if (saveSoonTimer) { clearTimeout(saveSoonTimer); saveSoonTimer = null; saveData(); } }
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSaveSoon(); });
+    window.addEventListener('pagehide', flushSaveSoon);
+    function saveData() {
+        if (saveSoonTimer) { clearTimeout(saveSoonTimer); saveSoonTimer = null; }
         // 過去の販売会を一時的に読み込んでいる最中は保存しない。
         // ここで書いてしまうと、現在のデータが過去のデータで上書きされてしまう。
         if (viewingSnapshot) return;
@@ -13303,6 +13326,21 @@
                     }
                     return;
                 } catch (_) { /* それでもだめなら下の従来処理へ */ }
+            }
+            // 商品の画像も同じ場所を使っている。売上の記録のほうが大事なので、
+            // まずいまの商品に使っていない画像を、それでもだめなら全部の画像を、この端末から外して保存し直す。
+            if (typeof productImgs === 'object' && Object.keys(productImgs).length) {
+                const used = new Set(products.map(x => x.name));
+                for (const all of [false, true]) {
+                    try {
+                        Object.keys(productImgs).forEach(k => { if (all || !used.has(k)) delete productImgs[k]; });
+                        try { localStorage.setItem(IMG_KEY, JSON.stringify(productImgs)); } catch (_) { localStorage.removeItem(IMG_KEY); }
+                        localStorage.setItem(sk('taizanboku_pos_data'), json);
+                        lastSavedSnapshot = json;
+                        showToast(all ? '空き容量が足りないため、商品の画像をこの端末から外しました（売上は保存済み）' : '空き容量が足りないため、使っていない商品の画像を外しました');
+                        return;
+                    } catch (_) { /* 次へ */ }
+                }
             }
             try {
                 if (lastSavedSnapshot) localStorage.setItem(sk('taizanboku_pos_data'), lastSavedSnapshot);
@@ -18901,9 +18939,11 @@
         //   こうしないと、途中の1件を取り消した時に、それ以降の客No.が
         //   すべて1つずつずれてしまい、お渡し済みの領収書と食い違う。
         //   取り消した番号は欠番として空けておく（1台だけで使う時と同じ）。
+        // 2台のレジが同じ1000分の1秒に会計した時も、どの端末でも同じ順（＝同じ客No.）になるよう、
+        // 時刻が同じなら会計の書類の名前の順で決める（届いた順は端末ごとに違うことがある）
         const ordered = docs
             .map(d => ({ d, t: new Date(d.createdAt || Date.now()).getTime() }))
-            .sort((a, b) => a.t - b.t);
+            .sort((a, b) => (a.t - b.t) || (String(a.d.__id) < String(b.d.__id) ? -1 : (String(a.d.__id) > String(b.d.__id) ? 1 : 0)));
         const noOf = new Map();
         ordered.forEach((x, i) => { noOf.set(x.d.__id, i + 1); });
         // 同じ会計が二重に入らないようにする（送信し直しなどで書類が2つできた時の保険）。
