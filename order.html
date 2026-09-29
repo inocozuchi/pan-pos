@@ -77,9 +77,11 @@
         .dine button.on.take { background: var(--take); color: #fff; box-shadow: none; }
         .dine button.on.eat { background: var(--eat); color: #fff; box-shadow: none; }
         .lines { background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 6px 14px; margin: 10px 0; }
-        .lines div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; font-variant-numeric: tabular-nums; }
-        .lines div.t { font-weight: 800; font-size: 18px; }
-        .lines div.disc { color: var(--accent-ink); font-weight: 700; }
+        /* 明細の行と合計の行だけを左右に並べる（特注の欄の中の箱には効かせない） */
+        .lines > div, .lines .ln .row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; font-variant-numeric: tabular-nums; }
+        .lines .ln .row { padding: 0; }
+        .lines > div.t { font-weight: 800; font-size: 18px; }
+        .lines > div.disc { color: var(--accent-ink); font-weight: 700; }
         .card { background: var(--surface); border-radius: 20px; box-shadow: var(--shadow); padding: 20px 18px; margin: 12px 0; text-align: center; }
         .card .k { font-size: 13px; color: var(--sub); font-weight: 700; }
         .card .no { font-size: 64px; font-weight: 900; line-height: 1.1; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
@@ -124,7 +126,7 @@
         .sheet h2 { margin: 0 0 4px; font-size: 20px; }
         .sheet input { width: 100%; min-height: 60px; font-size: 30px; font-weight: 800; text-align: center; font-family: inherit; border-radius: 14px; border: none; background: var(--sunken); color: var(--text); box-shadow: inset 0 0 0 1px var(--hair); margin: 12px 0; letter-spacing: .08em; }
         /* 特注 */
-        .lines .ln { display: block; padding: 8px 0; }
+        .lines > div.ln { display: block; padding: 8px 0; }
         .lines .ln .row { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
         .lines .ln .opt { display: block; font-size: 13px; font-weight: 800; color: var(--danger); margin-top: 2px; }
         .lines .ln .ob { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; font-size: 12.5px; font-weight: 800; background: var(--sunken); color: var(--text); box-shadow: inset 0 0 0 1px var(--hair); border-radius: 999px; padding: 5px 10px; margin-left: 8px; cursor: pointer; }

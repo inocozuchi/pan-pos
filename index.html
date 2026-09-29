@@ -628,7 +628,8 @@
            注文を1件ずつカードにする。カードの上に番号・状態・経過時間・持ち帰りか店内か。
            商品の行は分類の色の帯で塗り分け、遠くからでも何を作るかが分かるようにする。
            押すところはカードの下の大きなボタン1つ（と、小さな「戻す」）だけ。 */
-        .kds-filters { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 12px; -webkit-overflow-scrolling: touch; }
+        /* 絞り込みは折り返して、全部が見えるようにする（横に隠れると「完了」や「商品の合計」に気づけない） */
+        .kds-filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 2px 12px; }
         .kds-filters button {
             appearance: none; -webkit-appearance: none; border: none; cursor: pointer; font-family: inherit;
             flex-shrink: 0; min-height: 40px; padding: 8px 16px; border-radius: 999px;
@@ -693,6 +694,7 @@
         .kds-card .kds-print .ic { width: 17px; height: 17px; }
         /* 商品の合計 */
         .kds-filters .kds-sumbtn { margin-left: auto; }
+        @media (max-width: 560px) { .kds-filters button { padding: 8px 12px; } .kds-filters .kds-sumbtn { margin-left: 0; } }
         .kds-filters .kds-sumbtn .ic { width: 16px; height: 16px; }
         .kds-sum { background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card); padding: 10px 14px 12px; margin: 0 0 12px; }
         .kds-sum-h { font-size: 12.5px; font-weight: 800; color: var(--text-light); margin-bottom: 8px; }
@@ -758,6 +760,15 @@
         #customer-display .cdc-wait { background: #181A21; border-radius: 22px; padding: 18px 20px; min-height: 0; overflow: hidden; }
         #customer-display .cdc-list { display: flex; flex-wrap: wrap; gap: 8px 14px; }
         #customer-display .cdc-list span { font-size: clamp(24px, 4vw, 38px); font-weight: 800; color: #C9CEDA; font-variant-numeric: tabular-nums; }
+        /* 番号が多い時は、枠に入りきる大きさまで一段ずつ小さくする（はみ出して見えない番号を作らない） */
+        #customer-display .cdc-nums.n-m { gap: 10px; }
+        #customer-display .cdc-nums.n-m span { font-size: clamp(30px, 6vw, 68px); padding: 10px 16px; border-radius: 14px; }
+        #customer-display .cdc-nums.n-s { gap: 8px; }
+        #customer-display .cdc-nums.n-s span { font-size: clamp(22px, 4.2vw, 46px); padding: 7px 12px; border-radius: 11px; }
+        #customer-display .cdc-nums.n-xs { gap: 6px; }
+        #customer-display .cdc-nums.n-xs span { font-size: clamp(17px, 3vw, 32px); padding: 5px 9px; border-radius: 9px; }
+        #customer-display .cdc-list.n-s span { font-size: clamp(18px, 3vw, 28px); }
+        #customer-display .cdc-list.n-xs span { font-size: clamp(14px, 2.2vw, 20px); }
 
         /* 前回の集計PDFを取り込む：読み取った数字を確かめる画面 */
         .pdfimp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 10px; }
@@ -1118,6 +1129,12 @@
         .step-btn.minus { color: var(--accent-ink); }
         .step-btn.plus { background: var(--positive); box-shadow: inset 0 0 0 1px var(--positive-line); }
         .step-btn:active { transform: translateY(1px); }
+        /* ▼ 押せる範囲だけを広げる（見た目の大きさは変えない）▼
+           速く打つ時に、少し外れた指でも拾えるようにする。隣のボタンと重ならない幅にしてある。 */
+        .step-btn, .share-chip, .link-btn, .cart-clear { position: relative; }
+        .step-btn::after { content: ''; position: absolute; inset: -6px -3px; }
+        .share-chip::after, .link-btn::after, .cart-clear::after { content: ''; position: absolute; inset: -8px -4px; }
+        .type-btn::after { content: ''; position: absolute; inset: -5px 0; }
         /* ▲▲▲ ここまで ▲▲▲ */
 
         .modal {
@@ -1835,6 +1852,8 @@
         .menu-row .mr-go { width: 18px; height: 18px; color: var(--text-light); }
         .menu-row.is-danger > .ic:first-child { color: var(--danger); }
         .menu-row.is-disabled { opacity: .5; pointer-events: none; }
+        /* 設定のメニューのまとまりの見出し */
+        .menu-head { font-size: 12.5px; font-weight: 800; color: var(--text-light); letter-spacing: .04em; margin: 16px 6px 2px; }
         @media (min-width: 769px) {
             .menu-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; }
             /* 2列のときは右列の区切り線が浮くので、縦線で区切る */
@@ -2430,8 +2449,8 @@
             #customer-display { --cd-total: 96px; --cd-change: 60px; --cd-item: 23px; --cd-head: 40px; }
             #customer-display.is-checkout { --cd-total: 124px; --cd-change: 76px; }
             #customer-display .cd-order { flex-direction: row; align-items: stretch; gap: 40px; }
-            #customer-display .cd-items { flex: 1 1 0; min-width: 0; margin-bottom: 0; justify-content: center; }
-            #customer-display .cd-sum { flex: 0 0 52%; max-width: 52%; justify-content: center; }
+            #customer-display .cd-items { flex: 1 1 0; min-width: 0; margin-bottom: 0; justify-content: flex-start; }
+            #customer-display .cd-sum { flex: 0 0 52%; max-width: 52%; justify-content: flex-end; }
             #customer-display .cd-total-row { box-shadow: none; padding-top: 0; }
             #customer-display .cd-done .cd-done-mark { width: 104px; height: 104px; }
             #customer-display .cd-done .ic { width: 58px; height: 58px; }
@@ -2899,6 +2918,7 @@
   <symbol id="ic-qr" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1"/><path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 18.5h1.5M18.5 14h2"/></symbol>
   <symbol id="ic-copy" viewBox="0 0 24 24"><path d="M9 4.5h6v2.5H9z"/><path d="M8 6H6v15h12V6h-2"/><path d="M9.5 12h5M9.5 16h3.5"/></symbol>
   <symbol id="ic-sliders" viewBox="0 0 24 24"><path d="M4 8h9M17 8h3M4 16h4M12 16h8"/><path d="M15 5.5v5M10 13.5v5"/></symbol>
+  <symbol id="ic-ticket" viewBox="0 0 24 24"><path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h14a1.5 1.5 0 0 1 1.5 1.5V10a2 2 0 0 0 0 4v2.5A1.5 1.5 0 0 1 19 18H5a1.5 1.5 0 0 1-1.5-1.5V14a2 2 0 0 0 0-4z"/><path d="M14.5 6.5v11" stroke-dasharray="1.6 2"/></symbol>
   <symbol id="ic-tag" viewBox="0 0 24 24"><path d="M11 3.5H20v9l-8.5 8.5L3 12.5z"/><circle cx="16.5" cy="7.5" r="1.3"/></symbol>
   <symbol id="ic-clipboard" viewBox="0 0 24 24"><path d="M9 4.5h6v2.5H9z"/><path d="M8 6H5.5v15h13V6H16"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4"/></symbol>
   <!-- 本（操作マニュアル）：開いた本を1本の輪郭と背でつくる -->
@@ -4436,7 +4456,7 @@
         });
 
         if (cart.length > 0) {
-            list.innerHTML += `<div style="text-align:right; margin-bottom:6px;"><button onclick="clearCartAll()" style="background:none; border:none; color:var(--danger-ink); font-size:12px; font-weight:bold; cursor:pointer; padding:4px; font-family:inherit; display:inline-flex; align-items:center; gap:4px;"><svg class="ic"><use href="#ic-trash"/></svg>カートを全部取消す</button></div>`;
+            list.innerHTML += `<div style="text-align:right; margin-bottom:6px;"><button class="cart-clear" onclick="clearCartAll()" style="background:none; border:none; color:var(--danger-ink); font-size:12px; font-weight:bold; cursor:pointer; padding:4px; font-family:inherit; display:inline-flex; align-items:center; gap:4px;"><svg class="ic"><use href="#ic-trash"/></svg>カートを全部取消す</button></div>`;
         }
 
         const optOn = isKitchen();
@@ -5147,7 +5167,7 @@
                         <tr><td>予約</td><td>先に取り置きしたお客様の一覧。受け取りに来たらここから清算します。</td></tr>
                         <tr><td>会計記録</td><td>済んだ会計の一覧。取り消し・修正・領収書の発行ができます。</td></tr>
                         <tr><td>売上集計</td><td>売れ行きや客層などの集計。発表用のまとめやPDFもここから。</td></tr>
-                        <tr><td>設定</td><td>商品・在庫の調整、複数端末での共有、CD、このマニュアルなど。</td></tr>
+                        <tr><td>設定</td><td>商品・在庫の調整、複数端末での共有、CD、このマニュアルなど。<b>「販売の準備」「端末と画面」「印刷」「記録とデータ」</b>の見出しごとにまとまっています。</td></tr>
                     </tbody>
                 </table>
                 <p>画面の左上に<b>「戻る」</b>が出ているときは、ひとつ前の画面にもどれます。</p>
@@ -5536,6 +5556,7 @@
                     <li>閉店すると<b>その回の売上が自動で集計され</b>、「発表用のまとめ」が出ます。</li>
                 </ol>
                 <p>閉店した記録は<b>「設定 → 過去の販売会」</b>に自動で保存され、レジの会計データは空になります。あとから集計を見たり、PDFを出したりできます。</p>
+                <p>閉店は<b>ふつうはレジの端末</b>で行います。KDの端末で「閉店する」を押した時は、全部の端末が閉店になることを<b>もう一度確かめてから</b>閉店します。</p>
                 <div class="man-box">
                     <div class="man-box-h">複数の端末で使っているとき</div>
                     <p>どの端末で閉店しても、<b>共有中のすべての端末がいっしょに閉店</b>になります。ほかの端末にも「他の端末で閉店されました」と出て、同じ集計がその端末にも保存されます。1台ずつ閉店して回る必要はありません。</p>
@@ -8124,6 +8145,9 @@
     }
 
     function endSession() {
+        // KDの端末から閉店すると、レジも含めて全部の端末が閉店になる。押し間違えやすいので、もう一度確かめる
+        if (deviceRole() === 'kitchen' && syncMode
+            && !confirm('この端末はKDです。\n閉店すると、レジも含めて共有している全部の端末が閉店になります。\nふつうはレジの端末で閉店します。\n\nそれでもここで閉店しますか？')) return;
         if(reservations.length > 0) {
             alert('【！】未精算の予約が残っています。予約管理を確認してください');
             return;
@@ -11004,24 +11028,30 @@
             : (uiPrefs.theme === 'dark' ? '暗い配色' : '明るい配色');
         const clockSub = [themeSub, uiPrefs.clock ? '時計' : null, uiPrefs.weather ? `天気（${areaName}）` : null, '全画面']
             .filter(Boolean).join('・');
+        // 項目が増えたので、4つのまとまりに分けて見出しを付ける（探す場所の見当が付くように）
+        const head = t => `<div class="menu-head">${t}</div>`;
         box.innerHTML =
             menuRow('book', '操作マニュアル', 'はじめての人向けの使い方（PDFにも出せます）', "openPanel('settings','manual')") +
-            menuRow(isKitchen() ? 'kitchen' : 'store', '店舗モード', storeModeLabel(), "openPanel('settings','mode')") +
-            menuRow('device', 'この端末の役割', roleSub(), "openPanel('settings','role')") +
-            menuRow('users', 'CD（お客様用の画面）', cdSub(), "openPanel('settings','cd')") +
+            head('販売の準備') +
             menuRow('sliders', '商品・在庫の調整', stockSub, "openPanel('settings','stock')", { disabled: !currentSession }) +
-            menuRow('tag', '商品の分類', categories.map(c => escHtml(c.label)).join('・'), "openPanel('settings','cats')") +
+            menuRow('target', 'セット割・売上目標', setGoalSub(), "openPanel('settings','goal')") +
+            menuRow('ticket', 'クーポン', couponSub(), "openPanel('settings','coupon')") +
             menuRow('yen', '支払い方法', paySub(), "openPanel('settings','pay')") +
-            menuRow('tag', 'クーポン', couponSub(), "openPanel('settings','coupon')") +
+            menuRow('tag', '商品の分類', categories.map(c => escHtml(c.label)).join('・'), "openPanel('settings','cats')") +
             (isKitchen() ? menuRow('qr', 'モバイルオーダー', mobileSub(), "openPanel('settings','mobile')") : '') +
             (isKitchen() ? menuRow('calendar', '予約', reservations.length ? `${reservations.length}件の予約` : '先に受けて、あとで渡す注文', "openPanel('reservations')") : '') +
-            menuRow('target', 'セット割・売上目標', setGoalSub(), "openPanel('settings','goal')") +
+            menuRow(isKitchen() ? 'kitchen' : 'store', '店舗モード', storeModeLabel(), "openPanel('settings','mode')") +
+            head('端末と画面') +
             menuRow('link', '複数端末で使う', syncSub, "openPanel('settings','sync')", { disabled: !window.FIREBASE_CONFIG }) +
+            menuRow('device', 'この端末の役割', roleSub(), "openPanel('settings','role')") +
+            menuRow('users', 'CD（お客様用の画面）', cdSub(), "openPanel('settings','cd')") +
+            menuRow('clock', 'この端末の設定', (isLocked() ? '制限中・' : '') + clockSub, "openPanel('settings','display')") +
+            head('印刷') +
             menuRow('printer', 'レシート', 'ヘッダー・フッター・QR・大きな番号・並べる項目', "openPanel('settings','rcpt')") +
             menuRow('file', '領収書の設定', `発行者「${escHtml(shopInfo().name)}」・但し書きの変更`, "openPanel('settings','receipt')") +
+            head('記録とデータ') +
             menuRow('archive', '過去の販売会', archSub, "openPanel('settings','archive')") +
             menuRow('download', 'データの書き出し', 'バックアップの保存・端末間のコピー', "openPanel('settings','data')") +
-            menuRow('clock', 'この端末の設定', (isLocked() ? '制限中・' : '') + clockSub, "openPanel('settings','display')") +
             menuRow('trash', 'データの初期化', '不具合が直らない時の最終手段', "openPanel('settings','reset')", { danger: true });
     }
 
@@ -14427,14 +14457,29 @@
         return o;
     }
 
-    function setKitchenOrder(id, change, merge) {
+    function setKitchenOrder(id, change) {
         const o = kitchenOrders.find(x => x.id === id);
         if (!o) return null;
+        const before = JSON.parse(JSON.stringify(o));
         change(o);
         o.upd = Date.now();
-        pushOrder(o, merge);
+        pushOrderChange(o, before);
         afterKitchenChange();
         return o;
+    }
+    // 変えた項目だけを置き場に送る。
+    // 注文をまるごと送ると、レジが「会計済」にしたのと同じ時にKDが「できた」を押した時、
+    // あとから届いた方が相手の変更を古い中身で上書きしてしまう（会計済が未会計に戻る など）。
+    function pushOrderChange(o, before) {
+        if (!syncMode || !syncEventCode || !fbDb || !o) return;
+        const keys = Object.keys(before);
+        if (keys.some(k => !(k in o))) { pushOrder(o); return; }   // 項目を消した時は、まるごと送る
+        const diff = {};
+        Object.keys(o).forEach(k => { if (JSON.stringify(o[k]) !== JSON.stringify(before[k])) diff[k] = JSON.parse(JSON.stringify(o[k])); });
+        diff.id = o.id;
+        diff.roundId = syncRoundId;
+        ordersCol(syncEventCode).doc(o.id).set(diff, { merge: true })
+            .catch(e => console.warn('注文の共有に失敗しました', e));
     }
 
     function afterKitchenChange() {
@@ -14546,7 +14591,7 @@
             return;
         }
         o.upd = Date.now();
-        pushOrder(o);
+        pushOrderChange(o, { ...o, chk: null, upd: null });   // 印（chk）だけを送る
         afterKitchenChange();
     }
     // 「未」をまとめて消す（全部できた時・急ぎで呼びたい時。もう一度押すと、全部「未」に戻る）
@@ -14566,7 +14611,7 @@
             return;
         }
         o.upd = Date.now();
-        pushOrder(o);
+        pushOrderChange(o, { ...o, chk: null, upd: null });   // 印（chk）だけを送る
         afterKitchenChange();
     }
     // 商品の合計（同じ商品が何個作りかけか）を出すかどうか。端末ごとに覚える
@@ -15862,6 +15907,15 @@
         if (cdOrdersUnsub) { try { cdOrdersUnsub(); } catch (e) {} cdOrdersUnsub = null; }
         cdOrders = [];
     }
+    // 枠からはみ出さない、いちばん大きな文字の大きさを選ぶ
+    function fitCallBoard(el, steps, base) {
+        const box = el && el.parentElement;
+        if (!box || !box.clientHeight) return;
+        for (const c of steps) {
+            el.className = base + (c ? ' ' + c : '');
+            if (box.scrollHeight <= box.clientHeight + 1) return;
+        }
+    }
     function renderCallBoard() {
         const ready = document.getElementById('cdc-ready'), wait = document.getElementById('cdc-wait'), wn = document.getElementById('cdc-wait-n');
         if (!ready || !wait) return;
@@ -15874,6 +15928,8 @@
             ? rd.map(o => `<span class="${fresh.includes(o) ? 'new' : ''}">${escHtml(orderNoText(o))}</span>`).join('')
             : '<div class="cdc-none">いまお呼び出し中の番号はありません</div>';
         wait.innerHTML = wt.map(o => `<span>${escHtml(orderNoText(o))}</span>`).join('');
+        fitCallBoard(ready, ['', 'n-m', 'n-s', 'n-xs'], 'cdc-nums');
+        fitCallBoard(wait, ['', 'n-s', 'n-xs'], 'cdc-list');
         if (wn) wn.textContent = wt.length ? `（${wt.length}件）` : '';
         cdReadySeen = new Set(rd.map(o => o.id));
         if (fresh.length) kitchenChime();
