@@ -86,6 +86,29 @@ service cloud.firestore {
   }
 }
 ```
+### レストラン（テーブルと伝票）の時
+- 置き場に次のものが増えます（閉店の片づけで、ほかといっしょに消します）。
+  - `bills/{伝票}` … テーブルごとの伝票（伝票番号・テーブル・払った数・開いている／会計済み）
+  - `tables/{テーブル}` … いまそのテーブルで開いている伝票の印
+  - `live/bseq` … 伝票番号（0001、0002 …）を数える文書
+- 伝票は **トランザクション**（まとめて読み書き）で開きます。ハンディ2台やお客様のスマホが同じテーブルに同じ瞬間に注文しても、伝票は1枚にまとまり、番号も重なりません。
+- 上の「いまのルール」（ログイン済みなら読み書き可）のままで動きます。
+- お客様の書き込みを絞る厳しいルールにする時は、テーブルのQRから注文するお客様が伝票を開けるように、次を足します。
+
+```
+      // お客様（レストラン）：テーブルの伝票を開く・伝票番号を数える
+      match /tables/{t} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null;
+      }
+      match /bills/{b} {
+        allow read: if request.auth != null;
+        allow create: if request.auth != null && (isStaff(eventCode) || request.resource.data.st == 'open');
+        allow update, delete: if request.auth != null && isStaff(eventCode);
+      }
+      // live/{doc} の条件に doc == 'bseq' も足す
+```
+
 - ※上の `isStaff` は、端末の一覧（`devices`）の文書の名前が匿名ログインの uid になっている前提の書き方です。
   いまのアプリは端末の一覧に自分で決めた端末の印を使っているので、この厳しいルールに切り替える時は、
   アプリの側も合わせて直す必要があります（切り替える時に一緒に作業します）。
