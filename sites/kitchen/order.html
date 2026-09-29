@@ -167,8 +167,8 @@
     <!-- 確かめる画面 -->
     <section id="confirm" class="hide">
         <h1>ご注文の確認</h1>
-        <div class="sub">お召し上がりを選んでください</div>
-        <div class="dine" role="group" aria-label="お召し上がり">
+        <div class="sub" id="c-dine-sub">お召し上がりを選んでください</div>
+        <div class="dine" id="c-dine" role="group" aria-label="お召し上がり">
             <button type="button" class="take" id="d-take" onclick="pickDine('take')">持ち帰り</button>
             <button type="button" class="eat" id="d-eat" onclick="pickDine('eat')">店内</button>
         </div>
@@ -187,7 +187,7 @@
             </div>
             <div class="sub" id="c-coupon-sub"></div>
         </div>
-        <div class="notice">お支払いは、受け取りの時にレジでお願いします。注文すると番号が出ます。</div>
+        <div class="notice" id="c-note">お支払いは、受け取りの時にレジでお願いします。注文すると番号が出ます。</div>
         <button class="btn full" id="c-send" onclick="sendOrder()" disabled>注文する</button>
         <button class="btn sec full" style="margin-top:8px;" onclick="showMenu()">メニューに戻る</button>
     </section>
@@ -220,6 +220,9 @@
     const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const yen = n => '¥' + Number(n || 0).toLocaleString('ja-JP');
     let code = (new URLSearchParams(location.search).get('e') || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 32);
+    // レストラン：テーブルに置いたQRには、テーブルの番号（t）が入っている
+    const tableNo = (() => { const v = String(new URLSearchParams(location.search).get('t') || '').trim(); return /^[0-9]{1,3}$/.test(v) && Number(v) > 0 ? String(parseInt(v, 10)) : ''; })();
+    function restMode() { return !!(evData && evData.storeMode === 'restaurant'); }
     const INK = { sweet: '#4A6FA5', savory: '#14837E', drink: '#5D5BC4', x1: '#A86A12', x2: '#B83A5E', x3: '#3E8A3A', x4: '#B85420', x5: '#8A3E96', x6: '#6F7A1E', x7: '#1F7FA6', x8: '#7A5238' };
 
     let db = null, uid = '', ev = null, evData = null, menu = null, orders = [];
@@ -282,6 +285,7 @@
             snap.forEach(d => {
                 const v = d.data() || {};
                 if (!v.mobile || v.mobile.on !== true || !Array.isArray(v.products)) return;
+                if (v.storeMode === 'restaurant') return;       // レストランはテーブルのQRから
                 if ((Number(v.openedAt) || 0) < now - 24 * 3600000) return;     // 前の日から開いたままのものは出さない
                 rows.push({ code: d.id, name: String(v.mobile.shop || v.name || 'お店'), icon: typeof v.mobile.icon === 'string' && v.mobile.icon.startsWith('data:image/') ? v.mobile.icon : '', wait: Number(v.mobile.wait) || 0 });
             });
@@ -401,7 +405,7 @@
         if (evData) {
             const nm = shopName();
             $('title').textContent = nm || 'モバイルオーダー';
-            shop.textContent = nm ? 'モバイルオーダー' : '';
+            shop.textContent = restMode() && tableNo ? `${tableNo}番テーブル` : (nm ? 'モバイルオーダー' : '');
             document.title = (nm ? nm + '｜' : '') + 'モバイルオーダー';
             const icon = evData.mobile && evData.mobile.icon;
             const im = $('brand-icon');
@@ -419,6 +423,7 @@
             say(m || 'ただいま、スマホからの注文を止めています。店頭でご注文ください。', true);
             hideOrdering(); renderMine(); return;
         }
+        if (restMode() && !tableNo) { say('テーブルに置いてあるQRコードを読み取って、ご注文ください。', true); hideOrdering(); renderMine(); return; }
         if (!menu || !Array.isArray(menu.items)) { say('メニューを読み込んでいます…'); hideOrdering(); renderMine(); return; }
         say('');
         renderMenu();
@@ -427,7 +432,7 @@
     // いまの待ち時間（お店が決めた目安）と、いま待っている組の数
     function renderWait() {
         const w = $('wait'), wm = cfg().wait, g = waitingGroups();
-        const show = !!evData && accepting();
+        const show = !!evData && accepting() && !restMode();    // レストランは席で待つので「◯組待ち」は出さない
         w.classList.toggle('hide', !show);
         if (show) w.innerHTML = `<span>いま <b>${g}</b> 組待ち</span>${wm ? `<span>待ち時間 <b>約${wm}分</b></span>` : ''}`;
     }
@@ -572,6 +577,12 @@
     };
     function renderConfirm() {
         const lines = cartLines();
+        const rm = restMode();
+        if (rm) { dine = 'eat'; pickAt = 0; seat = ''; coupon = null; }
+        $('c-dine').classList.toggle('hide', rm);
+        $('c-dine-sub').textContent = rm ? `${tableNo}番テーブルのご注文` : 'お召し上がりを選んでください';
+        $('c-note').textContent = rm ? 'お料理はお席までお持ちします。お支払いは、お帰りの時にレジでお願いします（テーブルの伝票でまとめてお会計）。'
+            : 'お支払いは、受け取りの時にレジでお願いします。注文すると番号が出ます。';
         $('d-take').classList.toggle('on', dine === 'take');
         $('d-eat').classList.toggle('on', dine === 'eat');
         const tot = lines.reduce((t, l) => t + l.qty * l.price, 0);
@@ -591,13 +602,13 @@
         bindOptButtons();
         // 席番号（席から注文で、店内の時）
         const sb = $('c-seat');
-        const needSeat = dine === 'eat' && c0.seat;
+        const needSeat = dine === 'eat' && c0.seat && !rm;
         sb.classList.toggle('hide', !needSeat || !seat);
         if (needSeat && seat) sb.innerHTML = `<span>席番号</span><b>${esc(seat)}</b><span class="sp"></span><button type="button" onclick="openSeat()">変える</button>`;
         // 受け取り時間（お店が許している時だけ）。時間がたって選べなくなった時刻は、できしだいに戻す
         const c = cfg(), box = $('c-pick-box');
-        box.classList.toggle('hide', !c.pick);
-        if (c.pick) {
+        box.classList.toggle('hide', !c.pick || rm);
+        if (c.pick && !rm) {
             const slots = pickSlots(Date.now());
             if (pickAt && !slots.includes(pickAt)) pickAt = 0;
             const sel = $('c-pick');
@@ -613,7 +624,7 @@
         } else pickAt = 0;
         // クーポン（お店がコード付きのクーポンを出している時だけ）
         const cb = $('c-coupon-box');
-        const hasCp = codeCoupons().length > 0;
+        const hasCp = codeCoupons().length > 0 && !rm;
         cb.classList.toggle('hide', !hasCp);
         if (!hasCp) coupon = null;
         if (coupon) {
@@ -621,7 +632,7 @@
             $('c-coupon-sub').textContent = `「${coupon.name}」（${off}${coupon.solo ? '・セット割と併用しない' : ''}）を使います。お支払いの時にレジで引きます（クーポンを引いた目安：${yen(dp.net)}）。${coupon.note ? coupon.note : ''}`;
         }
         const send = $('c-send');
-        const seatMissing = dine === 'eat' && c0.seat && !seat;
+        const seatMissing = dine === 'eat' && c0.seat && !seat && !rm;
         send.disabled = !dine || !lines.length || sending || seatMissing;
         send.textContent = sending ? '送っています…' : (!dine ? 'お召し上がりを選んでください' : (seatMissing ? '席番号を入れてください' : '注文する'));
     }
@@ -655,6 +666,12 @@
         if (activeMine().length >= MAX_ACTIVE) { alert(`一度に注文できるのは${MAX_ACTIVE}件までです。受け取ってから、次の注文をしてください。`); return; }
         unlockAudio();
         sending = true; renderConfirm();
+        if (restMode()) {
+            try { await sendTableOrder(lines); }
+            catch (e) { alert('送れませんでした。電波の良い所で、もう一度お試しください。'); }
+            finally { sending = false; render(); }
+            return;
+        }
         try {
             // 番号は 持ち帰りなら M・店内なら T ＋ 4けた（千の位の 0 がモバイルの印。M0001、T0002 …）。
             // ほかのお客様とぶつからないよう、置き場で1つずつ数える。
@@ -713,7 +730,9 @@
         const keep = mine.filter(id => {
             const o = orders.find(x => x.id === id);
             if (!o) return true;          // まだ届いていない（送った直後など）注文は消さない
-            if (o.st !== 'done' && o.st !== 'void') return true;
+            // レストラン：料理を運んだ後も、お会計が済むまで（伝票が閉じるまで）残す
+            if (o.billId && o.st !== 'void') { if (!o.paid) return true; }
+            else if (o.st !== 'done' && o.st !== 'void') return true;
             if (!doneSeenAt[id]) doneSeenAt[id] = now;
             // 取り消された注文は、気づけるように長めに残す
             return now - doneSeenAt[id] < (o.st === 'void' ? 10 * 60000 : DONE_SHOW_MS);
@@ -721,6 +740,43 @@
         if (keep.length !== mine.length) { mine = keep; saveMine(mine); }
     }
     setInterval(() => { const before = mine.length; dropFinished(); if (mine.length !== before) render(); }, 3000);
+    // レストラン：テーブルの伝票を開いて（もう開いていればそこへ）注文を足す。
+    // 伝票・テーブルの印・伝票番号の数をまとめて読み書きする（同じ瞬間に別の人が注文しても、伝票が2枚にならない）
+    async function sendTableOrder(lines) {
+        const tref = ev.collection('tables').doc(tableNo);
+        const seqRef = ev.collection('live').doc('bseq');
+        const roundId = (evData && evData.roundId) || '';
+        const bill = await db.runTransaction(async tx => {
+            const tsnap = await tx.get(tref);
+            const cur = tsnap.exists ? String((tsnap.data() || {}).bill || '') : '';
+            if (cur) {
+                const bsnap = await tx.get(ev.collection('bills').doc(cur));
+                const bd = bsnap.exists ? bsnap.data() : null;
+                if (bd && bd.st === 'open' && (bd.roundId || '') === roundId) return bd;
+            }
+            const ssnap = await tx.get(seqRef);
+            const n = (ssnap.exists ? (Number((ssnap.data() || {}).n) || 0) : 0) + 1;
+            const doc = { id: 'b-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7), no: n, table: tableNo, st: 'open', at: Date.now(), by: 'mobile', roundId, paid: {}, pays: [] };
+            tx.set(ev.collection('bills').doc(doc.id), doc);
+            tx.set(tref, { bill: doc.id, roundId });
+            tx.set(seqRef, { n });
+            return doc;
+        });
+        const at = Date.now();
+        const id = 'm-' + (uid || 'x').slice(0, 10) + '-' + at;
+        const items = lines.map(l => { const it = { name: l.name, qty: l.qty, price: l.price, type: l.type || 'sweet' }; if (l.opt) it.opt = l.opt; return it; });
+        const doc = {
+            id, no: String(bill.no).padStart(4, '0'), table: tableNo, billId: bill.id, at, dine: 'eat', items, st: 'cook', channel: 'mobile', paid: false,
+            total: items.reduce((t, l) => t + l.qty * l.price, 0), uid, roundId, upd: at, chk: [], t: {}, dev: ''
+        };
+        await ev.collection('orders').doc(id).set(doc);
+        mine.push(id); saveMine(mine);
+        Object.keys(qty).forEach(k => delete qty[k]);
+        Object.keys(optSel).forEach(k => delete optSel[k]);
+        dine = ''; optOpen = '';
+        $('confirm').classList.add('hide');
+        window.scrollTo(0, 0);
+    }
     function renderMine() {
         const box = $('my');
         dropFinished();
@@ -735,20 +791,28 @@
             const ahead = orders.filter(x => x.st === 'cook' && !heldNow(x, now) && startOf(x) < myStart).length;
             const pk = pickupOf(o);
             let cls = '', st = '', sub = '';
-            if (o.st === 'ready') { cls = 'ready'; st = 'できあがりました！'; sub = '受け取り口へお越しください'; anyReady = true; }
+            if (o.billId) {
+                // レストラン：料理は席まで運ぶ
+                if (o.paid) st = 'ありがとうございました';
+                else if (o.st === 'void') { cls = 'void'; st = 'この注文は取り消されました'; sub = 'くわしくはお店の人にお尋ねください'; }
+                else if (o.st === 'done') { st = 'お持ちしました'; sub = 'お支払いは、お帰りの時にレジで（伝票でまとめてお会計）'; }
+                else if (o.st === 'ready') { cls = 'ready'; st = 'できあがりました'; sub = 'まもなくお席までお持ちします'; }
+                else { st = 'お作りしています'; sub = 'できたらお席までお持ちします'; }
+            }
+            else if (o.st === 'ready') { cls = 'ready'; st = 'できあがりました！'; sub = '受け取り口へお越しください'; anyReady = true; }
             else if (o.st === 'done') { st = 'お受け取りありがとうございました'; }
             else if (o.st === 'void') { cls = 'void'; st = 'この注文は取り消されました'; sub = 'くわしくは店頭でお尋ねください'; }
             else if (heldNow(o, now)) { st = `受け取り ${hm(pk)}ごろ`; sub = `ご注文を受け付けました。${hm(myStart)}ごろから作り始めます`; }
             else { st = 'お作りしています'; sub = (ahead ? `あと ${ahead} 組` : 'まもなくできあがります') + (pk ? `（受け取り ${hm(pk)}ごろ）` : ''); }
             const items = (o.items || []).map(i => `${esc(i.name)}${i.opt ? '（' + esc(i.opt) + '）' : ''}×${i.qty}`).join('、');
             return `<div class="card ${cls}">
-                <div class="k">${esc(shopName() || '')}${shopName() ? ' の' : ''}ご注文の番号</div>
+                <div class="k">${esc(shopName() || '')}${shopName() ? ' の' : ''}${o.billId ? `${esc(o.table)}番テーブル・伝票番号` : 'ご注文の番号'}</div>
                 <div class="no">${esc(String(o.no || '') + (o.seat ? '-' + o.seat : ''))}</div>
                 <div class="st">${st}</div>
                 ${sub ? `<div class="ahead">${sub}</div>` : ''}
-                <span class="dn ${o.dine === 'eat' ? 'eat' : ''}">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>
+                ${o.billId ? '' : `<span class="dn ${o.dine === 'eat' ? 'eat' : ''}">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>`}
                 <div class="sub" style="margin-top:10px;">${items}</div>
-                ${o.st !== 'void' && !o.paid ? `<div class="sub" style="margin-top:6px;">受け取りの時に、この番号を見せてレジで ${yen(o.total)} をお支払いください${Number(o.discount) > 0 ? `（セット割 −${yen(o.discount)} を引いた額）` : ''}${o.coupon && o.coupon.name ? `。クーポン「${esc(o.coupon.name)}」は、レジで引きます` : ''}</div>` : ''}
+                ${o.st !== 'void' && !o.paid && !o.billId ? `<div class="sub" style="margin-top:6px;">受け取りの時に、この番号を見せてレジで ${yen(o.total)} をお支払いください${Number(o.discount) > 0 ? `（セット割 −${yen(o.discount)} を引いた額）` : ''}${o.coupon && o.coupon.name ? `。クーポン「${esc(o.coupon.name)}」は、レジで引きます` : ''}</div>` : ''}
             </div>`;
         }).join('') + (list.some(o => o.st === 'cook') ? '<div class="foot">この画面を開いたままにしてください。できあがると、音と画面でお知らせします（画面を消すと、お知らせが届きません）。</div>' : '');
         // 呼び出されたら、音・振動・画面の色で知らせる（初めて呼び出された時だけ）

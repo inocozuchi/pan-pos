@@ -630,6 +630,72 @@
            押すところはカードの下の大きなボタン1つ（と、小さな「戻す」）だけ。 */
         /* 絞り込みは折り返して、全部が見えるようにする（横に隠れると「完了」や「商品の合計」に気づけない） */
         .kds-filters { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 2px 12px; }
+        /* ▼ レストラン：テーブルと伝票 ▼ */
+        .hd-top { display: none; }
+        body.hd-full #bottom-nav, body.hd-full header { display: none !important; }
+        body.hd-full.hd-home #page-panel > .panel-head { display: none !important; }
+        body.hd-full #page-panel .panel-body, body.hd-full #page-register { padding-top: env(safe-area-inset-top, 0px); }
+        body.hd-full.hd-home .hd-top { display: flex; align-items: center; gap: 10px; margin: 0 2px 12px; min-height: 40px; }
+        .bill-find { display: flex; gap: 8px; margin: 0 0 14px; }
+        .bill-find input { flex: 1; min-width: 0; font-size: 22px; font-weight: 800; letter-spacing: .12em; text-align: center; font-variant-numeric: tabular-nums; }
+        .bill-find .action-btn { margin: 0; flex: 0 0 auto; width: auto; padding-left: 16px; padding-right: 16px; }
+        .bill-find input { width: auto; }
+        .tbl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .tbl-tile {
+            display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-height: 96px; padding: 12px 14px;
+            border: none; border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow-card);
+            font: inherit; color: var(--text-main); text-align: left; cursor: pointer;
+        }
+        .tbl-tile:active { filter: var(--press, brightness(.9)); }
+        .tbl-tile .tt-n { font-size: 20px; font-weight: 800; }
+        .tbl-tile .tt-s { font-size: 12.5px; font-weight: 700; color: var(--text-light); }
+        .tbl-tile .tt-b { font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .tbl-tile .tt-t { margin-top: auto; font-size: 17px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .tbl-tile.busy { background: var(--accent-soft); }
+        .tbl-tile.busy .tt-s { color: var(--accent-ink); }
+        .tbl-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; margin: 4px 0 12px; max-height: 50vh; overflow-y: auto; }
+        .tbl-pick button {
+            min-height: 60px; border: none; border-radius: 14px; background: var(--btn-neutral); color: var(--text-main);
+            font: inherit; font-size: 17px; font-weight: 800; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+        }
+        .tbl-pick button small { font-size: 11px; font-weight: 700; color: var(--accent-ink); }
+        .tbl-pick button.busy { background: var(--accent-soft); }
+        .order-target {
+            display: flex; align-items: center; gap: 10px; margin: 0 0 8px; padding: 10px 12px; border-radius: var(--r-md);
+            background: var(--accent-soft); color: var(--accent-ink); font-size: 14px; font-weight: 800;
+        }
+        .order-target .ot-t { flex: 1; min-width: 0; }
+        .order-target .ot-t small { display: block; font-size: 12px; font-weight: 700; opacity: .85; }
+        .order-target button { flex-shrink: 0; border: none; border-radius: 999px; padding: 8px 14px; background: var(--surface); color: var(--text-main); font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+        .bill-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 0 2px 12px; }
+        .bill-head .bh-t { font-size: 24px; font-weight: 800; }
+        .bill-head .bh-no { font-size: 15px; font-weight: 800; color: var(--accent-ink); font-variant-numeric: tabular-nums; }
+        .bill-head .bh-s { font-size: 13px; font-weight: 700; color: var(--text-light); }
+        .bill-lines { background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card); padding: 6px 14px; }
+        .bill-line { display: flex; align-items: center; gap: 10px; padding: 9px 0; }
+        .bill-line + .bill-line { box-shadow: inset 0 1px 0 var(--hair, rgba(0,0,0,.06)); }
+        .bill-line .bl-n { flex: 1; min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
+        .bill-line .bl-n small { display: block; font-size: 12px; font-weight: 700; color: var(--danger); }
+        .bill-line .bl-n em { display: block; font-style: normal; font-size: 11.5px; font-weight: 700; color: var(--text-light); }
+        .bill-line .bl-q { font-weight: 800; color: var(--text-light); white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .bill-line .bl-v { font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; min-width: 4.5em; text-align: right; }
+        .bill-line.paidall { opacity: .45; }
+        .bill-line .bl-step { display: flex; align-items: center; gap: 4px; }
+        .bill-line .bl-step button { width: 36px; height: 36px; border: none; border-radius: 10px; background: var(--btn-neutral); color: var(--text-main); font: inherit; font-size: 18px; font-weight: 800; cursor: pointer; }
+        .bill-line .bl-step b { min-width: 1.6em; text-align: center; font-variant-numeric: tabular-nums; }
+        .bill-sum { margin: 12px 2px 0; display: flex; flex-direction: column; gap: 4px; }
+        .bill-sum div { display: flex; justify-content: space-between; font-size: 14px; font-weight: 700; color: var(--text-light); font-variant-numeric: tabular-nums; }
+        .bill-sum div.big { font-size: 22px; font-weight: 800; color: var(--text-main); }
+        .bill-acts { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+        .bill-acts .action-btn { width: 100%; margin: 0; }
+        .bill-acts .row2 { display: flex; gap: 8px; }
+        .bill-acts .row2 .action-btn { flex: 1; }
+        .bill-card-no { font-size: 64px; font-weight: 900; letter-spacing: .08em; text-align: center; font-variant-numeric: tabular-nums; margin: 6px 0 2px; color: var(--text-main); }
+        .rest-qr { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 8px; }
+        .rest-qr figure { margin: 0; background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card); padding: 10px; text-align: center; }
+        .rest-qr figure svg { width: 100%; height: auto; }
+        .rest-qr figcaption { font-weight: 800; margin-top: 4px; }
+
         /* ▼ KDの端末：CDと同じく画面いっぱいに出す（上の帯・見出し・下のタブを隠す）▼ */
         .kds-top { display: none; }
         body.kd-full header, body.kd-full #bottom-nav, body.kd-full #page-panel > .panel-head { display: none !important; }
@@ -3059,6 +3125,9 @@
   <!-- 天気：小さく出しても形が分かるよう、線の数をしぼった単純な形にしている -->
   <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.3"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></symbol>
   <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4 8.5 8.5 0 1020 14.5z"/></symbol>
+  <symbol id="ic-table" viewBox="0 0 24 24"><path d="M3 9.5h18"/><path d="M5.5 9.5 4.5 19M18.5 9.5l1 9.5"/><path d="M8 9.5V6.5h8v3"/><path d="M7 14h10"/></symbol>
+  <symbol id="ic-handy" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M8.8 5.5h6.4v5H8.8z"/><path d="M9.3 14h.01M12 14h.01M14.7 14h.01M9.3 16.8h.01M12 16.8h.01M14.7 16.8h.01" stroke-width="2.4"/></symbol>
+  <symbol id="ic-receipt" viewBox="0 0 24 24"><path d="M6 2.5h12v19l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 7.5h6M9 11h6M9 14.5h4"/></symbol>
   <symbol id="ic-device" viewBox="0 0 24 24"><path d="M7 2.5h10v19H7z"/><path d="M10.5 18.8h3"/></symbol>
   <symbol id="ic-cloud" viewBox="0 0 24 24"><path d="M7 18.5h10a4 4 0 000-8 5.6 5.6 0 00-10.7 1.6A3.3 3.3 0 007 18.5z"/></symbol>
   <symbol id="ic-rain" viewBox="0 0 24 24"><path d="M7 15h10a3.8 3.8 0 000-7.6A5.4 5.4 0 006.4 9 3.1 3.1 0 007 15z"/><path d="M8.5 18v2.5M12 18.5v3M15.5 18v2.5"/></symbol>
@@ -3141,6 +3210,8 @@
             <div id="pending-reminder" onclick="navTo('records')" style="display:none;"></div>
             <!-- ファストフードの時：まだ払っていないモバイルの注文（受け取りの時にレジで会計する） -->
             <button type="button" id="mobile-pay-bar" onclick="navTo('unpaid')"></button>
+            <!-- レストラン：テーブルに注文を足している間だけ出る帯 -->
+            <div id="order-target-bar" class="order-target" style="display:none;"></div>
 
             <!-- スマホ縦画面では、カートの明細は畳んで商品ボタンの面積を優先する -->
             <button id="cart-toggle" onclick="toggleCartSheet()">
@@ -3159,7 +3230,7 @@
                     <button class="action-btn btn-undo" onclick="undoLast()"><svg class="ic"><use href="#ic-undo"/></svg>1つ戻す</button>
                     <button class="action-btn btn-reserve" id="btn-reserve" onclick="reserveButtonAction()"><svg class="ic"><use href="#ic-calendar"/></svg>予約保留</button>
                 </div>
-                <button class="action-btn btn-checkout" onclick="openCheckout()">会計へ進む</button>
+                <button class="action-btn btn-checkout js-primary" onclick="checkoutButtonAction()">会計へ進む</button>
             </footer>
         </aside>
     </div>
@@ -3187,6 +3258,20 @@
             <div id="kds-lead" class="kds-lead" style="display:none;"></div>
             <div id="kds-sum" class="kds-sum" style="display:none;"></div>
             <div id="kds-grid" class="kds-grid" aria-live="polite"></div>
+        </div>
+
+        <!-- ---------- テーブルと伝票（レストランの時だけ）---------- -->
+        <div class="panel-view" id="view-tables">
+            <div class="sub-view" id="sub-tables-home">
+                <!-- ハンディの端末で画面いっぱいに出している時だけ見える帯 -->
+                <div class="hd-top">
+                    <span class="kds-top-t"><svg class="ic"><use href="#ic-handy"/></svg>ハンディ</span>
+                    <span class="kds-top-s" id="hd-top-s"></span>
+                    <button type="button" class="kds-role-btn" onclick="openPanel('settings','role')" aria-label="この端末の役割を変える"><svg class="ic"><use href="#ic-device"/></svg>役割</button>
+                </div>
+                <div id="tables-body"></div>
+            </div>
+            <div class="sub-view" id="sub-bill" style="display:none;"><div id="bill-body"></div></div>
         </div>
 
         <!-- ---------- 未会計（ファストフードの時だけ）---------- -->
@@ -3434,6 +3519,9 @@
                 <div id="role-note" class="notice" style="margin-top:12px;"></div>
             </div>
 
+            <!-- レストラン：テーブルの数・伝票の渡し方・テーブルのQR -->
+            <div class="sub-view" id="sub-rest" style="display:none;"><div id="rest-body"></div></div>
+
             <!-- クーポン（一覧と、作る・直す画面） -->
             <!-- セット割・クーポン（割引はここにまとめる） -->
             <div class="sub-view" id="sub-coupon" style="display:none;">
@@ -3613,6 +3701,16 @@
     </div>
 </div>
 
+<!-- レストラン：どのテーブルの伝票に付けるか -->
+<div id="table-sheet" class="later-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="table-sheet-title" onclick="if (event.target === this) closeTableSheet()">
+    <div class="later-card">
+        <div class="later-title" id="table-sheet-title">どのテーブルに送りますか？</div>
+        <div class="later-sub">カートの中身を、そのテーブルの伝票に足してKDへ送ります（お支払いはお帰りの時に、伝票でまとめて）。</div>
+        <div class="tbl-pick" id="table-sheet-grid"></div>
+        <button type="button" class="later-cancel" onclick="closeTableSheet()">やめる</button>
+    </div>
+</div>
+
 <!-- クーポンを選ぶ（タップで使うクーポンの一覧と、コードの入力） -->
 <div id="coupon-sheet" class="later-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="coupon-title" onclick="if (event.target === this) closeCouponSheet()">
     <div class="later-card">
@@ -3663,6 +3761,8 @@
     <button class="nav-item" id="nav-reservations" onclick="navTo('reservations')"><svg class="ic nav-ico"><use href="#ic-calendar"/></svg>予約<span class="nav-badge"></span></button>
     <!-- ファストフードの時だけ、予約の場所に出す（「後で会計」とモバイルの、まだ払っていない注文） -->
     <button class="nav-item" id="nav-unpaid" onclick="navTo('unpaid')" style="display:none;"><svg class="ic nav-ico"><use href="#ic-clock"/></svg>未会計<span class="nav-badge"></span></button>
+    <!-- レストランの時だけ、予約の場所に出す（テーブルと伝票） -->
+    <button class="nav-item" id="nav-tables" onclick="navTo('tables')" style="display:none;"><svg class="ic nav-ico"><use href="#ic-table"/></svg>テーブル<span class="nav-badge"></span></button>
     <button class="nav-item" id="nav-records" onclick="navTo('records')"><svg class="ic nav-ico"><use href="#ic-list"/></svg>会計記録<span class="nav-badge"></span></button>
     <button class="nav-item" id="nav-analytics" onclick="navTo('analytics')"><svg class="ic nav-ico"><use href="#ic-chart"/></svg>売上集計</button>
     <button class="nav-item" id="nav-settings" onclick="navTo('settings')"><svg class="ic nav-ico"><use href="#ic-gear"/></svg>設定</button>
@@ -3880,7 +3980,7 @@
         return {
             id: /^[A-Za-z0-9_-]{1,32}$/.test(String(c.id || '')) ? String(c.id) : '',
             appName: str(c.appName, d.appName),
-            mode: c.mode === 'kitchen' ? 'kitchen' : 'retail',
+            mode: (c.mode === 'kitchen' || c.mode === 'restaurant') ? c.mode : 'retail',
             customerTypes: [...new Set(types)],
             categories: cats,
             setDiscount: c.setDiscount === false ? false : true,
@@ -3892,10 +3992,16 @@
     function sk(name) { return STORE_PREFIX + name; }
     // 会計で選べる客層（最後は必ず「不明」）
     const CUST_TYPES = [...SITE_CFG.customerTypes, '不明'];
-    // 店舗モード：'retail' 既製品の販売（今までどおり）／ 'kitchen' ファストフード（キッチン・呼び出し）。
+    // 店舗モード：'retail' 既製品の販売（今までどおり）／ 'kitchen' ファストフード（キッチン・呼び出し）／
+    // 'restaurant' レストラン（テーブルで注文を受けて運び、帰る時に伝票でまとめて会計）。
     // 設定から切り替える（閉店中だけ）。共有する時は、開店した端末のモードに合流した端末もそろう。
     let storeMode = SITE_CFG.mode;
-    function isKitchen() { return storeMode === 'kitchen'; }
+    const STORE_MODE_IDS = ['retail', 'kitchen', 'restaurant'];
+    function validStoreMode(m) { return STORE_MODE_IDS.includes(m) ? m : null; }
+    // KD・注文の仕組みを使うモード（ファストフードとレストラン）
+    function isKitchen() { return storeMode === 'kitchen' || storeMode === 'restaurant'; }
+    function isFastFood() { return storeMode === 'kitchen'; }
+    function isRestaurant() { return storeMode === 'restaurant'; }
     // 共有に使う Firebase の置き場（施設ごとに別のプロジェクトなら 'events' のまま）
     const EVENTS_COL = SITE_CFG.eventsCollection;
     // アプリの名前（タブ・ホーム画面・画面の左上）
@@ -4147,9 +4253,15 @@
         // まだ払っていない注文（モバイル・後で会計）も、作る分として残数から引いておく（レジで会計すると売上に移る）。
         // 1台だけの時も同じ（後で会計の注文は、作った時に在庫へ戻してあるため）
         if (isKitchen()) kitchenOrders.forEach(o => {
-            if (o.paid || o.st === 'void' || o.st === 'draft' || o.id === pendingMobileOrderId) return;
+            if (o.billId || o.paid || o.st === 'void' || o.st === 'draft' || o.id === pendingMobileOrderId) return;
             o.items.forEach(i => { if (i.name === p.name) n += i.qty; });
         });
+        // レストランの伝票：頼まれた数から、もう払った数と、いまカートで会計している数を引いた分
+        if (isRestaurant()) openBills().forEach(b => billLines(b).forEach(l => {
+            if (l.name !== p.name) return;
+            const taking = pendingBill && pendingBill.id === b.id ? (pendingBill.take[l.key] || 0) : 0;
+            n += Math.max(0, l.qty - l.paid - taking);
+        }));
         if (!syncMode) return n;
         const same = i => i && (i.id === p.id || i.name === p.name);
         n += cart.filter(same).length;
@@ -4211,6 +4323,7 @@
     let lastTileQty = {};   // 前に描いた時の、商品ごとのカートの個数（増えた時だけ数字を弾ませる）
     function init() {
         if (deferWhileTouching('init', init)) return;
+        if (typeof updateOrderTargetUi === 'function') updateOrderTargetUi();
         const grid = document.getElementById('product-grid');
         grid.innerHTML = '';
         // カートに入っている数（商品ごと）
@@ -4337,8 +4450,9 @@
         const counts = {};
         rec.items.forEach(i => { counts[i.name] = (counts[i.name] || 0) + 1; });
         const summary = Object.entries(counts).map(([n, c]) => `${n}×${c}`).join('、');
-        if (!confirm(`客No.${rec.no || ''} の会計を取り消します。\n［${summary}］ 合計¥${rec.total}\n※販売した商品は在庫に戻ります。よろしいですか？`)) return;
-        kitchenOnVoid(rec);   // キッチンの注文も取り消しにする
+        if (!confirm(`客No.${rec.no || ''} の会計を取り消します。\n［${summary}］ 合計¥${rec.total}\n${rec.billNo ? `※伝票${rec.billNo}の、この分がまた「まだ払っていない」に戻ります。` : '※販売した商品は在庫に戻ります。'}よろしいですか？`)) return;
+        if (rec.billNo) reverseBillPayment(rec);   // 伝票の会計：伝票の払った数から引く（料理はもう出ているので、KDの注文は取り消さない）
+        else kitchenOnVoid(rec);   // キッチンの注文も取り消しにする
         if (syncMode) {
             // 同期中：Firestoreで取消フラグを立てる（全端末に反映）。在庫は購読の再計算で戻る。
             syncUpdateSale(rec.remoteId, { voided: true, voidedAt: Date.now() }, rec.remoteCode);
@@ -5010,6 +5124,7 @@
             pendingType: pending,
             ...(checkoutPay !== 'cash' ? { pay: checkoutPay, payLabel: payLabel(checkoutPay) } : {}),
             ...(isKitchen() && pendingMobileOrderId && !payingLater ? { channel: 'mobile' } : {}),
+            ...(pendingBill && billById(pendingBill.id) ? { channel: 'table', billNo: billNoText(billById(pendingBill.id)), table: billById(pendingBill.id).table } : {}),
             cash: checkoutPay !== 'cash' ? null : cash,
             change: checkoutPay !== 'cash' ? 0 : Math.max(0, cash - total)
         };
@@ -5026,7 +5141,14 @@
         // キッチン：この会計を注文としてキッチンの画面に出す（売上の記録とは別に置く）。
         // モバイルの注文をレジで会計した時は、その注文をもう作っているので「払い済み」にするだけ。
         let kitchenNo = null;
-        if (isKitchen()) {
+        let paidBill = null;
+        if (pendingBill) {
+            // レストランの伝票：注文はもうKDに出ているので、伝票に「払った」を書くだけ
+            paidBill = billById(pendingBill.id);
+            applyBillPayment(pendingBill, record);
+            pendingBill = null;
+            billSplit = null;
+        } else if (isKitchen()) {
             if (pendingMobileOrderId) {
                 const mo = markMobileOrderPaid(pendingMobileOrderId, record);
                 kitchenNo = mo ? orderNoText(mo) : null;
@@ -5054,9 +5176,15 @@
             : (record.change > 0
                 ? `お釣り¥${record.change}（${changeDenoms(record.change).map(d => `${d.unit}×${d.count}`).join('・')}）`
                 : 'お釣りなし');
-        showToast(`記録しました（${isKitchen() ? '番号' + (kitchenNo != null ? kitchenNo : record.no) : '客No.' + record.no} / ${chgText}）`);
+        showToast(`記録しました（${paidBill ? '伝票' + billNoText(paidBill) : (isKitchen() ? '番号' + (kitchenNo != null ? kitchenNo : record.no) : '客No.' + record.no)} / ${chgText}）`);
         // お客様の画面に「ありがとうございました」を出す（ファストフードの時は、呼び出しの番号も）
-        publishCustomerDone(record, isKitchen() && kitchenNo != null ? String(kitchenNo) : null);
+        publishCustomerDone(record, isFastFood() && kitchenNo != null ? String(kitchenNo) : null);
+        // 伝票を分けて払っている途中なら、残りを払う人のために、その伝票の画面に戻る
+        if (paidBill && paidBill.st === 'open' && billTotals(paidBill).rest > 0) {
+            currentBillId = paidBill.id;
+            navTo('tables');
+            openPanel('tables', 'bill');
+        }
     }
 
     // 予約の番号。共有していると2台が同じ瞬間に予約を受けることがあるので、
@@ -5315,7 +5443,7 @@
                     <thead><tr><th>ボタン</th><th>できること</th></tr></thead>
                     <tbody>
                         <tr><td>レジ</td><td>お会計をする画面。ふだんはここにいます。</td></tr>
-                        <tr><td>予約</td><td>先に取り置きしたお客様の一覧。受け取りに来たらここから清算します。<b>ファストフードの時は、ここが「未会計」</b>（後で会計・モバイルの、まだ払っていない注文）になります。</td></tr>
+                        <tr><td>予約</td><td>先に取り置きしたお客様の一覧。受け取りに来たらここから清算します。<b>ファストフードの時は、ここが「未会計」</b>（後で会計・モバイルの、まだ払っていない注文）、<b>レストランの時は「テーブル」</b>（テーブルと伝票の一覧・伝票番号で会計）になります。</td></tr>
                         <tr><td>会計記録</td><td>済んだ会計の一覧。取り消し・修正・領収書の発行ができます。</td></tr>
                         <tr><td>売上集計</td><td>売れ行きや客層などの集計。発表用のまとめやPDFもここから。</td></tr>
                         <tr><td>設定</td><td>商品・在庫の調整、複数端末での共有、CD、このマニュアルなど。<b>「販売の準備」「端末と画面」「印刷」「記録とデータ」</b>の見出しごとにまとまっています。</td></tr>
@@ -5478,7 +5606,7 @@
         },
         {
             id: 'roles', icon: 'device', title: '端末の置き方と、払うタイミング', sub: 'ファストフードの時',
-            kitchenOnly: true,
+            kitchenOnly: true, ffOnly: true,
             body: `
                 <p>ファストフードでは、店の側の画面が4種類あります。<b>「設定 → この端末の役割」</b>の一覧から、端末ごとに1つ選びます（押せばその場で切り替わり、コードの入れ直しは要りません）。</p>
                 <ul class="man-list">
@@ -5498,8 +5626,48 @@
                 <p>閉店の前に<b>「未会計」が0件</b>になっているかを確かめてください（払わずに帰った注文がないか）。</p>`
         },
         {
+            id: 'restaurant', icon: 'table', title: 'レストラン：テーブルと伝票', sub: 'ハンディ・テーブルのQR・伝票で会計',
+            kitchenOnly: true, restOnly: true,
+            body: `
+                <p>席に着いたお客様の注文を<b>テーブルごとの「伝票」</b>にまとめ、料理を先にお出しして、<b>お帰りの時にレジで伝票ごとにまとめて会計</b>します。追加の注文も同じ伝票に足されます。</p>
+                <h4>端末の役割</h4>
+                <ul class="man-list">
+                    <li><b>ハンディ</b>…店員さんが持つ端末。テーブルを選んで注文を受け、KDへ送ります（会計はしません）。画面いっぱいに出て、役割は右上の「役割」から変えられます。</li>
+                    <li><b>KD</b>…注文をテーブルの番号つきで出します。できたら<b>「できた」</b>、お席に運んだら<b>「提供済み」</b>を押します。</li>
+                    <li><b>レジ</b>…伝票の会計をします。レジからテーブルに注文を送ることもできます（カートの「テーブルに送る」）。</li>
+                    <li><b>CD</b>…レジの横で、お客様に金額を見せます。</li>
+                </ul>
+                <h4>注文を受ける（ハンディ）</h4>
+                <ol class="man-steps">
+                    <li>テーブルの一覧から、お客様のテーブルを押します（空いているテーブルは「空き」）。</li>
+                    <li>商品を選び（特注も付けられます）、下の<b>「◯番テーブルに送る」</b>を押します。注文がKDに出ます。</li>
+                    <li>そのテーブルで<b>はじめての注文なら、新しい伝票が開きます</b>。伝票番号（4けた・0001〜）が決まり、伝票を<b>印刷</b>するか、<b>番号を大きく出す</b>ので札に書いてお渡しします（「設定 → テーブルと伝票」で選びます）。</li>
+                    <li>追加の注文は、同じテーブルを押して<b>「注文を足す」</b>。同じ伝票に足されます。伝票を刷り直す時は「伝票を印刷」。</li>
+                </ol>
+                <h4>席からのモバイルオーダー</h4>
+                <ul class="man-list">
+                    <li>「設定 → テーブルと伝票」から、<b>テーブルごとのQRコード</b>を印刷して各テーブルに置きます。「設定 → モバイルオーダー」で受付をオンにします。</li>
+                    <li>お客様が読み取って注文すると、<b>そのテーブルの伝票に自動で足され</b>、KDに出ます（お客様は席番号を入れません。持ち帰り・受け取り時間はありません）。</li>
+                    <li>お客様のスマホには、テーブルと伝票番号・「お作りしています／お持ちしました」が出て、<b>会計が済むと消えます</b>。</li>
+                </ul>
+                <h4>お帰りの時に会計する（レジ）</h4>
+                <ol class="man-steps">
+                    <li>下の<b>「テーブル」</b>を開き、上の欄に<b>伝票番号</b>を入れて「伝票を出す」（数字だけでよく、「12」でも「0012」でも出ます）。テーブルを押しても出ます。</li>
+                    <li>伝票の中身（品目・個数・金額・調理の状態）と合計が出ます。<b>「まとめて会計する」</b>でお会計の窓が開きます。あとはいつもの会計と同じです。</li>
+                    <li><b>別々に払う時</b>は「品目を選んで分けて会計する」で、今回払う品目と数を＋−で選び、「選んだ分を会計する」。残りは伝票に残り、会計の後はその伝票の画面に戻ります。</li>
+                    <li>全部払い終わると伝票が閉じ、<b>テーブルが空きます</b>。次のお客様には新しい伝票が開きます。</li>
+                </ol>
+                <ul class="man-list">
+                    <li>伝票の会計は、頼んだ時の値段で会計します（途中で値段を変えても、伝票の値段のまま）。</li>
+                    <li>伝票の会計を「会計記録」で取り消すと、その分が伝票の「まだ払っていない」に戻ります（閉じていた伝票は開き直します）。伝票の会計は、品目の「修正」はできません（取り消してから、伝票で会計し直します）。</li>
+                    <li>1円も払っていない伝票は「伝票を取り消す」で消せます（KDの注文も取り消されます）。</li>
+                    <li>閉店の時に、まだ会計していない伝票があると、枚数と番号を見せて確かめます。</li>
+                    <li>伝票は、ハンディ2台が同じテーブルに同じ瞬間に注文しても、<b>1枚にまとまります</b>（伝票番号も重なりません）。</li>
+                </ul>`
+        },
+        {
             id: 'mobile', icon: 'qr', title: 'モバイルオーダー', sub: 'お客様のスマホから注文',
-            kitchenOnly: true,
+            kitchenOnly: true, ffOnly: true,
             body: `
                 <p>お客様がQRコードを読むと、スマホで注文の画面が開きます（アプリは要りません）。<b>共有している時だけ</b>使えます。</p>
                 <ol class="man-steps">
@@ -6060,7 +6228,7 @@
         const code = knownShareCode();
         customerMode = false;
         uiPrefs.role = 'register';
-        if (opts && opts.as) uiPrefs.kitchenOnly = opts.as === 'kitchen';
+        if (opts && opts.as) { uiPrefs.kitchenOnly = opts.as === 'kitchen'; uiPrefs.handyOnly = opts.as === 'handy'; }
         try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
         applyCustomerMode();
         // もう一度コードを入れ直させない。
@@ -6079,7 +6247,7 @@
         if (!currentSession) {
             const jc = document.getElementById('join-code-input');
             if (jc) jc.value = code;
-            joinRole = (isKitchen() && uiPrefs.kitchenOnly) ? 'kitchen' : 'register';
+            joinRole = (isKitchen() && uiPrefs.kitchenOnly) ? 'kitchen' : (uiPrefs.handyOnly ? 'handy' : 'register');
         } else {
             const inp = document.getElementById('sync-live-code-input');
             if (inp) inp.value = code;
@@ -6140,11 +6308,13 @@
     const ROLE_INFO = {
         register: { icon: 'register', sub: '商品を打って会計する' },
         kitchen: { icon: 'kitchen', sub: '注文を見て作り、できたら呼び出す（会計はしない）' },
+        handy: { icon: 'handy', sub: 'テーブルで注文を受けてKDへ送る。伝票も出せる（会計はしない）' },
         display: { icon: 'users', sub: 'お客様に金額とおつりを大きく見せる（映すだけ）' },
         call: { icon: 'bolt', sub: '受け取り口に、できあがった番号を映す（映すだけ）' }
     };
     function roleTitle(r) {
         if (r === 'kitchen') return 'KD';
+        if (r === 'handy') return 'ハンディ';
         if (r === 'display') return isKitchen() ? 'CD（金額）' : 'CD';
         if (r === 'call') return 'CD（呼び出し番号）';
         return 'レジ';
@@ -6152,9 +6322,17 @@
     function deviceRole() {
         if (customerMode) return (isKitchen() && uiPrefs.cdCallOnly) ? 'call' : 'display';
         if (isKitchen() && uiPrefs.kitchenOnly) return 'kitchen';
+        if (isRestaurant() && uiPrefs.handyOnly) return 'handy';
         return 'register';
     }
-    function roleChoices() { return isKitchen() ? ['register', 'kitchen', 'display', 'call'] : ['register', 'display']; }
+    // 選べる役割：既製品 レジ・CD／ファストフード レジ・KD・CD（金額）・CD（呼び出し番号）／
+    // レストラン レジ・ハンディ・KD・CD（料理は席まで運ぶので、呼び出し番号の画面は使わない）
+    function roleChoicesFor(mode) {
+        if (mode === 'restaurant') return ['register', 'handy', 'kitchen', 'display'];
+        if (mode === 'kitchen') return ['register', 'kitchen', 'display', 'call'];
+        return ['register', 'display'];
+    }
+    function roleChoices() { return roleChoicesFor(storeMode); }
     function storeUiPrefs() {
         try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) { /* 保存できなくても動く */ }
     }
@@ -6169,7 +6347,10 @@
         // KDの端末では、いちばん左のタブが「KD」になる（押すとKDの画面に戻る。レジの画面は出さない）
         const nr = document.getElementById('nav-register');
         if (nr) nr.innerHTML = k ? '<svg class="ic nav-ico"><use href="#ic-kitchen"/></svg>KD' : '<svg class="ic nav-ico"><use href="#ic-register"/></svg>レジ';
+        if (!handyNow() && orderTarget && deviceRole() === 'handy') orderTarget = null;
+        updateOrderTargetUi();
         if (k && currentView === 'register') navTo('kitchen');
+        if (handyNow() && currentView === 'register' && !orderTarget) navTo('tables');
         // KDではなくなった時は、履歴の中のKDの画面をレジに置きかえる（「戻る」でKDに行かないように）
         if (!k) {
             navStack = navStack.map(e => e.view === 'kitchen' ? { view: 'register', sub: null } : e);
@@ -6178,7 +6359,15 @@
         updateKdFull();
     }
     // KDの端末で、KDの画面を出している間は、上の帯・下のタブ・見出しを隠して画面いっぱいに使う
+    // ハンディ：営業中は上の帯と下のタブを隠し、テーブルの画面を画面いっぱいに出す
+    function handyNow() { return !customerMode && deviceRole() === 'handy' && !!currentSession; }
+    function updateHdFull() {
+        const on = handyNow();
+        document.body.classList.toggle('hd-full', on);
+        document.body.classList.toggle('hd-home', on && currentView === 'tables' && currentSub !== 'bill');
+    }
     function updateKdFull() {
+        updateHdFull();
         const on = kitchenOnlyNow() && currentView === 'kitchen';
         document.body.classList.toggle('kd-full', on);
         if (!on) return;
@@ -6228,14 +6417,15 @@
             renderSyncRoleList();
             return;
         }
-        // レジ・キッチン（どちらも販売会のデータを持つ端末）
-        const kitchen = role === 'kitchen';
-        // 閉店中のKDも、合流する時に選ぶ（開いている販売会のKDとして入る）
-        if (kitchen && !customerMode && !currentSession) { openJoinAs(role); return; }
-        if (kitchen && !customerMode && currentSession && !syncMode
-            && !confirm('この端末は、ほかの端末と共有していません。\nKDにしている間は、この端末では会計できません。\n（会計する時は、KDの画面の右上の「役割」から、レジに戻します）\n\nKDにしますか？')) return;
-        if (kitchen && cart.length > 0) {
-            if (!confirm('いま打ちかけの商品があります。\nKDにすると、この端末では会計しません。\n\n打ちかけの内容を取り消して切り替えますか？')) return;
+        // レジ・KD・ハンディ（どれも販売会のデータを持つ端末）
+        const kitchen = role === 'kitchen', handy = role === 'handy';
+        const notRegister = kitchen || handy;
+        // 閉店中のKD・ハンディも、合流する時に選ぶ（開いている販売会のKD・ハンディとして入る）
+        if (notRegister && !customerMode && !currentSession) { openJoinAs(role); return; }
+        if (notRegister && !customerMode && currentSession && !syncMode
+            && !confirm(`この端末は、ほかの端末と共有していません。\n${roleTitle(role)}にしている間は、この端末では会計できません。\n（会計する時は、画面の右上の「役割」から、レジに戻します）\n\n${roleTitle(role)}にしますか？`)) return;
+        if (notRegister && cart.length > 0) {
+            if (!confirm(`いま打ちかけの商品があります。\n${roleTitle(role)}にすると、この端末では会計しません。\n\n打ちかけの内容を取り消して切り替えますか？`)) return;
             if (!syncMode) cart.forEach(item => restockOne(products.find(p => p.id === item.id)));
             cart = [];
             saveData();
@@ -6244,14 +6434,17 @@
         if (customerMode) {
             await exitCustomerMode({ quiet: true, as: role });
             if (customerMode) return;          // パスコードで止められた
-            // 映すだけだった端末（まだ販売会に入っていない）は、KDとして合流する画面へ
-            if (kitchen && !currentSession) { uiPrefs.kitchenOnly = true; storeUiPrefs(); openJoinAs('kitchen'); return; }
+            // 映すだけだった端末（まだ販売会に入っていない）は、KD・ハンディとして合流する画面へ
+            if (notRegister && !currentSession) { uiPrefs.kitchenOnly = kitchen; uiPrefs.handyOnly = handy; storeUiPrefs(); openJoinAs(role); return; }
         }
         uiPrefs.kitchenOnly = kitchen;
+        uiPrefs.handyOnly = handy;
         storeUiPrefs();
-        if (!kitchen && syncMode && isKitchen()) ensureKitchenLetter(syncEventCode);   // レジになったら、レジの番号を決める
+        if (!notRegister && syncMode && isKitchen()) ensureKitchenLetter(syncEventCode);   // レジになったら、レジの番号を決める
+        if (!handy) orderTarget = null;
         applyDeviceRole();
         if (kitchen && currentSession) navTo('kitchen');
+        if (handy && currentSession) navTo('tables');
         if (!kitchen && currentView === 'kitchen') showRegister();
         beatPresence();
         showToast(`${roleTitle(role)}にしました`);
@@ -6358,7 +6551,7 @@
             if (d) mobileCfg = normMobileCfg(d.mobile);
             if (d) acceptCdCfgFromEvent(d);    // 明るさ・広告・支払い方法
             // 映している販売会の店舗モードにそろえる（ファストフードなら呼び出し番号を受け取る）
-            if (d && (d.storeMode === 'kitchen' || d.storeMode === 'retail') && d.storeMode !== storeMode) {
+            if (d && validStoreMode(d.storeMode) && d.storeMode !== storeMode) {
                 storeMode = d.storeMode;
                 saveData();
                 applyStoreMode();
@@ -7256,7 +7449,7 @@
         { id: 'session',   label: '開店・合流・閉店',       ex: 'ヘッダーの「開店・合流」「閉店する」' }
     ];
     const LOCK_DEFAULT_ALLOW = { reserve: true, records: true, edit: false, analytics: false, session: false };
-    const VIEW_PERM = { reservations: 'reserve', unpaid: 'reserve', records: 'records', analytics: 'analytics', session: 'session', settings: 'settings' };
+    const VIEW_PERM = { reservations: 'reserve', unpaid: 'reserve', tables: 'reserve', records: 'records', analytics: 'analytics', session: 'session', settings: 'settings' };
     function normLock(l) {
         if (!l || typeof l !== 'object' || typeof l.hash !== 'string' || !l.hash) return null;
         const allow = {};
@@ -8010,7 +8203,7 @@
     let manualOpenId = 'flow';   // 画面で開いている章（はじめは「全体の流れ」）
 
     // 店舗モードに関係のない項目は出さない（キッチンの項目は、キッチンのお店だけ）
-    function manualSections() { return MANUAL_ALL.filter(sec => !sec.kitchenOnly || isKitchen()); }
+    function manualSections() { return MANUAL_ALL.filter(sec => (!sec.kitchenOnly || isKitchen()) && (!sec.ffOnly || isFastFood()) && (!sec.restOnly || isRestaurant())); }
 
     function renderManual() {
         const box = document.getElementById('manual-body');
@@ -8143,6 +8336,14 @@
         const from = checkoutFrom;
         checkoutFrom = null;
         if (!from) return;
+        // 伝票から読み込んだカートも元に戻す（伝票は、払っていないまま残る）
+        if (pendingBill) {
+            if (!syncMode) cart.forEach(item => restockOne(products.find(p => p.id === item.id)));
+            cart = [];
+            pendingBill = null;
+            saveData();
+            init();
+        }
         // 未会計の注文を読み込んだカートは元に戻す（注文は未会計のまま一覧に残る）
         if (pendingMobileOrderId) {
             if (!syncMode) cart.forEach(item => restockOne(products.find(p => p.id === item.id)));
@@ -8229,7 +8430,7 @@
                         );
                         if (!ok) return;
                         joinedProducts = data.products;
-                        joinedMode = (data.storeMode === 'kitchen' || data.storeMode === 'retail') ? data.storeMode : null;
+                        joinedMode = validStoreMode(data.storeMode);
                         if (Array.isArray(data.categories)) joinedCats = data.categories;
                         if (data.payCfg) joinedPay = data.payCfg;
                         if (data.cdCfg) joinedCd = data.cdCfg;
@@ -8323,6 +8524,7 @@
         salesHistory = [];
         reservations = [];
         kitchenOrders = [];
+        bills = []; billSeqLocal = 0; orderTarget = null; pendingBill = null; billSplit = null;
         kitchenSeen = new Set();
         mobileCfg = freshMobileCfg(); mmLast = '';
         cart = [];
@@ -8426,7 +8628,12 @@
         if (cart.length > 0) confirmMsg = `【！】カートに${cart.length}点の打ちかけが残っています。このまま閉店すると破棄されます。\n\n` + confirmMsg;
         // まだ払っていない注文（モバイル・後で会計）は、閉店すると売上に入らないまま終わる。
         // 来なかった注文もあるので止めはしないが、必ず件数と番号を見せて確かめる。
-        const unpaid = isKitchen() ? unpaidOrders() : [];
+        const unpaid = isFastFood() ? unpaidOrders() : [];
+        const openB = isRestaurant() ? openBills().filter(b => billTotals(b).rest > 0) : [];
+        if (openB.length) {
+            confirmMsg = `【！】まだ会計していない伝票が${openB.length}枚あります（${openB.slice(0, 8).map(b => `${billNoText(b)}・${b.table}番`).join('、')}${openB.length > 8 ? ' ほか' : ''}）。\n`
+                + 'このまま閉店すると、その分は売上に入りません。「テーブル」から会計してから閉店してください。\n\n' + confirmMsg;
+        }
         if (unpaid.length) {
             confirmMsg = `【！】まだ払っていない注文が${unpaid.length}件あります（${unpaid.slice(0, 8).map(orderNoText).join('、')}${unpaid.length > 8 ? ' ほか' : ''}）。\n`
                 + 'このまま閉店すると、その分は売上に入りません。受け取りに来なかった注文なら、そのまま閉店してかまいません。\n\n' + confirmMsg;
@@ -8487,6 +8694,7 @@
         cart = [];
         reservations = [];
         kitchenOrders = [];
+        bills = []; billSeqLocal = 0; orderTarget = null; pendingBill = null; billSplit = null;
         kdLast = ''; kdStartedAt = 0; pendingMobileOrderId = null;   // 会計中の注文の控えも捨てる
         mobileCfg = freshMobileCfg(); mmLast = '';
         receiptCounter = 0;
@@ -9123,10 +9331,11 @@
     function setQrRole(r) { qrRole = pickRole(r); playSound(660, 0.05); renderShareQr(); }
     // 役割の切り替えボタンの並び（合流の画面とQRコードで同じものを使う）
     function roleSegHTML(cur, fn, idPrefix) {
-        const short = { register: 'レジ', kitchen: 'KD', display: isKitchen() ? 'CD 金額' : 'CD', call: 'CD 呼び出し' };
+        const short = { register: 'レジ', handy: 'ハンディ', kitchen: 'KD', display: isFastFood() ? 'CD 金額' : 'CD', call: 'CD 呼び出し' };
         return roleChoices().map(r => `<button type="button"${idPrefix ? ` id="${idPrefix}${r}"` : ''} class="${cur === r ? 'on' : ''}" aria-pressed="${cur === r}" onclick="${fn}('${r}')"><svg class="ic"><use href="#ic-${ROLE_INFO[r].icon}"/></svg>${short[r]}</button>`).join('');
     }
     function roleAsText(r) {
+        if (r === 'handy') return 'ハンディとして';
         return r === 'kitchen' ? 'KDの端末として' : (r === 'display' ? (isKitchen() ? 'CD（金額）として' : 'CDとして') : (r === 'call' ? 'CD（呼び出し番号）として' : 'レジとして'));
     }
     function renderShareQr() {
@@ -10939,10 +11148,11 @@
     // レジ以外の画面も「重ねる」のではなく「切り替える」。ヘッダーとボトムナビは常に残す。
     // 各画面は必要に応じて「一覧 → 個別」の2段階にして、1画面あたりの情報量を絞る
     // （スクロールしないと目的の操作にたどり着けない状態をなくすため）。
-    const PANEL_VIEWS = ['kitchen', 'unpaid', 'reservations', 'records', 'analytics', 'settings', 'session'];
+    const PANEL_VIEWS = ['kitchen', 'unpaid', 'tables', 'reservations', 'records', 'analytics', 'settings', 'session'];
     const VIEW_TITLES = {
         kitchen: 'KD',
         unpaid: '未会計の注文',
+        tables: 'テーブル',
         reservations: '予約',
         records: '会計記録',
         analytics: '売上集計',
@@ -10957,6 +11167,9 @@
         'pay': '支払い方法',
         'mobile': 'モバイルオーダー',
         'mobile-pay': '未会計の注文',
+        'tables-home': 'テーブル',
+        'bill': '伝票',
+        'rest': 'テーブルと伝票',
         'customer': 'CD',
         'role': 'この端末の役割',
         'cd': 'CD（お客様用の画面）',
@@ -11032,6 +11245,8 @@
     function renderNav() {
         // キッチン用の端末は、営業中はレジの画面を出さずにキッチンの画面を出す
         if (navTop().view === 'register' && kitchenOnlyNow()) navStack = [{ view: 'kitchen', sub: null }];
+        // ハンディの端末は、テーブルに注文を足している間だけレジの画面（商品を選ぶ）を使う
+        if (navTop().view === 'register' && handyNow() && !orderTarget) navStack = [{ view: 'tables', sub: null }];
         const top = navTop();
         currentView = top.view;
         currentSub = top.sub;
@@ -11176,6 +11391,7 @@
         if (view === 'kitchen') { renderKitchen(); startKitchenTick(); }
         else if (view === 'reservations') renderReservations();
         else if (view === 'unpaid') renderMobilePayView();
+        else if (view === 'tables') { if (sub === 'bill') renderBillView(); else renderTablesView(); }
         else if (view === 'records') { resetRecordsView(); renderRecords(); }
         else if (view === 'settings') {
             if (!sub) renderSettingsMenu();
@@ -11189,6 +11405,7 @@
             else if (sub === 'pay') renderPayView();
             else if (sub === 'mobile') renderMobileView();
             else if (sub === 'mobile-pay') renderMobilePayView();
+            else if (sub === 'rest') renderRestView();
             else if (sub === 'pdf-import') renderPdfImport();
             else if (sub === 'display') { updateFullscreenButton(); renderThemeSettings(); renderClockSettings(); renderLockEntry(); }
             else if (sub === 'lock') { lockDraft = null; lockReuse = true; renderLockView(); }
@@ -11300,6 +11517,7 @@
             menuRow('tag', '商品の分類', categories.map(c => escHtml(c.label)).join('・'), "openPanel('settings','cats')") +
             menuRow('ticket', 'セット割・クーポン', discountSub(), "openPanel('settings','coupon')") +
             menuRow('yen', '支払い方法', paySub(), "openPanel('settings','pay')") +
+            (isRestaurant() ? menuRow('table', 'テーブルと伝票', restSub(), "openPanel('settings','rest')") : '') +
             (isKitchen() ? menuRow('qr', 'モバイルオーダー', mobileSub(), "openPanel('settings','mobile')") : '') +
             menuRow('target', '売上目標', setGoalSub(), "openPanel('settings','goal')") +
             head('端末と画面') +
@@ -11369,7 +11587,7 @@
             state: (now - lastAt > EVENT_STALE_MS) ? 'stale' : 'open',
             openedAt: Number(d.openedAt) || 0, lastAt,
             registers, displays: active.length - registers,
-            storeMode: d.storeMode === 'kitchen' ? 'kitchen' : 'retail'
+            storeMode: validStoreMode(d.storeMode) || 'retail'
         };
     }
     // 販売会の様子を調べる。state は open（合流できる）/ closed / stale（長く使われていない）/ none / unknown（通信できない）
@@ -11409,7 +11627,7 @@
     //  ・開き直されている（閉店になっていない／別の回になっている）
     //  ・まだ閉店を受け取っていないレジ役の端末がいる（その端末が閉店を受け取って、自分の集計を残すまで待つ）
     //    → その端末が閉店を受け取った時に、あらためて片づける
-    const PURGE_SUBCOLS = ['sales', 'reservations', 'orders', 'devices', 'live'];
+    const PURGE_SUBCOLS = ['sales', 'reservations', 'orders', 'bills', 'tables', 'devices', 'live'];
     async function purgeClosedEvent(code, opts) {
         const c = sanitizeEventCode(code || '');
         if (!c || !fbDb || !syncReady) return false;
@@ -11578,7 +11796,7 @@
     }
     // カードの行から：レジとして、その場で合流する
     function joinQuick(code) {
-        joinRole = uiPrefs.kitchenOnly ? 'kitchen' : 'register';   // KDの端末は、KDのまま入る
+        joinRole = uiPrefs.kitchenOnly ? 'kitchen' : (uiPrefs.handyOnly ? 'handy' : 'register');   // KD・ハンディの端末は、そのまま入る
         return joinEvent(code);
     }
 
@@ -11587,11 +11805,11 @@
     // （キッチンと呼び出し番号は、ファストフードの販売会の時だけ選べる）
     let joinRole = 'register';
     function joinChoices() {
-        const k = isKitchen() || openSyncPeek.storeMode === 'kitchen';
-        return k ? ['register', 'kitchen', 'display', 'call'] : ['register', 'display'];
+        // 合流先の販売会のモードが分かっていれば、そのモードの役割を並べる
+        return roleChoicesFor(validStoreMode(openSyncPeek.storeMode) || storeMode);
     }
     function setJoinRole(r) {
-        joinRole = ['register', 'kitchen', 'display', 'call'].includes(r) ? r : 'register';
+        joinRole = ['register', 'handy', 'kitchen', 'display', 'call'].includes(r) ? r : 'register';
         setJoinRoleQuiet(joinRole);
         playSound(660, 0.05);
         renderJoinPeek();
@@ -11636,12 +11854,14 @@
             // お客様用の表示（お会計の表示・呼び出し番号）：映すだけなので、この端末の売上データには触らない
             uiPrefs.cdCallOnly = joinRole === 'call' && info.storeMode === 'kitchen';
             uiPrefs.kitchenOnly = false;
+            uiPrefs.handyOnly = false;
             if (!enterCustomerMode(c)) return false;
             navTo('register');
             return true;
         }
         // キッチン：レジと同じように合流して、キッチンの画面だけを出す
-        uiPrefs.kitchenOnly = joinRole === 'kitchen' && info.storeMode === 'kitchen';
+        uiPrefs.kitchenOnly = joinRole === 'kitchen' && (info.storeMode === 'kitchen' || info.storeMode === 'restaurant');
+        uiPrefs.handyOnly = joinRole === 'handy' && info.storeMode === 'restaurant';
         storeUiPrefs();
         openSyncPeek = { code: c, state: 'open', name: info.name, storeMode: info.storeMode };
         const codeInput = document.getElementById('sync-event-code-input');
@@ -11735,7 +11955,7 @@
         // （合流する時に、ファストフードでなければ キッチン→レジ、呼び出し番号→お会計の表示 になる）
         const cur = list.includes(r) ? r : (r === 'call' ? 'display' : 'register');
         const kitchenLike = list.length > 2;
-        const short = { register: 'レジとして使う', kitchen: 'KD', display: kitchenLike ? 'CD 金額' : 'CD', call: 'CD 呼び出し' };
+        const short = { register: list.includes('handy') ? 'レジ' : 'レジとして使う', handy: 'ハンディ', kitchen: 'KD', display: list.includes('call') ? 'CD 金額' : 'CD', call: 'CD 呼び出し' };
         box.className = 'seg-pick' + (kitchenLike ? ' four' : '');
         box.innerHTML = list.map(k => `<button type="button" id="join-role-${k}" class="${cur === k ? 'on' : ''}" aria-pressed="${cur === k}" onclick="setJoinRole('${k}')"><svg class="ic"><use href="#ic-${ROLE_INFO[k].icon}"/></svg>${short[k]}</button>`).join('');
     }
@@ -11888,7 +12108,8 @@
         };
         set('nav-reservations', reservations.length);
         set('nav-records', salesHistory.filter(h => h.pendingType).length);
-        set('nav-unpaid', isKitchen() && currentSession ? unpaidOrders().length : 0);
+        set('nav-unpaid', isFastFood() && currentSession ? unpaidOrders().length : 0);
+        set('nav-tables', isRestaurant() && currentSession ? openBills().length : 0);
     }
 
     // 閉店中はレジ上に「開店する」CTAを重ねる（初見でも次の一手が分かる）
@@ -12564,7 +12785,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, cdCfg, cdCfgBy, mobileKeep, coupons, couponsBy, couponCodes, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
+        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, cdCfg, cdCfgBy, mobileKeep, coupons, couponsBy, couponCodes, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, bills, billSeqLocal, restCfg, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -12575,7 +12796,10 @@
         salesHistory = Array.isArray(data.salesHistory) ? data.salesHistory : [];
         reservations = Array.isArray(data.reservations) ? data.reservations : [];
         kitchenOrders = Array.isArray(data.orders) ? data.orders.map(normOrder).filter(Boolean) : [];
-        storeMode = (data.storeMode === 'kitchen' || data.storeMode === 'retail') ? data.storeMode : SITE_CFG.mode;
+        bills = Array.isArray(data.bills) ? data.bills.map(normBill).filter(Boolean) : [];
+        billSeqLocal = Number(data.billSeqLocal) || 0;
+        restCfg = normRestCfg(data.restCfg);
+        storeMode = validStoreMode(data.storeMode) || SITE_CFG.mode;
         setCategories(data.categories);
         payCfg = normPayCfg(data.payCfg);
         payCfgBy = typeof data.payCfgBy === 'string' ? data.payCfgBy : '';
@@ -12922,11 +13146,11 @@
         requestAnimationFrame(() => { if (body && currentView === 'records' && body.scrollTop !== keepTop) body.scrollTop = keepTop; });
         // ファストフードの時：会計済と未会計を切り替えて見る
         const kindBox = document.getElementById('records-kind');
-        const unpaid = isKitchen() ? unpaidOrders() : [];
+        const unpaid = isFastFood() ? unpaidOrders() : [];
         if (kindBox) {
-            kindBox.style.display = isKitchen() ? '' : 'none';
-            if (!isKitchen()) recordsKind = 'paid';
-            kindBox.innerHTML = isKitchen() ? `<button type="button" class="${recordsKind === 'paid' ? 'on' : ''}" aria-pressed="${recordsKind === 'paid'}" onclick="setRecordsKind('paid')">会計済<b>${salesHistory.length}</b></button><button type="button" class="${recordsKind === 'unpaid' ? 'on' : ''}" aria-pressed="${recordsKind === 'unpaid'}" onclick="setRecordsKind('unpaid')">未会計<b>${unpaid.length}</b></button>` : '';
+            kindBox.style.display = isFastFood() ? '' : 'none';
+            if (!isFastFood()) recordsKind = 'paid';
+            kindBox.innerHTML = isFastFood() ? `<button type="button" class="${recordsKind === 'paid' ? 'on' : ''}" aria-pressed="${recordsKind === 'paid'}" onclick="setRecordsKind('paid')">会計済<b>${salesHistory.length}</b></button><button type="button" class="${recordsKind === 'unpaid' ? 'on' : ''}" aria-pressed="${recordsKind === 'unpaid'}" onclick="setRecordsKind('unpaid')">未会計<b>${unpaid.length}</b></button>` : '';
         }
         if (recordsKind === 'unpaid') {
             renderRecordsNotice(0);
@@ -13021,7 +13245,7 @@
             return `
                 <div class="res-card${h.pendingType ? ' is-pending' : ''}"${editing ? ' style="outline:2px solid var(--accent);"' : ''}>
                     <div class="res-header">
-                        <span class="rc-no">客No. ${h.no || '-'}${h.deviceLabel ? ` <span style="font-size:11px; color:var(--text-light); font-weight:normal;">［${h.deviceLabel}］</span>` : ''}${h.edited ? ' <span style="font-size:11px; color:var(--danger-ink); font-weight:normal;">(修正済)</span>' : ''}</span>
+                        <span class="rc-no">客No. ${h.no || '-'}${h.billNo ? ` <span style="font-size:12px; color:var(--accent-ink);">伝票${escHtml(h.billNo)}・${escHtml(h.table || '')}番</span>` : ''}${h.deviceLabel ? ` <span style="font-size:11px; color:var(--text-light); font-weight:normal;">［${h.deviceLabel}］</span>` : ''}${h.edited ? ' <span style="font-size:11px; color:var(--danger-ink); font-weight:normal;">(修正済)</span>' : ''}</span>
                         <span style="color:var(--text-light); font-size:12.5px; font-weight:normal;">${dtStr}</span>
                     </div>
                     ${h.pendingType ? '<div class="rc-flag"><svg class="ic"><use href="#ic-alert"/></svg>客属性が未入力</div>' : ''}
@@ -13062,6 +13286,12 @@
     let editingRecordIdx = null;
     function toggleEditRecord(idx) {
         if (idx != null && !requirePerm('edit', () => toggleEditRecord(idx))) return;
+        // 伝票の会計は、品目を直すと伝票の「払った数」と食い違うので、取り消してから伝票で会計し直す
+        if (idx != null && salesHistory[idx] && salesHistory[idx].billNo) {
+            playError();
+            alert('伝票の会計は、ここでは直せません。\n「取り消し」で伝票に戻してから、テーブルの画面で伝票をもう一度会計してください。');
+            return;
+        }
         editingRecordIdx = idx;
         renderRecords();
     }
@@ -13269,6 +13499,7 @@
     }
     // その会計の注文番号（ファストフードの時。無ければ客No.）
     function recordOrderNo(h) {
+        if (h && h.billNo) return '伝票' + h.billNo;
         if (isKitchen()) {
             const o = kitchenOrders.find(x => x.key && x.key === orderKeyOf(h) && x.st !== 'void');
             if (o) return orderNoText(o);
@@ -14360,6 +14591,19 @@
                 init();
                 if (currentView === 'settings' && currentSub === 'cats') renderCategoriesView();
             }
+            // レストラン：テーブルの数・伝票の渡し方も全端末でそろえる
+            if (syncMode && d && isRestaurant()) {
+                if (!d.rest && d.restBy === undefined) writeRestCfg(restCfg);
+                else if (d.rest) {
+                    const rc = normRestCfg(d.rest);
+                    if (JSON.stringify(rc) !== JSON.stringify(restCfg)) {
+                        restCfg = rc;
+                        saveData();
+                        if (currentView === 'settings' && currentSub === 'rest') renderRestView();
+                        if (currentView === 'tables') renderTablesView();
+                    }
+                }
+            }
             // モバイルオーダーの受付（受付中／停止中・お知らせ）も全端末でそろえる
             if (syncMode && d) {
                 const mc = normMobileCfg(d.mobile);
@@ -14400,12 +14644,12 @@
                 if (currentView === 'settings' && !currentSub) renderSettingsMenu();
             }
             // 店舗モードも、開店した端末にそろえる（合流した時・営業中に合流させた時）
-            if (syncMode && d && (d.storeMode === 'kitchen' || d.storeMode === 'retail') && d.storeMode !== storeMode) {
+            if (syncMode && d && validStoreMode(d.storeMode) && d.storeMode !== storeMode) {
                 storeMode = d.storeMode;
                 saveData();
                 applyStoreMode();
                 if (isKitchen()) startOrdersSubscription(code); else stopOrdersSubscription();
-                showToast(isKitchen() ? 'この販売会はファストフードのモードです' : 'この販売会は既製品の販売のモードです');
+                showToast(`この販売会は「${storeModeLabel()}」のモードです`);
             }
             // セット割のオン・オフも全端末でそろえる。
             // （同じカゴなのに端末によって10円違う、ということが起きないように）
@@ -14565,6 +14809,8 @@
     // 状態：調理中（注文が入ったらすぐ）→ 呼び出し中 → 受け渡し済み（取り消しは void）。
     // 会計が終わる前のレジのカートは「会計中」（draft）として出し、点滅させる。
     const KITCHEN_ST = { draft: '会計中', cook: '調理中', ready: '呼び出し中', done: '受け渡し済み', void: '取り消し' };
+    // 画面に出す状態の名前（レストランは料理を席まで運ぶので「できた」「提供済み」）
+    function kitchenStLabel(st) { return (isRestaurant() && { ready: 'できた', done: '提供済み' }[st]) || KITCHEN_ST[st]; }
     const KITCHEN_NEXT = { cook: 'ready', ready: 'done' };
     const KITCHEN_PREV = { ready: 'cook', done: 'ready' };
     const KITCHEN_WARN_MIN = 5;     // これより待たせている注文は、経過時間を黄色に
@@ -14654,7 +14900,9 @@
             dine: d.dine === 'eat' ? 'eat' : 'take', items, st,
             t: { ready: Number(t.ready) || 0, done: Number(t.done) || 0, void: Number(t.void) || 0 },
             chk: [...new Set(chk)], edited: !!d.edited, dev: String(d.dev || ''), roundId: d.roundId || '',
-            channel: d.channel === 'mobile' ? 'mobile' : 'pos',
+            channel: d.channel === 'mobile' ? 'mobile' : (d.channel === 'handy' ? 'handy' : 'pos'),
+            // レストラン：どの伝票（テーブル）の注文か
+            billId: /^b-[0-9a-z-]{4,60}$/.test(String(d.billId || '')) ? String(d.billId) : '', table: normTable(d.table),
             // 払い済みか。モバイルと「後で会計」の注文は、レジで会計するまで未払い
             paid: d.paid === false ? false : (d.channel === 'mobile' ? !!d.paid : true),
             later: !!d.later, sno: Number(d.sno) || 0,
@@ -14772,6 +15020,7 @@
     let kdTimer = null, kdLast = '', kdStartedAt = 0;
     function publishKitchenDraft(force) {
         if (!isKitchen() || !syncMode || !syncEventCode || !fbDb || customerMode) return;
+        if (isRestaurant() && (orderTarget || deviceRole() === 'handy')) { clearKitchenDraft(); return; }
         if (kdTimer) clearTimeout(kdTimer);
         kdTimer = setTimeout(() => {
             kdTimer = null;
@@ -14824,7 +15073,7 @@
         return c ? c.dataset.id : null;
     }
     // 渡してよいか：払い済み、または店内で食べる注文（帰る時に払う）
-    function canHandOver(o) { return !!o && (o.paid || o.dine === 'eat'); }
+    function canHandOver(o) { return !!o && (o.paid || o.dine === 'eat' || isRestaurant()); }
     function kitchenGo(btn) {
         const id = cardIdOf(btn);
         const o = kitchenOrders.find(x => x.id === id);
@@ -14942,7 +15191,8 @@
         const stn = kitchenStation();
         const mine = o => stn === 'all' || o.items.some(x => x.type === stn);
         const c = kitchenCounts(mine);
-        const tabs = [['active', '全て'], ['cook', '調理中'], ['ready', '呼び出し中'], ['done', '完了']];
+        const tabs = isRestaurant() ? [['active', '全て'], ['cook', '調理中'], ['ready', 'できた'], ['done', '提供済み']]
+            : [['active', '全て'], ['cook', '調理中'], ['ready', '呼び出し中'], ['done', '完了']];
         // 受け取り時間を選べる時（または時間指定の注文が残っている時）だけ「時間指定」を出す
         // （「予約」は、設定から開く予約の機能と取り違えるので使わない）
         if (mobileCfg.pick || c.held) tabs.push(['held', '時間指定']);
@@ -15030,26 +15280,30 @@
                 return `<li class="${done ? 'done' : ''}${other ? ' other' : ''}" style="--ink:${catInk(x.type)};">
                     <button type="button" ${canTap && !other ? '' : 'disabled'} data-key="${escHtml(k)}" onclick="kitchenCheck(this, this.dataset.key)"><span class="kds-mi" aria-label="${done ? 'できた' : 'まだ'}">未</span><span class="qty">${x.qty}</span><span class="nm">${escHtml(x.name)}${x.opt ? `<span class="kds-opt">${escHtml(x.opt)}</span>` : ''}</span></button></li>`;
             }).join('');
-            const no = o.st === 'draft' ? '会計中' : '#' + escHtml(orderNoText(o));
+            const no = o.st === 'draft' ? '会計中' : (o.table ? escHtml(tableLabel(o.table)) : '#' + escHtml(orderNoText(o)));
+            const rest = isRestaurant();
             // 「未」をまとめて消すボタン（全部済みの時は、まとめて「未」に戻す）
             const allBtn = canTap ? `<button type="button" class="kds-all" onclick="kitchenCheckAll(this)" aria-label="${left ? '未をまとめて消す' : '未にまとめて戻す'}"><svg class="ic"><use href="#ic-${left ? 'check' : 'undo'}"/></svg>${left ? 'まとめて済' : '戻す'}</button>` : '';
+            // レストランは料理を席まで運ぶので、「呼び出し」は「できた」、「受け渡し完了」は「提供済み」
+            const goLabel = rest ? 'できた' : '呼び出し';
             let foot;
             if (held) foot = `<button type="button" class="kds-go" onclick="kitchenRelease(this)"><svg class="ic"><use href="#ic-bolt"/></svg>いま作り始める</button>`;
             else if (o.st === 'draft') foot = allBtn + `<div class="kds-wait">レジで会計しています</div>`;
-            else if (o.st === 'cook') foot = allBtn + `<button type="button" class="kds-go" ${left ? 'disabled' : ''} onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-bolt"/></svg>${left ? `呼び出し（未 ${left}）` : '呼び出し'}</button>`;
+            else if (o.st === 'cook') foot = allBtn + `<button type="button" class="kds-go" ${left ? 'disabled' : ''} onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-bolt"/></svg>${left ? `${goLabel}（未 ${left}）` : goLabel}</button>`;
             else if (o.st === 'ready') foot = `<button type="button" class="kds-undo" onclick="kitchenBack(this)" aria-label="調理中に戻す"><svg class="ic"><use href="#ic-undo"/></svg></button>`
-                + (canHandOver(o) ? `<button type="button" class="kds-go" onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-check"/></svg>${o.paid ? '受け渡し完了' : '受け渡し完了（お代は帰る時）'}</button>`
+                + (canHandOver(o) ? `<button type="button" class="kds-go" onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-check"/></svg>${rest ? '提供済み' : (o.paid ? '受け渡し完了' : '受け渡し完了（お代は帰る時）')}</button>`
                     : `<button type="button" class="kds-go" disabled><svg class="ic"><use href="#ic-alert"/></svg>未会計（会計してから渡す）</button>`);
-            else foot = `<button type="button" class="kds-go" onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-undo"/></svg>呼び出しに戻す</button>`;
+            else foot = `<button type="button" class="kds-go" onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-undo"/></svg>${rest ? 'できたに戻す' : '呼び出しに戻す'}</button>`;
             return `<article class="${cls.join(' ')}" data-id="${escHtml(o.id)}">
                 <div class="kds-head">
                     <span class="kds-no">${no}</span>
-                    <span class="kds-dine">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>
-                    ${o.channel === 'mobile' ? `<span class="kds-tag">モバイル${o.paid ? '' : '・未払い'}</span>` : (o.later ? `<span class="kds-tag">${o.paid ? '後で会計・払い済み' : '後で会計・未払い'}</span>` : '')}
+                    ${o.billId ? `<span class="kds-tag">伝票${escHtml(String(o.no))}・${o.channel === 'mobile' ? 'モバイル' : (o.channel === 'handy' ? 'ハンディ' : 'レジ')}</span>`
+                        : `<span class="kds-dine">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>
+                    ${o.channel === 'mobile' ? `<span class="kds-tag">モバイル${o.paid ? '' : '・未払い'}</span>` : (o.later ? `<span class="kds-tag">${o.paid ? '後で会計・払い済み' : '後で会計・未払い'}</span>` : '')}`}
                     ${o.pickupAt ? `<span class="kds-tag kds-pick">受取 ${hmOf(o.pickupAt)}</span>` : ''}
                     <span class="kds-min">${held ? `${hmOf(orderStartAt(o))}に出ます` : `${min}分`}</span>
                 </div>
-                ${o.st !== 'cook' && o.st !== 'draft' ? `<div class="kds-state">${KITCHEN_ST[o.st]}</div>` : ''}
+                ${o.st !== 'cook' && o.st !== 'draft' ? `<div class="kds-state">${kitchenStLabel(o.st)}</div>` : ''}
                 ${o.edited ? '<div class="kds-edit">レジで中身が直されました</div>' : ''}
                 <ul class="kds-items">${items}</ul>
                 ${o.st !== 'draft' ? `<div class="kds-sub"><button type="button" class="kds-print" onclick="printKitchenTicket(this)"><svg class="ic"><use href="#ic-printer"/></svg>伝票</button></div>` : ''}
@@ -15181,9 +15435,11 @@
             if (currentView === 'kitchen') { renderKitchen(); if (arrived) kitchenChime(); }
             if (typeof onOrdersChangedForRegister === 'function') onOrdersChangedForRegister();
         }, err => { console.warn('注文の購読でエラー', err); });
+        if (isRestaurant()) startBillsSubscription(code);
     }
     function stopOrdersSubscription() {
         if (fbOrdersUnsub) { try { fbOrdersUnsub(); } catch (e) {} fbOrdersUnsub = null; }
+        stopBillsSubscription();
     }
 
     // お会計の窓の「持ち帰り／店内」
@@ -15199,21 +15455,28 @@
     function applyStoreMode() {
         const k = isKitchen();
         // カートの「予約保留」は、ファストフードの時は「後で会計」になる
+        const rest = isRestaurant();
         const rb = document.getElementById('btn-reserve');
-        if (rb) rb.innerHTML = k ? '<svg class="ic"><use href="#ic-clock"/></svg>後で会計' : '<svg class="ic"><use href="#ic-calendar"/></svg>予約保留';
+        if (rb) rb.innerHTML = rest ? '<svg class="ic"><use href="#ic-table"/></svg>テーブルに送る'
+            : (k ? '<svg class="ic"><use href="#ic-clock"/></svg>後で会計' : '<svg class="ic"><use href="#ic-calendar"/></svg>予約保留');
         const dine = document.getElementById('co-dine');
-        if (dine) dine.style.display = k ? '' : 'none';
+        if (dine) dine.style.display = isFastFood() ? '' : 'none';   // レストランは持ち帰り／店内を選ばない
         // 客層を1つも決めていない施設は、客層の欄そのものを出さない
         const type = document.getElementById('co-type');
         if (type) type.style.display = SITE_CFG.customerTypes.length ? '' : 'none';
         // 下は5つ。既製品は レジ・予約・会計記録・売上集計・設定、
         // ファストフードは「予約」の場所が「未会計」（予約保留のボタンが「後で会計」になるのと同じ）。
         // KDはタブに置かず、「この端末の役割」でKDにした端末だけが、CDのように画面いっぱいに出す。
-        const nres = document.getElementById('nav-reservations'), nun = document.getElementById('nav-unpaid');
+        // レストランは「予約」の場所が「テーブル」（テーブルと伝票の一覧）
+        const nres = document.getElementById('nav-reservations'), nun = document.getElementById('nav-unpaid'), ntb = document.getElementById('nav-tables');
         if (nres) nres.style.display = k ? 'none' : '';
-        if (nun) nun.style.display = k ? '' : 'none';
+        if (nun) nun.style.display = isFastFood() ? '' : 'none';
+        if (ntb) ntb.style.display = rest ? '' : 'none';
         if (currentView === 'kitchen' && !kitchenOnlyNow()) showRegister();
-        if (!k && currentView === 'unpaid') showRegister();
+        if (!isFastFood() && currentView === 'unpaid') showRegister();
+        if (!rest && currentView === 'tables') showRegister();
+        if (!rest) orderTarget = null;
+        updateOrderTargetUi();
         renderAnalyticsMenu();
         updateNavBadges();
         applyDeviceRole();     // KDの端末は、ファストフードの時だけレジの画面を隠す
@@ -15222,7 +15485,8 @@
     // ---- 設定：店舗モード ----
     const STORE_MODES = [
         { id: 'retail', icon: 'store', title: '既製品の販売', sub: 'パン・クッキーなど、その場で渡すお店。レジで会計したら完了です（今までどおり）。' },
-        { id: 'kitchen', icon: 'kitchen', title: 'ファストフード（KD・呼び出し）', sub: '作ってから番号で呼ぶお店。会計すると注文がKDに出ます。モバイルオーダーも使えます。' }
+        { id: 'kitchen', icon: 'kitchen', title: 'ファストフード（KD・呼び出し）', sub: '作ってから番号で呼ぶお店。会計すると注文がKDに出ます。モバイルオーダーも使えます。' },
+        { id: 'restaurant', icon: 'table', title: 'レストラン（テーブル・伝票）', sub: '席で注文を受けて料理を運び、お帰りの時に伝票でまとめて会計するお店。ハンディとテーブルごとのQRで注文できます。' }
     ];
     function storeModeLabel() { return (STORE_MODES.find(m => m.id === storeMode) || STORE_MODES[0]).title; }
     function renderStoreModeView() {
@@ -15240,7 +15504,7 @@
                 </button>`).join('') + `</div>`;
     }
     function setStoreMode(m) {
-        if (m !== 'retail' && m !== 'kitchen') return;
+        if (!validStoreMode(m)) return;
         if (currentSession) { playError(); alert('営業中は店舗モードを切り替えられません。\n閉店してから切り替えてください。'); return; }
         if (m === storeMode) return;
         storeMode = m;
@@ -15827,6 +16091,7 @@
             return;
         }
         const url = orderPageUrl(syncEventCode);
+        const rest = isRestaurant();   // レストランは、テーブルごとのQRから注文（待ち時間・受け取り時間・席番号は使わない）
         box.innerHTML = `
             <div class="mo-state ${mobileCfg.on ? 'on' : 'off'}">
                 <div class="sw-row">
@@ -15850,15 +16115,19 @@
             </div>
             <p class="settings-hint">左の四角を押すと、アイコンの画像を選べます。名前が空なら、販売会の名前を出します。次の回にも持ち越します。</p>
             <input type="file" id="mo-icon-file" accept="image/*" style="display:none" onchange="onMobileIconChosen(event)">
-            <label class="field-label sec">店内の注文</label>
-            <div class="sw-row">
+            <label class="field-label sec">${rest ? '注文の受け方' : '店内の注文'}</label>
+            ${rest ? '' : `<div class="sw-row">
                 <div class="sw-text"><b>席から注文</b><span>お客様が「店内」を選んだら、席番号を入れてもらいます。番号は T0001-12 のように席番号が付きます</span></div>
                 <input type="checkbox" class="ios-switch" id="opt-mobile-seat" ${mobileCfg.seat ? 'checked' : ''} onchange="setMobileFlag('seat', this.checked)">
-            </div>
+            </div>`}
             <div class="sw-row">
                 <div class="sw-text"><b>特注を受ける</b><span>お客様が「氷少なめ」「ソース抜き」などを付けられます</span></div>
                 <input type="checkbox" class="ios-switch" id="opt-mobile-opt" ${mobileCfg.opt ? 'checked' : ''} onchange="setMobileFlag('opt', this.checked)">
             </div>
+            ${rest ? `<label class="field-label sec">テーブルのQRコード</label>
+            <p class="settings-hint">レストランでは、テーブルごとに別のQRコードを置きます。お客様が読み取って注文すると、そのテーブルの伝票に足され、KDに出ます。お支払いはお帰りの時にレジで伝票ごとにまとめて行います。</p>
+            <button type="button" class="action-btn btn-secondary" style="width:100%;" onclick="printTableQrs()"><svg class="ic"><use href="#ic-printer"/></svg>テーブルのQRコードを印刷する（${restCfg.tables}枚）</button>
+            <button type="button" class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="openPanel('settings','rest')"><svg class="ic"><use href="#ic-table"/></svg>テーブルの数・伝票の渡し方</button>` : `
             <label class="field-label sec">いまの待ち時間</label>
             <div class="chip-pick" role="group" aria-label="いまの待ち時間">${MOBILE_WAITS.map(w =>
                 `<button type="button" class="${mobileCfg.wait === w ? 'on' : ''}" aria-pressed="${mobileCfg.wait === w}" onclick="setMobileWait(${w})">${w ? `約${w}分` : '出さない'}</button>`).join('')}</div>
@@ -15895,7 +16164,7 @@
                 <li>商品と「持ち帰り／店内」を選んで注文すると、<b>M0001</b>（店内は T0001）のような番号が出ます。注文はすぐKDに「モバイル・未払い」で出ます（受け取り時間を指定した注文は、その少し前に出ます）。</li>
                 <li>お客様の画面には「あと何組」が出て、呼び出すと音と画面で知らせます（画面を開いたままの時）。</li>
                 <li>受け取りの時に、下の<b>「未会計」</b>（またはレジの上の「未会計の注文」）から番号を選んで会計します。</li>
-            </ol>`;
+            </ol>`}`;
     }
     function copyText(text, msg) {
         try { navigator.clipboard.writeText(text).then(() => showToast(msg), () => showToast('コピーできませんでした')); }
@@ -16010,17 +16279,18 @@
     // ---- レジ：まだ払っていないモバイルの注文 ----
     // まだ払っていない注文（モバイルオーダーと、レジの「後で会計」）
     function unpaidOrders() {
-        return kitchenOrders.filter(o => !o.paid && o.st !== 'void' && o.st !== 'draft').sort((a, b) => a.at - b.at);
+        return kitchenOrders.filter(o => !o.paid && !o.billId && o.st !== 'void' && o.st !== 'draft').sort((a, b) => a.at - b.at);
     }
     function renderMobilePayBar() {
         const bar = document.getElementById('mobile-pay-bar');
         if (!bar) return;
-        const n = isKitchen() && currentSession ? unpaidOrders().length : 0;
+        const n = isFastFood() && currentSession ? unpaidOrders().length : 0;
         bar.classList.toggle('show', n > 0);
         if (n > 0) bar.innerHTML = `<svg class="ic"><use href="#ic-clock"/></svg>未会計の注文（${n}件）を会計する`;
     }
     function onOrdersChangedForRegister() {
         renderMobilePayBar();
+        if (currentView === 'tables') { if (currentSub === 'bill') renderBillView(); else renderTablesView(); }
         if (currentView === 'records' && isKitchen()) renderRecords();   // 未会計の件数・一覧も新しくする
         if ((currentView === 'settings' && currentSub === 'mobile-pay') || currentView === 'unpaid') renderMobilePayView();
         updateNavBadges();
@@ -16055,9 +16325,10 @@
     }
     // モバイルの注文の中身をカートに入れて、お会計の窓を開く
     function payMobileOrder(id) {
-        if (deviceRole() === 'kitchen') { playError(); alert('この端末はKDです。会計はレジの端末でしてください。'); return; }
+        if (deviceRole() === 'kitchen' || deviceRole() === 'handy') { playError(); alert(`この端末は${roleTitle(deviceRole())}です。会計はレジの端末でしてください。`); return; }
         const o = kitchenOrders.find(x => x.id === id);
         if (!o || o.paid || o.st === 'void') { playError(); renderMobilePayView(); return; }
+        if (o.billId) { const b = billById(o.billId); if (b) { currentBillId = b.id; navTo('tables'); openPanel('tables', 'bill'); } return; }
         if (cart.length && !confirm('いまカートに入っている商品を取り消して、この注文の会計にしますか？')) return;
         const missing = o.items.filter(i => !products.some(p => p.name === i.name));
         if (missing.length) { playError(); alert(`次の商品がレジの商品にないため、会計できません：${missing.map(i => i.name).join('、')}`); return; }
@@ -16099,8 +16370,606 @@
     // カートの「後で会計」→ 持ち帰りか店内を選ぶ → すぐキッチンに出る（未払い）。
     // 払う時は「未会計の注文」から選ぶ。客No.は注文した時に取っておき、会計の記録もその番号にする。
     function reserveButtonAction() {
+        if (isRestaurant()) { openTableSheet(); return; }
         if (isKitchen()) promptLaterOrder(); else promptReservation();
     }
+    // レジの「会計へ進む」：レストランでテーブルに注文を足している間は「◯番テーブルに送る」になる
+    function checkoutButtonAction() {
+        if (isRestaurant() && orderTarget) { sendTableOrder(orderTarget.table); return; }
+        if (isRestaurant() && deviceRole() === 'handy') { openTableSheet(); return; }
+        openCheckout();
+    }
+
+    // ▼▼▼ レストラン：テーブルと伝票 ▼▼▼
+    // 席に着いたお客様の注文を、テーブルごとの「伝票」にまとめていき、お帰りの時にレジで伝票ごと会計する。
+    //   ・伝票はテーブルに1枚（そのテーブルの追加注文は全部同じ伝票に足す）。会計が全部済むとテーブルが空く
+    //   ・伝票番号は4けた（0001〜）。販売会の中で1つずつ数える（2台が同じ瞬間に開いてもぶつからない）
+    //   ・注文そのものはKDの注文と同じ入れ物（orders）に置き、どの伝票かを billId で結ぶ
+    //   ・品目を選んで何回かに分けて払える（伝票の paid に、払った数を品目ごとに残す）
+    // 置き場：bills/{伝票}、tables/{テーブル}（いま開いている伝票を指す）、live/bseq（伝票番号の数）
+    let restCfg = { tables: 10, slip: 'print' };
+    let bills = [];               // 伝票
+    let billSeqLocal = 0;         // 1台だけで営業している時の伝票番号
+    let orderTarget = null;       // { table } テーブルに注文を足している間
+    let currentBillId = '';       // いま開いている伝票（伝票の画面）
+    let billSplit = null;         // 品目を選んで払う時の、選んだ数 { key: qty }
+    let pendingBill = null;       // いまレジで会計している伝票の分 { id, take: { key: qty } }
+    let billsUnsub = null;
+    let tableSending = false;
+    function normRestCfg(r) {
+        r = (r && typeof r === 'object') ? r : {};
+        const n = parseInt(r.tables, 10);
+        return { tables: Number.isFinite(n) && n >= 1 && n <= 99 ? n : 10, slip: r.slip === 'card' ? 'card' : 'print' };
+    }
+    // テーブルの一覧。数を減らした後も、伝票が開いたままのテーブルは必ず出す（会計し忘れないように）
+    function tableList() {
+        const list = [...Array(restCfg.tables)].map((_, i) => String(i + 1));
+        bills.forEach(b => { if (b.st === 'open' && b.table && !list.includes(b.table)) list.push(b.table); });
+        return list.sort((a, b) => Number(a) - Number(b));
+    }
+    function tableLabel(t) { return `${t}番テーブル`; }
+    function normTable(v) { const s = String(v == null ? '' : v).trim(); return /^[0-9]{1,3}$/.test(s) ? String(parseInt(s, 10)) : ''; }
+    function billNoText(b) { return String(b && b.no != null ? b.no : '').padStart(4, '0'); }
+    function normBill(d) {
+        if (!d || typeof d !== 'object' || !/^b-[0-9a-z-]{4,60}$/.test(String(d.id || ''))) return null;
+        const paid = {};
+        if (d.paid && typeof d.paid === 'object') Object.keys(d.paid).forEach(k => { const n = parseInt(d.paid[k], 10); if (n > 0) paid[k] = n; });
+        return {
+            id: String(d.id), no: parseInt(d.no, 10) || 0, table: normTable(d.table), st: ['open', 'paid', 'void'].includes(d.st) ? d.st : 'open',
+            at: Number(d.at) || 0, by: String(d.by || ''), roundId: d.roundId || '', paid,
+            pays: Array.isArray(d.pays) ? d.pays.filter(x => x && typeof x === 'object').map(x => ({ at: Number(x.at) || 0, total: Number(x.total) || 0, localId: String(x.localId || '') })) : [],
+            closedAt: Number(d.closedAt) || 0
+        };
+    }
+    function billById(id) { return bills.find(b => b.id === id) || null; }
+    function openBillOf(table) { return bills.find(b => b.st === 'open' && b.table === String(table)) || null; }
+    function openBills() { return bills.filter(b => b.st === 'open').sort((a, b) => a.no - b.no); }
+    function billOrders(b) { return kitchenOrders.filter(o => o.billId === b.id && o.st !== 'void' && o.st !== 'draft'); }
+    // 伝票の1行＝同じ商品・同じ特注・同じ値段（注文の時の値段で数える。途中で値段を変えても、頼んだ時の値段のまま）
+    function lineKeyOf(it) { return [it.name, it.opt || '', Number(it.price) || 0].join('\x01'); }
+    function billLines(b) {
+        const map = {};
+        billOrders(b).forEach(o => o.items.forEach(it => {
+            const k = lineKeyOf(it);
+            const l = map[k] || (map[k] = { key: k, name: it.name, opt: it.opt || '', price: Number(it.price) || 0, type: it.type, qty: 0, cook: 0, ready: 0, done: 0 });
+            l.qty += it.qty;
+            const st = o.st === 'done' ? 'done' : (o.st === 'ready' ? 'ready' : 'cook');
+            l[st] += it.qty;
+        }));
+        return Object.values(map).map(l => Object.assign(l, { paid: Math.min(l.qty, b.paid[l.key] || 0) }));
+    }
+    function billTotals(b) {
+        const lines = billLines(b);
+        const total = lines.reduce((t, l) => t + l.qty * l.price, 0);
+        const paid = lines.reduce((t, l) => t + l.paid * l.price, 0);
+        return { lines, total, paid, rest: total - paid, restQty: lines.reduce((t, l) => t + l.qty - l.paid, 0) };
+    }
+    function billsCol(code) { return fbDb.collection(EVENTS_COL).doc(code).collection('bills'); }
+    function tablesCol(code) { return fbDb.collection(EVENTS_COL).doc(code).collection('tables'); }
+    function newBillId() { return 'b-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7); }
+    function upsertBill(d) {
+        const b = normBill(d);
+        if (!b) return null;
+        const i = bills.findIndex(x => x.id === b.id);
+        if (i >= 0) bills[i] = b; else bills.push(b);
+        return b;
+    }
+    // テーブルの伝票を開く（もう開いていれば、その伝票を返す）。
+    // 共有中は置き場の「トランザクション」で、テーブルの印・伝票・番号の数をいっしょに読み書きする。
+    // そうしないと、ハンディ2台が同じテーブルに同じ瞬間に注文した時に、伝票が2枚になってしまう。
+    async function openBillForTable(table) {
+        table = normTable(table);
+        if (!table) throw new Error('テーブルの番号がありません');
+        if (!(syncMode && syncEventCode && fbDb)) {
+            const cur = openBillOf(table);
+            if (cur) return { bill: cur, isNew: false };
+            billSeqLocal++;
+            const b = upsertBill({ id: newBillId(), no: billSeqLocal, table, st: 'open', at: Date.now(), by: getDeviceId(), roundId: '', paid: {}, pays: [] });
+            saveData();
+            return { bill: b, isNew: true };
+        }
+        const code = syncEventCode;
+        const tref = tablesCol(code).doc(table);
+        const seqRef = fbDb.collection(EVENTS_COL).doc(code).collection('live').doc('bseq');
+        const res = await fbDb.runTransaction(async tx => {
+            const tsnap = await tx.get(tref);
+            const cur = tsnap.exists ? String((tsnap.data() || {}).bill || '') : '';
+            if (cur) {
+                const bref = billsCol(code).doc(cur);
+                const bsnap = await tx.get(bref);
+                const bd = bsnap.exists ? bsnap.data() : null;
+                if (bd && bd.st === 'open' && inCurrentRound(bd.roundId)) return { doc: bd, isNew: false };
+            }
+            const ssnap = await tx.get(seqRef);
+            const n = (ssnap.exists ? (Number((ssnap.data() || {}).n) || 0) : 0) + 1;
+            const doc = { id: newBillId(), no: n, table, st: 'open', at: Date.now(), by: getDeviceId(), roundId: syncRoundId, paid: {}, pays: [] };
+            tx.set(billsCol(code).doc(doc.id), doc);
+            tx.set(tref, { bill: doc.id, roundId: syncRoundId });
+            tx.set(seqRef, { n });
+            return { doc, isNew: true };
+        });
+        const b = upsertBill(res.doc);
+        return { bill: b, isNew: res.isNew };
+    }
+    function pushBill(b) {
+        if (!syncMode || !syncEventCode || !fbDb || !b) return;
+        billsCol(syncEventCode).doc(b.id).set(JSON.parse(JSON.stringify(Object.assign({}, b, { roundId: syncRoundId }))))
+            .catch(e => console.warn('伝票の共有に失敗しました', e));
+    }
+    function startBillsSubscription(code) {
+        stopBillsSubscription();
+        if (!isRestaurant() || !syncReady || !code || !fbDb) return;
+        billsUnsub = billsCol(code).onSnapshot(snap => {
+            const rows = [];
+            snap.forEach(doc => { const b = normBill(doc.data()); if (b && inCurrentRound(b.roundId)) rows.push(b); });
+            // この端末だけにある伝票（共有を始める前に開いた分）は残す
+            bills.forEach(b => { if (!rows.some(r => r.id === b.id) && !b.roundId && b.st === 'open') { rows.push(b); pushBill(b); } });
+            if (JSON.stringify(rows) === JSON.stringify(bills)) return;
+            bills = rows;
+            saveData();
+            afterBillsChange();
+        }, err => console.warn('伝票の購読でエラー', err));
+    }
+    function stopBillsSubscription() { if (billsUnsub) { try { billsUnsub(); } catch (e) {} billsUnsub = null; } }
+    function afterBillsChange() {
+        updateNavBadges();
+        if (currentView === 'tables') {
+            if (currentSub === 'bill') renderBillView(); else renderTablesView();
+        }
+        if (currentView === 'register') init();
+    }
+
+    // ---- テーブルに注文を足す ----
+    function setOrderTarget(table) {
+        orderTarget = table ? { table: normTable(table) } : null;
+        navTo('register');
+        updateOrderTargetUi();
+    }
+    function cancelOrderTarget() {
+        const t = orderTarget;
+        if (cart.length && !confirm('打ちかけの商品を取り消して、テーブルの画面に戻りますか？')) return;
+        if (!syncMode) cart.forEach(item => restockOne(products.find(p => p.id === item.id)));
+        cart = [];
+        orderTarget = null;
+        saveData();
+        init();
+        navTo('tables');
+        if (t) { const b = openBillOf(t.table); if (b) { currentBillId = b.id; openPanel('tables', 'bill'); } }
+    }
+    function updateOrderTargetUi() {
+        const bar = document.getElementById('order-target-bar');
+        const restaurant = isRestaurant();
+        if (bar) {
+            const show = restaurant && !!orderTarget;
+            bar.style.display = show ? '' : 'none';
+            if (show) {
+                const b = openBillOf(orderTarget.table);
+                bar.innerHTML = `<svg class="ic"><use href="#ic-table"/></svg><span class="ot-t">${escHtml(tableLabel(orderTarget.table))}に注文を足しています<small>${b ? '伝票 ' + billNoText(b) + '・いまの合計 ' + yenStr(billTotals(b).total) : '新しい伝票を開きます'}</small></span><button type="button" onclick="cancelOrderTarget()">やめる</button>`;
+            }
+        }
+        const handy = restaurant && deviceRole() === 'handy';
+        document.querySelectorAll('.js-primary').forEach(btn => {
+            btn.textContent = restaurant && orderTarget ? `${tableLabel(orderTarget.table)}に送る` : (handy ? 'テーブルを選んで送る' : '会計へ進む');
+        });
+        const rb = document.getElementById('btn-reserve');
+        if (rb) rb.style.display = restaurant && (orderTarget || handy) ? 'none' : '';
+    }
+    function openTableSheet() {
+        if (!currentSession) { playError(); alert('設定から先に開店してください'); return; }
+        if (!cart.length) { playError(); showToast('先に商品を選んでください'); return; }
+        const grid = document.getElementById('table-sheet-grid');
+        if (grid) grid.innerHTML = tableList().map(t => { const b = openBillOf(t); return `<button type="button" class="${b ? 'busy' : ''}" onclick="closeTableSheet(); sendTableOrder('${t}')">${t}${b ? `<small>伝票${billNoText(b)}</small>` : ''}</button>`; }).join('');
+        const sheet = document.getElementById('table-sheet');
+        if (sheet) { sheet.style.display = 'flex'; playSound(); }
+    }
+    function closeTableSheet() { const sheet = document.getElementById('table-sheet'); if (sheet) sheet.style.display = 'none'; }
+    // カートの中身を、テーブルの伝票に足してKDへ送る
+    async function sendTableOrder(table) {
+        table = normTable(table);
+        if (!table || tableSending) return;
+        if (!currentSession) { playError(); alert('設定から先に開店してください'); return; }
+        if (!cart.length) { playError(); showToast('先に商品を選んでください'); return; }
+        tableSending = true;
+        let res;
+        try { res = await openBillForTable(table); }
+        catch (e) {
+            tableSending = false;
+            console.warn('伝票を開けませんでした', e);
+            playError();
+            alert('送れませんでした（伝票を開けませんでした）。\n電波を確かめて、もう一度「送る」を押してください。\n打った商品はそのまま残っています。');
+            return;
+        }
+        const b = res.bill;
+        const at = Date.now();
+        const items = groupOrderItems(cart);
+        const o = {
+            id: 'r-' + getDeviceId() + '-' + at, key: '', no: billNoText(b), table, billId: b.id, at, dine: 'eat', items, st: 'cook',
+            t: { ready: 0, done: 0, void: 0 }, chk: [], edited: false, dev: syncMode ? deviceLabel() : '', by: getDeviceId(), roundId: syncRoundId,
+            channel: deviceRole() === 'handy' ? 'handy' : 'pos', paid: false, later: true, total: items.reduce((t, i) => t + i.qty * i.price, 0),
+            fromDraft: false, upd: at, uid: ''
+        };
+        kitchenOrders.push(normOrder(o));
+        pushOrder(o);
+        // 1台だけの時は、カートに入れた時に引いた在庫を戻す（未払いの注文として別に数える）
+        if (!syncMode) cart.forEach(it => { if (!isUnlimited(it)) restockOne(products.find(p => p.id === it.id)); });
+        const n = cart.length;
+        cart = [];
+        orderTarget = null;
+        tableSending = false;
+        logEdit(`${tableLabel(table)}に注文を送った：伝票${billNoText(b)}（${items.map(i => i.name + '×' + i.qty).join('、')}）`);
+        saveData();
+        init();
+        afterKitchenChange();
+        playSound(988, 0.07);
+        showToast(`${tableLabel(table)}に${n}点を送りました（伝票 ${billNoText(b)}）`);
+        currentBillId = b.id;
+        navTo('tables');
+        openPanel('tables', 'bill');
+        if (res.isNew) handOverBill(b);
+    }
+    // 新しい伝票を開いた時：設定に合わせて、伝票を印刷するか、番号を大きく出して札に書いてもらう
+    function handOverBill(b) {
+        if (restCfg.slip === 'print') { printBillSlip(b.id); return; }
+        askChoice('伝票番号を札に書いてお渡しください',
+            `<div class="bill-card-no">${billNoText(b)}</div><div style="text-align:center; font-weight:700;">${escHtml(tableLabel(b.table))}</div><p class="settings-hint" style="text-align:center;">お帰りの時に、この番号でレジで会計します。</p>`,
+            [{ label: 'お渡ししました', value: 1, style: 'btn-checkout' }]);
+    }
+    // 伝票（お客様にお渡しする紙）を印刷する。追加注文の後も、印刷し直せば中身と合計が新しくなる
+    function printBillSlip(id) {
+        const b = billById(id);
+        if (!b) return;
+        const esc = v => String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const pad = n => String(n).padStart(2, '0');
+        const d = new Date(b.at || Date.now()), now = new Date();
+        const tt = billTotals(b);
+        const rows = tt.lines.map(l => `<div class="ln"><span class="n">${esc(l.name)}${l.opt ? `<small>${esc(l.opt)}</small>` : ''}</span><span class="q">×${l.qty}</span><span class="v">${yenStr(l.qty * l.price)}</span></div>`).join('');
+        const body = `<div class="sl">
+                <div class="shop">${esc(shopInfo().name || currentSession || '')}</div>
+                <div class="k">伝票番号</div>
+                <div class="no">${billNoText(b)}</div>
+                <div class="tb">${esc(tableLabel(b.table))}</div>
+                <div class="tm">${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())} から（${pad(now.getHours())}:${pad(now.getMinutes())} 現在）</div>
+                <div class="rule"></div>
+                <div class="items">${rows || '<div class="ln"><span class="n">（まだ注文はありません）</span></div>'}</div>
+                <div class="rule"></div>
+                <div class="tot"><span>合計</span><span>${yenStr(tt.total)}</span></div>
+                ${tt.paid > 0 ? `<div class="sub"><span>お支払い済み</span><span>${yenStr(tt.paid)}</span></div><div class="sub"><span>残り</span><span>${yenStr(tt.rest)}</span></div>` : ''}
+                <div class="note">お帰りの際に、この伝票をレジへお持ちください。</div>
+            </div>`;
+        const css = `@page { size: 80mm auto; margin: 3mm; }
+            body { font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', sans-serif; color: #000; margin: 0; padding: 16px; background: #fff; }
+            .sl { max-width: 74mm; margin: 0 auto; }
+            .shop { text-align: center; font-size: 15px; font-weight: 800; }
+            .k { text-align: center; font-size: 12px; margin-top: 8px; }
+            .no { text-align: center; font-size: 46px; font-weight: 900; letter-spacing: .08em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+            .tb { text-align: center; font-size: 18px; font-weight: 800; }
+            .tm { text-align: center; font-size: 12px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+            .rule { border-top: 1px dashed #000; margin: 8px 0; }
+            .ln { display: flex; gap: 6px; font-size: 14px; padding: 2px 0; }
+            .ln .n { flex: 1; } .ln .n small { display: block; font-size: 11px; }
+            .ln .q, .ln .v { white-space: nowrap; font-variant-numeric: tabular-nums; } .ln .v { min-width: 5em; text-align: right; }
+            .tot { display: flex; justify-content: space-between; font-size: 20px; font-weight: 900; font-variant-numeric: tabular-nums; }
+            .sub { display: flex; justify-content: space-between; font-size: 13px; font-variant-numeric: tabular-nums; }
+            .note { text-align: center; font-size: 12px; margin-top: 10px; }`;
+        openPrintDoc('伝票 ' + billNoText(b), body, css, '伝票');
+    }
+
+    // ---- テーブルの画面（一覧）----
+    function renderTablesView() {
+        const box = document.getElementById('tables-body');
+        if (!box) return;
+        const hs = document.getElementById('hd-top-s');
+        if (hs) hs.textContent = [typeof currentSession === 'string' ? currentSession : '', syncMode && syncEventCode ? '共有 ' + syncEventCode : ''].filter(Boolean).join('・');
+        if (!currentSession) { box.innerHTML = '<p class="settings-hint">開店すると、テーブルと伝票がここに出ます。</p>'; return; }
+        const now = Date.now();
+        const reg = deviceRole() !== 'handy';
+        box.innerHTML = (reg ? `<div class="bill-find">
+                <input type="text" id="bill-no-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="伝票番号" aria-label="伝票番号" onkeydown="if(event.key==='Enter'){event.preventDefault();findBillByNo();}">
+                <button type="button" class="action-btn btn-checkout" onclick="findBillByNo()"><svg class="ic"><use href="#ic-receipt"/></svg>伝票を出す</button>
+            </div>` : '')
+            + `<div class="tbl-grid">${tableList().map(t => {
+                const b = openBillOf(t);
+                if (!b) return `<button type="button" class="tbl-tile" onclick="openTable('${t}')"><span class="tt-n">${t}</span><span class="tt-s">空き</span></button>`;
+                const tt = billTotals(b);
+                const min = Math.max(0, Math.floor((now - b.at) / 60000));
+                const cooking = billOrders(b).filter(o => o.st === 'cook').length;
+                return `<button type="button" class="tbl-tile busy" onclick="openTable('${t}')"><span class="tt-n">${t}</span><span class="tt-s">伝票 ${billNoText(b)}・${min}分${cooking ? `・調理中${cooking}` : ''}</span><span class="tt-t">${yenStr(tt.rest)}</span></button>`;
+            }).join('')}</div>`;
+    }
+    function findBillByNo() {
+        const el = document.getElementById('bill-no-input');
+        const n = parseInt(String(el && el.value || '').replace(/[^0-9]/g, ''), 10);
+        const b = n ? bills.find(x => x.no === n && x.st === 'open') : null;
+        if (!b) {
+            const done = n ? bills.find(x => x.no === n) : null;
+            playError();
+            showToast(!n ? '伝票番号を入れてください' : (done ? `伝票 ${billNoText(done)} は、もう${done.st === 'void' ? '取り消されています' : '会計が済んでいます'}` : `伝票 ${String(n).padStart(4, '0')} は見つかりません`));
+            return;
+        }
+        if (el) el.value = '';
+        currentBillId = b.id;
+        billSplit = null;
+        openPanel('tables', 'bill');
+    }
+    function openTable(t) {
+        const b = openBillOf(t);
+        if (!b) {
+            // 空いているテーブル：注文を受ける画面へ（送った時に伝票が開く）
+            setOrderTarget(t);
+            return;
+        }
+        currentBillId = b.id;
+        billSplit = null;
+        openPanel('tables', 'bill');
+    }
+
+    // ---- 伝票の画面 ----
+    function renderBillView() {
+        const box = document.getElementById('bill-body');
+        if (!box) return;
+        const b = billById(currentBillId);
+        if (!b) { box.innerHTML = '<p class="settings-hint">この伝票は見つかりません。</p>'; return; }
+        const tt = billTotals(b);
+        const reg = deviceRole() !== 'handy';
+        const open = b.st === 'open';
+        const min = Math.max(0, Math.floor(((b.closedAt || Date.now()) - b.at) / 60000));
+        const stText = l => [l.cook ? `調理中${l.cook}` : '', l.ready ? `できた${l.ready}` : '', l.done ? `提供済${l.done}` : ''].filter(Boolean).join('・');
+        const splitting = open && reg && billSplit;
+        const lines = tt.lines.map(l => {
+            const left = l.qty - l.paid;
+            const pick = splitting ? (billSplit[l.key] || 0) : 0;
+            return `<div class="bill-line${left <= 0 ? ' paidall' : ''}">
+                <span class="bl-n">${escHtml(l.name)}${l.opt ? `<small>${escHtml(l.opt)}</small>` : ''}<em>${yenStr(l.price)}・${stText(l)}${l.paid ? `・支払い済${l.paid}` : ''}</em></span>
+                ${splitting && left > 0
+                    ? `<span class="bl-step"><button type="button" aria-label="へらす" onclick="stepBillSplit('${escArg(l.key)}', -1)">−</button><b>${pick}</b><button type="button" aria-label="ふやす" onclick="stepBillSplit('${escArg(l.key)}', 1)">＋</button></span><span class="bl-q">／${left}</span>`
+                    : `<span class="bl-q">×${l.qty}</span><span class="bl-v">${yenStr(l.qty * l.price)}</span>`}
+            </div>`;
+        }).join('');
+        const pickTotal = splitting ? tt.lines.reduce((t, l) => t + (billSplit[l.key] || 0) * l.price, 0) : 0;
+        box.innerHTML = `<div class="bill-head"><span class="bh-t">${escHtml(tableLabel(b.table))}</span><span class="bh-no">伝票 ${billNoText(b)}</span><span class="bh-s">${open ? `開いてから${min}分` : (b.st === 'paid' ? '会計済み' : '取り消し済み')}</span></div>
+            <div class="bill-lines">${lines || '<div class="bill-line"><span class="bl-n">まだ注文はありません</span></div>'}</div>
+            <div class="bill-sum">
+                <div><span>合計</span><span>${yenStr(tt.total)}</span></div>
+                ${tt.paid ? `<div><span>お支払い済み</span><span>${yenStr(tt.paid)}</span></div>` : ''}
+                <div class="big"><span>${splitting ? '今回お支払い' : '残り'}</span><span>${yenStr(splitting ? pickTotal : tt.rest)}</span></div>
+            </div>
+            <div class="bill-acts">${!open ? '' : splitting
+                ? `<button type="button" class="action-btn btn-checkout" ${pickTotal > 0 ? '' : 'disabled'} onclick="payBill(true)"><svg class="ic"><use href="#ic-yen"/></svg>選んだ分を会計する（${yenStr(pickTotal)}）</button>
+                   <button type="button" class="action-btn btn-secondary" onclick="billSplit = null; renderBillView();">選ぶのをやめる</button>`
+                : (reg && tt.rest > 0 ? `<button type="button" class="action-btn btn-checkout" onclick="payBill(false)"><svg class="ic"><use href="#ic-yen"/></svg>まとめて会計する（${yenStr(tt.rest)}）</button>
+                   <button type="button" class="action-btn btn-secondary" onclick="startBillSplit()"><svg class="ic"><use href="#ic-list"/></svg>品目を選んで分けて会計する</button>` : '')
+                  + `<div class="row2"><button type="button" class="action-btn btn-secondary" onclick="setOrderTarget('${b.table}')"><svg class="ic"><use href="#ic-plus"/></svg>注文を足す</button>
+                     <button type="button" class="action-btn btn-secondary" onclick="${restCfg.slip === 'print' ? `printBillSlip('${b.id}')` : `handOverBill(billById('${b.id}'))`}"><svg class="ic"><use href="#ic-${restCfg.slip === 'print' ? 'printer' : 'receipt'}"/></svg>${restCfg.slip === 'print' ? '伝票を印刷' : '伝票番号を出す'}</button></div>`
+                  + (reg && tt.paid === 0 ? `<button type="button" class="action-btn btn-secondary" style="color:var(--danger);" onclick="voidBill('${b.id}')"><svg class="ic"><use href="#ic-x"/></svg>伝票を取り消す</button>` : '')}
+            </div>`;
+    }
+    function startBillSplit() { billSplit = {}; playSound(660, 0.05); renderBillView(); }
+    function stepBillSplit(key, d) {
+        const b = billById(currentBillId);
+        if (!b || !billSplit) return;
+        const l = billLines(b).find(x => x.key === key);
+        if (!l) return;
+        billSplit[key] = Math.max(0, Math.min(l.qty - l.paid, (billSplit[key] || 0) + d));
+        playSound(d > 0 ? 880 : 660, 0.04);
+        renderBillView();
+    }
+    // 伝票（全部か、選んだ分）をカートに入れて、お会計の窓を開く
+    function payBill(split) {
+        if (deviceRole() !== 'register') { playError(); alert('会計はレジの端末でしてください。'); return; }
+        const b = billById(currentBillId);
+        if (!b || b.st !== 'open') { playError(); showToast('この伝票は、もう会計できません'); return; }
+        const tt = billTotals(b);
+        const take = {};
+        tt.lines.forEach(l => { const q = split ? Math.min(billSplit ? (billSplit[l.key] || 0) : 0, l.qty - l.paid) : l.qty - l.paid; if (q > 0) take[l.key] = q; });
+        if (!Object.keys(take).length) { playError(); return; }
+        if (cart.length && !confirm('いまカートに入っている商品を取り消して、この伝票の会計にしますか？')) return;
+        if (!syncMode) cart.forEach(item => restockOne(products.find(p => p.id === item.id)));
+        cart = [];
+        const missing = [];
+        tt.lines.forEach(l => {
+            const q = take[l.key] || 0;
+            if (!q) return;
+            const p = products.find(x => x.name === l.name);
+            if (!p) { missing.push(l.name); return; }
+            for (let k = 0; k < q; k++) {
+                if (!syncMode && !isUnlimited(p)) { p.stock--; if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString(); }
+                const unit = { ...p, price: l.price };   // 注文した時の値段で会計する
+                delete unit.opt;
+                if (l.opt) unit.opt = l.opt;
+                cart.push(unit);
+            }
+        });
+        if (missing.length) {
+            if (!syncMode) cart.forEach(item => restockOne(products.find(p => p.id === item.id)));
+            cart = [];
+            playError(); alert(`次の商品がレジの商品にないため、会計できません：${missing.join('、')}`); return;
+        }
+        pendingBill = { id: b.id, take };
+        rememberCheckoutFrom();
+        showRegister();
+        init();
+        openCheckout();
+        showToast(`伝票 ${billNoText(b)}（${tableLabel(b.table)}）をお会計に入れました`);
+    }
+    // 会計が済んだ時：伝票に払った数を足す。全部払い終わったら伝票を閉じ、テーブルを空け、注文を払い済みにする
+    async function applyBillPayment(pb, record) {
+        const b = billById(pb.id);
+        if (!b) return;
+        const payEntry = { at: Date.now(), total: record.total, localId: record.localId || String(record.no) };
+        const allPaid = bb => billLines(bb).every(l => (bb.paid[l.key] || 0) >= l.qty);
+        const closeLocal = bb => {
+            if (!allPaid(bb)) return;
+            bb.st = 'paid'; bb.closedAt = Date.now();
+            billOrders(bb).forEach(o => { if (!o.paid) setKitchenOrder(o.id, x => { x.paid = true; }); });
+        };
+        if (!(syncMode && syncEventCode && fbDb)) {
+            Object.keys(pb.take).forEach(k => { b.paid[k] = (b.paid[k] || 0) + pb.take[k]; });
+            b.pays.push(payEntry);
+            closeLocal(b);
+            saveData();
+            afterBillsChange();
+            return;
+        }
+        const code = syncEventCode;
+        const bref = billsCol(code).doc(b.id);
+        try {
+            const out = await fbDb.runTransaction(async tx => {
+                const snap = await tx.get(bref);
+                const cur = normBill(snap.exists ? snap.data() : b) || b;
+                const paid = Object.assign({}, cur.paid);
+                let over = false;
+                const lines = billLines(Object.assign({}, cur, { paid: {} }));
+                Object.keys(pb.take).forEach(k => {
+                    paid[k] = (paid[k] || 0) + pb.take[k];
+                    const l = lines.find(x => x.key === k);
+                    if (l && paid[k] > l.qty) over = true;
+                });
+                const next = Object.assign({}, cur, { paid, pays: cur.pays.concat([payEntry]) });
+                const done = lines.length > 0 && lines.every(l => (paid[l.key] || 0) >= l.qty);
+                if (done) { next.st = 'paid'; next.closedAt = Date.now(); }
+                tx.set(bref, Object.assign(JSON.parse(JSON.stringify(next)), { roundId: syncRoundId }));
+                if (done) tx.set(tablesCol(code).doc(cur.table), { bill: '', roundId: syncRoundId });
+                return { next, over, done };
+            });
+            upsertBill(out.next);
+            if (out.done) billOrders(out.next).forEach(o => { if (!o.paid) setKitchenOrder(o.id, x => { x.paid = true; }); });
+            if (out.over) { playError(); alert(`【！】伝票 ${billNoText(b)} は、ほかのレジでも同じ品目が会計されています。\n二重にお金を受け取っていないか、会計記録を確かめてください。`); }
+            saveData();
+            afterBillsChange();
+        } catch (e) {
+            // 通信できない時も、会計の記録は残っている。伝票には、つながった時にもう一度書く
+            console.warn('伝票の会計を書けませんでした', e);
+            Object.keys(pb.take).forEach(k => { b.paid[k] = (b.paid[k] || 0) + pb.take[k]; });
+            b.pays.push(payEntry);
+            closeLocal(b);
+            pushBill(b);
+            if (b.st === 'paid') tablesCol(code).doc(b.table).set({ bill: '', roundId: syncRoundId }).catch(() => {});
+            saveData();
+            afterBillsChange();
+        }
+    }
+    // 伝票の会計を取り消した時：その会計の分を、伝票の「払った数」から引く。
+    // 払い終わって閉じていた伝票は開き直し、テーブルに戻す（そのテーブルがもう次の伝票を開いていたら、伝票だけ開き直す）
+    async function reverseBillPayment(rec) {
+        const b = bills.find(x => billNoText(x) === String(rec.billNo));
+        if (!b) return;
+        const take = {};
+        (rec.items || []).forEach(it => { const k = lineKeyOf({ name: it.name, opt: normOpt(it.opt), price: it.price }); take[k] = (take[k] || 0) + 1; });
+        const payId = rec.localId || String(rec.no);
+        const undo = cur => {
+            const paid = Object.assign({}, cur.paid);
+            Object.keys(take).forEach(k => { paid[k] = Math.max(0, (paid[k] || 0) - take[k]); if (!paid[k]) delete paid[k]; });
+            const next = Object.assign({}, cur, { paid, pays: cur.pays.filter(p => p.localId !== payId) });
+            if (next.st === 'paid') { next.st = 'open'; next.closedAt = 0; }
+            return next;
+        };
+        const reopen = next => billOrders(next).forEach(o => { if (o.paid) setKitchenOrder(o.id, x => { x.paid = false; }); });
+        if (!(syncMode && syncEventCode && fbDb)) {
+            const next = undo(b);
+            upsertBill(next);
+            reopen(next);
+            saveData();
+            afterBillsChange();
+            return;
+        }
+        const code = syncEventCode;
+        const bref = billsCol(code).doc(b.id), tref = tablesCol(code).doc(b.table);
+        try {
+            const out = await fbDb.runTransaction(async tx => {
+                const snap = await tx.get(bref);
+                const tsnap = await tx.get(tref);
+                const cur = normBill(snap.exists ? snap.data() : b) || b;
+                const next = undo(cur);
+                tx.set(bref, Object.assign(JSON.parse(JSON.stringify(next)), { roundId: syncRoundId }));
+                const pointer = tsnap.exists ? String((tsnap.data() || {}).bill || '') : '';
+                let clash = false;
+                if (next.st === 'open' && pointer !== next.id) {
+                    const other = pointer ? bills.find(x => x.id === pointer && x.st === 'open') : null;
+                    if (other) clash = true; else tx.set(tref, { bill: next.id, roundId: syncRoundId });
+                }
+                return { next, clash };
+            });
+            upsertBill(out.next);
+            reopen(out.next);
+            if (out.clash) alert(`伝票${billNoText(b)}を開き直しました。\n${tableLabel(b.table)}はもう次のお客様の伝票が開いているので、伝票${billNoText(b)}は伝票番号で呼び出して会計してください。`);
+            saveData();
+            afterBillsChange();
+        } catch (e) {
+            console.warn('伝票の会計を取り消せませんでした', e);
+            alert('伝票に取り消しを書けませんでした（電波を確かめてください）。\n会計の取り消しは済んでいます。伝票の画面で残りの金額を確かめてください。');
+        }
+    }
+
+    // 伝票を取り消す（まだ1円も払っていない時だけ）。KDの注文も取り消す
+    function voidBill(id) {
+        const b = billById(id);
+        if (!b || b.st !== 'open') return;
+        if (billTotals(b).paid > 0) { playError(); alert('一部を会計済みの伝票は取り消せません。'); return; }
+        if (!confirm(`伝票 ${billNoText(b)}（${tableLabel(b.table)}）を取り消しますか？\nKDの注文も取り消され、テーブルが空きます。`)) return;
+        billOrders(b).forEach(o => setKitchenOrder(o.id, x => { x.st = 'void'; x.t.void = Date.now(); }));
+        b.st = 'void'; b.closedAt = Date.now();
+        pushBill(b);
+        if (syncMode && syncEventCode && fbDb) tablesCol(syncEventCode).doc(b.table).set({ bill: '', roundId: syncRoundId }).catch(() => {});
+        logEdit(`伝票を取り消した：${billNoText(b)}（${tableLabel(b.table)}）`);
+        saveData();
+        afterBillsChange();
+        panelBack();
+    }
+
+    // ---- 設定：テーブルと伝票 ----
+    function writeRestCfg(next, logText) {
+        restCfg = normRestCfg(next);
+        saveData();
+        if (syncMode && syncEventCode && fbDb) {
+            fbDb.collection(EVENTS_COL).doc(syncEventCode).set({ rest: restCfg, restBy: getDeviceId() }, { merge: true })
+                .catch(e => { console.warn('テーブルの設定の共有に失敗しました', e); showToast('共有に失敗しました。電波を確かめてください'); });
+        }
+        if (logText) logEdit(logText);
+        renderRestView();
+        if (currentView === 'tables') renderTablesView();
+    }
+    function setRestTables(d) { const n = Math.max(1, Math.min(99, restCfg.tables + d)); if (n !== restCfg.tables) writeRestCfg(Object.assign({}, restCfg, { tables: n }), `テーブルの数を${n}にした`); }
+    function setRestSlip(v) { writeRestCfg(Object.assign({}, restCfg, { slip: v === 'card' ? 'card' : 'print' }), v === 'card' ? '伝票を番号の札で渡すようにした' : '伝票を印刷して渡すようにした'); }
+    function tableOrderUrl(t) { return orderPageUrl(syncEventCode) + '&t=' + encodeURIComponent(t); }
+    function renderRestView() {
+        const box = document.getElementById('rest-body');
+        if (!box) return;
+        const busy = openBills().length;
+        box.innerHTML = `<p class="settings-hint" style="margin-top:0;">席に着いたお客様の注文を、テーブルごとの<b>伝票</b>にまとめます。お帰りの時に、レジで伝票番号を入れて会計します。</p>
+            <label class="field-label">テーブルの数</label>
+            <div class="stepper">
+                <button type="button" class="st-btn" aria-label="1つへらす" onclick="setRestTables(-1)" ${restCfg.tables <= Math.max(1, ...openBills().map(b => Number(b.table) || 0)) ? 'disabled' : ''}>−</button>
+                <label class="st-val"><b style="font-size:22px;">${restCfg.tables}</b><span>テーブル（1番〜${restCfg.tables}番）</span></label>
+                <button type="button" class="st-btn" aria-label="1つふやす" onclick="setRestTables(1)">＋</button>
+            </div>
+            ${busy ? `<p class="settings-hint">いま開いている伝票が${busy}枚あります（開いているテーブルより少なくはできません）。</p>` : ''}
+            <label class="field-label sec">伝票の渡し方</label>
+            <div class="seg-pick" role="group" aria-label="伝票の渡し方">
+                <button type="button" class="${restCfg.slip === 'print' ? 'on' : ''}" aria-pressed="${restCfg.slip === 'print'}" onclick="setRestSlip('print')"><svg class="ic"><use href="#ic-printer"/></svg>印刷した紙</button>
+                <button type="button" class="${restCfg.slip === 'card' ? 'on' : ''}" aria-pressed="${restCfg.slip === 'card'}" onclick="setRestSlip('card')"><svg class="ic"><use href="#ic-receipt"/></svg>番号の札だけ</button>
+            </div>
+            <p class="settings-hint">${restCfg.slip === 'print'
+                ? '新しい伝票を開いた時に、伝票番号・テーブル・注文・合計の入った紙を印刷します（AirPrint などのプリンタ）。追加注文の後は、伝票の画面の「伝票を印刷」で刷り直せます。'
+                : '新しい伝票を開いた時に、伝票番号を大きく出します。番号を札やカードに書いてお渡しください（プリンタが無くても使えます）。'}</p>
+            <label class="field-label sec">テーブルのQRコード（席からのモバイルオーダー）</label>
+            ${syncMode && syncEventCode
+                ? `<p class="settings-hint">テーブルごとに別のQRコードです。お客様が読み取って注文すると、そのテーブルの伝票に足されます（お客様は席番号を入れなくてよい）。モバイルオーダーの受付は「設定 → モバイルオーダー」でオンにします。</p>
+                   <button type="button" class="action-btn btn-secondary" style="width:100%;" onclick="printTableQrs()"><svg class="ic"><use href="#ic-printer"/></svg>テーブルのQRコードを印刷する（${restCfg.tables}枚）</button>`
+                : '<p class="settings-hint">共有して営業している時に使えます（QRコードに、この販売会の共有コードが入るため）。</p>'}`;
+    }
+    function printTableQrs() {
+        if (!syncMode || !syncEventCode) return;
+        const cells = tableList().map(t => `<figure><div class="q">${qrSvg(tableOrderUrl(t))}</div><figcaption>${t}番テーブル</figcaption><div class="s">読み取って注文できます</div></figure>`).join('');
+        const css = `@page { size: A4; margin: 10mm; }
+            body { font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', 'Yu Gothic', sans-serif; margin: 0; padding: 12px; background: #fff; color: #000; }
+            .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10mm; }
+            figure { margin: 0; text-align: center; break-inside: avoid; border: 1px dashed #999; border-radius: 4mm; padding: 5mm; }
+            .q svg { width: 42mm; height: 42mm; }
+            figcaption { font-size: 18px; font-weight: 800; margin-top: 2mm; }
+            .s { font-size: 11px; }`;
+        openPrintDoc('テーブルのQRコード', `<div class="grid">${cells}</div>`, css, 'テーブルのQRコード');
+    }
+    function restSub() { return `${restCfg.tables}テーブル・${restCfg.slip === 'print' ? '伝票を印刷' : '番号の札'}${currentSession ? `・開いている伝票${openBills().length}枚` : ''}`; }
     // ▼▼▼ 特注（ファストフードの時だけ）▼▼▼
     // 商品1個ずつに文字で付ける（例：「後出し・氷少なめ・ソース抜き」）。値段は変わらない。
     // KD・伝票・レシート・CD・会計記録にも、商品名の下にそのまま出る。
@@ -16337,6 +17206,7 @@
                 customerType: d.customerType || '不明',
                 pendingType: !!d.pendingType,
                 ...(d.channel === 'mobile' ? { channel: 'mobile' } : {}),
+                ...(d.channel === 'table' ? { channel: 'table', billNo: String(d.billNo || '').slice(0, 8), table: normTable(d.table) } : {}),
                 ...(d.pay && d.pay !== 'cash' ? { pay: d.pay, payLabel: d.payLabel || d.pay } : {}),
                 typeEditedLater: !!d.typeEditedLater,
                 edited: !!d.edited,
@@ -16425,7 +17295,9 @@
             ...(record.coupon ? { coupon: record.coupon } : {}),
             customerType: record.customerType,
             pendingType: !!record.pendingType,
-            channel: record.channel === 'mobile' ? 'mobile' : 'pos',
+            channel: record.channel === 'mobile' ? 'mobile' : (record.channel === 'table' ? 'table' : 'pos'),
+            // レストラン：どの伝票（テーブル）の会計か
+            ...(record.channel === 'table' ? { billNo: String(record.billNo || ''), table: String(record.table || '') } : {}),
             pay: record.pay || 'cash',
             payLabel: record.payLabel || '現金',
             typeEditedLater: false,
