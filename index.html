@@ -2106,6 +2106,75 @@
         .menu-row .mr-go { width: 18px; height: 18px; color: var(--text-light); }
         .menu-row.is-danger > .ic:first-child { color: var(--danger); }
         .menu-row.is-disabled { opacity: .5; pointer-events: none; }
+        .menu-row .mr-need { color: var(--danger); font-weight: 700; }
+        /* ---- テストモード：ひと目で分かる印（オレンジのしま模様） ---- */
+        :root { --test-a: #FF9500; --test-b: #FFB340; --test-ink: #C45500; }
+        #test-band { display: none; }
+        #test-band > span { display: none; }
+        body.test-mode #test-band {
+            display: flex; align-items: flex-end; justify-content: center;
+            position: fixed; left: 0; right: 0; top: 0; z-index: 10050; pointer-events: none;
+            height: calc(env(safe-area-inset-top, 0px) + 5px);
+            background: repeating-linear-gradient(135deg, var(--test-a) 0 12px, var(--test-b) 12px 24px);
+        }
+        body.test-mode #session-display {
+            background: repeating-linear-gradient(135deg, var(--test-a) 0 10px, #FF8A00 10px 20px) !important;
+            color: #fff !important; font-weight: 800;
+        }
+        /* CD・KD・ハンディ（見出しの無い全画面）では、帯を太くして文字を入れ、中身をその分だけ下げる */
+        body.test-mode.cd-on #test-band, body.test-mode.kd-full #test-band, body.test-mode.hd-full #test-band { height: calc(env(safe-area-inset-top, 0px) + 24px); }
+        body.test-mode.cd-on #test-band > span, body.test-mode.kd-full #test-band > span, body.test-mode.hd-full #test-band > span {
+            display: flex; align-items: baseline; gap: 6px; height: 24px; line-height: 24px;
+            color: #fff; font-weight: 800; font-size: 13px; white-space: nowrap; text-shadow: 0 1px 2px rgba(120, 50, 0, .45);
+        }
+        #test-band small { font-size: 11px; font-weight: 700; }
+        body.test-mode.cd-on #customer-display { padding-top: calc(38px + env(safe-area-inset-top, 0px)); }
+        body.test-mode.kd-full #page-panel .panel-body { padding-top: calc(36px + env(safe-area-inset-top, 0px)); }
+        body.test-mode.hd-full #page-panel .panel-body, body.test-mode.hd-full #page-register { padding-top: calc(24px + env(safe-area-inset-top, 0px)); }
+        .test-tag {
+            display: inline-block; vertical-align: middle; margin: 0 6px 0 0; padding: 1px 7px; border-radius: 6px;
+            font-size: 11px; font-weight: 800; color: #fff; letter-spacing: .04em;
+            background: repeating-linear-gradient(135deg, var(--test-a) 0 6px, #FF8A00 6px 12px);
+        }
+        .co-test { display: none; margin-left: 8px; }
+        body.test-mode .co-test { display: inline-block; }
+        .test-note { display: none; }
+        body.test-mode .test-note {
+            display: flex; align-items: center; gap: 8px; margin: 0 0 10px; padding: 10px 14px; border-radius: var(--r-md);
+            background: rgba(255, 149, 0, .14); color: var(--test-ink); font-size: 13px; line-height: 1.5;
+            box-shadow: inset 4px 0 0 var(--test-a);
+        }
+        body.test-mode .test-note .ic { flex: none; width: 18px; height: 18px; }
+        /* テストで開店するボタン：本番の青いボタンとは、色も形もはっきり変える */
+        .test-open-btn {
+            display: flex; align-items: center; justify-content: center; gap: 10px; text-align: left; margin-top: 8px; padding: 8px 12px; min-height: 44px;
+            background: rgba(255, 149, 0, .12); color: var(--test-ink); box-shadow: inset 0 0 0 1.5px rgba(255, 149, 0, .55);
+        }
+        .test-open-btn .tob-stripe { flex: none; width: 20px; height: 20px; border-radius: 6px; background: repeating-linear-gradient(135deg, var(--test-a) 0 5px, var(--test-b) 5px 10px); }
+        .test-open-btn .tob-body { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 8px; }
+        .test-open-btn b { font-size: 14.5px; }
+        .test-open-btn small { font-size: 11.5px; font-weight: 600; opacity: .85; }
+        .test-open-btn:disabled { opacity: .45; }
+        @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --test-ink: #FFB340; } }
+        :root[data-theme="dark"] { --test-ink: #FFB340; }
+        /* 商品がまだ無い時の案内（何をすればよいかが、見ただけで分かるように） */
+        .empty-start {
+            display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+            background: var(--surface); border-radius: var(--r-lg, 16px); box-shadow: var(--shadow-card);
+            padding: 22px 18px 14px; margin-bottom: 4px; grid-column: 1 / -1;
+            animation: esIn .36s cubic-bezier(.2,.9,.3,1.15) both;
+        }
+        .empty-start .es-ic { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+        .empty-start .es-ic .ic { width: 30px; height: 30px; }
+        .empty-start > b { font-size: 17px; margin-top: 4px; }
+        .empty-start > span { font-size: 13px; color: var(--text-light); margin-bottom: 6px; }
+        .empty-start .action-btn { width: 100%; margin: 0; }
+        .empty-start .link-btn { margin: 2px 0 0; }
+        @keyframes esIn { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+        /* 1品ずつ入れる時、足したカードをそっと光らせる */
+        .setup-card.just-added { animation: justAdded .5s ease both; }
+        @keyframes justAdded { 0% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: var(--shadow-card, none); } }
+        @media (prefers-reduced-motion: reduce) { .empty-start, .setup-card.just-added { animation: none; } }
         /* 設定のメニューのまとまりの見出し */
         .menu-head { font-size: 12.5px; font-weight: 800; color: var(--text-light); letter-spacing: .04em; margin: 16px 6px 2px; }
         @media (min-width: 769px) {
@@ -2525,8 +2594,6 @@
         /* 明細が少ない時は、1行を大きくして空いた所を使う（離れた所からも読める） */
         #customer-display .cd-items.few .cd-item { font-size: calc(var(--cd-item) * 1.45); padding: 10px 0; }
         #customer-display .cd-items.few2 .cd-item { font-size: calc(var(--cd-item) * 1.2); }
-        /* 縦の画面で明細が少ない時は、明細を上に寄せず、空いている所のまん中に置く（上だけに固まって下が空かないように） */
-        #customer-display .cd-items.few, #customer-display .cd-items.few2 { justify-content: center; }
         @media (orientation: portrait) {
             #customer-display .cd-items.few .cd-item { font-size: calc(var(--cd-item) * 1.6); padding: 12px 0; }
         }
@@ -2679,6 +2746,10 @@
             #customer-display .cd-pay-gl { flex: none; padding-top: 0; }
             #customer-display .cd-pay-tiles { width: 100%; }
         }
+        /* 種類が1つだけの時は、種類の見出しを出さずにまん中へ（左に寄って右が空かないように） */
+        #customer-display .cd-pay-g.one { justify-content: center; align-items: center; }
+        #customer-display .cd-pay-g.one .cd-pay-gl { display: none; }
+        #customer-display .cd-pay-g.one .cd-pay-tiles { flex: 0 1 auto; width: auto; justify-content: center; }
         #customer-display .cd-pt b { font-size: 11.5px; font-weight: 700; color: #D3D9E6; text-align: center; line-height: 1.25; overflow-wrap: anywhere; }
         #customer-display.cd-light .cd-idle-pay { background: #FFFFFF; box-shadow: 0 1px 2px rgba(20,24,40,.05), 0 10px 28px rgba(20,24,40,.08); }
         #customer-display.cd-light .cd-pay-h { color: #4A4F5C; }
@@ -3324,6 +3395,7 @@
     </style>
 </head>
 <body>
+<div id="test-band" role="status"><span>テストモード<small>記録に残りません</small></span></div>
 
 <!-- ▼▼▼ アイコン（ピクトグラム）の定義 ▼▼▼
      絵文字は端末ごとに形も色もばらつき、小さいと何の絵か分かりにくいので、
@@ -3559,6 +3631,7 @@
 
         <!-- ---------- 会計記録 ---------- -->
         <div class="panel-view" id="view-records">
+            <div class="test-note"><svg class="ic"><use href="#ic-alert"/></svg><span><b>テストモードの会計です。</b>終えると消え、記録には残りません。</span></div>
             <div class="seg-pick kds-kind" id="records-kind" role="group" aria-label="会計済と未会計" style="display:none;"></div>
             <div id="records-notice" style="display:none;"></div>
             <div id="records-consign" style="display:none;"></div>
@@ -3573,6 +3646,7 @@
 
         <!-- ---------- 売上集計 ---------- -->
         <div class="panel-view" id="view-analytics">
+            <div class="test-note"><svg class="ic"><use href="#ic-alert"/></svg><span><b>テストモードの集計です。</b>終えると消え、過去の販売会にも残りません。</span></div>
             <div id="analytics-menu">
                 <div id="analytics-archive-note" class="notice notice-accent" style="display:none;"></div>
                 <div id="analytics-empty" class="empty-note" style="display:none;">
@@ -3929,6 +4003,8 @@
                 <!-- 引き継ぎ・テスト用：決まった共有コードで開く時だけ値が入る（画面には出さない） -->
                 <input type="hidden" id="sync-event-code-input" value="">
                 <button class="action-btn btn-checkout" id="open-primary-btn" style="width:100%; margin-top:14px;" onclick="startSession()"><svg class="ic"><use href="#ic-store"/></svg>この内容で開店する</button>
+                <!-- 練習用：会計しても記録に残らない。はっきり分かるよう、しま模様の印で開く -->
+                <button class="action-btn test-open-btn" id="open-test-btn" style="width:100%;" onclick="startSession({ test: true })"><span class="tob-stripe" aria-hidden="true"></span><span class="tob-body"><b>テストモードで開店</b><small>会計しても記録に残りません</small></span></button>
             </div>
 
             <!-- 開いている販売会に合流する -->
@@ -3963,7 +4039,7 @@
                 <div id="inventory-setup-list" class="setup-list"></div>
                 <!-- 直したそばから控えているので、この一押しは「決めて戻る」だけ。
                      何も押さずに戻っても同じだが、決め終わりが分かる場所が要る。 -->
-                <button class="action-btn btn-checkout" style="width:100%; margin-top:12px;" onclick="confirmOpenStock()"><svg class="ic"><use href="#ic-check"/></svg>この商品と仕入れ数にする</button>
+                <button class="action-btn btn-checkout" id="open-stock-done" style="width:100%; margin-top:12px;" onclick="confirmOpenStock()"><svg class="ic"><use href="#ic-check"/></svg>この商品と仕入れ数にする</button>
             </div>
 
             <!-- データを取り込んで始める -->
@@ -4069,7 +4145,7 @@
         <div class="checkout-left">
             <div class="co-head">
                 <button class="sheet-back" onclick="cancelCheckout()"><svg class="ic"><use href="#ic-left"/></svg>戻る</button>
-                <h2>お会計</h2>
+                <h2>お会計<span class="test-tag co-test">テスト</span></h2>
                 <span></span>
             </div>
             <ul class="receipt-list" id="checkout-receipt"></ul>
@@ -4500,9 +4576,12 @@
 
     const ACTIVE_EVENT_KEY = resolveActiveEvent();
     const ACTIVE_EVENT_SET = ((window.PRODUCT_SETS || {})[ACTIVE_EVENT_KEY]) || { label: '（データ未読込）', items: [] };
-    // 既定ラインナップ（開店設定の「既定に戻す」の戻し先。イベント切替はここに反映される）
+    // サンプルの商品（パン・クッキー・コーヒー）。開店の準備の「サンプルを入れる」で入る。
     const DEFAULT_PRODUCTS = buildProductsFromSet(ACTIVE_EVENT_SET);
-    let products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+    // 初めて使う時は、商品は空から始める（お店ごとに売る物がちがうため）。
+    // メモの貼り付け・1品ずつの入力・サンプルのどれかで入れてから開店する。
+    // 試験の時だけ、はじめからサンプルを入れておく（window.__POS_TEST_SAMPLE）。
+    let products = window.__POS_TEST_SAMPLE ? JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)) : [];
     if (DEFAULT_PRODUCTS.length === 0) {
         alert('商品データ（data/products.*.js）が読み込めませんでした。ファイルの配置をご確認ください。');
     }
@@ -4512,6 +4591,9 @@
     let salesHistory = [];
     let reservations = [];
     let currentSession = null;
+    // テストモード：練習のための営業。会計はできるが、閉店しても「過去の販売会」や集計の記録に残さない。
+    // 共有している時は、販売会の置き場の test で全部の端末にそろえる。
+    let testMode = false;
     let processingReservationId = null;
     let sessionArchive = []; // 過去の販売会の実績（次回仕入れ推奨のもと）
     let receiptCounter = 0;  // 客No.（会計ごとの通し番号）
@@ -5656,12 +5738,21 @@
 
         // 「推奨を反映」「既定に戻す」ボタンは横スクロール外（上部）に固定表示
         const applyBox = document.getElementById('inventory-apply');
+        // まだ1品も無い時は「決めて戻る」を出さない（押す物が2つ並ぶと迷う）
+        const doneBtn = document.getElementById('open-stock-done');
+        if (doneBtn) doneBtn.style.display = tempSetupProducts.length ? '' : 'none';
+        if (applyBox && !tempSetupProducts.length) {
+            // まだ1品も無い：何をすればよいかを、その場で見せる
+            applyBox.innerHTML = emptyLineupHtml('stock');
+            list.innerHTML = '';
+            return;
+        }
         if (applyBox) {
             applyBox.innerHTML =
                 (latest ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:8px; padding:10px; background:var(--accent-soft); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--accent-ink); display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="ic"><use href="#ic-bulb"/></svg>前回「${escHtml(latest.sessionName)}」の実績を参考に反映</button>` : '')
                 + `<button class="action-btn btn-secondary bulk-open" onclick="openBulk('setup')"><svg class="ic"><use href="#ic-clipboard"/></svg>メモを貼り付けて、まとめて登録</button>`
                 + `<button class="link-btn" style="margin:0 0 8px;" onclick="openPanel('settings','cats')"><svg class="ic"><use href="#ic-tag"/></svg>分類を足す・名前を変える</button>`
-                + `<button onclick="resetLineupToDefault()" style="width:100%; margin-bottom:10px; padding:8px; background:var(--btn-neutral); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--text-light); font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="ic"><use href="#ic-undo"/></svg>商品リストを「${escHtml(ACTIVE_EVENT_SET.label)}」の既定に戻す</button>`;
+                + (DEFAULT_PRODUCTS.length ? `<button class="link-btn" style="margin:0 0 10px;" onclick="loadSampleLineup()"><svg class="ic"><use href="#ic-undo"/></svg>サンプル（${escHtml(sampleLabel())}）に入れ替える</button>` : '');
         }
 
         const cards = [];
@@ -5741,8 +5832,55 @@
 
     function addTempProduct() {
         const newId = Date.now();
-        tempSetupProducts.push({ id: newId, name: "", price: 0, stock: 0, initialStock: 0, type: "sweet", cost: null });
+        tempSetupProducts.push({ id: newId, name: "", price: 0, stock: 0, initialStock: 0, type: (categories[0] && categories[0].id) || "sweet", cost: null });
         renderInventorySetup();
+        // 足した品の名前の欄へ移って、そのまま打てるようにする
+        const cards = document.querySelectorAll('#inventory-setup-list .setup-card');
+        const last = cards[cards.length - 1];
+        if (last) {
+            last.classList.add('just-added');
+            const nm = last.querySelector('input[type=text]');
+            if (nm) { try { nm.focus({ preventScroll: true }); } catch (e) {} }
+            last.scrollIntoView({ block: 'center', behavior: REDUCE_MOTION ? 'auto' : 'smooth' });
+        }
+    }
+
+    // ---- 商品がまだ無い時 ----
+    // 開店できる商品＝販売する・名前がある・値段が1円以上
+    function sellableProducts(list) {
+        return (list || []).filter(p => p && p.active !== false && String(p.name || '').trim() && Number(p.price) > 0);
+    }
+    // サンプルの中身（「パン・クッキー・コーヒー」のように、分類の名前を並べる）
+    function sampleLabel() {
+        const names = [];
+        DEFAULT_PRODUCTS.forEach(p => { const l = catLabelOf(p.type); if (l && !names.includes(l)) names.push(l); });
+        return names.slice(0, 3).join('・') || `${DEFAULT_PRODUCTS.length}品`;
+    }
+    // 空の時の案内。where = 'open'（開店の画面）／'stock'（商品と仕入れ数の画面）
+    function emptyLineupHtml(where) {
+        return `<div class="empty-start">
+            <div class="es-ic"><svg class="ic"><use href="#ic-box"/></svg></div>
+            <b>まず、売る商品を入れましょう</b>
+            <span>商品が1つ以上あると、開店できます。</span>
+            <button type="button" class="action-btn btn-checkout" onclick="openBulk('setup')"><svg class="ic"><use href="#ic-clipboard"/></svg>メモを貼り付けて、まとめて登録</button>
+            <button type="button" class="action-btn btn-secondary" onclick="startManualAdd()"><svg class="ic"><use href="#ic-pencil"/></svg>1品ずつ入れる</button>
+            ${DEFAULT_PRODUCTS.length ? `<button type="button" class="link-btn" onclick="loadSampleLineup()"><svg class="ic"><use href="#ic-bulb"/></svg>サンプル（${escHtml(sampleLabel())}）で試す</button>` : ''}
+        </div>`;
+    }
+    function startManualAdd() {
+        playSound();
+        if (!(currentView === 'session' && currentSub === 'open-stock')) openPanel('session', 'open-stock');
+        addTempProduct();
+    }
+    // サンプルの商品を入れる（あとから名前・値段・仕入れ数を自由に直せる）
+    function loadSampleLineup() {
+        if (!DEFAULT_PRODUCTS.length) return;
+        if (tempSetupProducts.length && !confirm(`いまの商品（${tempSetupProducts.length}品）を消して、サンプルの${DEFAULT_PRODUCTS.length}品に入れ替えます。よろしいですか？`)) return;
+        tempSetupProducts = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+        playSuccess();
+        showToast(`サンプルの${DEFAULT_PRODUCTS.length}品を入れました。名前・値段・仕入れ数は自由に直せます`);
+        if (currentView === 'session' && currentSub === 'open-stock') renderInventorySetup();
+        else renderOpenMenu();
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -6987,6 +7125,8 @@
         const box = document.getElementById('customer-display');
         if (!box) return;
         box.style.display = customerMode ? 'flex' : 'none';
+        if (!customerMode) cdTest = false;
+        applyTestModeUi();
         applySurfaceColors();    // 画面の端までの色も、役割に合わせて切り替える
         if (cdUnsub) { try { cdUnsub(); } catch (e) {} cdUnsub = null; }
         if (cdEventUnsub) { try { cdEventUnsub(); } catch (e) {} cdEventUnsub = null; }
@@ -7037,6 +7177,9 @@
             // 受け取り時間の何分前に作り始めるか（呼び出し番号の「お作りしています」に時間指定の注文を混ぜないため）
             if (d) mobileCfg = normMobileCfg(d.mobile);
             if (d) acceptCdCfgFromEvent(d);    // 明るさ・広告・支払い方法
+            // テストモードの販売会を映している時は、CDにもはっきり出す
+            const t = !!(d && d.test && d.status !== 'closed');
+            if (t !== cdTest) { cdTest = t; applyTestModeUi(); }
             // 映している販売会の店舗モードにそろえる（ファストフードなら呼び出し番号を受け取る）
             if (d && validStoreMode(d.storeMode) && d.storeMode !== storeMode) {
                 storeMode = d.storeMode;
@@ -8874,9 +9017,20 @@
     // ▲▲▲ ここまで ▲▲▲
 
     // 営業状態が変わった時に、ヘッダーのボタンと各メニューの表示をそろえる
+    // テストモードの印（上の帯・見出しのバッジ・CD/KDの札）を、いまの状態に合わせる
+    let cdTest = false;   // CDの端末：映している販売会がテストモードか
+    function testModeOn() { return customerMode ? cdTest : !!(testMode && currentSession); }
+    function applyTestModeUi() {
+        const on = testModeOn();
+        document.body.classList.toggle('test-mode', on);
+        document.body.classList.toggle('cd-on', !!customerMode);
+        const disp = document.getElementById('session-display');
+        if (disp && currentSession && !customerMode) disp.textContent = `${on ? 'テスト中' : '営業中'}: ${currentSession}`;
+    }
     function updateSessionTabView() {
         const banner = document.getElementById('event-banner');
-        if (banner) banner.innerHTML = `<svg class="ic"><use href="#ic-box"/></svg><span>商品セット：<b>${escHtml(ACTIVE_EVENT_SET.label)}</b><br><span style="color:var(--text-light); font-size:12px;">切替は data/active-event.js（またはURLに ?event=festival）</span></span>`;
+        if (banner) { banner.innerHTML = ''; banner.style.display = 'none'; }
+        applyTestModeUi();
         updateHeaderSessionBtn();
         updateReopenRow();
         updateSyncUi();
@@ -9021,9 +9175,18 @@
         return `${base} (${Date.now()})`;
     }
 
-    async function startSession() {
+    async function startSession(opts) {
+        const wantTest = !!(opts && opts.test);
         const name = document.getElementById('session-name-input').value;
         if (!name) { alert('名前を入力してください'); return; }
+        // 商品が無いまま開店すると、レジに何も出ない。合流（向こうの商品を使う）の時だけは要らない。
+        const hasCode = !!(document.getElementById('sync-event-code-input') || {}).value;
+        if (!hasCode && !sellableProducts(tempSetupProducts).length) {
+            playError();
+            alert('売る商品がまだありません。\n「メモを貼り付けて、まとめて登録」か「1品ずつ入れる」で、名前と値段を入れてから開店してください。');
+            if (currentView === 'session') renderOpenMenu();
+            return;
+        }
 
         // 同期：共有コードが既に「開店中」の販売会なら参加、「閉店済み」なら警告、
         // 存在しなければこの端末が新規作成（＝商品構成の共有元になる）。
@@ -9040,7 +9203,7 @@
         // 共有するか：いつも共有する（通信できない時だけ、この端末だけで開店する）。
         const wantShare = !!typedCode || shareOnOpenWanted();
         let useSync = !!(syncReady && window.FIREBASE_CONFIG && wantShare);
-        let code = null, joinedProducts = null, sharedName = name, isJoining = false, joinRound = '', joinedMode = null, joinedCats = null, joinedPay = null, joinedCd = null, joinedCoupons = null;
+        let code = null, joinedProducts = null, sharedName = name, isJoining = false, joinRound = '', joinedMode = null, joinedCats = null, joinedPay = null, joinedCd = null, joinedCoupons = null, joinedTest = false;
         let soloReason = (wantShare && window.FIREBASE_CONFIG && !syncReady) ? 'offline' : '';
         if (useSync && !typedCode) {
             // 新しく開店する時の共有コードは、自動で決める（打ち間違い・前のコードとの取り違えが起きない）
@@ -9074,6 +9237,7 @@
                         if (data.payCfg) joinedPay = data.payCfg;
                         if (data.cdCfg) joinedCd = data.cdCfg;
                         if (Array.isArray(data.coupons)) joinedCoupons = data.coupons;
+                        joinedTest = !!data.test;
                         sharedName = data.name || name;
                         isJoining = true;
                         joinRound = data.roundId || '';   // 動いている回に合わせる
@@ -9096,6 +9260,11 @@
             }
         }
 
+        if (!isJoining && !sellableProducts(tempSetupProducts).length) {
+            playError();
+            alert('売る商品がまだありません。商品を入れてから開店してください。');
+            return;
+        }
         if (!isJoining) {
             // 開店前の仕入れ数の妥当性チェック（ミルクパンのような数え間違い・入力ミスの予防）
             // ※参加(join)の場合は共有済みの商品構成を使うため対象外。
@@ -9156,6 +9325,7 @@
         }
 
         currentSession = sharedName;
+        testMode = isJoining ? joinedTest : wantTest;
         // 閉店した直後は「いま閉じた販売会の集計」を見せる状態のまま残っている。
         // そのまま次の開店に進むと、集計やPDFの書き出しが前回の記録を指したままになる。
         // 開店したら、見るのは必ず今回の販売会。
@@ -9198,7 +9368,8 @@
                     name: sharedName, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), consign: consignCfg, consignBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
                     roundId: syncRoundId,
                     setDiscount: setDiscountOn, setRule: setRuleForDoc(setRule), setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
-                    openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
+                    openedAt: Date.now(), closedAt: null, openedBy: getDeviceId(),
+                    test: testMode
                 });
             } catch (e) {
                 // 置き場に書けなかった（権限など）。共有したつもりで誰とも出会えない状態にしないよう、
@@ -9229,7 +9400,8 @@
         init();
         updateSessionTabView();
         // 何が起きたかを1行で知らせる（共有したなら、ほかの端末に伝えるコードも）
-        if (useSync && !isJoining) showToast(`開店しました（共有コード ${code}）`);
+        if (testMode) showToast(isJoining ? 'テストモードの販売会に合流しました（記録に残りません）' : `テストモードで開店しました（記録に残りません${useSync ? `・共有コード ${code}` : ''}）`);
+        else if (useSync && !isJoining) showToast(`開店しました（共有コード ${code}）`);
         else if (!useSync && soloReason && soloReason !== 'offline') {
             // 通信できないことは開店の画面に書いてあるので、ここで重ねて言うのは
             // 「共有するつもりで押したのに、できなかった」時だけ
@@ -9248,6 +9420,23 @@
         // KDの端末から閉店すると、レジも含めて全部の端末が閉店になる。押し間違えやすいので、もう一度確かめる
         if (deviceRole() === 'kitchen' && syncMode
             && !confirm('この端末はKDです。\n閉店すると、レジも含めて共有している全部の端末が閉店になります。\nふつうはレジの端末で閉店します。\n\nそれでもここで閉店しますか？')) return;
+        // テストモード：記録に残さないので、確かめるのは「消えてよいか」だけ
+        if (testMode) {
+            const n = salesHistory.filter(h => !h.voided).length;
+            if (!confirm(`テストモードを終えます。\nテスト中の会計（${n}件）は、記録に残さずに消します。`
+                + (syncMode ? '\n共有しているほかの端末も、いっしょに終わります。' : '')
+                + '\n\n商品と設定はそのまま残るので、続けて本番を開店できます。')) return;
+            if (syncMode && syncEventCode && fbDb) {
+                const code = syncEventCode, round = syncRoundId;
+                fbDb.collection(EVENTS_COL).doc(code).set({ status: 'closed', closedAt: Date.now(), closedBy: getDeviceId() }, { merge: true })
+                    .catch(e => console.warn('共有販売会の終了フラグの書き込みに失敗しました', e));
+                closeSessionLocally();
+                schedulePurge(code, round, 8000);
+                return;
+            }
+            closeSessionLocally();
+            return;
+        }
         if(reservations.length > 0) {
             alert('【！】未精算の予約が残っています。予約管理を確認してください');
             return;
@@ -9309,7 +9498,10 @@
         //   ・閉店後でも集計/PDF/CSVをいつでも作り直せる
         //   ・レジ側の会計データは空にできる（次の販売会をまっさらな状態で始められる）
         //   ・閉店の押し間違いも「再開」で元に戻せる
-        const hadSales = salesHistory.length > 0;
+        // テストモードの会計は、どこにも残さない（過去の販売会・前回比・仕入れの目安・税務用の資料に入らない）
+        const wasTest = testMode;
+        testMode = false;
+        const hadSales = salesHistory.length > 0 && !wasTest;
         if (hadSales) {
             sessionArchive.push(buildSessionArchiveEntry());
             if (sessionArchive.length > 20) sessionArchive = sessionArchive.slice(-20);
@@ -9355,6 +9547,14 @@
         renderRecords();
         renderReservations();
 
+        applyTestModeUi();
+        if (wasTest) {
+            // テストの集計は残していないので、レジのカード（次の開店）へ戻る
+            showRegister();
+            if (remote) showToast('ほかの端末でテストモードが終わりました');
+            else showToast('テストモードを終えました（記録には残していません）');
+            return;
+        }
         // 閉店直後は、いま閉じたばかりの販売会の集計をそのまま表示する
         // （この端末がロック中で、集計を見る許可が無い時はレジのカードに戻るだけ）
         if (!lockAllows('analytics')) {
@@ -11869,13 +12069,6 @@
         alert(`「${latest.sessionName}」の実績を参考に ${applied} 件の仕入れ数を反映しました。季節や天候に合わせて調整してください。`);
     }
 
-    // 商品リストをアプリ既定のラインナップに戻す（端末に古いデータが残っている時の保険）
-    function resetLineupToDefault() {
-        if (!confirm(`商品リストを「${ACTIVE_EVENT_SET.label}」の既定ラインナップ（${DEFAULT_PRODUCTS.length}品）に戻します。\n編集中の内容は破棄されます。よろしいですか？`)) return;
-        tempSetupProducts = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
-        renderInventorySetup();
-        showToast(`「${ACTIVE_EVENT_SET.label}」の既定に戻しました`);
-    }
     // ▲▲▲ ここまで ▲▲▲
 
     // ▼▼▼ 画面の切り替え ▼▼▼
@@ -12371,7 +12564,8 @@
             state: (now - lastAt > EVENT_STALE_MS) ? 'stale' : 'open',
             openedAt: Number(d.openedAt) || 0, lastAt,
             registers, displays: active.length - registers,
-            storeMode: validStoreMode(d.storeMode) || 'retail'
+            storeMode: validStoreMode(d.storeMode) || 'retail',
+            test: !!d.test
         };
     }
     // 販売会の様子を調べる。state は open（合流できる）/ closed / stale（長く使われていない）/ none / unknown（通信できない）
@@ -12544,7 +12738,7 @@
         const rows = openEventRows.filter(r => !(syncMode && r.code === syncEventCode));
         const hm = t => { const d = new Date(t); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
         const html = rows.map(r =>
-            menuRow('link', r.name, `コード <b>${escHtml(r.code)}</b>・${hm(r.openedAt)} 開店・${devicesText(r)}`,
+            menuRow('link', r.test ? `${r.name}（テスト）` : r.name, `${r.test ? '<span class="test-tag">テスト</span>' : ''}コード <b>${escHtml(r.code)}</b>・${hm(r.openedAt)} 開店・${devicesText(r)}`,
                 `joinOpenEvent('${escArg(r.code)}')`)).join('');
         // 閉店中の「合流する」画面
         const list = document.getElementById('open-live-list');
@@ -12573,7 +12767,7 @@
             clist.innerHTML = show ? rows.slice(0, 3).map(r =>
                 `<button class="cc-live-row" onclick="joinQuick('${escArg(r.code)}')">`
                 + `<svg class="ic"><use href="#ic-link"/></svg>`
-                + `<span class="lr-body"><span class="lr-name">${escHtml(r.name)}</span>`
+                + `<span class="lr-body"><span class="lr-name">${r.test ? '<span class="test-tag">テスト</span>' : ''}${escHtml(r.name)}</span>`
                 + `<span class="lr-sub">コード <b>${escHtml(r.code)}</b>・${hm(r.openedAt)}〜・${r.registers > 0 ? `レジ${r.registers}台` : '端末なし'}</span></span>`
                 + `<span class="lr-go">合流</span></button>`).join('') : '';
         }
@@ -12799,10 +12993,22 @@
         if (!tempSetupProducts.length) prepareOpenSetup();
         const active = tempSetupProducts.filter(p => p.active !== false);
         const totalStock = active.reduce((sum, p) => sum + (p.initialStock || 0), 0);
-        box.innerHTML =
+        const canOpen = sellableProducts(tempSetupProducts).length > 0;
+        const openBtn = document.getElementById('open-primary-btn');
+        const testBtn = document.getElementById('open-test-btn');
+        if (testBtn) testBtn.disabled = !canOpen;
+        if (openBtn) {
+            openBtn.disabled = !canOpen;
+            openBtn.innerHTML = canOpen
+                ? '<svg class="ic"><use href="#ic-store"/></svg>この内容で開店する'
+                : '<svg class="ic"><use href="#ic-store"/></svg>商品を入れると開店できます';
+        }
+        const stockSub = !tempSetupProducts.length ? '<span class="mr-need">まだありません</span>'
+            : (!canOpen ? '<span class="mr-need">名前と値段を入れてください</span>' : `${active.length}品・合計${totalStock}個`);
+        box.innerHTML = (tempSetupProducts.length ? '' : emptyLineupHtml('open')) +
             menuRow('tag', '販売会の名前', escHtml(nameInput ? nameInput.value : ''), "openPanel('session','open-name')") +
             menuRow(isKitchen() ? 'kitchen' : 'store', '店舗モード', storeModeLabel(), "openPanel('settings','mode')") +
-            menuRow('box', '商品と仕入れ数', `${active.length}品・合計${totalStock}個`, "openPanel('session','open-stock')") +
+            menuRow('box', '商品と仕入れ数', stockSub, "openPanel('session','open-stock')") +
             // 割引と目標は半分ずつの幅で横に並べる（背の低いスマホでも、開店の準備がスクロールなしで収まるように）
             `<div class="menu-pair">${menuRow('ticket', 'セット割・クーポン', discountSub(), "openPanel('settings','coupon')")}${menuRow('target', '売上目標', setGoalSub(), "openPanel('settings','goal')")}</div>` +
             menuRow('archive', '前回の記録', prevRecordSub(), "openPanel('settings','archive')");
@@ -12812,8 +13018,8 @@
             note.style.display = window.FIREBASE_CONFIG ? '' : 'none';
             note.className = 'notice' + (syncReady ? '' : ' notice-warn');
             note.innerHTML = syncReady
-                ? '<svg class="ic"><use href="#ic-link"/></svg><span>開店すると<b>共有コードが自動で決まります</b>。ほかの端末は「合流する」から、この販売会を選ぶだけで入れます。</span>'
-                : '<svg class="ic"><use href="#ic-alert"/></svg><span>いまは通信できないため、<b>この端末だけで開店します</b>。つながったら「設定 → 複数端末で使う」から共有を始められます。</span>';
+                ? '<svg class="ic"><use href="#ic-link"/></svg><span>開店すると<b>共有コードが自動で決まり</b>、ほかの端末は「合流する」から入れます。</span>'
+                : '<svg class="ic"><use href="#ic-alert"/></svg><span>通信できないため、<b>この端末だけで開店します</b>（あとから共有できます）。</span>';
         }
         renderOpenEventLists();
         updateReopenRow();
@@ -13556,6 +13762,7 @@
             document.getElementById('session-display').innerText = `営業中: ${currentSession}`;
             document.getElementById('session-display').style.background = 'var(--white)';
         }
+        applyTestModeUi();
     }
 
     // 前の版で保存された「ドリンク（準備中）」の枠を、コーヒー（100円）に置き換える。
@@ -13597,7 +13804,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, cdCfg, cdCfgBy, mobileKeep, coupons, couponsBy, couponCodes, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, bills, billSeqLocal, restCfg, taxCfg, taxCfgBy, consignCfg, consignBy, currentSession, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
+        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, cdCfg, cdCfgBy, mobileKeep, coupons, couponsBy, couponCodes, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, bills, billSeqLocal, restCfg, taxCfg, taxCfgBy, consignCfg, consignBy, currentSession, testMode, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -13630,6 +13837,7 @@
         kitchenLetter = typeof data.kitchenLetter === 'string' ? data.kitchenLetter : '';
         kitchenLetterCode = typeof data.kitchenLetterCode === 'string' ? data.kitchenLetterCode : '';
         currentSession = data.currentSession || null;
+        testMode = !!(data.testMode && currentSession);
         sessionArchive = Array.isArray(data.sessionArchive) ? data.sessionArchive : [];
         receiptCounter = data.receiptCounter || salesHistory.length;
         voidCount = data.voidCount || 0;
@@ -15590,6 +15798,7 @@
                 ${printWindowBarHtml('印刷の画面が自動で開きます')}
                 <div class="paper">
                 <h1>領収書</h1>
+                ${testMode ? '<div style="text-align:center; margin:4px 0 10px; padding:6px; border:2px dashed #FF7A00; color:#C45500; font-weight:800; font-size:13px;">テスト（本物の領収書ではありません）</div>' : ''}
                 <div class="no">No. ${esc(h.no || '-')}　　${dtStr}</div>
 
                 <div class="to"><span class="line">&nbsp;</span><span class="suffix">様</span></div>
@@ -16417,6 +16626,11 @@
             const d = doc.data();
             const hadDoc = sawDoc;
             if (d) sawDoc = true;
+            if (d && currentSession && d.status !== 'closed' && !!d.test !== testMode && inCurrentRound(d.roundId)) {
+                testMode = !!d.test;
+                applyTestModeUi();
+                saveData();
+            }
             // 読み込み直した時・役割を切り替えて戻った時に、もう閉店していた
             // （この端末が見ていない間に、同じ回がほかの端末で閉店された）
             if (firstSnapshot && d && d.status === 'closed' && syncMode && currentSession
@@ -17817,7 +18031,7 @@
         const list = payMethods();
         const groups = PAY_KINDS.map(k => ({ k, rows: list.filter(m => payKindOf(m) === k.id) })).filter(g => g.rows.length);
         const title = list.length === 1 && list[0].id === 'cash' ? 'お支払いは現金のみです' : 'ご利用いただけるお支払い方法';
-        return `<div class="cd-pay-h">${title}</div>` + groups.map(g => `<div class="cd-pay-g"><span class="cd-pay-gl">${g.k.label}</span><div class="cd-pay-tiles">${g.rows.map(m =>
+        return `<div class="cd-pay-h">${title}</div>` + groups.map(g => `<div class="cd-pay-g${groups.length === 1 ? ' one' : ''}"><span class="cd-pay-gl">${g.k.label}</span><div class="cd-pay-tiles">${g.rows.map(m =>
             `<span class="cd-pt" style="--pt:${g.k.color};"><i><svg class="ic"><use href="#ic-${g.k.icon}"/></svg></i><b>${escHtml(m.label)}</b></span>`).join('')}</div></div>`).join('');
     }
     async function renderCdIdle(active) {
