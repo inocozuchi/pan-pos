@@ -50,6 +50,14 @@
         if (isCustomer) { root.classList.add('is-customer'); if (cdLight) root.classList.add('cd-light-root'); root.style.colorScheme = cdLight ? 'light' : 'dark'; }
         var m = document.querySelector('meta[name="theme-color"]');
         if (m) m.setAttribute('content', isCustomer ? (cdLight ? '#F4F5F8' : '#0E0F13') : (dark ? '#0E1015' : '#F2F3F7'));
+        // 「端末に合わせる」の時は、明るい時・暗い時の2つの帯の色を置いておく。
+        // 端末の明暗を切り替えた時（アプリが裏にいる間でも）、iPhone がその場で正しい方を選んで塗る。
+        if (m && !isCustomer && mode === 'auto') {
+            m.setAttribute('content', '#F2F3F7'); m.setAttribute('media', '(prefers-color-scheme: light)');
+            var m2 = document.createElement('meta');
+            m2.name = 'theme-color'; m2.content = '#0E1015'; m2.media = '(prefers-color-scheme: dark)';
+            m.parentNode.insertBefore(m2, m.nextSibling);
+        }
     })();
     </script>
     <link rel="manifest" href="manifest.webmanifest">
@@ -2885,6 +2893,11 @@
         .role-now .rn-ic .ic { width: 30px; height: 30px; }
         .role-now .rn-t { font-size: 24px; font-weight: 900; line-height: 1.2; }
         .role-now .rn-s { font-size: 13px; opacity: .9; line-height: 1.5; }
+        .role-now.sm { display: flex; align-items: center; gap: 10px; padding: 8px 14px; min-height: 48px; box-sizing: border-box; margin-bottom: 6px; }
+        .role-now.sm .rn-ic { width: 32px; height: 32px; border-radius: 10px; }
+        .role-now.sm .rn-ic .ic { width: 18px; height: 18px; }
+        .role-now.sm .rn-k { margin: 0; font-size: 12px; }
+        .role-now.sm .rn-t { font-size: 17px; margin-left: auto; }
         #role-list .menu-head { grid-column: 1 / -1; }
         #customer-display .cd-exit {
             /* 金額は画面の下半分いっぱいに大きく出るので、戻すボタンは上の帯に置く。
@@ -3978,7 +3991,7 @@
                     <span>会計・在庫・商品・セット割・目標・予約は<b>全端末で同じ</b>。どこから閉じても<b>いっしょに閉店</b>し、コードの中身は片づけます。</span>
                 </div>
                 <!-- 通信障害の時の対処（インターネットを通して共有するため、つながらない間はほかの端末に届かない） -->
-                <details class="mo-all">
+                <details class="mo-all" id="sync-offline-help" style="display:none;">
                     <summary>電波が無い・通信障害の時は</summary>
                     <ol class="mo-flow">
                         <li><b>会計はそのまま続けられます。</b>送れない会計はこの端末に控えておき、つながった時に自動でまとめて送ります（2重にはなりません）。</li>
@@ -7488,10 +7501,13 @@
     }
 
     // 設定の「この端末の役割」：役割の一覧（押せばその場で切り替わる）
-    function roleRowsHTML() {
+    // compact … 共有の画面に置く時は、いまの役割を1行の色付きの帯にする（スマホでもスクロールせずに収まるように）
+    function roleRowsHTML(compact) {
         const now = deviceRole();
         const noShare = !window.FIREBASE_CONFIG;
         const others = roleChoices().filter(r => r !== now);
+        if (compact) return `<div class="role-now sm" role="status"><span class="rn-ic"><svg class="ic"><use href="#ic-${ROLE_INFO[now].icon}"/></svg></span><span class="rn-k">いまの役割</span><b class="rn-t">${escHtml(roleTitle(now))}</b></div>`
+            + others.map(r => menuRow(ROLE_INFO[r].icon, roleTitle(r), ROLE_INFO[r].sub, `switchDeviceRole('${r}')`, { disabled: noShare && r !== 'register' })).join('');
         return `<div class="role-now" role="status">
                 <span class="rn-k">いまの役割</span>
                 <span class="rn-ic"><svg class="ic"><use href="#ic-${ROLE_INFO[now].icon}"/></svg></span>
@@ -8261,25 +8277,45 @@
         if (box) box.classList.toggle('cd-light', light);
         if (customerMode) root.style.colorScheme = light ? 'light' : 'dark';
         else root.style.colorScheme = resolvedTheme();
-        setThemeColorMeta(customerMode ? (light ? CD_EDGE_LIGHT : CD_EDGE_COLOR) : THEME_COLORS[resolvedTheme()]);
+        setThemeColorMeta(customerMode ? (light ? CD_EDGE_LIGHT : CD_EDGE_COLOR) : THEME_COLORS[resolvedTheme()], !customerMode && uiPrefs.theme !== 'light' && uiPrefs.theme !== 'dark');
     }
     // 画面いちばん上（時刻・電波・電池）の帯の色。
     // iPhone の Safari は、同じ meta の中身を書き換えただけでは色を塗り直さないことがある
     // （端末の明暗を切り替えたあとに、アプリの明暗を変えた時など）。
     // そこで、色が変わる時は meta を作り直して、必ず読み直させる。
-    function setThemeColorMeta(color) {
+    // 「端末に合わせる」の時（auto）は、明るい時・暗い時の2つの色を media 付きで置く。
+    // JS が動く前に端末の明暗が変わっても（アプリが裏にいる間に切り替えた時など）、
+    // iPhone が自分で正しい方を選んで塗るので、帯だけ前の色のまま残ることがない。
+    // force … 中身が同じでも作り直す（画面に戻った時に、帯を必ず塗り直させるため）
+    function setThemeColorMeta(color, auto, force) {
+        const want = auto
+            ? [{ c: THEME_COLORS.light, m: '(prefers-color-scheme: light)' }, { c: THEME_COLORS.dark, m: '(prefers-color-scheme: dark)' }]
+            : [{ c: color, m: '' }];
         const old = [...document.querySelectorAll('meta[name="theme-color"]')];
-        if (old.length === 1 && old[0].getAttribute('content') === color && !old[0].media) return;
+        const same = old.length === want.length && old.every((m, i) => m.getAttribute('content') === want[i].c && (m.getAttribute('media') || '') === want[i].m);
+        if (same && !force) return;
         old.forEach(m => m.remove());
-        const m = document.createElement('meta');
-        m.name = 'theme-color';
-        m.content = color;
-        document.head.appendChild(m);
+        want.forEach(w => {
+            const m = document.createElement('meta');
+            m.name = 'theme-color';
+            m.content = w.c;
+            if (w.m) m.media = w.m;
+            document.head.appendChild(m);
+        });
         // 帯の文字（時刻など）の色も、いまの明るさに合わせてもらう
         let cs = document.querySelector('meta[name="color-scheme"]');
         if (!cs) { cs = document.createElement('meta'); cs.name = 'color-scheme'; document.head.appendChild(cs); }
-        cs.content = document.documentElement.style.colorScheme || 'light';
+        cs.content = auto ? 'light dark' : (document.documentElement.style.colorScheme || 'light');
     }
+    // 画面に戻った時（ホーム画面・コントロールセンターから戻った時）は、明暗を確かめ直して帯を塗り直す
+    function refreshSurfaceAfterWake() {
+        if (uiPrefs.theme !== 'light' && uiPrefs.theme !== 'dark' && !customerMode
+            && document.documentElement.getAttribute('data-theme') !== resolvedTheme()) { applyTheme(false); }
+        const light = customerMode ? uiPrefs.cdLight === true : false;
+        setThemeColorMeta(customerMode ? (light ? CD_EDGE_LIGHT : CD_EDGE_COLOR) : THEME_COLORS[resolvedTheme()], !customerMode && uiPrefs.theme !== 'light' && uiPrefs.theme !== 'dark', true);
+    }
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(refreshSurfaceAfterWake, 60); });
+    window.addEventListener('pageshow', () => setTimeout(refreshSurfaceAfterWake, 60));
 
     function applyTheme(animate) {
         const t = resolvedTheme();
@@ -8321,7 +8357,7 @@
     function watchSystemTheme() {
         if (!window.matchMedia) return;
         themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
-        const onChange = () => { if (uiPrefs.theme === 'auto') applyTheme(true); };
+        const onChange = () => { if (uiPrefs.theme === 'auto') { applyTheme(true); setTimeout(refreshSurfaceAfterWake, 120); } };
         if (themeMedia.addEventListener) themeMedia.addEventListener('change', onChange);
         else if (themeMedia.addListener) themeMedia.addListener(onChange);   // 古いSafari向け
     }
@@ -13647,6 +13683,7 @@
         const acts = document.getElementById('sync-actions');
         if (!box || !acts) return;
         const speed = document.getElementById('sync-speed');
+        const offHelp = document.getElementById('sync-offline-help');   // 通信障害の時の対処（共有している時だけ）
         const codeWrap = document.getElementById('sync-code-wrap');
         if (codeWrap) codeWrap.innerHTML = '';
         renderSyncRoleList();
@@ -13659,7 +13696,7 @@
             acts.innerHTML =
                 `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="openJoinSetup()"><svg class="ic"><use href="#ic-link"/></svg>開いている販売会に合流する</button>` +
                 `<button class="action-btn btn-secondary" onclick="headerSessionAction(); openNewSetup();"><svg class="ic"><use href="#ic-store"/></svg>新しく開店する</button>`;
-            if (speed) speed.style.display = 'none';
+            if (speed) speed.style.display = 'none'; if (offHelp) offHelp.style.display = 'none';
             return;
         }
         if (syncMode) {
@@ -13673,14 +13710,14 @@
             renderShareQr();
             acts.innerHTML =
                 `<button class="action-btn btn-secondary" onclick="leaveDeviceOnly()"><svg class="ic"><use href="#ic-power"/></svg>この端末の利用を終える（ほかの端末は続ける）</button>`;
-            if (speed) speed.style.display = '';
+            if (speed) speed.style.display = ''; if (offHelp) offHelp.style.display = '';
         } else {
             box.className = 'notice';
             box.innerHTML = '<svg class="ic"><use href="#ic-link"/></svg><span><b>この端末だけ</b>で営業中です。</span>';
             acts.innerHTML =
                 `<button class="action-btn btn-checkout" style="margin-top:0;" onclick="startShareNow()"><svg class="ic"><use href="#ic-plus"/></svg>ほかの端末と共有を始める</button>` +
                 `<button class="action-btn btn-secondary" onclick="openPanel('settings','sync-add')"><svg class="ic"><use href="#ic-link"/></svg>別の端末の販売会に合流する</button>`;
-            if (speed) speed.style.display = 'none';
+            if (speed) speed.style.display = 'none'; if (offHelp) offHelp.style.display = 'none';
         }
     }
 
@@ -13688,7 +13725,7 @@
     // どの役割からでも、その場で選び直せる（コードを入れ直さない）。
     function renderSyncRoleList() {
         const box = document.getElementById('sync-role-list');
-        if (box) box.innerHTML = roleRowsHTML();
+        if (box) box.innerHTML = roleRowsHTML(true);
         if (currentView === 'settings' && currentSub === 'role') renderRoleView();
     }
 
