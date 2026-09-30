@@ -859,18 +859,34 @@
         }
         .kds-station button i { width: 10px; height: 10px; border-radius: 3px; background: var(--ink); }
         .kds-station button.on { box-shadow: inset 0 0 0 2px var(--accent); color: var(--accent-ink); background: var(--accent-soft); }
-        .kds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; align-items: start; }
+        /* 同じ段のカードは高さをそろえ（stretch）、下のボタンの位置もそろえる。表のように左上から A・B・C… */
+        .kds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; align-items: stretch; }
         @media (max-width: 560px) { .kds-grid { grid-template-columns: 1fr; gap: 10px; } }
         /* 持ち帰りと店内は、カードの左の太い帯と見出しの色で分ける（遠くからでも分かるように） */
         .kds-card { background: var(--surface); border-radius: var(--r-lg, 16px); box-shadow: var(--shadow-card), inset 6px 0 0 var(--dine); overflow: hidden; display: flex; flex-direction: column; --dine: var(--dine-take); --dine-bg: var(--dine-take-bg); }
         .kds-card.dine-eat { --dine: var(--dine-eat); --dine-bg: var(--dine-eat-bg); }
-        .kds-card .kds-head { display: flex; align-items: center; gap: 8px; padding: 11px 14px 10px 20px; background: var(--dine-bg); flex-wrap: wrap; }
-        .kds-card .kds-no { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .01em; line-height: 1; }
-        .kds-card .kds-min { margin-left: auto; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .kds-card .kds-head { display: flex; align-items: center; gap: 10px; padding: 9px 14px 8px 18px; background: var(--dine-bg); flex-wrap: nowrap; min-height: 58px; box-sizing: border-box; }
+        /* 呼び名（A・B・C…）：いちばん目に入る大きな札 */
+        .kds-card .kds-letter { flex: none; min-width: 40px; height: 40px; padding: 0 6px; box-sizing: border-box; border-radius: 12px; display: grid; place-items: center;
+            background: var(--text-main); color: var(--surface); font-size: 26px; font-weight: 900; line-height: 1; letter-spacing: -.02em; }
+        .kds-card .kds-no { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: .01em; line-height: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .kds-card .kds-min { margin-left: auto; flex: none; font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        /* 札の帯：いつも同じ高さで1行（入りきらない時は右を「…」にする） */
+        .kds-card .kds-tags { display: flex; align-items: center; gap: 6px; height: 34px; padding: 0 6px 0 18px; box-sizing: border-box; }
+        .kds-card .kds-tl { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(90deg, #000 88%, transparent); mask-image: linear-gradient(90deg, #000 88%, transparent); }
+        .kds-card .kds-tl > * { flex: none; }
+        .kds-card .kds-tag.kds-unpaid { background: var(--danger); color: #fff; box-shadow: none; }
+        .kds-grid.dense .kds-card .kds-tag, .kds-grid.dense .kds-card .kds-dine { font-size: 11px; padding: 2px 7px; }
+        .kds-card .kds-tags .kds-print { flex: none; width: 40px; justify-content: center; padding: 0; }
+        .kds-card .kds-foot button { white-space: nowrap; min-width: 0; }
+        .kds-card .kds-foot .kds-left { font-size: 12px; font-weight: 800; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,.28); }
+        .kds-card .kds-foot .kds-go:disabled .kds-left { background: var(--surface); color: var(--danger); }
+        /* 分類の間の点線 */
+        .kds-items li.kds-sep { height: 0; margin: 3px 6px 3px 2px; border-top: 2px dotted var(--line-strong, #B8BCC6); }
         .kds-card .kds-dine { font-size: 13px; font-weight: 800; padding: 3px 10px; border-radius: 999px; background: var(--dine); color: #fff; }
         .kds-card .kds-tag { font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--surface); color: var(--accent-ink); box-shadow: inset 0 0 0 1.5px var(--accent); }
-        .kds-card .kds-state { font-size: 12.5px; font-weight: 800; color: var(--accent-ink); padding: 8px 14px 0 20px; }
-        .kds-card.st-done .kds-state { color: var(--text-light); }
+        .kds-card .kds-tag.kds-state { color: var(--accent-ink); }
+        .kds-card.st-done .kds-tag.kds-state { color: var(--text-light); box-shadow: inset 0 0 0 1.5px var(--text-light); }
         .kds-card.warn .kds-min { color: var(--warn-ink); }
         /* 10分を過ぎたら、経過時間を赤い大きな文字にして目立たせる */
         .kds-card.late .kds-min { color: var(--danger); font-size: 22px; font-weight: 900; }
@@ -879,14 +895,15 @@
         .kds-card.held { opacity: .78; }
         .kds-card.held .kds-min { color: var(--text-light); font-size: 13px; }
         .kds-card.late { box-shadow: var(--shadow-card), inset 6px 0 0 var(--dine), inset 0 0 0 2px var(--danger); }
-        .kds-card .kds-edit { font-size: 11.5px; font-weight: 700; color: var(--warn-ink); padding: 6px 14px 0 20px; }
+        .kds-card .kds-tag.kds-edit { color: var(--warn-ink); box-shadow: inset 0 0 0 1.5px var(--warn-ink); }
         /* 会計中（レジのカート）：上の色の帯だけを点滅させて、まだ会計が済んでいないことを示す。
            （カード全体を点滅させると、商品の行まで読みにくくなるため）
            明るい画面では「白と持ち帰り/店内の色」、暗い画面では「黒とその色」で点滅させる。 */
         .kds-card { --kds-blink-base: #FFFFFF; --kds-blink-ink: #1C1D22; }
         :root[data-theme="dark"] .kds-card { --kds-blink-base: #000000; --kds-blink-ink: #EDEFF4; }
         .kds-card.st-draft .kds-head { animation: kdsHeadBlink .5s ease-in-out infinite alternate; }
-        .kds-card.st-draft .kds-no { font-size: 18px; color: inherit; }
+        .kds-card.st-draft .kds-no { font-size: 20px; color: inherit; }
+        .kds-card.st-draft .kds-letter { color: inherit; background: transparent; box-shadow: inset 0 0 0 2.5px currentColor; }
         .kds-card.st-draft .kds-dine { box-shadow: 0 0 0 1.5px currentColor; }
         @keyframes kdsHeadBlink {
             from { background: var(--dine); color: #fff; }
@@ -902,8 +919,7 @@
         .kds-items li.done .kds-opt { color: var(--text-light); }
         /* 「未」をまとめて消す */
         .kds-card .kds-foot .kds-all { flex-shrink: 0; padding: 0 12px; background: var(--btn-neutral); color: var(--text-main); font-size: 14px; }
-        /* 伝票を出す（見出しの右端の小さなボタン） */
-        .kds-card .kds-sub { display: flex; justify-content: flex-end; padding: 0 10px 0 16px; }
+        /* 伝票を出す（札の帯の右端の小さなボタン） */
         .kds-card .kds-print { border: none; background: transparent; color: var(--text-light); min-height: 36px; padding: 0 8px; border-radius: 10px; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 700; }
         .kds-card .kds-print .ic { width: 17px; height: 17px; }
         /* 商品の合計 */
@@ -954,6 +970,17 @@
         .kds-card .kds-wait { flex: 1; text-align: center; font-size: 13px; font-weight: 700; color: var(--accent-ink); padding: 14px 0; }
         .kds-card.fresh { animation: kdsIn .45s cubic-bezier(.32,.72,0,1) both; }
         @keyframes kdsIn { from { transform: scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+        /* 注文が多い時（9枚から）：1枚を詰めて、1画面に多く入れる */
+        .kds-grid.dense { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+        .kds-grid.dense .kds-card .kds-head { min-height: 50px; padding-top: 7px; padding-bottom: 6px; }
+        .kds-grid.dense .kds-card .kds-letter { min-width: 34px; height: 34px; font-size: 22px; border-radius: 10px; }
+        .kds-grid.dense .kds-card .kds-no { font-size: 20px; }
+        .kds-grid.dense .kds-items { padding-top: 4px; gap: 2px; }
+        .kds-grid.dense .kds-items li button { min-height: 38px; font-size: 15.5px; padding: 5px 8px; }
+        .kds-grid.dense .kds-card .kds-foot button { min-height: 44px; font-size: 15px; }
+        .kds-grid.dense .kds-card .kds-foot .kds-all span { display: none; }   /* 細いカードでは「✓」だけにして、呼び出しを広く */
+        .kds-grid.dense .kds-card .kds-foot .kds-all { width: 48px; padding: 0; }
+        @media (max-width: 560px) { .kds-grid.dense { grid-template-columns: 1fr; } }
         .kds-empty { text-align: center; color: var(--text-light); padding: 40px 10px; font-size: 15px; line-height: 1.8; grid-column: 1 / -1; }
         /* お会計の窓の「持ち帰り／店内」 */
         .co-dine { display: flex; align-items: center; gap: 10px; margin: 10px 0 2px; }
@@ -2162,6 +2189,9 @@
         .fs-chips button { border: none; border-radius: 999px; padding: 8px 14px; min-height: 36px; background: var(--btn-neutral); color: var(--text-main); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
         .fs-chips button.on { background: var(--accent); color: #fff; }
         .co-coupon .cc-pair { display: flex; gap: 8px; }
+        .snd-try { flex: none; width: 40px; height: 40px; border: none; border-radius: 12px; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; cursor: pointer; margin-right: 4px; }
+        .snd-try .ic { width: 18px; height: 18px; }
+        .snd-link.btn-secondary { background: var(--accent-soft); color: var(--accent-ink); }
         .staff-chip {
             display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer;
             border: none; font-family: inherit; font-size: 12.5px; font-weight: 800; max-width: 7.5em;
@@ -3970,6 +4000,8 @@
 
             <!-- レストラン：テーブルの数・伝票の渡し方・テーブルのQR -->
             <div class="sub-view" id="sub-rest" style="display:none;"><div id="rest-body"></div></div>
+            <!-- 音と読み上げ（項目ごと・全部オン・全部オフ） -->
+            <div class="sub-view" id="sub-sound" style="display:none;"><div id="sound-body"></div></div>
             <!-- 担当者（機能：staff） -->
             <div class="sub-view" id="sub-staff" style="display:none;"><div id="staff-body"></div></div>
             <!-- 釣り銭とレジ締め（機能：cash） -->
@@ -4059,15 +4091,7 @@
                 <button class="action-btn btn-secondary" style="width:100%; margin-top:10px;" onclick="refreshWeather(true)"><svg class="ic"><use href="#ic-refresh"/></svg>天気をいますぐ取り直す</button>
 
                 <label class="field-label sec">音</label>
-                <div class="sw-row">
-                    <div class="sw-text"><b>操作音を鳴らす</b><span>商品を押した時・会計が済んだ時・まちがえた時の音（この端末だけ）</span></div>
-                    <input type="checkbox" class="ios-switch" id="opt-sound" onchange="setDeviceSound('sound', this.checked)">
-                </div>
-                <div class="sw-row">
-                    <div class="sw-text"><b>KDに注文が入ったら知らせる</b><span>ピーッ、ピーッ、ピーッと3回（この端末をKDにした時）</span></div>
-                    <input type="checkbox" class="ios-switch" id="opt-kdalert" onchange="setDeviceSound('kdAlert', this.checked)">
-                </div>
-                <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="unlockAudio(); kdAlert();"><svg class="ic"><use href="#ic-sound"/></svg>KDの知らせの音を試しに聞く</button>
+                <button class="action-btn btn-secondary snd-link" style="width:100%;" onclick="openPanel('settings','sound')"><svg class="ic"><use href="#ic-sound"/></svg>音と読み上げ（項目ごと・全部オン・全部オフ）</button>
 
                 <label class="field-label sec">全画面表示</label>
                 <button id="btn-fullscreen" class="action-btn btn-secondary" style="width:100%; display:none;" onclick="toggleFullscreen()"><svg class="ic"><use href="#ic-expand"/></svg>今すぐ全画面表示にする</button>
@@ -6334,6 +6358,10 @@
                     <li>呼び出しを押し間違えた時は、↶ で調理中に戻せます。「完了」からも「呼び出しに戻す」で戻せます。</li>
                     <li>待たせている時間が<b>5分を過ぎると黄色</b>、<b>10分を過ぎると赤い大きな文字</b>になります。</li>
                     <li>新しい注文が入ると、KDで<b>「ピーッ・ピーッ・ピーッ」</b>と3回鳴ります（時間指定の注文が調理中に出てきた時も）。鳴らしたくない時は、KDの右上の<b>「音あり」</b>を押すと<b>「音なし」</b>に変わります（もう一度押すと戻ります。端末ごとに覚えます）。</li>
+                    <li>カードには、<b>左上から A・B・C…</b>の呼び名が大きく付きます（27枚目からは AA・AB…）。「<b>Aオーダー</b>できました」のように呼べます。呼び名は画面の並びの順なので、先の注文が済むと、あとの注文の呼び名が1つずつ前にずれます。</li>
+                    <li>カードは表のように並び、<b>同じ段のカードは高さと下のボタンの位置がそろいます</b>。持ち帰り・店内・<b>未払い</b>（赤）・モバイル・後で会計などの札は、番号の下の決まった高さの帯に1行で並びます。</li>
+                    <li>商品の行は<b>分類（パン・ドリンク など）ごと</b>にまとまり、分類の間は<b>点線</b>で区切られます。「伝票」（印刷）も同じく分類ごとに点線で区切ります。伝票は札の帯の右端の印刷の印で出します。</li>
+                    <li>注文が9件より多い時は、カードを少し詰めて、1画面に多く入るようにします。</li>
                     <li><b>「担当」</b>で、ドリンク係はドリンク、のように分けて見られます（端末ごとに覚えます）。担当の商品が上に出て、<b>担当でない商品は下に薄い灰色</b>で出ます（押せません。何がいっしょに出るかは分かります）。</li>
                     <li>レジで会計を取り消すと、KDのカードも消えます。会計の中身を直すと、カードにも「直されました」と出ます。</li>
                     <li>KDで何を押しても、<b>売上の記録は変わりません</b>（お金の記録とは別に置いています）。</li>
@@ -6714,13 +6742,13 @@
                         <li>明細は上から、金額は下に並びます。レジで<b>「会計へ進む」</b>を押すと、<b>合計点数・合計・お預かり（はじめは0円）・不足・お釣り</b>が出ます。PayPay などの時は、お預かりの代わりに支払い方法が出ます。</li>
                     </ul>
                 </div>
-                <h4>音と読み上げ（設定 → CD → 音と読み上げ）</h4>
+                <h4>音と読み上げ（設定 → 音と読み上げ）</h4>
                 <ul class="man-list">
-                    <li><b>会計が済んだ時の音</b>…「ありがとうございました」が出る時に、明るい音が鳴ります。</li>
-                    <li><b>「ありがとうございました」と読み上げる</b>・<b>合計を読み上げる</b>（「お会計は、1,280円です」）…CDの端末が声で伝えます。</li>
-                    <li>ファストフードでは、<b>呼び出しの番号を読み上げる</b>こともできます（はじめは切ってあります）。</li>
-                    <li>iPhone・iPad は、<b>画面に1回さわるまで音が出ません</b>。CDに「タッチで音が出ます」と出ている時は、1回さわってください。</li>
-                    <li>「この端末で試しに聞く」で、今の設定の音を確かめられます。音を小さく・消したい時は、端末の音量で調整します。</li>
+                    <li>アプリで鳴る音と、CDの読み上げは、<b>「設定 → 音と読み上げ」</b>の1か所で切り替えます。<b>「全部オン」「全部オフ」</b>でまとめて、または項目ごとに切り替えられます。右の音の印を押すと、その音をこの端末で試しに聞けます。</li>
+                    <li><b>この端末の音</b>（端末ごと）…操作音、KDの新しい注文の知らせ（ファストフードの時）。</li>
+                    <li><b>CDの音と読み上げ</b>（全部のCDにそろう）…会計が済んだ時の音、「ありがとうございました」、合計（「お会計は、1,280円です」）、呼び出し番号（ファストフードの時。はじめは切ってあります）。</li>
+                    <li>呼び出し番号の読み上げは「<b>番号札、E 1001番、を、お持ちのお客様。カウンターにお越しください。</b>」です。</li>
+                    <li>iPhone・iPad は、<b>画面に1回さわるまで音が出ません</b>。CDに「タッチで音が出ます」と出ている時は、1回さわってください。音の大きさは、端末の音量で決めます。</li>
                 </ul>
                 <h4>お礼の長さ・広告の形（設定 → CD）</h4>
                 <ul class="man-list">
@@ -7484,6 +7512,8 @@
     }
 
     // 読み上げ用の番号（E1001 → 「E 1001」のように、英字と数字の間を空けて読みやすく）
+    // 呼び出しの時に読み上げる文（読点のところで少し間をあける）
+    function callSpeechText(no) { return `番号札、${callNoForSpeech(no)}番、を、お持ちのお客様。カウンターにお越しください。`; }
     function callNoForSpeech(no) { return String(no || '').replace(/^([A-Za-z]+)(\d)/, '$1 $2'); }
     // CDの音：同じ知らせで何度も鳴らさないよう、何に鳴らしたかを覚えておく
     let cdSoundDoneAt = 0, cdSayTotalKey = '', cdSayTotalTimer = null, cdSoundStarted = 0;
@@ -8245,6 +8275,74 @@
         uiPrefs[key] = !!on;
         try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) { /* 保存できなくても動く */ }
         if (on) { unlockAudio(); if (key === 'sound') playSound(880, 0.08); else kdAlert(); }
+    }
+    // ▼ 音と読み上げ（設定の1か所で、項目ごと・まとめて切り替える）▼
+    //   この端末 … 操作音・KDの知らせ（端末ごと）
+    //   CD      … 会計が済んだ時の音・「ありがとうございました」・合計・呼び出し番号（全部のCDにそろう）
+    function soundItems() {
+        return [
+            { g: 'dev', k: 'sound', t: '操作音', s: '商品を押した時・会計が済んだ時・まちがえた時の音', on: () => uiPrefs.sound !== false },
+            { g: 'dev', k: 'kdAlert', t: 'KDの新しい注文の知らせ', s: 'ピーッ、ピーッ、ピーッと3回（この端末をKDにした時）', on: () => uiPrefs.kdAlert !== false, kitchen: true },
+            { g: 'cd', k: 'sfx', t: '会計が済んだ時の音', s: '「ありがとうございました」の画面が出る時に、明るい音', on: () => !!cdCfg.sfx },
+            { g: 'cd', k: 'vThanks', t: '「ありがとうございました」の読み上げ', s: '音のあとに、CDの端末の声でしゃべります', on: () => !!cdCfg.vThanks },
+            { g: 'cd', k: 'vTotal', t: 'お会計の合計の読み上げ', s: '「会計へ進む」を押した時に「お会計は、1280円です」', on: () => !!cdCfg.vTotal },
+            { g: 'cd', k: 'vCall', t: '呼び出し番号の読み上げ', s: '「番号札、E 1001番、を、お持ちのお客様。カウンターにお越しください。」', on: () => !!cdCfg.vCall, ff: true }
+        ].filter(x => (!x.kitchen || isKitchen()) && (!x.ff || isFastFood()));
+    }
+    function soundSub() {
+        const list = soundItems(), on = list.filter(x => x.on()).length;
+        return on === list.length ? '全部オン' : (on === 0 ? '全部オフ' : `${list.length}項目のうち${on}項目がオン`);
+    }
+    function setSoundItem(k, on) {
+        const it = soundItems().find(x => x.k === k);
+        if (!it) return;
+        if (it.g === 'dev') setDeviceSound(k, on); else setCdSound(k, on);
+        if (k === 'kdAlert') renderKdSoundBtn();
+        setTimeout(renderSoundView, 200);
+    }
+    // 全部オン・全部オフ（この端末の音と、全部のCDの音と声を、1回で）
+    function setAllSound(on) {
+        on = !!on;
+        uiPrefs.sound = on; uiPrefs.kdAlert = on;
+        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
+        const cd = { sfx: on, vThanks: on, vTotal: on };
+        if (isFastFood()) cd.vCall = on;
+        writeCdCfg(Object.assign({}, cdCfg, cd), on ? '音と読み上げを全部オンにした' : '音と読み上げを全部オフにした');
+        renderKdSoundBtn();
+        if (on) { unlockAudio(); playSound(880, 0.08); }
+        showToast(on ? '音と読み上げを全部オンにしました' : '音と読み上げを全部オフにしました');
+        renderSoundView();
+    }
+    function previewSoundItem(k) {
+        unlockAudio(); unlockSpeech();
+        if (k === 'sound') playSound(880, 0.1);
+        else if (k === 'kdAlert') kdAlert();
+        else if (k === 'sfx') cdDoneChime();
+        else if (k === 'vThanks') speakJa('ありがとうございました');
+        else if (k === 'vTotal') speakJa('お会計は、1280円です');
+        else if (k === 'vCall') speakJa(callSpeechText('E1001'));
+    }
+    function renderSoundView() {
+        const box = document.getElementById('sound-body');
+        if (!box) return;
+        const list = soundItems();
+        const allOn = list.every(x => x.on()), allOff = list.every(x => !x.on());
+        const row = x => `<div class="sw-row">
+                <div class="sw-text"><b>${x.t}</b><span>${escHtml(x.s)}</span></div>
+                <button type="button" class="snd-try" onclick="previewSoundItem('${x.k}')" aria-label="${x.t}を試しに聞く"><svg class="ic"><use href="#ic-sound"/></svg></button>
+                <input type="checkbox" class="ios-switch" ${x.on() ? 'checked' : ''} onchange="setSoundItem('${x.k}', this.checked)" aria-label="${x.t}">
+            </div>`;
+        const dev = list.filter(x => x.g === 'dev'), cd = list.filter(x => x.g === 'cd');
+        box.innerHTML = `<p class="settings-hint" style="margin-top:0;">アプリで鳴る音と、CDの読み上げを1か所で切り替えます。右の音の印を押すと、この端末で試しに聞けます。</p>
+            <div class="seg-pick" role="group" aria-label="まとめて切り替える">
+                <button type="button" class="${allOn ? 'on' : ''}" aria-pressed="${allOn}" onclick="setAllSound(true)">全部オン</button>
+                <button type="button" class="${allOff ? 'on' : ''}" aria-pressed="${allOff}" onclick="setAllSound(false)">全部オフ</button>
+            </div>
+            <label class="field-label sec">この端末の音（端末ごと）</label>
+            ${dev.map(row).join('')}
+            <label class="field-label sec">CDの音と読み上げ（全部のCDにそろう）</label>
+            ${cd.map(row).join('')}
+            <p class="settings-hint">CDの音はCDの端末から出ます。iPhone・iPad は、CDにしたあと画面に1回触ると音が出るようになります。消音スイッチ（マナーモード）がオンだと、効果音は鳴りません。音の大きさは、端末の音量で決めます。</p>`;
     }
     // KDの右上の「音」：新しい注文の知らせの音を、この端末で鳴らすか
     function toggleKdAlert() {
@@ -12482,6 +12580,7 @@
         'feat': 'レジの機能',
         'cash': '釣り銭とレジ締め',
         'staff': '担当者',
+        'sound': '音と読み上げ',
         'customer': 'CD',
         'role': 'この端末の役割',
         'cd': 'CD（お客様用の画面）',
@@ -12766,6 +12865,7 @@
             else if (sub === 'feat') renderFeatView();
             else if (sub === 'cash') renderCashView();
             else if (sub === 'staff') renderStaffView();
+            else if (sub === 'sound') renderSoundView();
             else if (sub === 'pdf-import') renderPdfImport();
             else if (sub === 'display') { updateFullscreenButton(); renderThemeSettings(); renderClockSettings(); renderLockEntry(); }
             else if (sub === 'lock') { lockDraft = null; lockReuse = true; renderLockView(); }
@@ -12890,6 +12990,7 @@
             menuRow('device', 'この端末の役割', roleSub(), "openPanel('settings','role')") +
             menuRow('users', 'CD（お客様用の画面）', cdSub(), "openPanel('settings','cd')") +
             menuRow('clock', 'この端末の設定', (isLocked() ? '制限中・' : '') + clockSub, "openPanel('settings','display')") +
+            menuRow('sound', '音と読み上げ', soundSub(), "openPanel('settings','sound')") +
             head('印刷') +
             menuRow('printer', 'レシート', 'ヘッダー・フッター・QR・大きな番号・並べる項目', "openPanel('settings','rcpt')") +
             menuRow('file', '領収書', `発行者「${escHtml(shopInfo().name)}」・宛名・但し書き`, "openPanel('settings','receipt')") +
@@ -18258,7 +18359,9 @@
                     : (kitchenFilter === 'held' ? `受け取り時間を指定した注文はありません。<br><span>指定された注文は、受け取りの${mobileCfg.lead}分前に「調理中」へ出ます。</span>` : 'この状態の注文はありません。'))}</div>`;
             return;
         }
-        grid.innerHTML = rows.map(o => {
+        // 注文が多い時は、1枚を詰めて出す（1画面に多く入るように）
+        grid.classList.toggle('dense', rows.length > 8);
+        grid.innerHTML = rows.map((o, idx) => {
             const held = heldNow.has(o.id);
             const min = kitchenMinutes(o, now);
             const left = orderLeft(o);
@@ -18272,44 +18375,67 @@
             if (relAt && o.st === 'cook' && !o.chk.length && now - relAt < KITCHEN_REL_BLINK_MS) cls.push('rel-blink');
             const canTap = !held && (o.st === 'cook' || o.st === 'draft');
             // 担当を絞っている時は、担当の商品を上に、担当でない商品は下に灰色で出す（押せない。何がいっしょに出るかは分かる）
-            const mineFirst = stn === 'all' ? o.items : o.items.filter(x => x.type === stn).concat(o.items.filter(x => x.type !== stn));
+            // 商品の行は分類（パン・ドリンク など）ごとにまとめ、分類の間を点線で区切る
+            const mineFirst = kitchenItemsByCat(stn === 'all' ? o.items : o.items.filter(x => x.type === stn)).concat(stn === 'all' ? [] : kitchenItemsByCat(o.items.filter(x => x.type !== stn)));
+            let prevType = null;
             const items = mineFirst.map(x => {
                 const other = stn !== 'all' && x.type !== stn;
                 const k = optKey(x), done = o.chk.includes(k);
-                return `<li class="${done ? 'done' : ''}${other ? ' other' : ''}" style="--ink:${catInk(x.type)};">
+                const sep = prevType !== null && x.type !== prevType ? '<li class="kds-sep" aria-hidden="true"></li>' : '';
+                prevType = x.type;
+                return sep + `<li class="${done ? 'done' : ''}${other ? ' other' : ''}" style="--ink:${catInk(x.type)};">
                     <button type="button" ${canTap && !other ? '' : 'disabled'} data-key="${escHtml(k)}" onclick="kitchenCheck(this, this.dataset.key)"><span class="kds-mi" aria-label="${done ? 'できた' : 'まだ'}">未</span><span class="qty">${x.qty}</span><span class="nm">${escHtml(x.name)}${x.opt ? `<span class="kds-opt">${escHtml(x.opt)}</span>` : ''}</span></button></li>`;
             }).join('');
             const no = o.st === 'draft' ? '会計中' : (o.table ? escHtml(tableLabel(o.table)) : '#' + escHtml(orderNoText(o)));
             const rest = isRestaurant();
             // 「未」をまとめて消すボタン（全部済みの時は、まとめて「未」に戻す）
-            const allBtn = canTap ? `<button type="button" class="kds-all" onclick="kitchenCheckAll(this)" aria-label="${left ? '未をまとめて消す' : '未にまとめて戻す'}"><svg class="ic"><use href="#ic-${left ? 'check' : 'undo'}"/></svg>${left ? 'まとめて済' : '戻す'}</button>` : '';
+            const allBtn = canTap ? `<button type="button" class="kds-all" onclick="kitchenCheckAll(this)" aria-label="${left ? '未をまとめて消す' : '未にまとめて戻す'}"><svg class="ic"><use href="#ic-${left ? 'check' : 'undo'}"/></svg><span>${left ? 'まとめて済' : '戻す'}</span></button>` : '';
             // レストランは料理を席まで運ぶので、「呼び出し」は「できた」、「受け渡し完了」は「提供済み」
             const goLabel = rest ? 'できた' : '呼び出し';
             let foot;
             if (held) foot = `<button type="button" class="kds-go" onclick="kitchenRelease(this)"><svg class="ic"><use href="#ic-bolt"/></svg>いま作り始める</button>`;
             else if (o.st === 'draft') foot = allBtn + `<div class="kds-wait">レジで会計しています</div>`;
-            else if (o.st === 'cook') foot = allBtn + `<button type="button" class="kds-go" ${left ? 'disabled' : ''} onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-bolt"/></svg>${left ? `${goLabel}（未 ${left}）` : goLabel}</button>`;
+            else if (o.st === 'cook') foot = allBtn + `<button type="button" class="kds-go" ${left ? 'disabled' : ''} onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-bolt"/></svg>${goLabel}${left ? `<small class="kds-left">未${left}</small>` : ''}</button>`;
             else if (o.st === 'ready') foot = `<button type="button" class="kds-undo" onclick="kitchenBack(this)" aria-label="調理中に戻す"><svg class="ic"><use href="#ic-undo"/></svg></button>`
                 + (canHandOver(o) ? `<button type="button" class="kds-go" onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-check"/></svg>${rest ? '提供済み' : (o.paid ? '受け渡し完了' : '受け渡し完了（お代は帰る時）')}</button>`
                     : `<button type="button" class="kds-go" disabled><svg class="ic"><use href="#ic-alert"/></svg>未会計（会計してから渡す）</button>`);
             else foot = `<button type="button" class="kds-go" onclick="kitchenGo(this)"><svg class="ic"><use href="#ic-undo"/></svg>${rest ? 'できたに戻す' : '呼び出しに戻す'}</button>`;
-            return `<article class="${cls.join(' ')}" data-id="${escHtml(o.id)}">
+            // 見出しは1行（呼び名・番号・経過時間）、札は下の決まった高さの帯に1行で並べる。
+            // 札の多い・少ないでカードごとに商品の行の高さがずれないように（どのカードも同じ高さから始まる）。
+            const letter = kdsCardLetter(idx);
+            const tags = (o.billId ? `<span class="kds-tag">伝票${escHtml(String(o.no))}・${o.channel === 'mobile' ? 'モバイル' : (o.channel === 'handy' ? 'ハンディ' : 'レジ')}</span>`
+                    : `<span class="kds-dine">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>`
+                        // 「未払い」は大事なので、赤い札にして先に出す（細いカードでも切れないように）
+                        + ((o.channel === 'mobile' || o.later) && !o.paid ? '<span class="kds-tag kds-unpaid">未払い</span>' : '')
+                        + (o.channel === 'mobile' ? '<span class="kds-tag">モバイル</span>' : (o.later ? `<span class="kds-tag">${o.paid ? '後で会計・払い済み' : '後で会計'}</span>` : '')))
+                + (o.pickupAt ? `<span class="kds-tag kds-pick">受取 ${hmOf(o.pickupAt)}</span>` : '')
+                + (o.st !== 'cook' && o.st !== 'draft' ? `<span class="kds-tag kds-state">${kitchenStLabel(o.st)}</span>` : '')
+                + (o.edited ? '<span class="kds-tag kds-edit">直されました</span>' : '');
+            return `<article class="${cls.join(' ')}" data-id="${escHtml(o.id)}" data-letter="${letter}">
                 <div class="kds-head">
+                    <span class="kds-letter" aria-label="${letter}オーダー">${letter}</span>
                     <span class="kds-no">${no}</span>
-                    ${o.billId ? `<span class="kds-tag">伝票${escHtml(String(o.no))}・${o.channel === 'mobile' ? 'モバイル' : (o.channel === 'handy' ? 'ハンディ' : 'レジ')}</span>`
-                        : `<span class="kds-dine">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>
-                    ${o.channel === 'mobile' ? `<span class="kds-tag">モバイル${o.paid ? '' : '・未払い'}</span>` : (o.later ? `<span class="kds-tag">${o.paid ? '後で会計・払い済み' : '後で会計・未払い'}</span>` : '')}`}
-                    ${o.pickupAt ? `<span class="kds-tag kds-pick">受取 ${hmOf(o.pickupAt)}</span>` : ''}
                     <span class="kds-min">${held ? `${hmOf(orderStartAt(o))}に出ます` : `${min}分`}</span>
                 </div>
-                ${o.st !== 'cook' && o.st !== 'draft' ? `<div class="kds-state">${kitchenStLabel(o.st)}</div>` : ''}
-                ${o.edited ? '<div class="kds-edit">レジで中身が直されました</div>' : ''}
+                <div class="kds-tags"><span class="kds-tl">${tags}</span>${o.st !== 'draft' ? `<button type="button" class="kds-print" onclick="printKitchenTicket(this)" aria-label="${letter}オーダーの伝票を印刷" title="伝票を印刷"><svg class="ic"><use href="#ic-printer"/></svg></button>` : ''}</div>
                 <ul class="kds-items">${items}</ul>
-                ${o.st !== 'draft' ? `<div class="kds-sub"><button type="button" class="kds-print" onclick="printKitchenTicket(this)"><svg class="ic"><use href="#ic-printer"/></svg>伝票</button></div>` : ''}
                 <div class="kds-foot">${foot}</div>
             </article>`;
         }).join('');
         rows.forEach(o => kitchenSeen.add(o.id));
+    }
+
+    // KDのカードの呼び名：左上から A・B・C…Z、27枚目からは AA・AB…（「Aオーダー」と呼べるように）
+    function kdsCardLetter(i) {
+        let s = '', n = i;
+        do { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1; } while (n >= 0);
+        return s;
+    }
+    // 商品の行を分類の順（設定の「商品の分類」の順）にまとめる。同じ分類の中は注文の順のまま
+    function kitchenItemsByCat(items) {
+        const order = CAT_TYPES.map(c => c.id);
+        const rank = t => { const i = order.indexOf(t); return i < 0 ? order.length : i; };
+        return items.map((x, i) => ({ x, i })).sort((a, b) => rank(a.x.type) - rank(b.x.type) || a.i - b.i).map(v => v.x);
     }
 
     // ▼ 業務用の伝票（KDから出す。レシートとは別の、作る人向けの紙）▼
@@ -18328,13 +18454,17 @@
         if (o.channel === 'mobile') tags.push(o.paid ? 'モバイル' : 'モバイル・未払い');
         else if (o.later) tags.push(o.paid ? '後で会計・払い済み' : '後で会計・未払い');
         if (o.pickupAt) tags.push('受取 ' + hmOf(o.pickupAt));
-        const rows = o.items.map(x => `<div class="it${o.chk.includes(optKey(x)) ? ' done' : ''}"><span class="mi">${o.chk.includes(optKey(x)) ? '済' : '未'}</span><span class="q">${x.qty}</span><span class="n">${esc(x.name)}${x.opt ? `<small>${esc(x.opt)}</small>` : ''}</span></div>`).join('');
+        // 分類（パン・ドリンク など）ごとにまとめ、分類の間は点線で区切る
+        const row = x => `<div class="it${o.chk.includes(optKey(x)) ? ' done' : ''}"><span class="mi">${o.chk.includes(optKey(x)) ? '済' : '未'}</span><span class="q">${x.qty}</span><span class="n">${esc(x.name)}${x.opt ? `<small>${esc(x.opt)}</small>` : ''}</span></div>`;
+        const groups = [];
+        kitchenItemsByCat(o.items).forEach(x => { const g = groups[groups.length - 1]; if (g && g.type === x.type) g.items.push(x); else groups.push({ type: x.type, items: [x] }); });
+        const rows = groups.map((g, i) => `${i ? '<div class="rule dot"></div>' : ''}<div class="grp"><div class="gh">${esc(catLabelOf(g.type))}</div><div class="items">${g.items.map(row).join('')}</div></div>`).join('');
         const body = `<div class="tk">
                 <div class="top"><span>${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}</span><span>${esc(currentSession || '')}</span></div>
                 <div class="head"><span class="no">${esc(orderNoText(o))}</span><span class="cnt">計 ${count}個</span><span class="min">${min}分</span></div>
                 <div class="tags">${tags.map(esc).join('　')}</div>
                 <div class="rule"></div>
-                <div class="items">${rows}</div>
+                ${rows}
                 <div class="rule dash"></div>
             </div>`;
         const css = `@page { size: 80mm auto; margin: 3mm; }
@@ -18348,6 +18478,8 @@
             .tags { font-size: 13px; font-weight: 700; margin-top: 2px; }
             .rule { border-top: 2px dashed #000; margin: 6px 0; }
             .rule.dash { border-top-style: dashed; border-top-width: 1.5px; }
+            .rule.dot { border-top: 2px dotted #000; margin: 7px 0; }
+            .gh { font-size: 12px; font-weight: 800; margin-bottom: 3px; }
             .items { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; }
             .it { display: flex; align-items: baseline; gap: 6px; font-size: 15px; font-weight: 700; }
             .it .mi { font-size: 15px; }
@@ -18666,16 +18798,6 @@
         const labels = { sfx: '会計が済んだ時の音', vThanks: '「ありがとうございました」の読み上げ', vTotal: '合計の読み上げ', vCall: '呼び出し番号の読み上げ' };
         writeCdCfg(Object.assign({}, cdCfg, { [key]: !!on }), `CDの${labels[key]}を${on ? 'オン' : 'オフ'}にした`);
     }
-    // 設定の画面で、CDで出る音と声をこの端末で試す
-    function previewCdSound() {
-        unlockAudio(); unlockSpeech();
-        if (cdCfg.sfx) cdDoneChime();
-        const say = [];
-        if (cdCfg.vTotal) say.push('お会計は、1280円です');
-        if (cdCfg.vThanks) say.push('ありがとうございました');
-        if (say.length) setTimeout(() => speakJa(say.join('。')), cdCfg.sfx ? 520 : 0);
-        if (!cdCfg.sfx && !say.length) showToast('音と読み上げは、全部オフになっています');
-    }
     function setCdDoneSec(v) { if (CD_DONE_SECS.includes(v)) { playSound(660, 0.05); writeCdCfg(Object.assign({}, cdCfg, { doneSec: v }), `CDのお礼を出しておく長さを${v}秒にした`); } }
     function setCdAdShape(v) { if (CD_AD_SHAPES.some(x => x.id === v)) { playSound(660, 0.05); writeCdCfg(Object.assign({}, cdCfg, { adShape: v }), `CDの広告の枠を「${CD_AD_SHAPES.find(x => x.id === v).label}」にした`); } }
 
@@ -18837,24 +18959,7 @@
             <div class="chip-pick" role="group" aria-label="お礼を出しておく長さ">${CD_DONE_SECS.map(v => `<button type="button" class="${cdCfg.doneSec === v ? 'on' : ''}" aria-pressed="${cdCfg.doneSec === v}" onclick="setCdDoneSec(${v})">${v}秒</button>`).join('')}</div>
             <p class="settings-hint">会計が済んだ時の「ありがとうございました」を出しておく長さです。次のお客様の商品を打てば、すぐ次の会計の画面に変わります。</p>
             <label class="field-label sec">音と読み上げ</label>
-            <div class="sw-row">
-                <div class="sw-text"><b>会計が済んだら音を鳴らす</b><span>「ありがとうございました」の画面が出る時に、明るい音</span></div>
-                <input type="checkbox" class="ios-switch" ${cdCfg.sfx ? 'checked' : ''} onchange="setCdSound('sfx', this.checked)" aria-label="会計が済んだら音を鳴らす">
-            </div>
-            <div class="sw-row">
-                <div class="sw-text"><b>「ありがとうございました」と読み上げる</b><span>音のあとに、CDの端末の声でしゃべります</span></div>
-                <input type="checkbox" class="ios-switch" ${cdCfg.vThanks ? 'checked' : ''} onchange="setCdSound('vThanks', this.checked)" aria-label="ありがとうございましたと読み上げる">
-            </div>
-            <div class="sw-row">
-                <div class="sw-text"><b>お会計の合計を読み上げる</b><span>「会計へ進む」を押した時に「お会計は、1280円です」</span></div>
-                <input type="checkbox" class="ios-switch" ${cdCfg.vTotal ? 'checked' : ''} onchange="setCdSound('vTotal', this.checked)" aria-label="お会計の合計を読み上げる">
-            </div>
-            ${isFastFood() ? `<div class="sw-row">
-                <div class="sw-text"><b>呼び出し番号を読み上げる</b><span>「呼び出し番号」の画面で、できた番号を「E 1001番のお客様」と呼ぶ</span></div>
-                <input type="checkbox" class="ios-switch" ${cdCfg.vCall ? 'checked' : ''} onchange="setCdSound('vCall', this.checked)" aria-label="呼び出し番号を読み上げる">
-            </div>` : ''}
-            <button type="button" class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="previewCdSound()"><svg class="ic"><use href="#ic-sound"/></svg>この端末で試しに聞く</button>
-            <p class="settings-hint">音はCDの端末から出ます。iPhone・iPad は、CDにしたあと画面に1回触ると音が出るようになります（出ない時はCDの画面の下に案内が出ます）。消音スイッチ（マナーモード）がオンだと、効果音は鳴りません。</p>
+            <button type="button" class="action-btn btn-secondary snd-link" style="width:100%;" onclick="openPanel('settings','sound')"><svg class="ic"><use href="#ic-sound"/></svg>音と読み上げ（${soundSub()}）</button>
             <label class="field-label sec">支払い方法</label>
             <div class="sw-row">
                 <div class="sw-text"><b>使える支払い方法を出す</b><span>待っている間の画面に、現金・コード決済などの絵と名前で並べます（設定の「支払い方法」のとおり）</span></div>
@@ -20224,7 +20329,7 @@
         cdReadySeen = new Set(rd.map(o => o.id));
         if (fresh.length) {
             if (cdCfg.sfx !== false) kitchenChime();
-            if (cdCfg.vCall) setTimeout(() => speakJa(fresh.map(o => `${callNoForSpeech(orderNoText(o))}番のお客様`).join('、') + '、お待たせしました'), 450);
+            if (cdCfg.vCall) setTimeout(() => speakJa(fresh.map(o => callSpeechText(orderNoText(o))).join('')), 450);
         }
     }
     // ▲▲▲ ここまで ▲▲▲
