@@ -831,16 +831,16 @@
         .kds-top-t { display: inline-flex; align-items: center; gap: 7px; font-size: 22px; font-weight: 800; letter-spacing: .02em; color: var(--text-main); flex-shrink: 0; }
         .kds-top-t .ic { width: 24px; height: 24px; color: var(--accent); }
         .kds-top-s { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .kds-role-btn, .kds-sound-btn {
+        .kds-sound-btn {
             flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px;
             border: none; border-radius: var(--r-pill); background: var(--btn-neutral); color: var(--text-main);
             font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
         }
-        .kds-role-btn .ic, .kds-sound-btn .ic { width: 17px; height: 17px; }
+        .kds-sound-btn .ic { width: 17px; height: 17px; }
         .kds-sound-btn { background: var(--accent-soft); color: var(--accent-ink); }
         .kds-sound-btn.off { background: var(--btn-neutral); color: var(--text-light); }
         .kds-sound-btn.off .ic { opacity: .45; }
-        .kds-role-btn:active, .kds-sound-btn:active { filter: var(--press, brightness(.9)); }
+        .kds-sound-btn:active { filter: var(--press, brightness(.9)); }
         .kds-filters button {
             appearance: none; -webkit-appearance: none; border: none; cursor: pointer; font-family: inherit;
             flex-shrink: 0; min-height: 40px; padding: 8px 16px; border-radius: 999px;
@@ -879,6 +879,11 @@
         .kds-card .kds-tag.kds-unpaid { background: var(--danger); color: #fff; box-shadow: none; }
         .kds-grid.dense .kds-card .kds-tag, .kds-grid.dense .kds-card .kds-dine { font-size: 11px; padding: 2px 7px; }
         .kds-card .kds-tags .kds-print { flex: none; width: 40px; justify-content: center; padding: 0; }
+        /* 横向きの表（ページ分け）はマスがせまいので、札を少し小さくして全部見えるように */
+        .kds-grid.paged .kds-card .kds-tags { gap: 4px; padding-left: 14px; padding-right: 2px; }
+        .kds-grid.paged .kds-card .kds-tl { gap: 4px; }
+        .kds-grid.paged .kds-card .kds-tag, .kds-grid.paged .kds-card .kds-dine { font-size: 10.5px; padding: 2px 6px; }
+        .kds-grid.paged .kds-card .kds-tags .kds-print { width: 32px; }
         .kds-card .kds-foot button { white-space: nowrap; min-width: 0; }
         .kds-card .kds-foot .kds-left { font-size: 12px; font-weight: 800; padding: 1px 6px; border-radius: 999px; background: rgba(255,255,255,.28); }
         .kds-card .kds-foot .kds-go:disabled .kds-left { background: var(--surface); color: var(--danger); }
@@ -982,6 +987,23 @@
         .kds-grid.dense .kds-card .kds-foot .kds-all span { display: none; }   /* 細いカードでは「✓」だけにして、呼び出しを広く */
         .kds-grid.dense .kds-card .kds-foot .kds-all { width: 48px; padding: 0; }
         @media (max-width: 560px) { .kds-grid.dense { grid-template-columns: 1fr; } }
+        /* ページ式：マスの大きさは決まっていて、はみ出しは次のマスへ（カードの中はスクロールしない） */
+        .kds-grid.paged { gap: 10px; align-items: stretch; overflow: hidden; }
+        .kds-grid.paged .kds-card { height: 100%; min-height: 0; overflow: hidden; }
+        .kds-card.kds-cont .kds-head { min-height: 44px; background: var(--sunken); }
+        .kds-card.kds-cont .kds-head .kds-min { color: var(--text-light); font-size: 13px; }
+        .kds-card.kds-cont .kds-letter { background: var(--text-light); }
+        .kds-card .kds-more { margin-top: auto; padding: 4px 14px 8px 18px; font-size: 12.5px; font-weight: 800; color: var(--accent-ink); text-align: right; }
+        .kds-pager { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+        .kds-pager + .kds-sound-btn { margin-left: 0; }
+        .kds-pager .kp-btn { position: relative; width: 44px; height: 40px; border: none; border-radius: 12px; background: var(--btn-neutral); color: var(--text-main); display: grid; place-items: center; cursor: pointer; }
+        .kds-pager .kp-btn:disabled { opacity: .35; cursor: default; }
+        .kds-pager .kp-btn .ic { width: 20px; height: 20px; }
+        .kds-pager .kp-btn.has-new { background: var(--accent); color: #fff; animation: kpNew 1.2s ease-in-out infinite alternate; }
+        @keyframes kpNew { from { box-shadow: 0 0 0 0 rgba(10,108,224,.5); } to { box-shadow: 0 0 0 6px rgba(10,108,224,0); } }
+        .kds-pager .kp-n { position: absolute; top: -6px; right: -6px; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 10px; background: var(--danger); color: #fff; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+        .kds-pager .kp-now { font-size: 14px; font-weight: 700; color: var(--text-light); white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .kds-pager .kp-now b { color: var(--text-main); font-size: 17px; }
         .kds-empty { text-align: center; color: var(--text-light); padding: 40px 10px; font-size: 15px; line-height: 1.8; grid-column: 1 / -1; }
         /* お会計の窓の「持ち帰り／店内」 */
         .co-dine { display: flex; align-items: center; gap: 10px; margin: 10px 0 2px; }
@@ -1254,6 +1276,23 @@
         .mo-qr .qr-img svg { width: 200px; height: 200px; display: block; }
         .mo-url { font-size: 12.5px; color: var(--text-light); overflow-wrap: anywhere; margin: 10px 0; }
         .mo-flow { font-size: 13px; line-height: 1.7; color: var(--text-main); padding-left: 1.3em; margin: 6px 0 0; }
+        /* お客様の注文の画面：いちばん上の絵と、メニューの見せ方 */
+        .mo-hero { width: 100%; aspect-ratio: 2 / 1; border: none; border-radius: var(--r-lg); background: var(--sunken); color: var(--text-light); box-shadow: inset 0 0 0 1px var(--hairline);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; font: inherit; font-size: 14px; font-weight: 700; overflow: hidden; padding: 0; cursor: pointer; }
+        .mo-hero .ic { width: 26px; height: 26px; }
+        .mo-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .mo-mis { display: flex; flex-direction: column; gap: 8px; }
+        .mo-mi { display: flex; gap: 12px; align-items: flex-start; padding: 12px; border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-card), inset 4px 0 0 var(--ink); }
+        .mo-mi .pimg { width: 64px; height: 64px; border-radius: 14px; }
+        .mo-mi-b { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+        .mo-mi-n { display: flex; align-items: baseline; gap: 8px; }
+        .mo-mi-n b { flex: 1; min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
+        .mo-mi-n span { font-size: 13.5px; font-weight: 700; color: var(--text-light); font-variant-numeric: tabular-nums; }
+        .mo-mi-t { display: flex; gap: 6px; }
+        .mo-tg { border: none; font: inherit; font-size: 13px; font-weight: 800; min-height: 34px; padding: 0 14px; border-radius: 999px; background: var(--sunken); color: var(--text-light); box-shadow: inset 0 0 0 1px var(--hairline); cursor: pointer; }
+        .mo-tg.on { background: #FF9500; color: #fff; box-shadow: none; }
+        .mo-tg.nw.on { background: var(--accent); }
+        .mo-mi input[type="text"] { width: 100%; box-sizing: border-box; min-height: 40px; font-size: 16px; font-family: inherit; border: none; border-radius: var(--r-md); padding: 0 12px; background: var(--sunken); color: var(--text-main); box-shadow: inset 0 0 0 1px var(--hairline); }
         .mp-card { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-card), inset 6px 0 0 var(--dine); margin-bottom: 10px; --dine: var(--dine-take); }
         .mp-card.dine-eat { --dine: var(--dine-eat); }
         .mp-card .mp-head { display: flex; align-items: center; gap: 8px; }
@@ -2828,6 +2867,25 @@
             #customer-display .cd-done-bar { display: none; }
         }
 
+        /* KD・ハンディの左上の×（CDの×と同じ形。押すとレジに戻る） */
+        .role-exit {
+            flex-shrink: 0; width: 36px; height: 36px; border: none; border-radius: 50%; position: relative;
+            background: var(--btn-neutral); color: var(--text-light); cursor: pointer; display: grid; place-items: center;
+        }
+        .role-exit::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; }
+        .role-exit .ic { width: 17px; height: 17px; }
+        .role-exit:active { filter: var(--press, brightness(.9)); }
+        /* 役割の画面：いまの役割を、上に大きく */
+        .role-now {
+            display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto auto; column-gap: 14px; align-items: center;
+            padding: 16px 18px; border-radius: var(--r-md); background: var(--accent); color: #fff; box-shadow: var(--shadow-card); margin-bottom: 6px;
+        }
+        .role-now .rn-k { grid-column: 1 / -1; font-size: 12.5px; font-weight: 800; opacity: .85; letter-spacing: .06em; margin-bottom: 6px; }
+        .role-now .rn-ic { grid-row: 2 / 4; width: 52px; height: 52px; border-radius: 14px; background: rgba(255,255,255,.18); display: grid; place-items: center; }
+        .role-now .rn-ic .ic { width: 30px; height: 30px; }
+        .role-now .rn-t { font-size: 24px; font-weight: 900; line-height: 1.2; }
+        .role-now .rn-s { font-size: 13px; opacity: .9; line-height: 1.5; }
+        #role-list .menu-head { grid-column: 1 / -1; }
         #customer-display .cd-exit {
             /* 金額は画面の下半分いっぱいに大きく出るので、戻すボタンは上の帯に置く。
                （以前は左下にあり、明細やお釣りの数字と重なることがあった） */
@@ -3721,13 +3779,15 @@
         <!-- ---------- 予約 ---------- -->
         <!-- ---------- キッチン（店舗モード「キッチン調理＋呼び出し」の時だけ） ---------- -->
         <div class="panel-view" id="view-kitchen">
-            <!-- KDの端末で画面いっぱいに出している時だけ見える帯。役割の切り替えは右上から -->
+            <!-- KDの端末で画面いっぱいに出している時だけ見える帯。左上の×でレジに戻る（CDと同じ） -->
             <div class="kds-top">
+                <button type="button" class="role-exit" onclick="exitToRegister()" aria-label="KDをやめてレジに戻す" title="レジに戻す"><svg class="ic"><use href="#ic-x"/></svg></button>
                 <span class="kds-top-t"><svg class="ic"><use href="#ic-kitchen"/></svg>KD</span>
                 <span class="kds-top-s" id="kds-top-s"></span>
+                <!-- ページ式の時のページ送り（横長の画面で、注文がマスに入りきらない時だけ出る） -->
+                <div class="kds-pager" id="kds-pager" style="display:none;"></div>
                 <!-- 新しい注文の「ピーッ×3」をこの端末で鳴らすか（押すたびに切り替わる） -->
                 <button type="button" class="kds-sound-btn" id="kds-sound-btn" onclick="toggleKdAlert()" aria-pressed="true"><svg class="ic"><use href="#ic-sound"/></svg><span>音あり</span></button>
-                <button type="button" class="kds-role-btn" onclick="openPanel('settings','role')" aria-label="この端末の役割を変える"><svg class="ic"><use href="#ic-device"/></svg>役割</button>
             </div>
             <div id="kds-filters" class="kds-filters" role="group" aria-label="注文の絞り込み"></div>
             <div id="kds-station" class="kds-station" role="group" aria-label="担当"></div>
@@ -3741,9 +3801,9 @@
             <div class="sub-view" id="sub-tables-home">
                 <!-- ハンディの端末で画面いっぱいに出している時だけ見える帯 -->
                 <div class="hd-top">
+                    <button type="button" class="role-exit" onclick="exitToRegister()" aria-label="ハンディをやめてレジに戻す" title="レジに戻す"><svg class="ic"><use href="#ic-x"/></svg></button>
                     <span class="kds-top-t"><svg class="ic"><use href="#ic-handy"/></svg>ハンディ</span>
                     <span class="kds-top-s" id="hd-top-s"></span>
-                    <button type="button" class="kds-role-btn" onclick="openPanel('settings','role')" aria-label="この端末の役割を変える"><svg class="ic"><use href="#ic-device"/></svg>役割</button>
                 </div>
                 <div id="tables-body"></div>
             </div>
@@ -3917,6 +3977,17 @@
                     <svg class="ic"><use href="#ic-link"/></svg>
                     <span>会計・在庫・商品・セット割・目標・予約は<b>全端末で同じ</b>。どこから閉じても<b>いっしょに閉店</b>し、コードの中身は片づけます。</span>
                 </div>
+                <!-- 通信障害の時の対処（インターネットを通して共有するため、つながらない間はほかの端末に届かない） -->
+                <details class="mo-all">
+                    <summary>電波が無い・通信障害の時は</summary>
+                    <ol class="mo-flow">
+                        <li><b>会計はそのまま続けられます。</b>送れない会計はこの端末に控えておき、つながった時に自動でまとめて送ります（2重にはなりません）。</li>
+                        <li>ほかの回線につなぎ直すと、すぐ追いつきます。電波の入るスマホの<b>インターネット共有（テザリング）</b>や、<b>別の携帯会社</b>のスマホ・モバイルWi-Fiに、全部の端末をつないでください。</li>
+                        <li>つながらない間、KD・CDには新しい会計が届きません。注文は<b>伝票の印刷</b>や声かけで伝え、つながったら元に戻ります。</li>
+                        <li>閉店は、赤い帯が消えて全部の端末がつながってからにしてください。</li>
+                    </ol>
+                    <p class="settings-hint">Bluetooth で端末どうしを直接つなぐ方法は、iPhone・iPad のブラウザでは使えないため、ありません（このアプリはブラウザで動くため）。</p>
+                </details>
             </div>
 
             <!-- 共有コードの追加（入力画面） -->
@@ -4543,6 +4614,26 @@
     // iOS(iPad/iPhone)対策：AudioContextはユーザー操作の中でしか起動できず、
     // 最初のタップで「解錠」しないと無音のままになる。そのため画面への最初の
     // タッチ/クリックで必ず解錠する。音が出せない環境では無視。
+    // ▼ 画面が拡大しないようにする（CSS の touch-action: manipulation の保険）▼
+    // ・ボタンなど押せる所の外（すき間・文字）を素早く2回たたいた時の拡大を止める。
+    //   押せる所は止めない（連打はそのまま1回ずつ効く）。
+    // ・iPhone・iPad の2本指の拡大（ピンチ）も止める（レジの操作中に画面がずれないように）。
+    (function () {
+        let last = 0;
+        const tappable = el => {
+            for (let n = el; n && n.nodeType === 1 && n !== document.body; n = n.parentElement) {
+                if (n.onclick || /^(BUTTON|A|INPUT|SELECT|TEXTAREA|LABEL|SUMMARY|OPTION|VIDEO)$/.test(n.tagName) || n.isContentEditable || n.getAttribute('role') === 'button') return true;
+            }
+            return false;
+        };
+        document.addEventListener('touchend', e => {
+            const now = Date.now();
+            if (now - last < 320 && e.cancelable && e.changedTouches && e.changedTouches.length === 1 && !tappable(e.target)) e.preventDefault();
+            last = now;
+        }, { passive: false });
+        ['gesturestart', 'gesturechange'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+    })();
+
     let audioCtx = null;
     let audioUnlocked = false;
 
@@ -4621,10 +4712,11 @@
             o.start(t0); o.stop(t0 + dur + 0.02);
         } catch (e) { /* 音が出せない環境では何もしない */ }
     }
-    // KDに注文が入った時：ピーッ、ピーッ、ピーッ（厨房のタイマーのような、よく通る音）
+    // KDに注文が入った時：ピーーッ、ピーーッ、ピーーッ（厨房のタイマーのような、電子的でよく通る長い音）。
+    // 高い矩形波（2.4kHz）に、ほんの少し高さをずらした音を重ねて、ブザーのような細かいうなりを付ける。1回0.6秒
     function kdAlert() {
         if (devicePref('kdAlert') === false) return;
-        [0, 0.42, 0.84].forEach(t => playTone(2000, 0.3, 'square', 0.07, t));
+        [0, 0.85, 1.7].forEach(t => { playTone(2400, 0.6, 'square', 0.06, t); playTone(2412, 0.6, 'square', 0.035, t); });
     }
     // CDの会計完了：明るく上がる4つの音（ピロリロリン）
     function cdDoneChime() {
@@ -6340,7 +6432,7 @@
             id: 'kitchen', icon: 'kitchen', title: 'KDで作る・番号で呼ぶ', sub: 'ファストフードのモード',
             kitchenOnly: true,
             body: `
-                <p>KDは、<b>「設定 → この端末の役割」でKDにした端末</b>に、CDと同じく<b>画面いっぱい</b>に出ます（下のタブにはありません。役割を変える時は、KDの右上の<b>「役割」</b>から）。レジで商品を打つと、<b>会計が終わる前から</b>KDに「会計中」のカードが点滅して出て、音が鳴ります（共有している時）。先に作り始めて大丈夫です。会計が済むと、カードに<b>番号</b>が付きます。</p>
+                <p>KDは、<b>「設定 → この端末の役割」でKDにした端末</b>に、CDと同じく<b>画面いっぱい</b>に出ます（下のタブにはありません。レジに戻す時は、KDの<b>左上の×</b>を押します）。レジで商品を打つと、<b>会計が終わる前から</b>KDに「会計中」のカードが点滅して出て、音が鳴ります（共有している時）。先に作り始めて大丈夫です。会計が済むと、カードに<b>番号</b>が付きます。</p>
                 <ol class="man-steps">
                     <li>レジの会計の窓で<b>「持ち帰り」か「店内」</b>を選んでから会計します（何もしなければ持ち帰り）。カードの色は、<b>持ち帰りが橙・店内が緑</b>です。</li>
                     <li>キッチンの人は、できた商品の行を押します。<b>赤い「未」</b>が消えます（もう一度押すと戻ります）。</li>
@@ -6358,15 +6450,16 @@
                     <li><b>まだ払っていない持ち帰りの注文は、渡せません。</b>「呼び出し」まではできますが、「受け渡し完了」はレジで会計が済むまで押せません（カードに「未会計」と出ます）。店内の注文は先に渡して、帰る時に払ってもらえます。</li>
                     <li>呼び出しを押し間違えた時は、↶ で調理中に戻せます。「完了」からも「呼び出しに戻す」で戻せます。</li>
                     <li>待たせている時間が<b>5分を過ぎると黄色</b>、<b>10分を過ぎると赤い大きな文字</b>になります。</li>
-                    <li>新しい注文が入ると、KDで<b>「ピーッ・ピーッ・ピーッ」</b>と3回鳴ります（時間指定の注文が調理中に出てきた時も）。鳴らしたくない時は、KDの右上の<b>「音あり」</b>を押すと<b>「音なし」</b>に変わります（もう一度押すと戻ります。端末ごとに覚えます）。</li>
+                    <li>新しい注文が入ると、KDで電子音の<b>「ピーーッ・ピーーッ・ピーーッ」</b>と3回、長めに鳴ります（時間指定の注文が調理中に出てきた時も）。鳴らしたくない時は、KDの右上の<b>「音あり」</b>を押すと<b>「音なし」</b>に変わります（もう一度押すと戻ります。端末ごとに覚えます）。</li>
                     <li>カードには、<b>左上から A・B・C…</b>の呼び名が大きく付きます（27枚目からは AA・AB…）。「<b>Aオーダー</b>できました」のように呼べます。呼び名は画面の並びの順なので、先の注文が済むと、あとの注文の呼び名が1つずつ前にずれます。</li>
                     <li>カードは表のように並び、<b>同じ段のカードは高さと下のボタンの位置がそろいます</b>。持ち帰り・店内・<b>未払い</b>（赤）・モバイル・後で会計などの札は、番号の下の決まった高さの帯に1行で並びます。</li>
                     <li>商品の行は<b>分類（パン・ドリンク など）ごと</b>にまとまり、分類の間は<b>点線</b>で区切られます。「伝票」（印刷）も同じく分類ごとに点線で区切ります。伝票は札の帯の右端の印刷の印で出します。</li>
                     <li>注文が9件より多い時は、カードを少し詰めて、1画面に多く入るようにします。</li>
+                    <li><b>横長の画面（iPad・パソコンの横置き）では、スクロールせずにページで見ます。</b>画面を横5つ×縦2段（幅がせまい時は横4つ）のマスに分け、左上から A〜J の順に並べます。品数の多い注文は<b>次のマスへ続けて</b>（「つづき」と出ます）、次の注文はその次のマスから始まります。入りきらない注文は<b>2ページ目</b>に回り、2ページ目も A から数えます。ページは上の <b>‹ ›</b> か、<b>左右にスワイプ</b>で送ります（次のページに新しい注文があると › に数が出ます）。</li>
                     <li><b>「担当」</b>で、ドリンク係はドリンク、のように分けて見られます（端末ごとに覚えます）。担当の商品が上に出て、<b>担当でない商品は下に薄い灰色</b>で出ます（押せません。何がいっしょに出るかは分かります）。</li>
                     <li>レジで会計を取り消すと、KDのカードも消えます。会計の中身を直すと、カードにも「直されました」と出ます。</li>
                     <li>KDで何を押しても、<b>売上の記録は変わりません</b>（お金の記録とは別に置いています）。</li>
-                    <li>KDにする端末は、合流する時に<b>「KD」</b>を選びます（あとからでも<b>「設定 → この端末の役割」</b>で選べます）。レジの画面は出なくなり、KDが画面いっぱいに出ます。1台だけで営業している時もKDにできますが、その間は会計できないので、会計する時は「役割」からレジに戻します。受け取り口に番号を映す端末は<b>「CD（呼び出し番号）」</b>を選びます（下の「端末の置き方」）。</li>
+                    <li>KDにする端末は、合流する時に<b>「KD」</b>を選びます（あとからでも<b>「設定 → この端末の役割」</b>で選べます）。レジの画面は出なくなり、KDが画面いっぱいに出ます。1台だけで営業している時もKDにできますが、その間は会計できないので、会計する時は<b>左上の×</b>でレジに戻します。受け取り口に番号を映す端末は<b>「CD（呼び出し番号）」</b>を選びます（下の「端末の置き方」）。</li>
                     <li>モバイルオーダーで<b>受け取り時間を指定した注文</b>は、それまで<b>「時間指定」</b>に入っていて、受け取りの<b>決めた分だけ前（はじめは10分前）</b>に「調理中」へ出てきて音が鳴り、<b>見出しが点滅</b>します（「未」を1つ消すと止まります）。何分前に出すかは、KDの「時間指定」の上か「設定 → モバイルオーダー」で選べます。お客様が早く来た時は、KDの「時間指定」の<b>「いま作り始める」</b>か、レジの<b>「未会計」</b>の<b>「いますぐKDに出す」</b>を押します。</li>
                     <li>売上集計の<b>「注文と提供時間」</b>で、呼び出すまでに何分かかったかが見られます。</li>
                 </ul>`
@@ -6378,11 +6471,11 @@
                 <p>ファストフードでは、店の側の画面が4種類あります。<b>「設定 → この端末の役割」</b>の一覧から、端末ごとに1つ選びます（押せばその場で切り替わり、コードの入れ直しは要りません）。</p>
                 <ul class="man-list">
                     <li><b>レジ</b>…商品を打って会計する（ふだんの使い方）。まだ払っていない注文は、下の<b>「未会計」</b>に並びます。</li>
-                    <li><b>KD</b>…注文のカードだけを<b>画面いっぱい</b>に出す。レジの画面は出ません（打ち間違いで会計しないように）。右上の「役割」から役割を変えられます。</li>
+                    <li><b>KD</b>…注文のカードだけを<b>画面いっぱい</b>に出す。レジの画面は出ません（打ち間違いで会計しないように）。<b>左上の×</b>でレジに戻ります。</li>
                     <li><b>CD（金額）</b>…レジの横でお客様に向ける。打った商品・合計・お釣りが大きく出て、会計が済むと<b>「ありがとうございました」と呼び出しの番号</b>が出ます。</li>
                     <li><b>CD（呼び出し番号）</b>…受け取り口に置く。「お作りしています」と「できあがり」の番号だけを出し、呼び出すと音が鳴ります。</li>
                 </ul>
-                <p>1台で「CD（金額）」と「CD（呼び出し番号）」の両方は映しません。端末が足りない時は、レジの端末をその時だけ「役割」でKDにして見ることもできます（KDの間は会計できません）。</p>
+                <p>1台で「CD（金額）」と「CD（呼び出し番号）」の両方は映しません。端末が足りない時は、レジの端末をその時だけ「設定 → この端末の役割」でKDにして見ることもできます（KDの間は会計できません。左上の×でレジに戻ります）。</p>
                 <h4>お金を受け取るタイミング</h4>
                 <ul class="man-list">
                     <li><b>店頭で持ち帰り</b>…その場で会計します（いつもどおり）。会計が済むと番号が付き、KDに出ます。</li>
@@ -6399,7 +6492,7 @@
                 <p>席に着いたお客様の注文を<b>テーブルごとの「伝票」</b>にまとめ、料理を先にお出しして、<b>お帰りの時にレジで伝票ごとにまとめて会計</b>します。追加の注文も同じ伝票に足されます。</p>
                 <h4>端末の役割</h4>
                 <ul class="man-list">
-                    <li><b>ハンディ</b>…店員さんが持つ端末。テーブルを選んで注文を受け、KDへ送ります（会計はしません）。画面いっぱいに出て、役割は右上の「役割」から変えられます。</li>
+                    <li><b>ハンディ</b>…店員さんが持つ端末。テーブルを選んで注文を受け、KDへ送ります（会計はしません）。画面いっぱいに出て、<b>左上の×</b>でレジに戻ります。</li>
                     <li><b>KD</b>…注文をテーブルの番号つきで出します。できたら<b>「できた」</b>、お席に運んだら<b>「提供済み」</b>を押します。</li>
                     <li><b>レジ</b>…伝票の会計をします。レジからテーブルに注文を送ることもできます（カートの「テーブルに送る」）。</li>
                     <li><b>CD</b>…レジの横で、お客様に金額を見せます。</li>
@@ -6446,22 +6539,31 @@
                 <ol class="man-steps">
                     <li><b>「設定 → モバイルオーダー」</b>で受付をオンにします。出てくる<b>QRコード</b>を印刷するか、画面を見せます。</li>
                     <li>お客様は商品と<b>「持ち帰り／店内」</b>を選んで注文します。<b>M0001</b>（店内は <b>T0001</b>）のような番号が出て、注文はすぐKDに「モバイル・未払い」で出ます。受け取り時間を選べるようにしている時は、<b>「できしだい」か時刻</b>を選んでもらいます。</li>
-                    <li>お客様の画面には<b>「あと何組」</b>が出て、呼び出すと音と画面で知らせます（その画面を開いている時）。</li>
+                    <li>お客様の画面には<b>「あと何組」</b>と進み具合（受付 → お作りしています → できあがり）が出て、呼び出すと音と画面で知らせます（その画面を開いている時）。</li>
                     <li>お支払いはレジで、持ち帰りは<b>受け取りの時</b>（払うまで、KDは「受け渡し完了」を押せません）、店内は<b>帰る時</b>。下の<b>「未会計」</b>（またはレジの上の「未会計の注文」）から番号を選んで<b>「レジで会計する」</b>。中身がカートに入るので、いつもどおり会計します。</li>
                 </ol>
+                <h4>注文の画面の形（標準／シンプル）</h4>
+                <p><b>「設定 → モバイルオーダー → お客様の注文の画面の形」</b>で選びます。はじめは<b>標準</b>です。</p>
                 <ul class="man-list">
-                    <li><b>いまの待ち時間</b>…「設定 → モバイルオーダー」で<b>約5分〜約60分</b>から選ぶと、お客様の注文の画面のいちばん上に出ます。混み具合に合わせて選び直してください（「出さない」もあります）。</li>
+                    <li><b>標準</b>…ファストフードのアプリや、飲食店の注文のタブレットのような形です。商品の<b>写真</b>を大きく並べ、上に<b>分類のタブ</b>（押すとその分類へ）、いちばん上に<b>おすすめ</b>の列が出ます。商品を押すと、写真・説明・特注・数を選ぶ窓が開き、「カートに入れる」で下に<b>カート</b>が浮かびます。カードの<b>＋</b>を押せば、窓を開かずに1つずつ入ります。</li>
+                    <li><b>シンプル</b>…名前と値段だけの一覧です（前からの形）。軽く、古いスマホでもすぐ開きます。</li>
+                    <li><b>写真・おすすめ・新商品・説明</b>…同じ設定の<b>「メニューの見せ方」</b>で、商品ごとに付けます（写真は左の四角を押して選びます。レジのボタンの写真と同じです）。<b>残りわずか</b>（残り3個以下）と<b>人気</b>（よく出ている上から3品）の札は、自動で付きます。</li>
+                    <li><b>いちばん上の絵</b>…横長の画像を1枚置けます（新商品のお知らせ・お店の写真など）。次の回にも持ち越します。</li>
+                </ul>
+                <h4>そのほか</h4>
+                <ul class="man-list">
+                    <li><b>待ち時間</b>…「設定 → モバイルオーダー」で<b>約5分〜約60分</b>から選ぶと、お客様の注文の画面の上に「待ち時間 約◯分」と出ます。混み具合に合わせて選び直してください（「出さない」もあります）。</li>
                     <li><b>受け取り時間の指定</b>…オンにすると、お客様が<b>10分ごとの時刻</b>から受け取り時間を選べます。その注文は、受け取りの<b>何分前にKDへ出すか</b>（5〜60分前）と、<b>何時間先まで選べるか</b>（1〜4時間）を決めておきます。お客様の画面には「◯時◯分ごろから作り始めます」と出ます。</li>
                     <li>混んできたら受付をオフにします。お客様の画面には「止めている時のお知らせ」が出ます。</li>
                     <li>来ない注文・いたずらの注文は、「未会計」の<b>「取り消す」</b>で消せます。</li>
-                    <li>KDで<b>「受け渡し完了」</b>を押すと、お客様のスマホには「お受け取りありがとうございました」が少し出たあと<b>番号が消えて、はじめの画面に戻ります</b>（次の注文の時や、別のお店で注文した時に、前の番号と取り違えないように）。番号には<b>お店の名前</b>も付きます。</li>
+                    <li>KDで<b>「受け渡し完了」</b>を押すと、お客様のスマホからは<b>すぐに番号が消えて、はじめの画面に戻ります</b>（次の注文の時や、別のお店で注文した時に、前の番号と取り違えないように）。済んだ注文の番号と中身は、右上の<b>「履歴」</b>から見られ、<b>「もう一度 同じものを」</b>でカートに入れ直せます。番号には<b>お店の名前</b>も付きます。</li>
                     <li>QRコードは、<b>お店（販売会）ごとに1つ</b>です。持ち帰りも店内も、どの席からも同じQRコードで注文できます（店内か持ち帰りか・席番号は、お客様が注文の時に選びます）。レシートに載せるQRも、そのお店の注文ページです。いくつかのお店をまとめて案内する時は、「設定 → モバイルオーダー」の下にある<b>お店を選ぶQR</b>を使うと、受付中のお店の一覧から選んでもらえます。</li>
                     <li>まだ払っていないモバイルの注文の分も、レジの残数から引いて数えます。</li>
                     <li>1台のスマホから同時に頼めるのは3件までです。</li>
                     <li><b>店の名前とアイコン</b>…「設定 → モバイルオーダー」の「お客様の画面に出す店」で決めます。次の回にも持ち越します。</li>
                     <li><b>いくつかのお店で1枚のQRコード</b>…同じ設定の下の「いくつかのお店で1枚のQRコードにする時」のQRコードを読むと、受付中のお店の一覧が出て、お客様がお店を選んでから注文します。</li>
                     <li><b>席から注文</b>…オンにすると、お客様が「店内」を選んだ時に席番号を入れてもらいます。番号は T0001-12 のように席番号が付き、KDとCDにもそう出ます。</li>
-                    <li>お客様の画面のいちばん上には、<b>いま待っている組の数</b>（と、決めていれば待ち時間）が出ます。</li>
+                    <li>お客様の画面の上には、<b>「ただいま◯組待ち」</b>（いま作っている組の数）と、決めていれば待ち時間が出ます。</li>
                     <li>お客様も<b>特注</b>（後出し・氷／具材／ソースの抜き・少なめ・多め、その他）と、<b>クーポンコード</b>を入れられます。クーポンは、レジで会計する時に最初から付いています（止めている・上限の時は付きません）。</li>
                 </ul>`
         },
@@ -6696,6 +6798,17 @@
                     <p>レジの画面に<b>赤い帯</b>が出ます。<b>その間も会計はそのまま続けられます</b>（この端末に貯まり、つながると自動でまとめて送られます）。つながっていないまま閉店しようとすると引き止めるので、電波の良い場所で表示が緑になってから閉店してください。</p>
                     <p>電波が切れたまま画面を読み込み直したり、アプリを閉じたりしても、<b>送れていない会計はこの端末に控えてあり</b>、つながった時にもう一度送ります（同じ会計が2つになることはありません）。</p>
                 </div>
+                <div class="man-box tip">
+                    <div class="man-box-h">通信障害の時の対処</div>
+                    <p>共有はインターネットを通して行うので、つながらない間はほかの端末に届きません。次の順で対処してください。</p>
+                    <ol>
+                        <li><b>会計は止めずに続ける</b>（それぞれの端末に貯まり、つながると自動で送られます）。</li>
+                        <li>電波の入るスマホの<b>インターネット共有（テザリング）</b>や、<b>別の携帯会社</b>のスマホ・モバイルWi-Fiに、全部の端末をつなぎ直す。つながった所から、すぐ追いつきます。</li>
+                        <li>それでもつながらない間は、KD・CD には新しい会計が届きません。注文は<b>伝票の印刷</b>や声かけで伝えます。</li>
+                        <li>閉店は、全部の端末がつながってから（赤い帯が消えてから）。</li>
+                    </ol>
+                    <p>Bluetooth で端末どうしを直接つなぐ方法は、iPhone・iPad のブラウザでは使えないため、ありません。</p>
+                </div>
                 <h4>共有されるもの</h4>
                 <p>会計（売上・取消）／在庫と残数／商品の追加・値段・種類・備考／販売会の名前／売上目標／セット割（オン・オフ、組み合わせと額）／予約／閉店。<b>これらは全部の端末で同じになります。</b></p>
                 <p>端末ごとに持つのは、<b>領収書の発行者名</b>と<b>画面の明るさ・時計や天気の設定</b>だけです。</p>
@@ -6736,7 +6849,7 @@
                     <div class="man-box-h">覚えておくこと</div>
                     <ul class="man-list">
                         <li>お客様用にした端末では<b>会計はできません</b>（映すだけです）。</li>
-                        <li>ふだんのレジに戻すときは、画面の<b>左上の×</b>を押します（確認が出ます）。</li>
+                        <li>ふだんのレジに戻すときは、画面の<b>左上の×</b>を押します（KD・ハンディも同じです）。</li>
                         <li>電波が切れても表示のままです。つながり直すと自動でまた映ります。</li>
                         <li>画面が消えていた・他のアプリを使っていた場合も、<b>戻れば自動で追いつきます</b>。</li>
                         <li>レジが2台あるときは、<b>いま打っている方</b>の内容が映ります。</li>
@@ -7138,7 +7251,6 @@
         const quiet = !!(opts && opts.quiet);
         // ロック中のお客様用の表示は、お客様が×を押しても戻らないようにする
         if (!requirePerm('display-exit', () => exitCustomerMode(opts))) return;
-        if (!quiet && !confirm('CDをやめて、ふだんのレジの画面に戻しますか？')) return;
         const code = knownShareCode();
         customerMode = false;
         uiPrefs.role = 'register';
@@ -7328,7 +7440,7 @@
         // 閉店中のKD・ハンディも、合流する時に選ぶ（開いている販売会のKD・ハンディとして入る）
         if (notRegister && !customerMode && !currentSession) { openJoinAs(role); return; }
         if (notRegister && !customerMode && currentSession && !syncMode
-            && !confirm(`この端末は、ほかの端末と共有していません。\n${roleTitle(role)}にしている間は、この端末では会計できません。\n（会計する時は、画面の右上の「役割」から、レジに戻します）\n\n${roleTitle(role)}にしますか？`)) return;
+            && !confirm(`この端末は、ほかの端末と共有していません。\n${roleTitle(role)}にしている間は、この端末では会計できません。\n（会計する時は、画面の左上の×で、レジに戻します）\n\n${roleTitle(role)}にしますか？`)) return;
         if (notRegister && cart.length > 0) {
             if (!confirm(`いま打ちかけの商品があります。\n${roleTitle(role)}にすると、この端末では会計しません。\n\n打ちかけの内容を取り消して切り替えますか？`)) return;
             if (!syncMode) cart.forEach(item => restockOne(products.find(p => p.id === item.id)));
@@ -7357,6 +7469,14 @@
         if (currentView === 'settings' && currentSub === 'role') renderRoleView();
     }
 
+    // KD・ハンディの左上の×：確かめずに、ふだんのレジに戻す（CDの×と同じ）。
+    // ロックで「役割を変える」を止めている時は、パスコードを聞く
+    function exitToRegister() {
+        if (typeof requirePerm === 'function' && !requirePerm('display-exit', exitToRegister)) return;
+        switchDeviceRole('register').then(() => {
+            if (deviceRole() === 'register' && currentView !== 'register') showRegister();
+        });
+    }
     // 閉店中に レジ以外の役割を選んだ時：合流の画面を、その役割を選んだ形で開く
     function openJoinAs(role) {
         joinRole = role;
@@ -7371,10 +7491,15 @@
     function roleRowsHTML() {
         const now = deviceRole();
         const noShare = !window.FIREBASE_CONFIG;
-        return roleChoices().map(r => menuRow(ROLE_INFO[r].icon, roleTitle(r),
-            r === now ? '◯ いまこの役割です' : ROLE_INFO[r].sub,
-            r === now ? 'playSound(660,0.05)' : `switchDeviceRole('${r}')`,
-            { disabled: noShare && r !== 'register' })).join('');
+        const others = roleChoices().filter(r => r !== now);
+        return `<div class="role-now" role="status">
+                <span class="rn-k">いまの役割</span>
+                <span class="rn-ic"><svg class="ic"><use href="#ic-${ROLE_INFO[now].icon}"/></svg></span>
+                <b class="rn-t">${escHtml(roleTitle(now))}</b>
+                <span class="rn-s">${ROLE_INFO[now].sub}</span>
+            </div>
+            <div class="menu-head">ほかの役割に切り替える</div>`
+            + others.map(r => menuRow(ROLE_INFO[r].icon, roleTitle(r), ROLE_INFO[r].sub, `switchDeviceRole('${r}')`, { disabled: noShare && r !== 'register' })).join('');
     }
     function roleSub() { return roleTitle(deviceRole()); }
     function renderRoleView() {
@@ -8548,7 +8673,7 @@
     function requirePerm(perm, then) {
         if (lockAllows(perm)) return true;
         const what = perm === 'settings' ? '設定を開く'
-            : perm === 'display-exit' ? 'CDをやめる'
+            : perm === 'display-exit' ? (customerMode ? 'CDをやめる' : 'この役割をやめてレジに戻す')
             : ((LOCK_PERMS.find(x => x.id === perm) || {}).label || 'この操作');
         askPasscode({
             title: 'この端末は制限中です',
@@ -12857,7 +12982,7 @@
             else if (sub === 'mode') renderStoreModeView();
             else if (sub === 'cats') renderCategoriesView();
             else if (sub === 'pay') renderPayView();
-            else if (sub === 'mobile') renderMobileView();
+            else if (sub === 'mobile') { renderMobileView(); fillMobileHero(); }
             else if (sub === 'mobile-pay') renderMobilePayView();
             else if (sub === 'rest') renderRestView();
             else if (sub === 'tax') renderTaxView();
@@ -15103,6 +15228,8 @@
     }
     function afterImgChanged() {
         init();
+        publishMobileMenu(true);
+        if (currentView === 'settings' && currentSub === 'mobile') { renderMobileView(); fillMobileHero(); }
         if (currentView === 'settings' && currentSub === 'stock') renderLiveStock();
         if (currentView === 'session' && currentSub === 'open-stock') renderInventorySetup();
     }
@@ -17721,7 +17848,7 @@
                 const mc = normMobileCfg(d.mobile);
                 if (JSON.stringify(mc) !== JSON.stringify(mobileCfg)) {
                     mobileCfg = mc;
-                    if (currentView === 'settings' && currentSub === 'mobile') renderMobileView();
+                    if (currentView === 'settings' && currentSub === 'mobile') { renderMobileView(); fillMobileHero(); }
                     if (currentView === 'kitchen') renderKitchen();   // 受け取り何分前に出すかが変わった
                     publishMobileMenu();
                     if (currentView === 'settings' && !currentSub) renderSettingsMenu();
@@ -17789,7 +17916,8 @@
     function applyRemoteProducts(remoteProducts) {
         const key = list => JSON.stringify(list.map(p => ({
             n: p.name, p: p.price, i: p.initialStock, t: p.type || '', o: p.note || '', a: p.active !== false, u: !!p.unlimited, s: !!p.stopped, c: p.consign || '',
-            k: p.code || '', g: p.cost != null ? p.cost : ''   // JANコードと原価も（ほかの端末で直した時に届くように）
+            k: p.code || '', g: p.cost != null ? p.cost : '',   // JANコードと原価も（ほかの端末で直した時に届くように）
+            r: !!p.rec, w: !!p.isNew, d: p.desc || ''            // モバイルのおすすめ・新商品・説明も
         })));
         const before = key(products);
         const next = JSON.parse(JSON.stringify(remoteProducts));
@@ -18354,15 +18482,20 @@
         if (kitchenFilter === 'done') rows = rows.sort((a, b) => (b.t.done || 0) - (a.t.done || 0)).slice(0, KITCHEN_DONE_SHOW);
         else rows = rows.sort((a, b) => orderStartAt(a) - orderStartAt(b));
         if (!rows.length) {
+            grid.classList.remove('paged'); grid.style.removeProperty('grid-template-columns'); grid.style.removeProperty('grid-template-rows');
+            renderKdsPager(null);
             grid.innerHTML = `<div class="kds-empty">${!currentSession
                 ? '開店すると、レジで受けた注文がここに出ます。'
                 : (kitchenFilter === 'active' ? 'いま作る注文はありません。<br><span>レジで商品を打つと、会計が終わる前からここに出ます。</span>'
                     : (kitchenFilter === 'held' ? `受け取り時間を指定した注文はありません。<br><span>指定された注文は、受け取りの${mobileCfg.lead}分前に「調理中」へ出ます。</span>` : 'この状態の注文はありません。'))}</div>`;
             return;
         }
-        // 注文が多い時は、1枚を詰めて出す（1画面に多く入るように）
-        grid.classList.toggle('dense', rows.length > 8);
-        grid.innerHTML = rows.map((o, idx) => {
+        // 横長の画面（iPad・パソコン）は、スクロールなしのページ式（5×2のマス）。それ以外は縦に並べてスクロール
+        const paged = kdsPagedLayout(grid);
+        // 注文が多い時・ページ式の時は、1枚を詰めて出す（1画面に多く入るように）
+        grid.classList.toggle('dense', !!paged || rows.length > 8);
+        grid.classList.toggle('paged', !!paged);
+        const cardHtml = rows.map((o, idx) => {
             const held = heldNow.has(o.id);
             const min = kitchenMinutes(o, now);
             const left = orderLeft(o);
@@ -18422,9 +18555,182 @@
                 <ul class="kds-items">${items}</ul>
                 <div class="kds-foot">${foot}</div>
             </article>`;
-        }).join('');
+        });
+        if (paged) { kdsRenderPaged(grid, paged, rows, cardHtml); return; }
+        grid.style.removeProperty('grid-template-columns'); grid.style.removeProperty('grid-template-rows');
+        renderKdsPager(null);
+        grid.innerHTML = cardHtml.join('');
         rows.forEach(o => kitchenSeen.add(o.id));
     }
+
+    // ▼ KDのページ式（横長の画面）▼
+    // 画面を 5列×2段（幅が狭い時は 4列）のマスに分け、スクロールしないで収める。
+    // 1つの注文がマスに入りきらない時は、はみ出した行を次のマスに「つづき」として書き、次の注文はその次のマスから。
+    // マスが足りなくなったら次のページへ。ページごとに、左上から A・B・C…（2ページ目もAから）。
+    // ページはボタン・左右のスワイプ・キーボードの←→で送る。
+    let kdsPage = 0, kdsPageDir = 0, kdsPageCount = 1;
+    function kdsPagedLayout(grid) {
+        if (currentView !== 'kitchen') return null;
+        const w = window.innerWidth, h = window.innerHeight;
+        if (!(w > h && w >= 900)) return null;
+        const pb = grid.closest('.panel-body');
+        if (pb && pb.scrollTop) pb.scrollTop = 0;
+        const cols = w >= 1100 ? 5 : 4, gap = 10;
+        const top = grid.getBoundingClientRect().top;
+        const cellH = Math.floor((h - top - 20 - gap) / 2);
+        if (cellH < 190) return null;            // 上の帯などで場所が足りない時は、縦に並べる
+        const cellW = Math.floor((grid.clientWidth - gap * (cols - 1)) / cols);
+        return { cols, gap, cellH, cellW, per: cols * 2 };
+    }
+    function kdsRenderPaged(grid, L, rows, htmls) {
+        let meas = document.getElementById('kds-measure');
+        if (!meas) {
+            meas = document.createElement('div');
+            meas.id = 'kds-measure';
+            meas.setAttribute('aria-hidden', 'true');
+            document.getElementById('view-kitchen').appendChild(meas);
+        }
+        meas.className = 'kds-grid dense paged';
+        meas.style.cssText = `position:absolute; left:-20000px; top:0; visibility:hidden; display:block; width:${L.cellW}px;`;
+        meas.innerHTML = '';
+        const fits = (el, extra) => el.offsetHeight + (extra || 0) <= L.cellH;
+        // 「次のマスへつづく」の行の高さ（続きのある切れはしには、この分を空けておく）
+        meas.innerHTML = '<article class="kds-card"><div class="kds-more">次のマスへつづく →</div></article>';
+        const moreH = (meas.querySelector('.kds-more').offsetHeight || 24) + 4;
+        meas.innerHTML = '';
+        // 1つの注文を、マスに入る大きさの切れはし（1つ以上）に分ける
+        const piecesOf = html => {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            const card = tmp.firstElementChild;
+            meas.appendChild(card);
+            if (fits(card)) return [card];
+            const ul = card.querySelector('.kds-items'), foot = card.querySelector('.kds-foot');
+            const lis = [...ul.children];
+            lis.forEach(li => li.remove());
+            if (foot) foot.remove();
+            const parts = [card];
+            let cur = card, curUl = ul;
+            const newPart = () => {
+                const c = document.createElement('article');
+                c.className = card.className.replace(/\bfresh\b/, '') + ' kds-cont';
+                c.dataset.id = card.dataset.id;
+                c.innerHTML = `<div class="kds-head"><span class="kds-letter"></span><span class="kds-no">${card.querySelector('.kds-no').innerHTML}</span><span class="kds-min">つづき</span></div><ul class="kds-items"></ul>`;
+                meas.appendChild(c);
+                parts.push(c);
+                cur = c; curUl = c.querySelector('.kds-items');
+            };
+            lis.forEach(li => {
+                if (li.classList.contains('kds-sep') && !curUl.children.length) return;   // 切れはしの頭に点線は置かない
+                curUl.appendChild(li);
+                if (!fits(cur, moreH) && curUl.children.length > 1) {
+                    li.remove();
+                    newPart();
+                    if (!li.classList.contains('kds-sep')) curUl.appendChild(li);
+                }
+            });
+            if (foot) {
+                cur.appendChild(foot);
+                if (!fits(cur) && curUl.children.length > 1) {
+                    foot.remove();
+                    const last = curUl.lastElementChild;
+                    newPart();
+                    curUl.appendChild(last);
+                    cur.appendChild(foot);
+                }
+            }
+            // 切れはしの終わりの点線は消し、続きがある切れはしには「つづく」の印
+            parts.forEach((p, i) => {
+                const u = p.querySelector('.kds-items');
+                while (u.lastElementChild && u.lastElementChild.classList.contains('kds-sep')) u.lastElementChild.remove();
+                if (i < parts.length - 1) p.insertAdjacentHTML('beforeend', '<div class="kds-more">次のマスへつづく →</div>');
+            });
+            return parts;
+        };
+        const orders = rows.map((o, i) => ({ o, parts: piecesOf(htmls[i]) }));
+        // ページに詰める（1つの注文の切れはしは、同じページの続いたマスに置く）
+        const pages = [[]];
+        let used = 0;
+        orders.forEach(x => {
+            if (used && used + x.parts.length > L.per) { pages.push([]); used = 0; }
+            pages[pages.length - 1].push(x);
+            used += x.parts.length;
+        });
+        kdsPageCount = pages.length;
+        kdsPage = Math.max(0, Math.min(kdsPage, pages.length - 1));
+        // 呼び名はページごとに A から
+        pages.forEach(pg => pg.forEach((x, i) => {
+            const letter = kdsCardLetter(i);
+            x.parts.forEach(p => {
+                p.dataset.letter = letter;
+                const lt = p.querySelector('.kds-letter');
+                if (lt) { lt.textContent = letter; lt.setAttribute('aria-label', letter + 'オーダー'); }
+                const pr = p.querySelector('.kds-print');
+                if (pr) pr.setAttribute('aria-label', letter + 'オーダーの伝票を印刷');
+            });
+        }));
+        const show = pages[kdsPage];
+        grid.style.gridTemplateColumns = `repeat(${L.cols}, minmax(0, 1fr))`;
+        grid.style.gridTemplateRows = `repeat(2, ${L.cellH}px)`;
+        const els = [];
+        show.forEach(x => x.parts.forEach(p => els.push(p)));
+        grid.replaceChildren(...els);
+        if (kdsPageDir && !REDUCE_MOTION && grid.animate) {
+            grid.animate([{ transform: `translateX(${kdsPageDir * 40}px)`, opacity: 0.4 }, { transform: 'none', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.32,.72,0,1)' });
+        }
+        kdsPageDir = 0;
+        meas.innerHTML = '';
+        show.forEach(x => kitchenSeen.add(x.o.id));
+        // 次のページより後にある、まだ見ていない注文の数（ページ送りのボタンに出す）
+        const unseenLater = pages.slice(kdsPage + 1).reduce((n, pg) => n + pg.filter(x => !kitchenSeen.has(x.o.id)).length, 0);
+        renderKdsPager({ page: kdsPage, pages: pages.length, later: pages.slice(kdsPage + 1).reduce((n, pg) => n + pg.length, 0), unseenLater });
+    }
+    function renderKdsPager(info) {
+        const box = document.getElementById('kds-pager');
+        if (!box) return;
+        if (!info || info.pages <= 1) { box.style.display = 'none'; box.innerHTML = ''; return; }
+        box.style.display = '';
+        box.innerHTML = `<button type="button" class="kp-btn" onclick="kdsGoPage(-1)" ${info.page <= 0 ? 'disabled' : ''} aria-label="前のページ"><svg class="ic"><use href="#ic-left"/></svg></button>`
+            + `<span class="kp-now"><b>${info.page + 1}</b> / ${info.pages} ページ</span>`
+            + `<button type="button" class="kp-btn${info.unseenLater ? ' has-new' : ''}" onclick="kdsGoPage(1)" ${info.page >= info.pages - 1 ? 'disabled' : ''} aria-label="次のページ（あと${info.later}件）"><svg class="ic"><use href="#ic-right"/></svg>${info.later ? `<span class="kp-n">${info.later}</span>` : ''}</button>`;
+    }
+    function kdsGoPage(d) {
+        const next = Math.max(0, Math.min(kdsPageCount - 1, kdsPage + d));
+        if (next === kdsPage) { playError(); return; }
+        kdsPage = next;
+        kdsPageDir = d > 0 ? 1 : -1;
+        playSound(660, 0.04);
+        renderKitchen();
+    }
+    // 左右のスワイプでページを送る（タップや縦の動きは邪魔しない）
+    (function kdsSwipe() {
+        let sx = 0, sy = 0, on = false;
+        document.addEventListener('touchstart', e => {
+            const g = document.getElementById('kds-grid');
+            on = !!(g && g.classList.contains('paged') && e.touches.length === 1 && g.contains(e.target));
+            if (on) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }
+        }, { passive: true });
+        document.addEventListener('touchend', e => {
+            if (!on) return;
+            on = false;
+            const t = e.changedTouches && e.changedTouches[0];
+            if (!t) return;
+            const dx = t.clientX - sx, dy = t.clientY - sy;
+            if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 1.5) kdsGoPage(dx < 0 ? 1 : -1);
+        }, { passive: true });
+        document.addEventListener('keydown', e => {
+            if (currentView !== 'kitchen' || kdsPageCount <= 1) return;
+            const t = e.target;
+            if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+            if (e.key === 'ArrowRight') kdsGoPage(1);
+            else if (e.key === 'ArrowLeft') kdsGoPage(-1);
+        });
+        let rt = null;
+        window.addEventListener('resize', () => {
+            clearTimeout(rt);
+            rt = setTimeout(() => { if (currentView === 'kitchen') renderKitchen(); }, 200);
+        });
+    })();
 
     // KDのカードの呼び名：左上から A・B・C…Z、27枚目からは AA・AB…（「Aオーダー」と呼べるように）
     function kdsCardLetter(i) {
@@ -19043,30 +19349,81 @@
             if (dots) dots.innerHTML = imgs.length > 1 ? imgs.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('') : '';
             track.style.transition = 'none';
             track.style.transform = 'translate3d(0,0,0)';
+            // 読んでいる間に、お会計の表示などに変わっていたら、ここでは出さない
+            if (!idle || idle.style.display === 'none' || cdEnded) return;
         }
         wrap.style.display = ''; basic.style.display = '';
         if (idle) idle.classList.add('has-ads');
+        fitCdAdFrame();
         startCdAds();
     }
+    // 広告の枠の大きさを、いまの画面の広さから測って決める。
+    // （iPhone・iPad は、ホーム画面から戻った時などに、CSSだけで決めた大きさが古いまま残ることがあるため）
+    function fitCdAdFrame() {
+        const show = document.getElementById('cd-ads-show');
+        const frame = show && show.querySelector('.cd-ads-frame');
+        if (!frame || show.style.display === 'none' || !show.offsetParent) return;
+        const shape = CD_AD_SHAPES.find(x => x.id === cdCfg.adShape) || CD_AD_SHAPES[0];
+        const [aw, ah] = shape.ar.split('/').map(Number);
+        const w = show.clientWidth, h = show.clientHeight;
+        if (!w || !h || !aw || !ah) return;
+        frame.style.width = Math.max(0, Math.floor(Math.min(w, (h - 22) * aw / ah))) + 'px';
+    }
+    // 広告を、いまの1枚の位置にぴたっと置き直す（動きの途中や、写しの1枚目で止まっていても）
+    function cdAdSnap() {
+        const t = document.getElementById('cd-ads-track');
+        if (!t) return;
+        const n = Number(t.dataset.n) || 0;
+        cdAdIdx = n ? ((cdAdIdx % n) + n) % n : 0;
+        t.style.transition = 'none';
+        t.style.transform = `translate3d(${-100 * cdAdIdx}%,0,0)`;
+        document.querySelectorAll('#cd-ads-dots i').forEach((d, i) => d.classList.toggle('on', i === cdAdIdx));
+    }
+    let cdAdResetT = null;
     function startCdAds() {
         if (cdAdTimer) return;
         const track = document.getElementById('cd-ads-track');
-        const n = track ? Number(track.dataset.n) || 0 : 0;
-        if (n < 2) return;
+        if (!track || (Number(track.dataset.n) || 0) < 2) return;
         cdAdTimer = setInterval(() => {
             const t = document.getElementById('cd-ads-track');
-            if (!t) return;
+            // 広告の枚数は、毎回いまの並びから数える（途中で枚数が変わっても、何もない所へ流れないように）
+            const n = t ? Number(t.dataset.n) || 0 : 0;
+            if (!t || n < 2 || document.hidden) return;   // 見えていない間は進めない
+            if (cdAdIdx >= n) { cdAdSnap(); void t.offsetWidth; }
             cdAdIdx++;
             document.querySelectorAll('#cd-ads-dots i').forEach((d, i) => d.classList.toggle('on', i === cdAdIdx % n));
             t.style.transition = 'transform .7s cubic-bezier(.45,0,.2,1)';
             t.style.transform = `translate3d(${-100 * cdAdIdx}%,0,0)`;
             if (cdAdIdx >= n) {
                 // 写しの1枚目まで流れたら、動きを消して本物の1枚目に戻す（見た目は変わらない）
-                setTimeout(() => { t.style.transition = 'none'; cdAdIdx = 0; t.style.transform = 'translate3d(0,0,0)'; }, 760);
+                clearTimeout(cdAdResetT);
+                cdAdResetT = setTimeout(() => { if (cdAdIdx >= n) cdAdSnap(); }, 760);
             }
         }, cdCfg.adSec * 1000);
     }
-    function stopCdAds() { if (cdAdTimer) { clearInterval(cdAdTimer); cdAdTimer = null; } }
+    function stopCdAds() { if (cdAdTimer) { clearInterval(cdAdTimer); cdAdTimer = null; } clearTimeout(cdAdResetT); }
+    // ホーム画面から戻った時・画面の向きや大きさが変わった時に、広告を置き直す。
+    // （隠れている間は流すのを止め、戻ったら今の1枚から、正しい大きさで流し直す）
+    function wakeCdAds() {
+        if (!customerMode) return;
+        cdAdSnap();
+        const idle = document.getElementById('cd-idle');
+        renderCdIdle(!!(idle && idle.style.display !== 'none'));
+        requestAnimationFrame(() => requestAnimationFrame(fitCdAdFrame));
+    }
+    document.addEventListener('visibilitychange', () => {
+        if (!customerMode) return;
+        if (document.hidden) { stopCdAds(); cdAdSnap(); } else wakeCdAds();
+    });
+    window.addEventListener('pageshow', wakeCdAds);
+    (function () {
+        let t = null;
+        const again = () => { clearTimeout(t); t = setTimeout(() => { if (customerMode) fitCdAdFrame(); }, 120); };
+        window.addEventListener('resize', again);
+        window.addEventListener('orientationchange', again);
+        const show = document.getElementById('cd-ads-show');
+        if (show && typeof ResizeObserver === 'function') new ResizeObserver(() => { if (customerMode) fitCdAdFrame(); }).observe(show);
+    })();
     // 映す端末：販売会の文書から、CDの設定と支払い方法を受け取る
     function acceptCdCfgFromEvent(d) {
         if (!d) return;
@@ -19200,10 +19557,12 @@
     // ・shop / icon … お客様の画面に出す店の名前とアイコン（空なら販売会の名前）
     // ・seat  … 席から注文（店内を選んだら席番号を入れてもらう。番号は T0001-12 のようになる）
     // ・opt   … お客様が特注（氷少なめ など）を付けられるか
-    let mobileCfg = { on: false, stopMsg: '', note: '', wait: 0, pick: false, lead: 10, ahead: 120, shop: '', icon: '', seat: false, opt: true };
+    // ・ui    … お客様の注文の画面の形（'std' 標準：写真・おすすめ・分類のタブ ／ 'simple' シンプル：名前と値段の一覧）
+    // ・heroAt … 注文の画面のいちばん上の絵（横長の画像）を置いた時刻（0なら無し。画像は live/mhero に置く）
+    let mobileCfg = { on: false, stopMsg: '', note: '', wait: 0, pick: false, lead: 10, ahead: 120, shop: '', icon: '', seat: false, opt: true, ui: 'std', heroAt: 0 };
     // 次の回にも持ち越す設定（受付中かどうかと待ち時間は、毎回その日に決める）
     let mobileKeep = {};
-    const MOBILE_KEEP_KEYS = ['stopMsg', 'note', 'pick', 'lead', 'ahead', 'shop', 'icon', 'seat', 'opt'];
+    const MOBILE_KEEP_KEYS = ['stopMsg', 'note', 'pick', 'lead', 'ahead', 'shop', 'icon', 'seat', 'opt', 'ui', 'heroAt'];
     function keepMobile() { mobileKeep = {}; MOBILE_KEEP_KEYS.forEach(k => { mobileKeep[k] = mobileCfg[k]; }); }
     function freshMobileCfg() { return normMobileCfg(Object.assign({}, mobileKeep, { on: false, wait: 0 })); }
     const MOBILE_WAITS = [0, 5, 10, 15, 20, 30, 45, 60];
@@ -19217,7 +19576,8 @@
         return {
             on: m.on === true, stopMsg: str(m.stopMsg, 200), note: str(m.note, 300),
             wait: int(m.wait, 0, 180, 0), pick: m.pick === true, lead: int(m.lead, 1, 120, 10), ahead: int(m.ahead, 30, 720, 120),
-            shop: str(m.shop, 30).trim(), icon, seat: m.seat === true, opt: m.opt !== false
+            shop: str(m.shop, 30).trim(), icon, seat: m.seat === true, opt: m.opt !== false,
+            ui: m.ui === 'simple' ? 'simple' : 'std', heroAt: Number.isFinite(Number(m.heroAt)) && Number(m.heroAt) > 0 ? Math.floor(Number(m.heroAt)) : 0
         };
     }
     function mobileSub() {
@@ -19263,6 +19623,7 @@
             </div>
             <p class="settings-hint">左の四角を押すと、アイコンの画像を選べます。名前が空なら、販売会の名前を出します。次の回にも持ち越します。</p>
             <input type="file" id="mo-icon-file" accept="image/*" style="display:none" onchange="onMobileIconChosen(event)">
+            ${mobileLookHTML()}
             <label class="field-label sec">${rest ? '注文の受け方' : '店内の注文'}</label>
             ${rest ? '' : `<div class="sw-row">
                 <div class="sw-text"><b>席から注文</b><span>お客様が「店内」を選んだら、席番号を入れてもらいます。番号は T0001-12 のように席番号が付きます</span></div>
@@ -19279,7 +19640,7 @@
             <label class="field-label sec">いまの待ち時間</label>
             <div class="chip-pick" role="group" aria-label="いまの待ち時間">${MOBILE_WAITS.map(w =>
                 `<button type="button" class="${mobileCfg.wait === w ? 'on' : ''}" aria-pressed="${mobileCfg.wait === w}" onclick="setMobileWait(${w})">${w ? `約${w}分` : '出さない'}</button>`).join('')}</div>
-            <p class="settings-hint">お客様の注文の画面に「いまの待ち時間 約◯分」と出します。混んできたら長く、空いたら短く選び直してください。</p>
+            <p class="settings-hint">お客様の注文の画面に「待ち時間 約◯分」と出します。混んできたら長く、空いたら短く選び直してください。</p>
             <label class="field-label sec">受け取り時間の指定</label>
             <div class="sw-row">
                 <div class="sw-text"><b>お客様が受け取り時間を選べる</b><span>「できしだい」か、10分ごとの時間から選んでもらいます</span></div>
@@ -19328,6 +19689,7 @@
         logEdit(logText);
         publishMobileMenu(true);
         renderMobileView();
+        fillMobileHero();
     }
     function setMobileOn(on) {
         writeMobileCfg(Object.assign({}, mobileCfg, { on: !!on }), on ? 'モバイルオーダーの受付を始めた' : 'モバイルオーダーの受付を止めた');
@@ -19393,33 +19755,171 @@
         if (!confirm('アイコンを外しますか？')) return;
         writeMobileCfg(Object.assign({}, mobileCfg, { icon: '' }), 'モバイルのアイコンを外した');
     }
+    // ---- お客様の注文の画面の形と、メニューの見せ方 ----
+    function mobileLookHTML() {
+        const std = mobileCfg.ui !== 'simple';
+        const list = products.filter(p => p.active !== false && p.price > 0);
+        return `<label class="field-label sec">お客様の注文の画面の形</label>
+            <div class="seg-pick" role="group" aria-label="注文の画面の形">
+                <button type="button" class="${std ? 'on' : ''}" aria-pressed="${std}" onclick="setMobileUi('std')">標準</button>
+                <button type="button" class="${std ? '' : 'on'}" aria-pressed="${!std}" onclick="setMobileUi('simple')">シンプル</button>
+            </div>
+            <p class="settings-hint">${std
+                ? '<b>標準</b>：商品の写真を大きく並べ、上に分類のタブ、「おすすめ」の列、押すと説明と数を選べる窓が出ます（ファストフードのアプリのような形）。'
+                : '<b>シンプル</b>：商品の名前と値段だけの一覧です。軽く、古いスマホでもすぐ開きます。'}</p>
+            ${std ? `<label class="field-label sec">いちばん上の絵（任意）</label>
+            <button type="button" class="mo-hero" id="mo-hero" onclick="pickMobileHero()" aria-label="いちばん上の絵を選ぶ">${mobileCfg.heroAt ? '<span class="mh-load">読み込んでいます…</span>' : '<svg class="ic"><use href="#ic-image"/></svg><span>横長の画像を選ぶ</span>'}</button>
+            ${mobileCfg.heroAt ? '<button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="clearMobileHero()"><svg class="ic"><use href="#ic-trash"/></svg>絵を外す</button>' : ''}
+            <p class="settings-hint">注文の画面のいちばん上に、横長（2:1）に切って出します。新商品のお知らせやお店の写真などに。次の回にも持ち越します。</p>
+            <input type="file" id="mo-hero-file" accept="image/*" style="display:none" onchange="onMobileHeroChosen(event)">
+            <label class="field-label sec">メニューの見せ方</label>
+            <p class="settings-hint" style="margin-top:0;">写真（左の四角）・「おすすめ」「新商品」の札・ひとことの説明を付けられます。「おすすめ」を付けた商品は、いちばん上の列にも並びます。残りが少ない商品には「残りわずか」、よく出ている商品には「人気」が自動で付きます。</p>
+            <div class="mo-mis">${list.length ? list.map(p => `<div class="mo-mi" style="--ink:${catInk(p.type)};">
+                ${pimgHtml(p, 'live')}
+                <div class="mo-mi-b">
+                    <div class="mo-mi-n"><b>${escHtml(p.name)}</b><span>¥${Number(p.price).toLocaleString('ja-JP')}</span></div>
+                    <div class="mo-mi-t">
+                        <button type="button" class="mo-tg${p.rec ? ' on' : ''}" aria-pressed="${!!p.rec}" onclick="setMenuFlag(${p.id}, 'rec')">おすすめ</button>
+                        <button type="button" class="mo-tg nw${p.isNew ? ' on' : ''}" aria-pressed="${!!p.isNew}" onclick="setMenuFlag(${p.id}, 'isNew')">新商品</button>
+                    </div>
+                    <input type="text" maxlength="40" value="${escHtml(p.desc || '')}" placeholder="ひとことの説明（任意・40文字まで）" aria-label="${escHtml(p.name)}の説明" onchange="setMenuDesc(${p.id}, this.value)">
+                </div>
+            </div>`).join('') : '<p class="settings-hint">商品がありません。</p>'}</div>` : ''}`;
+    }
+    function setMobileUi(v) {
+        const ui = v === 'simple' ? 'simple' : 'std';
+        if (ui === mobileCfg.ui) return;
+        writeMobileCfg(Object.assign({}, mobileCfg, { ui }), ui === 'std' ? 'モバイルの注文の画面を標準の形にした' : 'モバイルの注文の画面をシンプルな形にした');
+        showToast(ui === 'std' ? '注文の画面を「標準」にしました' : '注文の画面を「シンプル」にしました');
+        if (ui === 'std') fillMobileHero();
+    }
+    // おすすめ・新商品の札（商品に付けて、ほかの端末にも伝える）
+    function setMenuFlag(id, k) {
+        if (k !== 'rec' && k !== 'isNew') return;
+        const p = products.find(x => x.id === id);
+        if (!p) return;
+        if (p[k]) delete p[k]; else p[k] = true;
+        playSound(660, 0.04);
+        logEdit(`${p.name}の「${k === 'rec' ? 'おすすめ' : '新商品'}」を${p[k] ? '付けた' : '外した'}`);
+        syncPushProducts(); saveData(); publishMobileMenu(true);
+        const b = [...document.querySelectorAll('#mobile-body .mo-tg')].find(x => x.getAttribute('onclick') === `setMenuFlag(${id}, '${k}')`);
+        if (b) { b.classList.toggle('on', !!p[k]); b.setAttribute('aria-pressed', String(!!p[k])); }
+    }
+    function setMenuDesc(id, v) {
+        const p = products.find(x => x.id === id);
+        if (!p) return;
+        const t = String(v || '').replace(/[\r\n]+/g, ' ').trim().slice(0, 40);
+        if ((p.desc || '') === t) return;
+        if (t) p.desc = t; else delete p.desc;
+        logEdit(`${p.name}の説明を${t ? '「' + t + '」に' : '消'}した`);
+        syncPushProducts(); saveData(); publishMobileMenu(true);
+        showToast('説明を保存しました');
+    }
+    // いちばん上の絵：横長（2:1）に切って小さくし、この端末（IndexedDB）と live/mhero に置く
+    const MOBILE_HERO_ID = 'mobile-hero';
+    function pickMobileHero() { const f = document.getElementById('mo-hero-file'); if (f) { f.value = ''; f.click(); } }
+    function onMobileHeroChosen(ev) {
+        const f = ev && ev.target && ev.target.files && ev.target.files[0];
+        if (!f || !/^image\//.test(f.type)) return;
+        const url = URL.createObjectURL(f);
+        const img = new Image();
+        img.onload = async () => {
+            URL.revokeObjectURL(url);
+            const W = 960, H = 480, c = document.createElement('canvas');
+            c.width = W; c.height = H;
+            const g = c.getContext('2d');
+            const k = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+            const w = img.naturalWidth * k, h = img.naturalHeight * k;
+            g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+            g.imageSmoothingQuality = 'high';
+            g.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+            let data = c.toDataURL('image/jpeg', 0.78);
+            if (data.length > 200000) data = c.toDataURL('image/jpeg', 0.6);
+            if (data.length > 200000) { playError(); alert('画像を小さくできませんでした。別の画像を選んでください。'); return; }
+            try { await adPut(MOBILE_HERO_ID, data); } catch (e) {}
+            const at = Date.now();
+            mmHeroLast = '';
+            writeMobileCfg(Object.assign({}, mobileCfg, { heroAt: at }), 'モバイルのいちばん上の絵を変えた');
+            showToast('いちばん上の絵を変えました');
+            fillMobileHero();
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); playError(); alert('画像を読めませんでした。'); };
+        img.src = url;
+    }
+    function clearMobileHero() {
+        if (!confirm('いちばん上の絵を外しますか？')) return;
+        adDel(MOBILE_HERO_ID);
+        if (syncMode && syncEventCode && fbDb) fbDb.collection(EVENTS_COL).doc(syncEventCode).collection('live').doc('mhero').delete().catch(() => {});
+        mmHeroLast = '';
+        writeMobileCfg(Object.assign({}, mobileCfg, { heroAt: 0 }), 'モバイルのいちばん上の絵を外した');
+    }
+    // 設定の画面の見本（この端末に無ければ、置き場から読む）
+    async function fillMobileHero() {
+        const b = document.getElementById('mo-hero');
+        if (!b || !mobileCfg.heroAt) return;
+        let d = await adGet(MOBILE_HERO_ID);
+        if (!d && fbDb && syncEventCode) {
+            try { const snap = await fbDb.collection(EVENTS_COL).doc(syncEventCode).collection('live').doc('mhero').get(); d = snap.exists ? (snap.data() || {}).d : null; } catch (e) {}
+        }
+        const b2 = document.getElementById('mo-hero');
+        if (b2 && d && /^data:image\//.test(d)) b2.innerHTML = `<img src="${d}" alt="">`;
+    }
     function saveMobileTexts() {
         const v = id => (document.getElementById(id) || {}).value || '';
         writeMobileCfg(Object.assign({}, mobileCfg, { stopMsg: v('mo-stop').trim(), note: v('mo-note').trim() }), 'モバイルオーダーのお知らせを変更');
         showToast('お知らせを保存しました');
     }
     // メニュー（売っている商品・値段・品切れ）を live/menu に書く。変わった時だけ、まとめて書く
-    let mmTimer = null, mmLast = '';
+    // 標準の形では、おすすめ・新商品・説明・写真・残りわずか・人気も一緒に書く（使う物だけ）。
+    // 写真は1品ずつ小さい（18KBまで）ので、live/menuimg に1つにまとめて置き、変わった時だけ書き直す。
+    let mmTimer = null, mmLast = '', mmImgLast = '', mmHeroLast = '';
     function publishMobileMenu(force) {
         if (!isKitchen() || !syncMode || !syncEventCode || !fbDb || customerMode) return;
         if (mmTimer) clearTimeout(mmTimer);
         mmTimer = setTimeout(() => {
             mmTimer = null;
-            const items = products.filter(p => p.active !== false && p.price > 0).map(p => {
+            const live = products.filter(p => p.active !== false && p.price > 0);
+            // よく出ている商品（この回に3個以上売れた、上から3品）
+            const sold = {};
+            salesHistory.forEach(h => { if (h && !h.voided) (h.items || []).forEach(i => { sold[i.name] = (sold[i.name] || 0) + 1; }); });
+            const hot = new Set(Object.keys(sold).filter(n => sold[n] >= 3).sort((a, b) => sold[b] - sold[a]).slice(0, 3));
+            const imgs = {}; let imgBytes = 0;
+            const items = live.map(p => {
                 let left = Infinity;
                 if (!isUnlimited(p)) {
                     left = p.stock;
                     reservations.forEach(r => (r.items || []).forEach(i => { if (i.name === p.name) left--; }));
                     kitchenOrders.forEach(o => { if (!o.paid && o.st !== 'void' && o.st !== 'draft') o.items.forEach(i => { if (i.name === p.name) left -= i.qty; }); });
                 }
-                return { name: p.name, price: p.price, type: p.type || 'sweet', soldOut: left <= 0 || !!p.stopped };
+                const it = { name: p.name, price: p.price, type: p.type || 'sweet', soldOut: left <= 0 || !!p.stopped };
+                if (p.rec) it.rec = true;
+                if (p.isNew) it.nw = true;
+                if (p.desc) it.desc = String(p.desc).slice(0, 40);
+                if (!it.soldOut && left <= 3) it.few = true;
+                if (!it.soldOut && hot.has(p.name)) it.hot = true;
+                const im = productImgs[p.name];
+                if (im && im.d && imgBytes + im.d.length < 900000) { imgs[p.name] = im.d; imgBytes += im.d.length; it.img = 1; }
+                return it;
             });
+            const imgKey = Object.keys(imgs).length ? String(Object.keys(imgs).map(n => n + ':' + (productImgs[n].at || 0)).join('|').split('').reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7)) : '';
             const doc = { items, cats: CAT_TYPES.map(c => ({ id: c.id, label: c.label })), on: mobileCfg.on };
+            if (imgKey) doc.imgKey = imgKey;
+            const liveCol = fbDb.collection(EVENTS_COL).doc(syncEventCode).collection('live');
+            // 写しは受付中の時だけ置く（使わない時に、置き場へ余計に書かない）
+            if (mobileCfg.on && imgKey && imgKey !== mmImgLast) {
+                mmImgLast = imgKey;
+                liveCol.doc('menuimg').set({ key: imgKey, imgs }).catch(e => { mmImgLast = ''; console.warn('モバイルの写真の共有に失敗しました', e); });
+            }
+            if (mobileCfg.on && mobileCfg.heroAt && String(mobileCfg.heroAt) !== mmHeroLast) {
+                mmHeroLast = String(mobileCfg.heroAt);
+                const at = mobileCfg.heroAt;
+                adGet(MOBILE_HERO_ID).then(d => { if (d && mobileCfg.heroAt === at) return liveCol.doc('mhero').set({ d, at }); }).catch(() => { mmHeroLast = ''; });
+            }
             const key = JSON.stringify(doc);
             if (!force && key === mmLast) return;
             mmLast = key;
             doc.at = Date.now();
-            fbDb.collection(EVENTS_COL).doc(syncEventCode).collection('live').doc('menu').set(doc)
+            liveCol.doc('menu').set(doc)
                 .catch(e => { mmLast = ''; console.warn('モバイルのメニューの共有に失敗しました', e); });
         }, force ? 0 : 800);
     }
