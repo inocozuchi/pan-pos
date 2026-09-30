@@ -1075,7 +1075,7 @@
         /* カテゴリの帯（上辺）。面の色が日光で飛んでも、この濃い帯で分類が分かる
            （.product-btn の背景の1枚目として描いている） */
         .product-btn:active { filter: var(--press, brightness(.9)); box-shadow: 0 1px 2px rgba(28,28,30,0.05); }
-        .product-btn { transition: transform .14s cubic-bezier(.32,.72,0,1), box-shadow .12s ease, filter .12s ease; }
+        .product-btn { transition: box-shadow .12s ease, filter .12s ease; }
         @media (hover: hover) {
             .product-btn:hover { filter: brightness(0.98); box-shadow: 0 3px 8px rgba(28,28,30,0.10); }
         }
@@ -2141,6 +2141,65 @@
         .menu-row.is-danger > .ic:first-child { color: var(--danger); }
         .menu-row.is-disabled { opacity: .5; pointer-events: none; }
         .menu-row .mr-need { color: var(--danger); font-weight: 700; }
+        /* レジの機能：1つずつの浮いたカード。オンの時だけ、設定を開くボタンが下に出る */
+        .feat-list { display: flex; flex-direction: column; gap: 8px; }
+        .feat-item { background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card); overflow: hidden; }
+        .feat-item .sw-row { margin: 0; padding: 12px 14px; background: none; box-shadow: none; }
+        .feat-ic { flex: none; width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: var(--sunken); color: var(--text-light); transition: background .2s ease, color .2s ease; }
+        .feat-ic .ic { width: 20px; height: 20px; }
+        .feat-item.on .feat-ic { background: var(--accent-soft); color: var(--accent); }
+        .feat-go {
+            display: flex; align-items: center; justify-content: space-between; width: 100%; border: none; cursor: pointer; font-family: inherit;
+            background: var(--accent-soft); color: var(--accent-ink); font-size: 13.5px; font-weight: 700; padding: 10px 14px; min-height: 44px;
+            animation: esIn .3s cubic-bezier(.2,.9,.3,1.15) both;
+        }
+        .feat-go .ic { width: 16px; height: 16px; }
+        /* 機能の入力の窓 */
+        .fs-card { max-height: calc(100dvh - 32px); overflow-y: auto; }
+        .fs-amt, .fs-memo { width: 100%; box-sizing: border-box; margin: 0 0 8px; }
+        .fs-amt { font-size: 24px; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+        .fs-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+        .fs-chips button { border: none; border-radius: 999px; padding: 8px 14px; min-height: 36px; background: var(--btn-neutral); color: var(--text-main); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
+        .fs-chips button.on { background: var(--accent); color: #fff; }
+        .co-coupon .cc-pair { display: flex; gap: 8px; }
+        .staff-chip {
+            display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; cursor: pointer;
+            border: none; font-family: inherit; font-size: 12.5px; font-weight: 800; max-width: 7.5em;
+            padding: 5px 10px; border-radius: var(--r-pill); background: var(--accent-soft); color: var(--accent-ink);
+        }
+        .staff-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .staff-chip.none { background: var(--warn-bg); color: var(--warn-ink); }
+        .staff-chip .ic { width: 14px; height: 14px; flex: none; }
+        .staff-pick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
+        .staff-pick button { min-height: 52px; border: none; border-radius: 14px; background: var(--btn-neutral); color: var(--text-main); font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; }
+        .staff-pick button.on { background: var(--accent); color: #fff; }
+        .staff-add { margin-bottom: 10px; }
+        .rc-staff { display: inline-flex; align-items: center; gap: 2px; font-size: 11.5px; font-weight: 700; color: var(--accent-ink); }
+        .rc-staff .ic { width: 12px; height: 12px; }
+        .product-btn.tool-tile { background: var(--btn-neutral); --cat-bar: var(--line-strong); color: var(--text-main); }
+        .product-btn.tool-tile .ic { width: 22px; height: 22px; color: var(--accent); margin-bottom: 2px; }
+        .product-btn.tool-tile .stock { font-size: 11px; color: var(--text-light); }
+        .cam-video { width: 100%; max-height: 42vh; margin-top: 8px; border-radius: 14px; background: #000; object-fit: cover; }
+        .co-coupon .cc-pair > * { flex: 1; min-width: 0; }
+        .co-coupon > .cc-on + .cc-use, .co-coupon > .cc-on + .cc-on, .co-coupon > .cc-use + .cc-on { margin-top: 6px; }
+        .fs-foot { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: baseline; margin: 6px 2px 12px; font-size: 14px; color: var(--text-light); }
+        .fs-foot b { font-size: 18px; color: var(--text-main); text-align: right; font-variant-numeric: tabular-nums; }
+        .fs-foot b.cash-ok { color: var(--positive-ink, #1E8E4E); }
+        .fs-foot b.cash-bad, .cash-bad { color: var(--danger); }
+        .cash-denoms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 10px; margin-bottom: 4px; }
+        .cd-den { display: flex; align-items: center; gap: 8px; background: var(--sunken); border-radius: 12px; padding: 4px 4px 4px 12px; }
+        .cd-den span { flex: 1; font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+        .cd-den input { width: 64px; margin: 0; text-align: right; font-size: 16px; padding: 8px; }
+        .cash-card { background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card); padding: 16px; display: flex; flex-direction: column; gap: 2px; }
+        .cash-card .cc-k { font-size: 13px; color: var(--text-light); font-weight: 700; }
+        .cash-card .cc-v { font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .cash-card .cc-rows { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; margin-top: 8px; font-size: 13.5px; color: var(--text-light); }
+        .cash-card .cc-rows span:nth-child(even) { text-align: right; color: var(--text-main); font-weight: 700; font-variant-numeric: tabular-nums; }
+        .cash-acts { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+        .cash-acts .action-btn { width: 100%; margin: 0; }
+        .cash-acts2 { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 8px; }
+        .cash-acts2 .action-btn { font-size: 13.5px; padding-left: 6px; padding-right: 6px; background: var(--surface); color: var(--accent-ink); box-shadow: var(--shadow-card); }
+        .cash-acts2 .action-btn:disabled { color: var(--text-light); box-shadow: none; }
         /* ---- テストモード：ひと目で分かる印（橙色のしま模様） ---- */
         :root { --test-a: #FF9500; --test-b: #FFB340; --test-ink: #C45500; }
         #test-band { display: none; }
@@ -3199,8 +3258,9 @@
         .menu-list > :nth-child(8), .tbl-grid > :nth-child(8) { animation-delay: .14s; }
         .menu-list > :nth-child(n+9), .tbl-grid > :nth-child(n+9) { animation-delay: .16s; }
         .menu-list { animation: none; }
-        /* 押した時は、ほんの少し縮んで、離すとばねのように戻る */
-        .product-btn:active { transform: scale(.965); }
+        /* 押した時は、ほんの少し縮んで、離すとばねのように戻る。
+           ただしレジの商品ボタンは縮めない（端を押した時に、縮んだボタンが指の下から外れてタップを取りこぼすため）。
+           商品ボタンは色の濃さだけで押したことを知らせる */
         .menu-row:active, .tbl-tile:active, .dg-pick:active, .mode-card:active { transform: scale(.98); }
         .chip-pick button, .seg-pick button { transition: background .22s cubic-bezier(.32,.72,0,1), color .22s ease, box-shadow .22s ease, transform .14s cubic-bezier(.32,.72,0,1); }
         .chip-pick button:active, .seg-pick button:active, .action-btn:active { transform: scale(.96); }
@@ -3456,6 +3516,8 @@
   <symbol id="ic-alert" viewBox="0 0 24 24"><path d="M12 3.5l9 16H3z"/><path d="M12 9.5v4.5M12 17h.01"/></symbol>
   <symbol id="ic-check" viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-10.5"/></symbol>
   <symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="ic-barcode" viewBox="0 0 24 24"><path d="M4 5v14M7 5v14M10.5 5v14M13 5v14M16.5 5v14M20 5v14"/></symbol>
+  <symbol id="ic-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-5.6 7-5.6s6.2 1.8 7 5.6"/></symbol>
   <symbol id="ic-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
   <symbol id="ic-undo" viewBox="0 0 24 24"><path d="M4 10.5h10.5a5 5 0 010 10H11"/><path d="M4 10.5l4.5-4.5M4 10.5L8.5 15"/></symbol>
   <symbol id="ic-printer" viewBox="0 0 24 24"><path d="M7.5 8.5V3.5h9v5"/><path d="M6.5 18H4v-6.5h16V18h-2.5"/><path d="M7.5 14h9v6.5h-9z"/></symbol>
@@ -3520,6 +3582,10 @@
             <svg class="ic"><use href="#ic-link"/></svg><span id="share-chip-code"></span>
         </button>
         <!-- この端末をロックしている時だけ出る。押すとパスコードを聞いてロックを外す -->
+        <!-- 担当者（機能：staff を使う時だけ）。押すと、この端末の担当を選び直せる -->
+        <button class="staff-chip" id="staff-chip" style="display:none;" onclick="openStaffSheet()" aria-label="この端末の担当者（押すと選び直す）">
+            <svg class="ic"><use href="#ic-person"/></svg><span id="staff-chip-name"></span>
+        </button>
         <button class="lock-chip" id="lock-chip" style="display:none;" onclick="lockChipTap()" aria-label="この端末は制限中（押すとロックを外す）">
             <svg class="ic"><use href="#ic-lock"/></svg><span>制限中</span>
         </button>
@@ -3778,8 +3844,8 @@
                             <label class="field-label">仕入れ数</label>
                             <input type="number" id="la-stock" inputmode="numeric" placeholder="10" min="0" step="1">
                         </div>
-                        <div>
-                            <label class="field-label">原価（任意）</label>
+                        <div id="la-cost-wrap">
+                            <label class="field-label">原価</label>
                             <input type="number" id="la-cost" inputmode="numeric" placeholder="—" min="0" step="1">
                         </div>
                     </div>
@@ -3904,6 +3970,12 @@
 
             <!-- レストラン：テーブルの数・伝票の渡し方・テーブルのQR -->
             <div class="sub-view" id="sub-rest" style="display:none;"><div id="rest-body"></div></div>
+            <!-- 担当者（機能：staff） -->
+            <div class="sub-view" id="sub-staff" style="display:none;"><div id="staff-body"></div></div>
+            <!-- 釣り銭とレジ締め（機能：cash） -->
+            <div class="sub-view" id="sub-cash" style="display:none;"><div id="cash-body"></div></div>
+            <!-- レジの機能：使う物だけオンにする（はじめは全部オフ） -->
+            <div class="sub-view" id="sub-feat" style="display:none;"><div id="feat-body"></div></div>
             <!-- 委託商品（ほかの人から預かって売る商品）と、預かった売上 -->
             <div class="sub-view" id="sub-consign" style="display:none;"><div id="consign-body"></div></div>
             <!-- メモのコピペで、商品をまとめて登録する -->
@@ -4126,6 +4198,11 @@
         </div>
         <button type="button" class="later-cancel" onclick="closeCouponSheet()">やめる</button>
     </div>
+</div>
+
+<!-- レジの機能の入力の窓（釣り銭・入出金・点検・値引き・手打ち・担当者・バーコード）。中身はその都度作る -->
+<div id="feat-sheet" class="later-overlay" style="display:none;" role="dialog" aria-modal="true" onclick="if (event.target === this) closeFeatSheet()">
+    <div class="later-card fs-card" id="feat-sheet-card"></div>
 </div>
 
 <!-- 特注（ファストフードの時だけ）：追加・後出し、氷・具材・ソースの抜き／少なめ／多め、その他 -->
@@ -4912,6 +4989,11 @@
             seenIds.add(p.id);
             wantBtns.push(t.btn);
         });
+        // 機能のボタン（手打ち・バーコード）は、開店中だけ最後に並べる
+        if (currentSession && !customerMode) {
+            if (featOn('open')) wantBtns.push(toolTile('open'));
+            if (featOn('code')) wantBtns.push(toolTile('code'));
+        }
         // 並びが変わった時・増減した時だけ、並べ直す
         const cur = grid.children;
         if (cur.length !== wantBtns.length || wantBtns.some((b, i) => cur[i] !== b)) grid.replaceChildren(...wantBtns);
@@ -4967,6 +5049,7 @@
     // name には、行の見分け（商品名＋特注）も渡せる。特注のある行の＋は、同じ特注で1つ足す
     function addOneToCart(name) {
         const line = cart.slice().reverse().find(i => optKey(i) === name);
+        if (line && line.manual) { cart.push(Object.assign({}, line)); playSound(); saveDataSoon(); init(); return; }
         const p = products.find(prod => prod.name === (line ? line.name : name));
         if (p) addToCart(p, line ? line.opt : '');
     }
@@ -5365,6 +5448,13 @@
                     <span class="num">−¥${p.coupon}</span>
                 </li>`;
         }
+        if (p.manual > 0 && checkoutManual) {
+            html += `
+                <li class="receipt-item disc-line" id="checkout-manual-line" style="border-left:5px solid transparent; padding-left:8px;">
+                    <span><svg class="ic"><use href="#ic-percent"/></svg>値引き${checkoutManual.reason ? '（' + escHtml(checkoutManual.reason) + '）' : ''}</span>
+                    <span class="num">−¥${p.manual}</span>
+                </li>`;
+        }
         return html;
     }
 
@@ -5393,6 +5483,7 @@
         checkoutSetRule = rule;
         checkoutItems = itemsToProcess;
         checkoutCoupon = null;
+        checkoutManual = null;
         // モバイルの注文でお客様が入れたクーポンは、使えるなら最初から付けておく
         if (pendingCouponId) {
             const c = coupons.find(x => x.id === pendingCouponId);
@@ -5400,7 +5491,7 @@
             else showToast(c ? `クーポン「${c.name}」は、いま使えません（止めている・上限）` : 'お客様が入れたクーポンは、もうありません');
             pendingCouponId = '';
         }
-        checkoutParts = discountParts(itemsToProcess, rule, checkoutCoupon);
+        checkoutParts = discountParts(itemsToProcess, rule, checkoutCoupon, null);
         checkoutDiscount = checkoutParts.total;
         const total = Math.max(0, itemsGross(itemsToProcess) - checkoutDiscount);
         document.getElementById('checkout-receipt').innerHTML = generateReceiptHTML(itemsToProcess, checkoutParts);
@@ -5661,6 +5752,8 @@
             setDisc: !!checkoutSetRule,
             setRule: checkoutSetRule,
             ...(checkoutCoupon && checkoutParts.coupon > 0 ? { coupon: { id: checkoutCoupon.id, name: checkoutCoupon.name, kind: checkoutCoupon.kind, amount: checkoutCoupon.amount, solo: !!checkoutCoupon.solo, amt: checkoutParts.coupon } } : {}),
+            ...(currentStaff() ? { staff: currentStaff() } : {}),
+            ...(checkoutManual && checkoutParts.manual > 0 ? { mdisc: { kind: checkoutManual.kind, amount: checkoutManual.amount, reason: checkoutManual.reason || '', amt: checkoutParts.manual } } : {}),
             customerType: selectedType,
             pendingType: pending,
             ...(taxSnap ? { tax: taxSnap } : {}),
@@ -5865,7 +5958,7 @@
                         <button class="step-btn" onclick="removeTempProduct(${p.id}, this)" style="background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
                     </div>
                     ${catPicker(p.type, `updateTempProduct(${p.id}, 'type', '%T%')`)}
-                    ${consignOn() ? `<div class="cs-field"><label>委託先</label><input type="text" list="consign-names" maxlength="20" value="${escHtml(p.consign || '')}" placeholder="空欄＝自分の店の商品" onchange="setProductConsign(${p.id}, this.value, 'setup')"></div>` : ''}
+                    ${productExtraFields(p, 'setup')}
                     <div style="display:flex; gap:5px; margin-top:5px;">
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:10px; color:var(--text-light);">価格</div>
@@ -5876,10 +5969,6 @@
                             ${p.unlimited
                                 ? `<div class="unl-box">無制限</div>`
                                 : `<input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">`}
-                        </div>
-                        <div style="flex:1; min-width:0;">
-                            <div style="font-size:10px; color:var(--text-light);">原価（任意）</div>
-                            <input type="number" value="${p.cost != null ? p.cost : ''}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="—" onchange="updateTempProduct(${p.id}, 'cost', this.value)">
                         </div>
                     </div>
                     ${hint}
@@ -6098,6 +6187,7 @@
                     <li><b>「販売会の名前」</b>を確認します（例：11月1日 パン販売）。あとで集計を見分けるための名前です。直したら<b>「この名前にする」</b>を押すと前の画面に戻ります。</li>
                     <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。入れ終えたら<b>「この商品と仕入れ数にする」</b>を押します。<br><b>初めて使う時は、商品は空です。</b>開店の画面に出る3つのボタンのどれかで入れます：<b>「メモを貼り付けて、まとめて登録」</b>（メモ帳に書いた一覧をそのまま貼る）／<b>「1品ずつ入れる」</b>（名前・値段・仕入れ数を打つ）／<b>「サンプル（パン・クッキー・ドリンク）で試す」</b>（ためしに使う時）。<b>名前と値段のある商品が1つ以上</b>あると、開店できます。</li>
                     <li><b>「前回の記録」</b>に前回の販売会が出ているか見ます。出ていれば、前回比と仕入れ数の目安に使われます。<b>「ありません」と出ていたら</b>、前回の集計結果のPDFから取り込めます（「前回の記録をPDFから取り込む」を見てください）。</li>
+                    <li>「釣り銭とレジ締め」を使っている時は、<b>「釣り銭準備金」</b>にレジに入れたお金を入れておきます（使っていなければ出ません）。</li>
                     <li>共有の設定はいりません。開店すると<b>共有コード（4けたの数字）が自動で決まり</b>、ほかの端末から合流できるようになります。1台だけで使う日も、そのままで大丈夫です（通信できない時だけ、この端末だけで開店します）。</li>
                     <li>いちばん下の<b>「この内容で開店する」</b>を押して完了です。</li>
                 </ol>
@@ -6471,9 +6561,42 @@
                 </ol>`
         },
         {
+            id: 'feat', icon: 'plus', title: 'レジの機能を足す', sub: '釣り銭・値引き・原価・担当者など（使う時だけ）',
+            body: `
+                <p>よそのレジにある機能を、<b>使う時だけ</b>オンにして足せます。<b>はじめは全部オフ</b>で、オフの機能はレジにも設定の一覧にも出ません（パンの販売会は今までどおりの画面のまま使えます）。<b>「設定 → レジの機能」</b>で切り替えます。共有している時は、全部の端末で同じになります。</p>
+                <table class="man-qa">
+                    <thead><tr><th>機能</th><th>オンにすると</th></tr></thead>
+                    <tbody>
+                        <tr><td><b>消費税</b></td><td>税率を決めて、レシート・領収書に内訳を出します（「消費税と税務用の資料」を見てください）。</td></tr>
+                        <tr><td><b>釣り銭とレジ締め</b></td><td>開店の画面に<b>「釣り銭準備金」</b>が出ます。「設定 → 釣り銭とレジ締め」で、入金・出金を記録し、<b>お金を数えて過不足</b>を出せます。</td></tr>
+                        <tr><td><b>手入力の値引き</b></td><td>お会計の窓に<b>「値引き」</b>が出ます。円か％と、理由（見切り品・サービス など）を選びます。</td></tr>
+                        <tr><td><b>原価と粗利</b></td><td>商品ごとに<b>原価</b>を入れる欄が出て、売上集計に<b>粗利</b>が出ます。</td></tr>
+                        <tr><td><b>手打ち</b></td><td>レジの商品ボタンの最後に<b>「手打ち」</b>が出ます。登録していない品を、金額と分類を選んで売れます（在庫は変わりません）。</td></tr>
+                        <tr><td><b>バーコード</b></td><td>商品ごとに<b>JANコード</b>を入れる欄が出ます。バーコードの読み取り機で読むと、その商品がカートに入ります。レジの最後の<b>「バーコード」</b>から、数字を打つ・カメラで読む（使える端末だけ）こともできます。</td></tr>
+                        <tr><td><b>担当者</b></td><td>名前を登録し、画面の上の名前を押して<b>いまの担当</b>を選びます（端末ごと）。会計ごとに担当が残り、担当ごとの売上が見られます。</td></tr>
+                        <tr><td><b>委託商品</b></td><td>ほかの人から預かって売る商品の売上を、委託先ごとに分けます（既製品の販売の時だけ）。</td></tr>
+                    </tbody>
+                </table>
+                <h4>釣り銭とレジ締め</h4>
+                <ol class="man-steps">
+                    <li>開店の前に、開店の画面の<b>「釣り銭準備金」</b>を押し、レジに入れたお札と硬貨の枚数を入れます（合計は自動で出ます）。</li>
+                    <li>営業中に両替や仕入れ代の支払いでお金を出し入れした時は、<b>「設定 → 釣り銭とレジ締め」</b>の<b>「入金」「出金」</b>で記録します。</li>
+                    <li>閉店の前に<b>「お金を数える（点検・締め）」</b>を押し、お札と硬貨の枚数を入れます。<b>あるはずの額</b>との差（ぴったり／◯円多い／◯円足りない）が出ます。</li>
+                    <li>「レジ締めの控えを印刷する」で、紙やPDFに残せます。数えないまま閉店しようとすると、先に数えるかを聞きます。</li>
+                </ol>
+                <ul class="man-list">
+                    <li>あるはずの額＝釣り銭準備金＋<b>この端末で受けた現金の会計</b>＋入金−出金。PayPay などの会計と、ほかのレジの会計は入りません（お金はレジごとに数えます）。</li>
+                    <li>お金の記録は、閉店すると過去の販売会に入り、端末からは片づきます。</li>
+                </ul>
+                <div class="man-box tip">
+                    <div class="man-box-h">値引きの順番</div>
+                    <p>セット割 → クーポン → 手入力の値引き の順に、残った額へかかります。1円未満は切り捨てです。会計記録で品目を直すと、値引きも同じ決まりで付け直します。</p>
+                </div>`
+        },
+        {
             id: 'tax', icon: 'percent', title: '消費税と税務用の資料', sub: '初期設定は「なし」',
             body: `
-                <p>はじめは<b>消費税なし</b>です（いまの販売会は消費税なしで販売しているため）。消費税をかける販売会では、<b>「設定 → 消費税」</b>で<b>「消費税を計算する」</b>をオンにします。</p>
+                <p>はじめは<b>消費税なし</b>です（いまの販売会は消費税なしで販売しているため）。消費税をかける販売会では、<b>「設定 → レジの機能」</b>で<b>「消費税」</b>をオンにします（オンにすると、設定の一覧に「消費税」が出ます）。</p>
                 <ul class="man-list">
                     <li>値段は<b>税込み</b>（総額表示）のまま使います。<b>合計の金額は変わりません。</b>合計のうち消費税がいくらかを計算します。</li>
                     <li>分類ごとに<b>8%（軽減税率：食べ物・飲み物の持ち帰り）</b>か<b>10%</b>を選びます。ファストフード・レストランでは、<b>店内で食べる会計は10%</b>にできます（初期はそうします）。</li>
@@ -6488,7 +6611,7 @@
         {
             id: 'consign', icon: 'box', title: '委託商品', sub: 'ほかの人から預かって売る',
             body: `
-                <p>作家さんやほかの団体から預かって売る商品です。既製品の販売のモードで、<b>「設定 → 委託商品」</b>をオンにすると使えます（はじめはオフ）。</p>
+                <p>作家さんやほかの団体から預かって売る商品です。既製品の販売のモードで、<b>「設定 → レジの機能」</b>の<b>「委託商品」</b>をオンにすると使えます（はじめはオフ。オンにすると、設定の一覧に「委託商品」が出ます）。</p>
                 <ol class="man-steps">
                     <li><b>手数料</b>（お店がいただく割合）を選びます。いらなければ0%のまま。</li>
                     <li><b>「設定 → 商品・在庫の調整」</b>（開店前は「商品と仕入れ数」）で、預かった商品の<b>「委託先」</b>に名前を入れます。自分の店の商品は空欄のまま。</li>
@@ -6896,6 +7019,7 @@
         if (inCheckout) {
             if (checkoutParts.set > 0) discLines.push({ name: SET_LABEL, amt: checkoutParts.set });
             if (checkoutParts.coupon > 0 && checkoutCoupon) discLines.push({ name: checkoutCoupon.name, amt: checkoutParts.coupon });
+            if (checkoutParts.manual > 0 && checkoutManual) discLines.push({ name: '値引き', amt: checkoutParts.manual });
         } else if (discount > 0) discLines.push({ name: SET_LABEL, amt: discount });
         const total = Math.max(0, itemsGross(src) - discount);
         const base = {
@@ -7049,15 +7173,6 @@
         return true;
     }
 
-    // コードだけで、動いている販売会にレジとして入る（前の版の呼び名。中身は joinEvent と同じ）
-    async function joinByCodeOnly(code, doneMsg) {
-        const before = joinRole;
-        joinRole = 'register';
-        const ok = await joinEvent(code);
-        joinRole = before;
-        if (ok && doneMsg) showToast(doneMsg);
-        return ok;
-    }
 
     // ▼▼▼ この端末の役割（一覧から選ぶ）▼▼▼
     //   レジ          … 商品を打って会計する（ふだんの使い方）
@@ -8097,6 +8212,8 @@
                     lock: normLock(d.lock),
                     cdCallOnly: !!d.cdCallOnly,
                     kitchenOnly: !!d.kitchenOnly,
+                    handyOnly: !!d.handyOnly,      // ハンディの端末（読み込み直してもハンディのまま）
+                    staff: typeof d.staff === 'string' ? d.staff.slice(0, 12) : '',   // この端末の担当者
                     kdsSum: !!d.kdsSum,
                     cdLight: d.cdLight === true,
                     kdsStation: typeof d.kdsStation === 'string' ? d.kdsStation : 'all',
@@ -8535,7 +8652,6 @@
         if (h.setRule) return normSetRule(h.setRule);
         return h.setDisc === true ? { needs: SET_DEFAULT.needs.slice(), amount: SET_DEFAULT.amount } : null;
     }
-    function setRuleUnit(r) { return r && r.kind === 'pct' ? '%' : '円'; }
     // 「クッキー＋ドリンクで10円引き」のような、人が読む形
     function setRuleText(r) {
         const rule = normSetRule(r);
@@ -8609,40 +8725,62 @@
     function couponUsable(c) { return !!c && c.on && couponLeft(c) > 0; }
     function couponText(c) { return c.kind === 'pct' ? `${c.amount}%引き` : `${c.amount}円引き`; }
     let couponViewKeepDraft = false;   // クーポンを直して戻った時は、セット割の選びかけを残す
-    function couponSub() {
-        const on = coupons.filter(c => c.on).length;
-        return coupons.length ? `${coupons.length}枚（使えるもの${on}枚）` : 'まだありません';
-    }
-    // 割引のまとめ：セット割とクーポンを足した額。クーポンは、セット割を引いた後の額にかける。1円未満は切り捨て
-    function discountParts(items, rule, coupon) {
+    // 割引のまとめ：セット割 → クーポン → 手入力の値引き（manual）の順に、残った額へかける。1円未満は切り捨て
+    function discountParts(items, rule, coupon, manual) {
         const gross = itemsGross(items);
         let set = setDiscountFor(items, rule);
-        let cp = 0;
+        let cp = 0, md = 0;
         if (coupon) {
             if (coupon.solo) set = 0;
             const base = Math.max(0, gross - set);
             cp = coupon.kind === 'pct' ? Math.floor(base * coupon.amount / 100) : Math.min(coupon.amount, base);
         }
-        return { set, coupon: cp, total: set + cp };
+        if (manual && manual.amount > 0) {
+            const base = Math.max(0, gross - set - cp);
+            md = manual.kind === 'pct' ? Math.floor(base * Math.min(100, manual.amount) / 100) : Math.min(manual.amount, base);
+        }
+        return { set, coupon: cp, manual: md, total: set + cp + md };
     }
     // 会計記録の割引の内訳（前の版の記録は、みなセット割）
     function couponPartOf(h) { return h && h.coupon ? Math.max(0, Number(h.coupon.amt) || 0) : 0; }
-    function setPartOf(h) { return Math.max(0, (Number(h && h.discount) || 0) - couponPartOf(h)); }
-    // 会計記録の明細を直した時に、割引を付け直す（クーポンは会計した時の決まりのまま）
+    function manualPartOf(h) { return h && h.mdisc ? Math.max(0, Number(h.mdisc.amt) || 0) : 0; }
+    function setPartOf(h) { return Math.max(0, (Number(h && h.discount) || 0) - couponPartOf(h) - manualPartOf(h)); }
+    function manualText(m) { return m ? (m.kind === 'pct' ? `${m.amount}%引き` : `${m.amount}円引き`) + (m.reason ? `（${m.reason}）` : '') : ''; }
+    // 1件の会計の割引の行（レシート・領収書・会計記録で同じものを使う）：[{ label, amt }]
+    function discLinesOf(h) {
+        const out = [];
+        if (setPartOf(h) > 0) out.push({ label: SET_LABEL, amt: setPartOf(h) });
+        if (couponPartOf(h) > 0) out.push({ label: h.coupon.name || 'クーポン', amt: couponPartOf(h) });
+        if (manualPartOf(h) > 0) out.push({ label: '値引き' + (h.mdisc.reason ? `（${h.mdisc.reason}）` : ''), amt: manualPartOf(h) });
+        return out;
+    }
+    function normMdisc(m) {
+        if (!m || typeof m !== 'object') return null;
+        const amount = Math.floor(Number(m.amount));
+        if (!(amount >= 1)) return null;
+        return { kind: m.kind === 'pct' ? 'pct' : 'yen', amount: Math.min(amount, m.kind === 'pct' ? 100 : 9999999), reason: String(m.reason || '').slice(0, 20), amt: Math.max(0, Math.floor(Number(m.amt) || 0)) };
+    }
+    // 会計記録の明細を直した時に、割引を付け直す（クーポン・値引きは会計した時の決まりのまま）
     function recordDiscount(rec, items) {
         const c = rec && rec.coupon ? { kind: rec.coupon.kind === 'pct' ? 'pct' : 'yen', amount: Number(rec.coupon.amount) || 0, solo: !!rec.coupon.solo } : null;
-        const d = discountParts(items, ruleOfRecord(rec), c && c.amount > 0 ? c : null);
+        const m = rec && rec.mdisc ? { kind: rec.mdisc.kind, amount: Number(rec.mdisc.amount) || 0 } : null;
+        const d = discountParts(items, ruleOfRecord(rec), c && c.amount > 0 ? c : null, m);
         if (rec && rec.coupon) rec.coupon.amt = d.coupon;
+        if (rec && rec.mdisc) rec.mdisc.amt = d.manual;
         return d.total;
+    }
+    // お店の設定を、この端末に保存して、共有していれば全部の端末へ送る（what は失敗した時の記録用）
+    function shareEventCfg(fields, what) {
+        saveData();
+        if (syncMode && syncEventCode && fbDb) {
+            fbDb.collection(EVENTS_COL).doc(syncEventCode).set(fields, { merge: true })
+                .catch(e => { console.warn(what + 'の共有に失敗しました', e); showToast('共有に失敗しました。電波を確かめてください'); });
+        }
     }
     function writeCoupons(list, logText) {
         coupons = normCoupons(list);
         couponsBy = getDeviceId();
-        saveData();
-        if (syncMode && syncEventCode && fbDb) {
-            fbDb.collection(EVENTS_COL).doc(syncEventCode).set({ coupons, couponsBy }, { merge: true })
-                .catch(e => { console.warn('クーポンの共有に失敗しました', e); showToast('共有に失敗しました。電波を確かめてください'); });
-        }
+        shareEventCfg({ coupons, couponsBy }, 'クーポン');
         if (logText) logEdit(logText);
         if (currentView === 'settings' && currentSub === 'coupon') renderCouponView();
     }
@@ -8774,17 +8912,78 @@
     // ---- お会計の窓：クーポンを使う ----
     let checkoutCoupon = null;         // いまのお会計で使うクーポン（使った時点の中身の写し）
     let checkoutItems = [];            // いまのお会計の明細（クーポンを付け外しした時に、割引を付け直すため）
-    let checkoutParts = { set: 0, coupon: 0, total: 0 };
+    let checkoutParts = { set: 0, coupon: 0, manual: 0, total: 0 };
+    let checkoutManual = null;         // いまのお会計の手入力の値引き { kind, amount, reason }
     let pendingCouponId = '';          // モバイルの注文で、お客様が入れたクーポン（会計の窓を開いた時に付ける）
+    // お会計の窓の、クーポンと値引きの場所（使える物がある時だけ出る）
     function renderCheckoutCoupon() {
         const box = document.getElementById('co-coupon');
         if (!box) return;
         const usable = coupons.filter(couponUsable);
-        if (!checkoutCoupon && !usable.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+        const cpShow = !!checkoutCoupon || usable.length > 0;
+        const mdShow = !!checkoutManual || featOn('disc');
+        if (!cpShow && !mdShow) { box.style.display = 'none'; box.innerHTML = ''; return; }
         box.style.display = '';
-        box.innerHTML = checkoutCoupon
+        const cp = !cpShow ? '' : (checkoutCoupon
             ? `<div class="cc-on"><svg class="ic"><use href="#ic-tag"/></svg><span class="cc-t">${escHtml(checkoutCoupon.name)}<small>${couponText(checkoutCoupon)}${checkoutCoupon.solo ? '・セット割と併用しない' : ''}${checkoutCoupon.note ? '・' + escHtml(checkoutCoupon.note) : ''}</small></span><button type="button" onclick="setCheckoutCoupon('')">外す</button></div>`
-            : `<button type="button" class="cc-use" onclick="openCouponSheet()"><svg class="ic"><use href="#ic-tag"/></svg>クーポンを使う</button>`;
+            : `<button type="button" class="cc-use" onclick="openCouponSheet()"><svg class="ic"><use href="#ic-tag"/></svg>クーポンを使う</button>`);
+        const md = !mdShow ? '' : (checkoutManual
+            ? `<div class="cc-on"><svg class="ic"><use href="#ic-percent"/></svg><span class="cc-t">値引き<small>${escHtml(manualText(checkoutManual))}</small></span><button type="button" onclick="setCheckoutManual(null)">外す</button></div>`
+            : `<button type="button" class="cc-use" onclick="openDiscSheet()"><svg class="ic"><use href="#ic-percent"/></svg>値引き</button>`);
+        const pair = cp && md && !checkoutCoupon && !checkoutManual;
+        box.innerHTML = pair ? `<div class="cc-pair">${cp}${md}</div>` : cp + md;
+    }
+    // 手入力の値引き（機能：disc）
+    let discDraft = { kind: 'yen', amount: '', reason: '' };
+    function openDiscSheet() {
+        if (!featOn('disc')) return;
+        discDraft = { kind: 'yen', amount: '', reason: '' };
+        playSound();
+        openFeatSheet(`<div class="later-title">値引き</div>
+            <div class="later-sub">この会計から引く額を入れます。セット割・クーポンを引いた後の額にかかります。</div>
+            <div class="seg-pick" role="group" aria-label="値引きのしかた"><button type="button" class="on" id="disc-k-yen" onclick="setDiscKind('yen')">円引き</button><button type="button" id="disc-k-pct" onclick="setDiscKind('pct')">％引き</button></div>
+            <input type="text" inputmode="numeric" class="fs-amt" id="disc-amt" data-focus placeholder="金額（円）" oninput="discDraft.amount = this.value; renderDiscFoot()">
+            <div class="fs-chips">${['見切り品', 'サービス', 'スタッフ', '傷あり', 'その他'].map(m => `<button type="button" onclick="pickDiscReason(this, '${m}')">${m}</button>`).join('')}</div>
+            <div class="fs-foot" id="disc-foot"></div>
+            <div class="opt-acts"><button type="button" class="later-cancel" onclick="closeFeatSheet()">やめる</button><button type="button" class="opt-ok" id="disc-ok" onclick="applyDiscSheet()">値引きする</button></div>`);
+        renderDiscFoot();
+    }
+    function setDiscKind(k) {
+        discDraft.kind = k === 'pct' ? 'pct' : 'yen';
+        ['yen', 'pct'].forEach(x => { const b = document.getElementById('disc-k-' + x); if (b) b.classList.toggle('on', x === discDraft.kind); });
+        const a = document.getElementById('disc-amt'); if (a) a.placeholder = discDraft.kind === 'pct' ? '割合（％）' : '金額（円）';
+        playSound(660, 0.04);
+        renderDiscFoot();
+    }
+    function pickDiscReason(btn, m) {
+        discDraft.reason = discDraft.reason === m ? '' : m;
+        document.querySelectorAll('#feat-sheet .fs-chips button').forEach(b => b.classList.toggle('on', b === btn && discDraft.reason === m));
+    }
+    function discDraftObj() {
+        const amount = yenInput(discDraft.amount);
+        if (!(amount >= 1) || (discDraft.kind === 'pct' && amount > 100)) return null;
+        return { kind: discDraft.kind, amount, reason: discDraft.reason };
+    }
+    function renderDiscFoot() {
+        const f = document.getElementById('disc-foot'), ok = document.getElementById('disc-ok');
+        const m = discDraftObj();
+        const p = discountParts(checkoutItems, checkoutSetRule, checkoutCoupon, m);
+        const after = Math.max(0, itemsGross(checkoutItems) - p.total);
+        if (f) f.innerHTML = discDraft.kind === 'pct' && yenInput(discDraft.amount) > 100
+            ? '<span class="cash-bad">100％までです</span><b></b>'
+            : `<span>値引き</span><b>−${yenStr(p.manual)}</b><span>値引きした後の合計</span><b>${yenStr(after)}</b>`;
+        if (ok) ok.disabled = !(m && p.manual > 0);
+    }
+    function applyDiscSheet() {
+        const m = discDraftObj();
+        if (!m) { playError(); return; }
+        closeFeatSheet();
+        setCheckoutManual(m);
+    }
+    function setCheckoutManual(m) {
+        checkoutManual = m ? { kind: m.kind, amount: m.amount, reason: m.reason || '' } : null;
+        playSound(m ? 988 : 660, 0.06);
+        recalcCheckout();
     }
     function openCouponSheet() {
         const sh = document.getElementById('coupon-sheet');
@@ -8821,7 +9020,7 @@
         recalcCheckout();
     }
     function recalcCheckout() {
-        checkoutParts = discountParts(checkoutItems, checkoutSetRule, checkoutCoupon);
+        checkoutParts = discountParts(checkoutItems, checkoutSetRule, checkoutCoupon, checkoutManual);
         checkoutDiscount = checkoutParts.total;
         const total = Math.max(0, itemsGross(checkoutItems) - checkoutDiscount);
         document.getElementById('checkout-receipt').innerHTML = generateReceiptHTML(checkoutItems, checkoutParts);
@@ -9173,6 +9372,7 @@
     let cdTest = false;   // CDの端末：映している販売会がテストモードか
     function testModeOn() { return customerMode ? cdTest : !!(testMode && currentSession); }
     function applyTestModeUi() {
+        renderStaffChip();
         const on = testModeOn();
         document.body.classList.toggle('test-mode', on);
         document.body.classList.toggle('cd-on', !!customerMode);
@@ -9492,6 +9692,7 @@
         receiptCounter = 0;
         voidCount = 0;
         operationLog = [];
+        cashOnOpen();
 
         if (isJoining) {
             // 参加：共有中の商品構成をそのまま採用（在庫は同期購読の再計算に任せる）
@@ -9517,7 +9718,7 @@
             acceptRound(newRoundId());
             try {
                 await fbDb.collection(EVENTS_COL).doc(code).set({
-                    name: sharedName, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), consign: consignCfg, consignBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
+                    name: sharedName, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), consign: consignCfg, consignBy: getDeviceId(), feat: featCfg, featBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
                     roundId: syncRoundId,
                     setDiscount: setDiscountOn, setRule: setRuleForDoc(setRule), setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                     openedAt: Date.now(), closedAt: null, openedBy: getDeviceId(),
@@ -9591,6 +9792,12 @@
         }
         if(reservations.length > 0) {
             alert('【！】未精算の予約が残っています。予約管理を確認してください');
+            return;
+        }
+        // 釣り銭とレジ締めを使っている時：この30分の間に数えていなければ、先に数えるかを聞く
+        if (featOn('cash') && !cashLog.some(e => e.k === 'count' && Date.now() - e.t < 30 * 60000)
+            && confirm('レジ締め（お金を数えて過不足を確かめる）がまだです。\n\n[OK] 先にお金を数える\n[キャンセル] 数えずに閉店へ進む')) {
+            navTo('settings'); openPanel('settings', 'cash'); openCashSheet('count');
             return;
         }
         let confirmMsg = syncMode
@@ -9684,6 +9891,7 @@
         voidCount = 0;
         operationLog = [];
         salesGoal = 0;   // 目標はその回のものなので、次の回に持ち越さない（開店時にまた決める）
+        cashLog = [];    // お金の記録は、閉店した回の控え（過去の販売会）に入っている
         products.forEach(p => { p.stock = p.initialStock; p.soldOutTime = null; p.note = ''; p.stopped = false; });
 
         // 会計の途中だった場合は、開いている窓を閉じてからレジを片づける
@@ -10419,7 +10627,7 @@
         acceptRound(newRoundId());
         try {
             await fbDb.collection(EVENTS_COL).doc(code).set({
-                name: currentSession, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), consign: consignCfg, consignBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
+                name: currentSession, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), consign: consignCfg, consignBy: getDeviceId(), feat: featCfg, featBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
                 roundId: syncRoundId,
                 setDiscount: setDiscountOn, setRule: setRuleForDoc(setRule), setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                 openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
@@ -10747,6 +10955,7 @@
         const rows = [];
         if ((s.setDiscTotal != null ? s.setDiscTotal : s.discountTotal) > 0) rows.push(['セット割引', `−${yenStr(s.setDiscTotal != null ? s.setDiscTotal : s.discountTotal)}<span class="sub">${s.setDiscCount != null ? s.setDiscCount : s.discountCount}件</span>`]);
         if (s.couponTotal > 0) rows.push(['クーポン', `−${yenStr(s.couponTotal)}<span class="sub">${s.couponCount}件</span>`]);
+        if (s.manualTotal > 0) rows.push(['値引き', `−${yenStr(s.manualTotal)}<span class="sub">${s.manualCount}件</span>`]);
         if (s.cashKnown > 0) rows.push(['お預かり合計', yenStr(s.cashTotal)], ['お釣り合計', yenStr(s.changeTotal)]);
         if (s.voidCount > 0) rows.push(['会計の取り消し', `${s.voidCount}件`]);
         if (s.itemEdited > 0) rows.push(['品目の事後修正', `${s.itemEdited}件`]);
@@ -11052,6 +11261,18 @@
     function secSegmentHTML() {
         const R = buildReportData();
         if (!R) return '<div class="a-empty">まだ売上データがありません。</div>';
+        return secSegmentBody(R) + secStaffHTML();
+    }
+    // 担当ごとの売上（担当が残っている会計がある時だけ）
+    function secStaffHTML() {
+        const rows = staffSummary(salesHistory);
+        if (!rows.length) return '';
+        const max = Math.max(...rows.map(r => r.amt), 1);
+        return `<div class="a-head">担当ごとの売上</div><table class="a-table"><thead><tr><th>担当</th><th class="num">件数</th><th class="num">売上</th><th class="num" style="min-width:82px;">割合</th></tr></thead><tbody>
+            ${rows.map(r => `<tr><td>${escHtml(r.name)}</td><td class="num">${r.n}件</td><td class="num">${yenStr(r.amt)}</td><td class="num"><span class="a-bar"><i style="width:${Math.round(r.amt / max * 100)}%"></i></span></td></tr>`).join('')}
+        </tbody></table>`;
+    }
+    function secSegmentBody(R) {
         const totalCust = R.types.reduce((a, t) => a + t.count, 0);
         let h = `<div class="a-head">客属性別の人数と客単価</div>`;
         h += R.types.length ? `<table class="a-table">
@@ -12184,6 +12405,7 @@
 
     // 粗利の集計（原価が入力された商品のみ対象。1件も無ければ null）。
     function buildProfit() {
+        if (!featOn('cost')) return null;
         const costMap = {};
         products.forEach(p => { if (p.cost != null && p.cost >= 0) costMap[p.name] = p.cost; });
         if (Object.keys(costMap).length === 0) return null;
@@ -12257,6 +12479,9 @@
         'tax': '消費税',
         'bulk': 'まとめて登録',
         'consign': '委託商品',
+        'feat': 'レジの機能',
+        'cash': '釣り銭とレジ締め',
+        'staff': '担当者',
         'customer': 'CD',
         'role': 'この端末の役割',
         'cd': 'CD（お客様用の画面）',
@@ -12538,6 +12763,9 @@
             else if (sub === 'tax') renderTaxView();
             else if (sub === 'bulk') renderBulkView();
             else if (sub === 'consign') renderConsignView();
+            else if (sub === 'feat') renderFeatView();
+            else if (sub === 'cash') renderCashView();
+            else if (sub === 'staff') renderStaffView();
             else if (sub === 'pdf-import') renderPdfImport();
             else if (sub === 'display') { updateFullscreenButton(); renderThemeSettings(); renderClockSettings(); renderLockEntry(); }
             else if (sub === 'lock') { lockDraft = null; lockReuse = true; renderLockView(); }
@@ -12649,8 +12877,11 @@
             menuRow('tag', '商品の分類', categories.map(c => escHtml(c.label)).join('・'), "openPanel('settings','cats')") +
             menuRow('ticket', 'セット割・クーポン', discountSub(), "openPanel('settings','coupon')") +
             menuRow('yen', '支払い方法', paySub(), "openPanel('settings','pay')") +
-            menuRow('percent', '消費税', taxSub(), "openPanel('settings','tax')") +
-            (!isKitchen() ? menuRow('box', '委託商品', consignSub(), "openPanel('settings','consign')") : '') +
+            menuRow('plus', 'レジの機能', featSub(), "openPanel('settings','feat')") +
+            (taxCfg.on ? menuRow('percent', '消費税', taxSub(), "openPanel('settings','tax')") : '') +
+            (consignOn() ? menuRow('box', '委託商品', consignSub(), "openPanel('settings','consign')") : '') +
+            (featOn('cash') ? menuRow('pay-cash', '釣り銭とレジ締め', cashSub(), "openPanel('settings','cash')") : '') +
+            (featOn('staff') ? menuRow('person', '担当者', staffSub(), "openPanel('settings','staff')") : '') +
             (isRestaurant() ? menuRow('table', 'テーブルと伝票', restSub(), "openPanel('settings','rest')") : '') +
             (isKitchen() ? menuRow('qr', 'モバイルオーダー', mobileSub(), "openPanel('settings','mobile')") : '') +
             menuRow('target', '売上目標', setGoalSub(), "openPanel('settings','goal')") +
@@ -13166,6 +13397,7 @@
             menuRow('tag', '販売会の名前', escHtml(nameInput ? nameInput.value : ''), "openPanel('session','open-name')") +
             menuRow(isKitchen() ? 'kitchen' : 'store', '店舗モード', storeModeLabel(), "openPanel('settings','mode')") +
             menuRow('box', '商品と仕入れ数', stockSub, "openPanel('session','open-stock')") +
+            (featOn('cash') ? menuRow('pay-cash', '釣り銭準備金', cashState().hasFloat ? yenStr(cashState().float) : '<span class="mr-need">まだ入れていません</span>', "openCashSheet('float')") : '') +
             // 割引と目標は半分ずつの幅で横に並べる（背の低いスマホでも、開店の準備がスクロールなしで収まるように）
             `<div class="menu-pair">${menuRow('ticket', 'セット割・クーポン', discountSub(), "openPanel('settings','coupon')")}${menuRow('target', '売上目標', setGoalSub(), "openPanel('settings','goal')")}</div>` +
             menuRow('archive', '前回の記録', prevRecordSub(), "openPanel('settings','archive')");
@@ -13302,6 +13534,8 @@
         const setDiscCount = sorted.filter(h => setPartOf(h) > 0).length;
         const couponTotal = sorted.reduce((a, h) => a + couponPartOf(h), 0);
         const couponCount = sorted.filter(h => couponPartOf(h) > 0).length;
+        const manualTotal = sorted.reduce((a, h) => a + manualPartOf(h), 0);
+        const manualCount = sorted.filter(h => manualPartOf(h) > 0).length;
 
         const itemCounts = {}, itemRev = {}, categoryRev = {};
         CAT_TYPES.forEach(c => { categoryRev[c.id] = 0; });
@@ -13400,7 +13634,7 @@
                 maxSale: Math.max(...sorted.map(h => h.total)), minSale: Math.min(...sorted.map(h => h.total)),
                 peak: peak ? { label: peak[0], rev: peak[1] } : null, cashTotal, changeTotal, cashKnown, voidCount,
                 typeEditedLater, itemEdited, pendingLeft,
-                discountTotal, discountCount, grossRev, setDiscTotal, setDiscCount, couponTotal, couponCount
+                discountTotal, discountCount, grossRev, setDiscTotal, setDiscCount, couponTotal, couponCount, manualTotal, manualCount
             },
             abc, soldOut, inStock, oversoldItems, integrity: checkIntegrity(), slots, types, categories, copairs,
             goal: buildGoal(totalRev),
@@ -13456,6 +13690,7 @@
                 ${R.leftover.initial > 0 ? `<div class="stat"><span class="stat-label">全体の消化率</span><span class="stat-val">${R.leftover.sellThrough}%（売れ残り ${R.leftover.leftQty}点・売価 ${yen(R.leftover.leftValue)}）</span></div>` : ''}
                 ${(s.setDiscTotal != null ? s.setDiscTotal : s.discountTotal) > 0 ? `<div class="stat"><span class="stat-label">セット割引</span><span class="stat-val">−${yen(s.setDiscTotal != null ? s.setDiscTotal : s.discountTotal)}（${s.setDiscCount != null ? s.setDiscCount : s.discountCount}件）</span></div>` : ''}
                 ${s.couponTotal > 0 ? `<div class="stat"><span class="stat-label">クーポン</span><span class="stat-val">−${yen(s.couponTotal)}（${s.couponCount}件）</span></div>` : ''}
+                ${s.manualTotal > 0 ? `<div class="stat"><span class="stat-label">値引き</span><span class="stat-val">−${yen(s.manualTotal)}（${s.manualCount}件）</span></div>` : ''}
                 ${s.cashKnown > 0 ? `<div class="stat"><span class="stat-label">現金 お預り／お釣り</span><span class="stat-val">${yen(s.cashTotal)} / ${yen(s.changeTotal)}</span></div>` : ''}
                 ${R.pay && R.pay.nonCash ? R.pay.rows.map(r => `<div class="stat"><span class="stat-label">支払い：${esc(r.label)}</span><span class="stat-val">${yen(r.rev)}（${r.n}件）</span></div>`).join('') : ''}
                 <div class="stat"><span class="stat-label">会計取消</span><span class="stat-val">${s.voidCount}件</span></div>
@@ -13968,7 +14203,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, cdCfg, cdCfgBy, mobileKeep, coupons, couponsBy, couponCodes, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, bills, billSeqLocal, restCfg, taxCfg, taxCfgBy, consignCfg, consignBy, currentSession, testMode, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
+        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, cdCfg, cdCfgBy, mobileKeep, coupons, couponsBy, couponCodes, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, bills, billSeqLocal, restCfg, taxCfg, taxCfgBy, consignCfg, consignBy, featCfg, featBy, cashLog, currentSession, testMode, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -13986,6 +14221,10 @@
         taxCfgBy = typeof data.taxCfgBy === 'string' ? data.taxCfgBy : '';
         consignCfg = normConsignCfg(data.consignCfg);
         consignBy = typeof data.consignBy === 'string' ? data.consignBy : '';
+        featCfg = normFeatCfg(data.featCfg);
+        if (!data.featCfg && Array.isArray(data.products) && data.products.some(p => p && p.cost != null)) featCfg.cost = true;
+        featBy = typeof data.featBy === 'string' ? data.featBy : '';
+        cashLog = normCashLog(data.cashLog);
         storeMode = validStoreMode(data.storeMode) || SITE_CFG.mode;
         setCategories(data.categories);
         payCfg = normPayCfg(data.payCfg);
@@ -14206,6 +14445,9 @@
             const cpAmt = salesHistory.reduce((a, h) => a + couponPartOf(h), 0);
             if (setAmt > 0) csv += `セット割引（${nSet}件）,,,,,,,,,,,,-${setAmt}\n`;
             if (cpAmt > 0) csv += `クーポン（${nCp}件）,,,,,,,,,,,,-${cpAmt}\n`;
+            const nMd = salesHistory.filter(h => manualPartOf(h) > 0).length;
+            const mdAmt = salesHistory.reduce((a, h) => a + manualPartOf(h), 0);
+            if (mdAmt > 0) csv += `値引き（${nMd}件）,,,,,,,,,,,,-${mdAmt}\n`;
             csv += `総売上（割引後）,,,,,,,,,,,,${net}\n`;
         }
         if (salesGoal > 0) csv += `\n売上目標,${salesGoal}\n達成率(%),${Math.round(net / salesGoal * 100)}\n`;
@@ -14405,8 +14647,7 @@
             const discRow = (label, amt) => `<div class="disc-line" style="display:flex; justify-content:space-between; font-size:13px; padding:2px 0;">
                         <span><svg class="ic"><use href="#ic-tag"/></svg>${label}</span><span>−¥${amt}</span>
                     </div>`;
-            const discLine = (setPartOf(h) > 0 ? discRow(SET_LABEL, setPartOf(h)) : '')
-                + (couponPartOf(h) > 0 ? discRow(escHtml(h.coupon.name || 'クーポン'), couponPartOf(h)) : '');
+            const discLine = discLinesOf(h).map(x => discRow(escHtml(x.label), x.amt)).join('');
             const cashStr = h.pay ? escHtml(h.payLabel || payLabel(h.pay)) : ((h.cash != null) ? `¥${h.cash}` : '—');
             const changeStr = h.pay ? '—' : ((h.change != null) ? `¥${h.change}` : '—');
             // 操作は塗りのボタンを3つ並べず、iOSのリストと同じ「文字だけのボタン」を1列に置く。
@@ -14439,7 +14680,7 @@
             return `
                 <div class="res-card${h.pendingType ? ' is-pending' : ''}"${editing ? ' style="outline:2px solid var(--accent);"' : ''}>
                     <div class="res-header">
-                        <span class="rc-no">客No. ${h.no || '-'}${h.billNo ? ` <span style="font-size:12px; color:var(--accent-ink);">伝票${escHtml(h.billNo)}・${escHtml(h.table || '')}番</span>` : ''}${h.deviceLabel ? ` <span style="font-size:11px; color:var(--text-light); font-weight:normal;">［${h.deviceLabel}］</span>` : ''}${h.edited ? ' <span style="font-size:11px; color:var(--danger-ink); font-weight:normal;">(修正済)</span>' : ''}</span>
+                        <span class="rc-no">客No. ${h.no || '-'}${h.billNo ? ` <span style="font-size:12px; color:var(--accent-ink);">伝票${escHtml(h.billNo)}・${escHtml(h.table || '')}番</span>` : ''}${h.deviceLabel ? ` <span style="font-size:11px; color:var(--text-light); font-weight:normal;">［${h.deviceLabel}］</span>` : ''}${h.edited ? ' <span style="font-size:11px; color:var(--danger-ink); font-weight:normal;">(修正済)</span>' : ''}${h.staff ? ` <span class="rc-staff"><svg class="ic"><use href="#ic-person"/></svg>${escHtml(h.staff)}</span>` : ''}</span>
                         <span style="color:var(--text-light); font-size:12.5px; font-weight:normal;">${dtStr}</span>
                     </div>
                     ${h.pendingType ? '<div class="rc-flag"><svg class="ic"><use href="#ic-alert"/></svg>客属性が未入力</div>' : ''}
@@ -14518,7 +14759,7 @@
                 editingRecordIdx = null;
                 showToast('全品目が無くなったため会計を削除しました');
             } else {
-                syncUpdateSale(rec.remoteId, rec.coupon ? { items, total, discount, coupon: rec.coupon, edited: true } : { items, total, discount, edited: true }, rec.remoteCode);
+                syncUpdateSale(rec.remoteId, Object.assign({ items, total, discount, edited: true }, rec.coupon ? { coupon: rec.coupon } : {}, rec.mdisc ? { mdisc: rec.mdisc } : {}), rec.remoteCode);
                 kitchenOnEdit(rec, items);
             }
             logEdit(`会計修正 客No.${rec.no || '-'}：${name} ${delta < 0 ? '−1' : '＋1'}`);
@@ -15083,6 +15324,498 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
+    // ▼▼▼ レジの機能（使う物だけオンにする）▼▼▼
+    // よそのレジにある機能を、お店ごとに足せるようにする。はじめは全部オフ。
+    // オフの機能は、レジにも設定の一覧にも出さない（パンの販売会の画面は今までどおり）。
+    // 共有している時は、全部の端末で同じになる（担当者の名前の一覧も）。
+    //   cash  … 釣り銭準備金・入金と出金・レジ点検と締め（現金を数えて過不足を出す）
+    //   disc  … お会計で、円か％を入れて値引きする
+    //   cost  … 商品に原価を入れて、売上集計で粗利を出す
+    //   open  … 手打ち（登録していない品を、金額を打って売る）
+    //   code  … バーコード（商品にJANコード、読み取り機・カメラで打つ）
+    //   staff … 担当者（会計ごとに担当の名前を残す）
+    const FEAT_KEYS = ['cash', 'disc', 'cost', 'open', 'code', 'staff'];
+    function normStaffName(v) { return String(v == null ? '' : v).normalize('NFKC').replace(/\s+/g, ' ').trim().slice(0, 12); }
+    function normFeatCfg(f) {
+        f = (f && typeof f === 'object') ? f : {};
+        const o = {};
+        FEAT_KEYS.forEach(k => { o[k] = f[k] === true; });
+        const seen = new Set();
+        o.staffNames = (Array.isArray(f.staffNames) ? f.staffNames : []).map(normStaffName)
+            .filter(n => n && !seen.has(n) && seen.add(n)).slice(0, 30);
+        return o;
+    }
+    let featCfg = normFeatCfg();
+    let featBy = '';
+    function featOn(k) { return featCfg[k] === true; }
+    function writeFeatCfg(next, logText) {
+        featCfg = normFeatCfg(next);
+        featBy = getDeviceId();
+        shareEventCfg({ feat: featCfg, featBy }, 'レジの機能');
+        if (logText) logEdit(logText);
+        afterFeatChange();
+    }
+    // 機能を切り替えた時・ほかの端末から届いた時に、関係する画面をまとめて描き直す
+    function afterFeatChange() {
+        init();
+        if (typeof renderStaffChip === 'function') renderStaffChip();
+        const co = document.getElementById('checkout-modal');
+        if (co && co.style.display === 'flex') renderCheckoutCoupon();
+        if (currentView === 'settings') {
+            if (!currentSub) renderSettingsMenu();
+            else if (currentSub === 'feat') renderFeatView();
+            else if (currentSub === 'stock') renderLiveStock();
+        }
+        if (currentView === 'session' && currentSub === 'open-stock') renderInventorySetup();
+        if (currentView === 'session' && (!currentSub || currentSub === 'open-new')) renderOpenMenu();
+    }
+    const FEAT_LABELS = { cash: '釣り銭とレジ締め', disc: '手入力の値引き', cost: '原価と粗利', open: '手打ち', code: 'バーコード', staff: '担当者' };
+    // 機能の一覧（消費税・委託商品も、ここでまとめてオン・オフできる）
+    function featList() {
+        return [
+            { k: 'tax', ic: 'percent', t: '消費税', s: '税率を決めて、レシート・領収書に内訳を出す', on: () => taxCfg.on, set: on => setTaxOn(on), detail: 'tax' },
+            { k: 'cash', ic: 'pay-cash', t: '釣り銭とレジ締め', s: '釣り銭準備金・入金と出金・閉店前に現金を数えて過不足を出す', detail: 'cash' },
+            { k: 'disc', ic: 'tag', t: '手入力の値引き', s: 'お会計で、円か％を入れて値引きする（理由も残す）' },
+            { k: 'cost', ic: 'trend', t: '原価と粗利', s: '商品に原価を入れて、売上集計で粗利を出す' },
+            { k: 'open', ic: 'pencil', t: '手打ち', s: 'レジに「手打ち」を出し、登録していない品を金額を打って売る' },
+            { k: 'code', ic: 'barcode', t: 'バーコード', s: '商品にJANコードを入れ、読み取り機やカメラで打つ' },
+            { k: 'staff', ic: 'person', t: '担当者', s: '会計ごとに担当の名前を残し、担当ごとに集計する', detail: 'staff' },
+            ...(!isKitchen() ? [{ k: 'consign', ic: 'box', t: '委託商品', s: 'ほかの人から預かって売る商品の売上を、委託先ごとに分ける', on: () => consignCfg.on, set: on => setConsignOn(on), detail: 'consign' }] : [])
+        ];
+    }
+    function featIsOn(f) { return f.on ? !!f.on() : featOn(f.k); }
+    function featSub() {
+        const on = featList().filter(featIsOn).map(f => f.t);
+        return on.length ? on.join('・') : 'いまは使っていません（消費税・釣り銭・原価などを足せます）';
+    }
+    function setFeat(k, on) {
+        const f = featList().find(x => x.k === k);
+        if (!f) return;
+        playSound(660, 0.05);
+        if (f.set) f.set(!!on);
+        else writeFeatCfg(Object.assign({}, featCfg, { [k]: !!on }), `${FEAT_LABELS[k] || k}を${on ? '使うようにした' : '使わないようにした'}`);
+        setTimeout(() => { if (currentView === 'settings' && currentSub === 'feat') renderFeatView(); }, 240);
+    }
+    function renderFeatView() {
+        const box = document.getElementById('feat-body');
+        if (!box) return;
+        const row = f => {
+            const on = featIsOn(f);
+            return `<div class="feat-item${on ? ' on' : ''}">
+                <div class="sw-row">
+                    <span class="feat-ic"><svg class="ic"><use href="#ic-${f.ic}"/></svg></span>
+                    <div class="sw-text"><b>${f.t}</b><span>${f.s}</span></div>
+                    <input type="checkbox" class="ios-switch" ${on ? 'checked' : ''} onchange="setFeat('${f.k}', this.checked)" aria-label="${f.t}を使う">
+                </div>
+                ${on && f.detail ? `<button type="button" class="feat-go" onclick="openPanel('settings','${f.detail}')">${f.t}の設定を開く<svg class="ic"><use href="#ic-right"/></svg></button>` : ''}
+            </div>`;
+        };
+        box.innerHTML = `<p class="settings-hint" style="margin-top:0;">使う機能だけをオンにします。<b>オフの機能は、レジにも設定の一覧にも出ません。</b>はじめは全部オフです。${syncMode ? '共有中は全部の端末で同じになります。' : ''}</p>
+            <div class="feat-list">${featList().map(row).join('')}</div>`;
+    }
+    // ---- 機能の入力の窓（1つを使い回す）----
+    let featSheetClose = null;   // 閉じた時にすること（カメラを止める等）
+    function openFeatSheet(html, onClose) {
+        const sh = document.getElementById('feat-sheet'), card = document.getElementById('feat-sheet-card');
+        if (!sh || !card) return;
+        if (featSheetClose) { const f = featSheetClose; featSheetClose = null; try { f(); } catch (e) {} }
+        card.innerHTML = html;
+        featSheetClose = onClose || null;
+        sh.style.display = 'flex';
+        const first = card.querySelector('[data-focus]');
+        if (first) setTimeout(() => { try { first.focus(); } catch (e) {} }, 60);
+    }
+    function closeFeatSheet() {
+        const sh = document.getElementById('feat-sheet');
+        if (sh) sh.style.display = 'none';
+        if (featSheetClose) { const f = featSheetClose; featSheetClose = null; try { f(); } catch (e) {} }
+    }
+    function featSheetOpen() { const sh = document.getElementById('feat-sheet'); return !!(sh && sh.style.display === 'flex'); }
+    // 金額の欄の中身（全角・カンマ・円を取り除いた、0以上の整数）
+    function yenInput(v) { const n = parseInt(String(v == null ? '' : v).normalize('NFKC').replace(/[^0-9]/g, ''), 10); return Number.isFinite(n) ? Math.min(n, 9999999) : 0; }
+
+    // ▼▼▼ 担当者（機能：staff）▼▼▼
+    // 名前の一覧はお店で1つ（共有中は全部の端末で同じ）。いまの担当は端末ごとに選ぶ（uiPrefs.staff）。
+    function currentStaff() {
+        if (!featOn('staff')) return '';
+        const n = normStaffName(uiPrefs.staff);
+        return featCfg.staffNames.includes(n) ? n : '';
+    }
+    function staffSub() { return featCfg.staffNames.length ? `${featCfg.staffNames.length}人・この端末は${currentStaff() || '担当なし'}` : 'まだ名前がありません'; }
+    function setMyStaff(n) {
+        uiPrefs.staff = normStaffName(n);
+        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
+        closeFeatSheet();
+        playSound(880, 0.05);
+        renderStaffChip();
+        showToast(uiPrefs.staff ? `担当：${uiPrefs.staff}` : '担当なしにしました');
+        if (currentView === 'settings' && currentSub === 'staff') renderStaffView();
+    }
+    function renderStaffChip() {
+        const c = document.getElementById('staff-chip');
+        if (!c) return;
+        const show = featOn('staff') && !!currentSession && !customerMode;
+        c.style.display = show ? '' : 'none';
+        if (!show) return;
+        const n = currentStaff();
+        c.classList.toggle('none', !n);
+        document.getElementById('staff-chip-name').textContent = n || '担当を選ぶ';
+    }
+    function openStaffSheet() {
+        if (!featOn('staff')) return;
+        const cur = currentStaff();
+        playSound();
+        openFeatSheet(`<div class="later-title">この端末の担当</div>
+            <div class="later-sub">会計すると、ここで選んだ名前が記録に残ります。</div>
+            ${featCfg.staffNames.length ? `<div class="staff-pick">${featCfg.staffNames.map(n => `<button type="button" class="${n === cur ? 'on' : ''}" onclick="setMyStaff('${escArg(n)}')">${escHtml(n)}</button>`).join('')}</div>`
+                : '<p class="settings-hint" style="margin:0 0 10px;">まだ名前がありません。「設定 → 担当者」で足してください。</p>'}
+            <div class="opt-acts"><button type="button" class="later-cancel" onclick="setMyStaff('')">担当なし</button><button type="button" class="opt-ok" onclick="closeFeatSheet(); navTo('settings'); openPanel('settings','staff')">名前を足す・消す</button></div>`);
+    }
+    function addStaffName() {
+        const inp = document.getElementById('staff-new');
+        const n = normStaffName(inp ? inp.value : '');
+        if (!n) { playError(); return; }
+        if (featCfg.staffNames.includes(n)) { playError(); alert(`「${n}」はもうあります。`); return; }
+        if (featCfg.staffNames.length >= 30) { playError(); alert('担当者は30人までです。'); return; }
+        writeFeatCfg(Object.assign({}, featCfg, { staffNames: featCfg.staffNames.concat([n]) }), `担当者「${n}」を足した`);
+        if (!currentStaff()) { uiPrefs.staff = n; try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {} renderStaffChip(); }
+        playSuccess();
+        renderStaffView();
+        const again = document.getElementById('staff-new'); if (again) again.focus();
+    }
+    function removeStaffName(n) {
+        const list = featCfg.staffNames.filter(x => x !== n);
+        writeFeatCfg(Object.assign({}, featCfg, { staffNames: list }), `担当者「${n}」を消した`);
+        renderStaffView();
+        showUndoToast(`「${n}」を消しました`, () => { if (!featCfg.staffNames.includes(n)) { writeFeatCfg(Object.assign({}, featCfg, { staffNames: featCfg.staffNames.concat([n]) }), `担当者「${n}」を戻した`); renderStaffView(); } });
+    }
+    function staffSummary(sales) {
+        const by = {};
+        (sales || []).forEach(h => { if (!h || h.voided || !h.staff) return; const b = by[h.staff] || (by[h.staff] = { n: 0, amt: 0 }); b.n++; b.amt += Number(h.total) || 0; });
+        return Object.keys(by).sort((a, b) => by[b].amt - by[a].amt).map(k => ({ name: k, n: by[k].n, amt: by[k].amt }));
+    }
+    function renderStaffView() {
+        const box = document.getElementById('staff-body');
+        if (!box) return;
+        const cur = currentStaff();
+        const sum = staffSummary(salesHistory);
+        box.innerHTML = `<p class="settings-hint" style="margin-top:0;">レジに立つ人の名前です。会計ごとに、その時の担当が記録に残ります。いまの担当は、画面の上の名前を押すと選び直せます（端末ごと）。${syncMode ? '名前の一覧は全部の端末で同じになります。' : ''}</p>
+            <div class="cs-code staff-add"><input type="text" id="staff-new" maxlength="12" placeholder="名前（12文字まで）" onkeydown="if(event.key==='Enter'){event.preventDefault();addStaffName();}"><button type="button" class="opt-ok" onclick="addStaffName()">足す</button></div>
+            ${featCfg.staffNames.length ? `<div class="bulk-rows">${featCfg.staffNames.map(n => `<div class="bulk-row"><span class="br-main"><span class="br-n">${escHtml(n)}</span><span class="br-s">${n === cur ? 'この端末の担当' : ''}</span></span><button type="button" class="step-btn" style="background:var(--danger-bg); color:var(--danger);" onclick="removeStaffName('${escArg(n)}')" aria-label="${escHtml(n)}を消す">×</button></div>`).join('')}</div>`
+                : '<p class="settings-hint">まだありません。</p>'}
+            ${sum.length ? `<label class="field-label sec">この販売会の担当ごとの売上</label>
+            <table class="a-table"><thead><tr><th>担当</th><th class="num">件数</th><th class="num">売上</th></tr></thead><tbody>
+                ${sum.map(r => `<tr><td>${escHtml(r.name)}</td><td class="num">${r.n}件</td><td class="num">${yenStr(r.amt)}</td></tr>`).join('')}
+            </tbody></table>` : ''}`;
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 手打ち（機能：open）とバーコード（機能：code）▼▼▼
+    // レジの商品ボタンのいちばん後ろに、機能のボタン（手打ち・バーコード）を並べる
+    const toolTiles = {};
+    function toolTile(k) {
+        if (toolTiles[k]) return toolTiles[k];
+        const b = document.createElement('button');
+        b.className = 'product-btn tool-tile';
+        b.type = 'button';
+        b.innerHTML = k === 'open'
+            ? '<svg class="ic"><use href="#ic-pencil"/></svg><span class="pname">手打ち</span><span class="stock">金額を打って売る</span>'
+            : '<svg class="ic"><use href="#ic-barcode"/></svg><span class="pname">バーコード</span><span class="stock">コード・カメラで打つ</span>';
+        b.onclick = () => (k === 'open' ? openOpenPriceSheet() : openCodeSheet());
+        toolTiles[k] = b;
+        return b;
+    }
+    // 手打ち：登録していない品を、金額と分類を決めてカートへ入れる（在庫は変えない）
+    let openDraft = { price: '', type: '', name: '' };
+    function openOpenPriceSheet() {
+        if (!featOn('open') || !currentSession) return;
+        openDraft = { price: '', type: (categories[0] && categories[0].id) || 'sweet', name: '' };
+        playSound();
+        openFeatSheet(`<div class="later-title">手打ち</div>
+            <div class="later-sub">登録していない品を、金額を打って売ります（在庫は変わりません）。</div>
+            <input type="text" inputmode="numeric" class="fs-amt" data-focus placeholder="金額（円）" oninput="openDraft.price = this.value; renderOpenFoot()" onkeydown="if(event.key==='Enter'){event.preventDefault();applyOpenPrice();}">
+            <div class="fs-chips" id="open-cats">${categories.map(c => `<button type="button" class="${c.id === openDraft.type ? 'on' : ''}" onclick="pickOpenCat(this, '${c.id}')">${escHtml(c.label)}</button>`).join('')}</div>
+            <input type="text" class="fs-memo" maxlength="20" placeholder="品名（任意。空なら「手打ち」）" oninput="openDraft.name = this.value">
+            <div class="fs-foot" id="open-foot"></div>
+            <div class="opt-acts"><button type="button" class="later-cancel" onclick="closeFeatSheet()">やめる</button><button type="button" class="opt-ok" id="open-ok" onclick="applyOpenPrice()">カートに入れる</button></div>`);
+        renderOpenFoot();
+    }
+    function pickOpenCat(btn, id) { openDraft.type = id; document.querySelectorAll('#open-cats button').forEach(b => b.classList.toggle('on', b === btn)); }
+    function renderOpenFoot() {
+        const p = yenInput(openDraft.price);
+        const f = document.getElementById('open-foot'), ok = document.getElementById('open-ok');
+        if (f) f.innerHTML = `<span>金額</span><b>${yenStr(p)}</b>`;
+        if (ok) ok.disabled = !(p > 0 && p <= MAX_PRICE);
+    }
+    function applyOpenPrice() {
+        const price = yenInput(openDraft.price);
+        if (!(price > 0) || price > MAX_PRICE) { playError(); return; }
+        const label = String(openDraft.name || '').normalize('NFKC').replace(/\s+/g, ' ').trim().slice(0, 20) || '手打ち';
+        // 名前に値段を入れておく（同じ名前で値段の違う品が、カートや明細で1行にまとまらないように）
+        cart.push({ id: 'm' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36), name: `${label}（${price}円）`, price, type: openDraft.type, manual: true });
+        closeFeatSheet();
+        playSound();
+        saveDataSoon();
+        init();
+    }
+    // バーコード：読み取り機（キーボードのように文字を送る物）・コードを打つ・カメラ（使える端末だけ）
+    function addByCode(raw) {
+        const code = normProductCode(raw);
+        if (!code) return false;
+        const p = products.find(x => x.code === code && x.active !== false);
+        if (!p) { playError(); showToast(`コード ${code} の商品はありません`); return false; }
+        addToCart(p);
+        showToast(`${p.name} を入れました`);
+        return true;
+    }
+    let camStream = null, camTimer = null, camLast = { code: '', at: 0 };
+    function openCodeSheet() {
+        if (!featOn('code') || !currentSession) return;
+        playSound();
+        const canCam = 'BarcodeDetector' in window && navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+        openFeatSheet(`<div class="later-title">バーコード</div>
+            <div class="later-sub">読み取り機で読むか、数字を打って「入れる」を押します。${canCam ? 'カメラでも読めます。' : ''}</div>
+            <div class="cs-code"><input type="text" id="code-input" inputmode="numeric" maxlength="20" data-focus placeholder="JANコード" onkeydown="if(event.key==='Enter'){event.preventDefault();codeInputAdd();}"><button type="button" class="opt-ok" onclick="codeInputAdd()">入れる</button></div>
+            ${canCam ? `<button type="button" class="action-btn btn-secondary" id="cam-btn" style="width:100%; margin:8px 0 0;" onclick="startCodeCamera()"><svg class="ic"><use href="#ic-barcode"/></svg>カメラで読む</button><video id="cam-video" class="cam-video" playsinline muted style="display:none;"></video>` : ''}
+            <button type="button" class="later-cancel" onclick="closeFeatSheet()">閉じる</button>`, stopCodeCamera);
+    }
+    function codeInputAdd() {
+        const inp = document.getElementById('code-input');
+        if (!inp) return;
+        if (addByCode(inp.value)) inp.value = '';
+        inp.focus();
+    }
+    async function startCodeCamera() {
+        const v = document.getElementById('cam-video'), btn = document.getElementById('cam-btn');
+        if (!v) return;
+        try {
+            const det = new window.BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'] });
+            camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+            if (!featSheetOpen()) { stopCodeCamera(); return; }
+            v.srcObject = camStream; v.style.display = 'block'; await v.play();
+            if (btn) btn.style.display = 'none';
+            camTimer = setInterval(async () => {
+                if (!camStream || v.readyState < 2) return;
+                try {
+                    const r = await det.detect(v);
+                    const c = r && r[0] && r[0].rawValue;
+                    if (!c) return;
+                    // 同じ品をかざし続けても、1.5秒に1回だけ入れる
+                    if (c === camLast.code && Date.now() - camLast.at < 1500) return;
+                    camLast = { code: c, at: Date.now() };
+                    addByCode(c);
+                } catch (e) { /* 読めない瞬間は飛ばす */ }
+            }, 250);
+        } catch (e) {
+            stopCodeCamera();
+            playError();
+            alert('カメラを使えませんでした。ブラウザの設定で、カメラの使用を許可してください。');
+        }
+    }
+    function stopCodeCamera() {
+        if (camTimer) { clearInterval(camTimer); camTimer = null; }
+        if (camStream) { try { camStream.getTracks().forEach(t => t.stop()); } catch (e) {} camStream = null; }
+    }
+    // 読み取り機：キーボードのように、数字をとても速く打ってから Enter を送ってくる。
+    // 入力の欄にいない時に、速く打たれた数字の並びだけをバーコードとして受け取る（人の手打ちとは速さで見分ける）
+    const scanBuf = { s: '', at: 0, fast: true };
+    document.addEventListener('keydown', e => {
+        if (!featOn('code') || !currentSession || customerMode) return;
+        const t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const now = Date.now();
+        if (e.key === 'Enter') {
+            const code = scanBuf.s;
+            const ok = code.length >= 4 && scanBuf.fast;
+            scanBuf.s = ''; scanBuf.fast = true;
+            if (!ok) return;
+            e.preventDefault();
+            const co = document.getElementById('checkout-modal');
+            if (co && co.style.display === 'flex') { playError(); showToast('お会計の間は読めません。戻ってから読んでください'); return; }
+            addByCode(code);
+            return;
+        }
+        if (e.key && e.key.length === 1 && /[0-9A-Za-z]/.test(e.key)) {
+            if (now - scanBuf.at > 300) { scanBuf.s = ''; scanBuf.fast = true; }
+            else if (scanBuf.s && now - scanBuf.at > 60) scanBuf.fast = false;
+            scanBuf.s = (scanBuf.s + e.key).slice(-24);
+            scanBuf.at = now;
+        }
+    });
+    // ▲▲▲ ここまで ▲▲▲
+
+    // ▼▼▼ 釣り銭とレジ締め（機能：cash）▼▼▼
+    // お金の出入りは、端末（レジ）ごとに数える（引き出しはレジごとに別々のため）。
+    //   float … 釣り銭準備金（開店の時にレジに入れたお金。入れ直すと、新しい額に置きかわる）
+    //   in    … 入金（両替で足した・預かった など）
+    //   out   … 出金（仕入れ代を払った・両替に出した など）
+    //   count … 点検・締め（数えた額と、あるはずの額と、その差）
+    // あるはずの現金 ＝ 釣り銭準備金 ＋ 現金の売上（この端末で受けた分）＋ 入金 − 出金
+    let cashLog = [];
+    const CASH_KINDS = ['float', 'in', 'out', 'count'];
+    const CASH_DENOMS = [10000, 5000, 2000, 1000, 500, 100, 50, 10, 5, 1];
+    function normCashLog(a) {
+        return (Array.isArray(a) ? a : []).filter(e => e && CASH_KINDS.includes(e.k) && Number.isFinite(Number(e.amt)))
+            .map(e => ({ k: e.k, amt: Math.max(0, Math.round(Number(e.amt))), t: Number(e.t) || Date.now(),
+                ...(e.memo ? { memo: String(e.memo).slice(0, 40) } : {}),
+                ...(e.k === 'count' ? { exp: Math.round(Number(e.exp) || 0) } : {}),
+                ...(e.counts && typeof e.counts === 'object' ? { counts: e.counts } : {}),
+                ...(e.pre ? { pre: true } : {}) })).slice(-300);
+    }
+    // この端末で受けた現金の売上（取り消した会計は数えない）
+    function myCashSales() {
+        const me = getDeviceId();
+        let amt = 0, n = 0;
+        salesHistory.forEach(h => {
+            if (!h || h.voided || (h.pay && h.pay !== 'cash')) return;
+            if (syncMode && h.deviceId && h.deviceId !== me) return;
+            amt += Number(h.total) || 0; n++;
+        });
+        return { amt, n };
+    }
+    function cashState() {
+        let float = 0, inn = 0, out = 0;
+        cashLog.forEach(e => { if (e.k === 'float') float = e.amt; else if (e.k === 'in') inn += e.amt; else if (e.k === 'out') out += e.amt; });
+        const sales = currentSession ? myCashSales() : { amt: 0, n: 0 };
+        const lastCount = [...cashLog].reverse().find(e => e.k === 'count') || null;
+        return { float, inn, out, sales, expect: float + sales.amt + inn - out, lastCount, hasFloat: cashLog.some(e => e.k === 'float') };
+    }
+    function cashSub() {
+        const st = cashState();
+        if (!currentSession) return st.hasFloat ? `開店前・釣り銭準備金 ${yenStr(st.float)}` : '開店前に釣り銭準備金を入れられます';
+        return `あるはずの現金 ${yenStr(st.expect)}${st.lastCount ? `・最後に数えた差 ${cashDiffText(st.lastCount.amt - st.lastCount.exp)}` : ''}`;
+    }
+    function cashDiffText(d) { return d === 0 ? 'ぴったり' : (d > 0 ? `${yenStr(d)} 多い` : `${yenStr(-d)} 足りない`); }
+    function addCash(k, amt, extra) {
+        const e = Object.assign({ k, amt: Math.max(0, Math.round(amt)), t: Date.now() }, extra || {});
+        if (!currentSession) e.pre = true;       // 開店前に入れた釣り銭準備金（開店した時に、その回へ持ち越す）
+        cashLog.push(e);
+        cashLog = normCashLog(cashLog);
+        saveData();
+        const names = { float: '釣り銭準備金', in: '入金', out: '出金', count: '点検' };
+        logEdit(`${names[k]}：${yenStr(e.amt)}${e.memo ? '（' + e.memo + '）' : ''}${k === 'count' ? `・あるはず ${yenStr(e.exp)}・${cashDiffText(e.amt - e.exp)}` : ''}`);
+    }
+    // 開店した時：前の回のお金の記録は片づけ、開店前に入れた釣り銭準備金だけを持ち越す
+    function cashOnOpen() {
+        cashLog = cashLog.filter(e => e.pre && e.k === 'float').map(e => ({ k: e.k, amt: e.amt, t: e.t }));
+        cashLog = cashLog.slice(-1);
+    }
+    function renderCashView() {
+        const box = document.getElementById('cash-body');
+        if (!box) return;
+        const st = cashState();
+        const hm = t => { const d = new Date(t); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+        const names = { float: '釣り銭準備金', in: '入金', out: '出金', count: '点検・締め' };
+        const hist = [...cashLog].reverse().map(e => `<div class="bulk-row"><span class="br-main"><span class="br-n">${names[e.k]}${e.memo ? '・' + escHtml(e.memo) : ''}</span><span class="br-s">${hm(e.t)}${e.k === 'count' ? `・あるはず ${yenStr(e.exp)}・<b class="${e.amt === e.exp ? '' : 'cash-bad'}">${cashDiffText(e.amt - e.exp)}</b>` : ''}</span></span><span class="br-v">${e.k === 'out' ? '−' : ''}${yenStr(e.amt)}</span></div>`).join('');
+        box.innerHTML = `<p class="settings-hint" style="margin-top:0;">この端末（レジ）の引き出しのお金です。${syncMode ? '共有していても、お金はレジごとに数えます（この端末で受けた現金の会計だけを数えます）。' : ''}</p>
+            <div class="cash-card">
+                <span class="cc-k">いまレジにあるはずの現金</span>
+                <b class="cc-v">${yenStr(st.expect)}</b>
+                <div class="cc-rows">
+                    <span>釣り銭準備金</span><span>${st.hasFloat ? yenStr(st.float) : 'まだ'}</span>
+                    <span>現金の売上（${st.sales.n}件）</span><span>${yenStr(st.sales.amt)}</span>
+                    <span>入金</span><span>${yenStr(st.inn)}</span>
+                    <span>出金</span><span>−${yenStr(st.out)}</span>
+                </div>
+            </div>
+            <div class="cash-acts">
+                <button type="button" class="action-btn btn-checkout" onclick="openCashSheet('count')"><svg class="ic"><use href="#ic-pay-cash"/></svg>お金を数える（点検・締め）</button>
+                <div class="cash-acts2">
+                    <button type="button" class="action-btn btn-secondary" onclick="openCashSheet('float')">${st.hasFloat ? '釣り銭準備金を直す' : '釣り銭準備金を入れる'}</button>
+                    <button type="button" class="action-btn btn-secondary" onclick="openCashSheet('in')" ${currentSession ? '' : 'disabled'}>入金</button>
+                    <button type="button" class="action-btn btn-secondary" onclick="openCashSheet('out')" ${currentSession ? '' : 'disabled'}>出金</button>
+                </div>
+                ${cashLog.some(e => e.k === 'count') ? `<button type="button" class="link-btn" onclick="printCashReport()"><svg class="ic"><use href="#ic-printer"/></svg>レジ締めの控えを印刷する</button>` : ''}
+            </div>
+            <label class="field-label sec">この回のお金の記録</label>
+            ${hist ? `<div class="bulk-rows">${hist}</div>` : '<p class="settings-hint">まだありません。</p>'}`;
+    }
+    let cashDraft = { k: 'count', counts: {}, amt: '', memo: '' };
+    function openCashSheet(k) {
+        cashDraft = { k, counts: {}, amt: '', memo: '' };
+        playSound();
+        const titles = { float: '釣り銭準備金', in: '入金', out: '出金', count: 'お金を数える' };
+        const subs = {
+            float: '開店の時にレジに入れたお金です。お札と硬貨の枚数を入れると、合計が出ます。',
+            in: 'レジに足したお金（両替・預かり など）。',
+            out: 'レジから出したお金（仕入れ代・両替 など）。',
+            count: 'いまレジにあるお札と硬貨の枚数を入れます。あるはずの額との差が出ます。'
+        };
+        const denomMode = k === 'float' || k === 'count';
+        openFeatSheet(`<div class="later-title">${titles[k]}</div>
+            <div class="later-sub">${subs[k]}</div>
+            ${denomMode ? `<div class="cash-denoms">${CASH_DENOMS.map(d => `<label class="cd-den"><span>${d >= 1000 ? d / 1000 + '千円' : d + '円'}</span><input type="number" inputmode="numeric" min="0" max="9999" placeholder="0" oninput="setCashCount(${d}, this.value)"></label>`).join('')}</div>`
+                : `<input type="text" inputmode="numeric" class="fs-amt" data-focus placeholder="金額（円）" oninput="cashDraft.amt = this.value; renderCashSheetFoot()">
+                   <div class="fs-chips">${(k === 'in' ? ['両替', '預かり', 'その他'] : ['仕入れ代', '両替', '交通費', 'その他']).map(m => `<button type="button" onclick="pickCashMemo(this, '${m}')">${m}</button>`).join('')}</div>
+                   <input type="text" class="fs-memo" maxlength="40" placeholder="メモ（任意）" oninput="cashDraft.memo = this.value">`}
+            <div class="fs-foot" id="cash-sheet-foot"></div>
+            <div class="opt-acts"><button type="button" class="later-cancel" onclick="closeFeatSheet()">やめる</button><button type="button" class="opt-ok" id="cash-sheet-ok" onclick="saveCashSheet()">記録する</button></div>`);
+        renderCashSheetFoot();
+    }
+    function setCashCount(d, v) { cashDraft.counts[d] = Math.max(0, Math.min(9999, parseInt(v, 10) || 0)); renderCashSheetFoot(); }
+    function pickCashMemo(btn, m) {
+        cashDraft.memo = m;
+        const inp = document.querySelector('#feat-sheet .fs-memo'); if (inp) inp.value = m;
+        document.querySelectorAll('#feat-sheet .fs-chips button').forEach(b => b.classList.toggle('on', b === btn));
+    }
+    function cashDraftAmt() {
+        if (cashDraft.k === 'float' || cashDraft.k === 'count') return CASH_DENOMS.reduce((a, d) => a + d * (cashDraft.counts[d] || 0), 0);
+        return yenInput(cashDraft.amt);
+    }
+    function renderCashSheetFoot() {
+        const f = document.getElementById('cash-sheet-foot');
+        if (!f) return;
+        const amt = cashDraftAmt();
+        if (cashDraft.k === 'count') {
+            const exp = cashState().expect, d = amt - exp;
+            f.innerHTML = `<span>数えた額</span><b>${yenStr(amt)}</b><span>あるはずの額</span><b>${yenStr(exp)}</b><span>差</span><b class="${d === 0 ? 'cash-ok' : 'cash-bad'}">${cashDiffText(d)}</b>`;
+        } else f.innerHTML = `<span>合計</span><b>${yenStr(amt)}</b>`;
+        const ok = document.getElementById('cash-sheet-ok');
+        if (ok) ok.disabled = cashDraft.k !== 'count' && cashDraft.k !== 'float' && !(amt > 0);
+    }
+    function saveCashSheet() {
+        const k = cashDraft.k, amt = cashDraftAmt();
+        if ((k === 'in' || k === 'out') && !(amt > 0)) { playError(); return; }
+        const counts = {};
+        Object.keys(cashDraft.counts).forEach(d => { if (cashDraft.counts[d] > 0) counts[d] = cashDraft.counts[d]; });
+        if (k === 'count') addCash('count', amt, { exp: cashState().expect, counts });
+        else addCash(k, amt, Object.assign({}, String(cashDraft.memo || '').trim() ? { memo: String(cashDraft.memo).replace(/\s+/g, ' ').trim().slice(0, 40) } : {}, k === 'float' && Object.keys(counts).length ? { counts } : {}));
+        closeFeatSheet();
+        playSuccess();
+        if (k === 'count') { const e = cashLog[cashLog.length - 1]; showToast(`数えた額 ${yenStr(e.amt)}・${cashDiffText(e.amt - e.exp)}`); }
+        else showToast('記録しました');
+        if (currentView === 'settings' && currentSub === 'cash') renderCashView();
+        if (currentView === 'settings' && !currentSub) renderSettingsMenu();
+        if (currentView === 'session') renderOpenMenu();
+    }
+    // レジ締めの控え（印刷・PDF）
+    function printCashReport() {
+        const st = cashState();
+        const hm = t => new Date(t).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+        const names = { float: '釣り銭準備金', in: '入金', out: '出金', count: '点検・締め' };
+        const last = st.lastCount;
+        document.getElementById('print-report').innerHTML = `<div class="report-root">
+            <header class="report-header"><div>
+                <div class="title">レジ締めの控え</div>
+                <div class="sub">${escHtml(currentSession || '')}　${escHtml(deviceDisplayName() || '')}　${new Date().toLocaleString('ja-JP')}</div>
+            </div></header>
+            <table class="rep-table"><tbody>
+                <tr><td>釣り銭準備金</td><td class="num">${yenStr(st.float)}</td></tr>
+                <tr><td>現金の売上（${st.sales.n}件）</td><td class="num">${yenStr(st.sales.amt)}</td></tr>
+                <tr><td>入金</td><td class="num">${yenStr(st.inn)}</td></tr>
+                <tr><td>出金</td><td class="num">−${yenStr(st.out)}</td></tr>
+                <tr><td><b>あるはずの現金</b></td><td class="num"><b>${yenStr(st.expect)}</b></td></tr>
+                ${last ? `<tr><td>数えた額（${hm(last.t)}）</td><td class="num">${yenStr(last.amt)}</td></tr><tr><td><b>過不足</b></td><td class="num"><b>${cashDiffText(last.amt - last.exp)}</b></td></tr>` : ''}
+            </tbody></table>
+            ${last && last.counts ? `<h3>金種</h3><table class="rep-table"><tbody>${CASH_DENOMS.filter(d => last.counts[d]).map(d => `<tr><td>${d.toLocaleString()}円</td><td class="num">${last.counts[d]}枚</td><td class="num">${yenStr(d * last.counts[d])}</td></tr>`).join('')}</tbody></table>` : ''}
+            <h3>お金の記録</h3>
+            <table class="rep-table"><tbody>${cashLog.map(e => `<tr><td>${hm(e.t)}</td><td>${names[e.k]}${e.memo ? '・' + escHtml(e.memo) : ''}</td><td class="num">${e.k === 'out' ? '−' : ''}${yenStr(e.amt)}</td></tr>`).join('')}</tbody></table>
+        </div>`;
+        openReportWindow('レジ締めの控え');
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     // ▼▼▼ 委託商品 ▼▼▼
     // ほかの人（作家さん・ほかの団体）から預かって売る商品。既製品の販売の時に、設定でオンにして使う。
     // 商品ごとに「委託先」を入れると、その商品の売上は委託先ごとに分けて数える（受託額＝預かった売上）。
@@ -15144,11 +15877,7 @@
     function writeConsignCfg(next, logText, fromSwitch) {
         consignCfg = normConsignCfg(next);
         consignBy = getDeviceId();
-        saveData();
-        if (syncMode && syncEventCode && fbDb) {
-            fbDb.collection(EVENTS_COL).doc(syncEventCode).set({ consign: consignCfg, consignBy }, { merge: true })
-                .catch(e => { console.warn('委託商品の設定の共有に失敗しました', e); showToast('共有に失敗しました。電波を確かめてください'); });
-        }
+        shareEventCfg({ consign: consignCfg, consignBy }, '委託商品の設定');
         if (logText) logEdit(logText);
         playSound(660, 0.05);
         if (fromSwitch) setTimeout(renderConsignView, 240); else renderConsignView();
@@ -15156,21 +15885,36 @@
     function setConsignOn(on) { revealOnce = on ? 'consign' : ''; writeConsignCfg(Object.assign({}, consignCfg, { on: !!on }), on ? '委託商品を使うようにした' : '委託商品を使わないようにした', true); }
     function stepConsignRate(d) { const r = Math.max(0, Math.min(50, consignCfg.rate + d)); if (r !== consignCfg.rate) setConsignRate(r); }
     function setConsignRate(r) { writeConsignCfg(Object.assign({}, consignCfg, { rate: r }), `委託の手数料を${r}%にした`); }
-    function setProductConsign(id, v, list) {
-        const name = normConsignName(v);
-        if (list === 'setup') {
-            const p = tempSetupProducts.find(x => x.id === id);
-            if (p) { if (name) p.consign = name; else delete p.consign; }
-            return;
-        }
+    // 商品ごとの追加の欄：使っている機能の分だけ出す（委託先・原価・JANコード）
+    function productExtraFields(p, list) {
+        const f = (k, label, inner) => `<div class="cs-field"><label>${label}</label>${inner}</div>`;
+        return (consignOn() ? f('consign', '委託先', `<input type="text" list="consign-names" maxlength="20" value="${escHtml(p.consign || '')}" placeholder="空欄＝自分の店の商品" onchange="setProductField(${p.id}, 'consign', this.value, '${list}')">`) : '')
+            + (featOn('cost') ? f('cost', '原価', `<input type="number" inputmode="numeric" min="0" value="${p.cost != null ? p.cost : ''}" placeholder="1個の原価（円）" onchange="setProductField(${p.id}, 'cost', this.value, '${list}')">`) : '')
+            + (featOn('code') ? f('code', 'JANコード', `<input type="text" inputmode="numeric" maxlength="20" value="${escHtml(p.code || '')}" placeholder="バーコードの数字" onchange="setProductField(${p.id}, 'code', this.value, '${list}')">`) : '');
+    }
+    function normProductCode(v) { return String(v == null ? '' : v).normalize('NFKC').replace(/[^0-9A-Za-z]/g, '').slice(0, 20); }
+    // 商品ごとの追加の欄を直す。list：'setup'（開店の準備）／'live'（営業中の在庫の調整）
+    function setProductField(id, field, v, list) {
+        let val;
+        if (field === 'consign') val = normConsignName(v);
+        else if (field === 'cost') { const n = parseInt(String(v).normalize('NFKC'), 10); val = (String(v).trim() === '' || !(n >= 0)) ? null : Math.min(n, MAX_PRICE); }
+        else if (field === 'code') val = normProductCode(v);
+        else return;
+        const put = p => { if (val === '' || val === null) { if (field === 'cost') p.cost = null; else delete p[field]; } else p[field] = val; };
+        if (list === 'setup') { const p = tempSetupProducts.find(x => x.id === id); if (p) put(p); return; }
         const p = products.find(x => x.id === id);
-        if (!p || (p.consign || '') === name) return;
-        if (name) p.consign = name; else delete p.consign;
-        logEdit(name ? `${p.name}を「${name}」の委託商品にした` : `${p.name}を自分の店の商品にした`);
+        if (!p || (p[field] == null ? '' : p[field]) === (val == null ? '' : val)) return;
+        if (field === 'code' && val && products.some(x => x !== p && x.code === val)) {
+            playError(); alert(`このコードは「${products.find(x => x !== p && x.code === val).name}」に付いています。`); renderLiveStock(); return;
+        }
+        put(p);
+        const what = { consign: val ? `${p.name}を「${val}」の委託商品にした` : `${p.name}を自分の店の商品にした`,
+            cost: `${p.name}の原価を${val == null ? '空欄' : val + '円'}にした`, code: `${p.name}のJANコードを${val || '空欄'}にした` }[field];
+        logEdit(what);
         syncPushProducts();
         saveData();
         init();
-        showToast(name ? `${p.name}：委託先「${name}」` : `${p.name}：自分の店の商品`);
+        showToast(field === 'consign' ? (val ? `${p.name}：委託先「${val}」` : `${p.name}：自分の店の商品`) : '直しました');
     }
     function renderConsignView() {
         const box = document.getElementById('consign-body');
@@ -15506,11 +16250,7 @@
     function writeTaxCfg(next, logText, fromSwitch) {
         taxCfg = normTaxCfg(next);
         taxCfgBy = getDeviceId();
-        saveData();
-        if (syncMode && syncEventCode && fbDb) {
-            fbDb.collection(EVENTS_COL).doc(syncEventCode).set({ tax: taxCfg, taxBy: taxCfgBy }, { merge: true })
-                .catch(e => { console.warn('消費税の設定の共有に失敗しました', e); showToast('共有に失敗しました。電波を確かめてください'); });
-        }
+        shareEventCfg({ tax: taxCfg, taxBy: taxCfgBy }, '消費税の設定');
         if (logText) logEdit(logText);
         playSound(660, 0.05);
         if (fromSwitch) setTimeout(renderTaxView, 240); else renderTaxView();
@@ -15766,7 +16506,7 @@
         const pad = n => String(n).padStart(2, '0');
         const lines = itemLines(h.items || []);
         const gross = lines.reduce((a, l) => a + l.subtotal, 0);
-        const setAmt = setPartOf(h), cpAmt = couponPartOf(h);
+        const discs = discLinesOf(h);
         const tx = saleTax(h);
         const reduced = l => tx.length > 0 && saleItemRate(h, l) === 8;
         const qrUrl = c.qr === 'mobile' && syncEventCode ? orderPageUrl(syncEventCode) : '';
@@ -15777,8 +16517,7 @@
             no: () => `<div>${isKitchen() ? `番号 ${esc(recordOrderNo(h))}　` : ''}客No. ${esc(h.no || '')}</div>`,
             lines: () => '<div class="rule"></div>' + lines.map(l => `<div class="kv"><span>${esc(l.name)}${reduced(l) ? '※' : ''}${l.qty > 1 ? ` ${yen(l.price)}×${l.qty}` : ''}${l.opt ? `<br><small>${esc(l.opt)}</small>` : ''}</span><span>${yen(l.subtotal)}</span></div>`).join(''),
             subtotal: () => `<div class="kv"><span>小計</span><span>${yen(gross)}</span></div>`
-                + (setAmt > 0 ? `<div class="kv"><span>${SET_LABEL}</span><span>−${yen(setAmt)}</span></div>` : '')
-                + (cpAmt > 0 ? `<div class="kv"><span>${esc(h.coupon.name || 'クーポン')}</span><span>−${yen(cpAmt)}</span></div>` : '') + '<div class="rule"></div>',
+                + discs.map(x => `<div class="kv"><span>${esc(x.label)}</span><span>−${yen(x.amt)}</span></div>`).join('') + '<div class="rule"></div>',
             total: () => `<div class="kv tot"><span>合計${tx.length ? '（税込）' : ''}</span><span>${yen(h.total)}</span></div>`,
             tax: () => !tx.length ? '' : tx.map(x => `<div class="kv"><span>${x.rate}%対象${x.rate === 8 ? '※' : ''}</span><span>${yen(x.amt)}</span></div><div class="kv"><span>　内消費税</span><span>${yen(x.tax)}</span></div>`).join('')
                 + (tx.some(x => x.rate === 8) ? '<div>※は軽減税率（8%）の対象</div>' : '')
@@ -15910,9 +16649,8 @@
         const lines = itemLines(h.items).map(l =>
             `<tr><td>${esc(l.name)}${tx.length && saleItemRate(h, l) === 8 ? '※' : ''}</td><td class="c">${l.qty}</td><td class="r">${yen(l.price)}</td><td class="r">${yen(l.subtotal)}</td></tr>`).join('');
         // セット割は明細の最後に「値引き」の行として載せる（明細の合計と金額がそろうように）
-        const disc = Number(h.discount) || 0;
-        const discRow = disc > 0
-            ? `<tr><td>${esc(SET_LABEL)}（値引き）</td><td class="c"></td><td class="r"></td><td class="r">−${yen(disc)}</td></tr>` : '';
+        // 値引きの行（セット割・クーポン・手入力の値引きを、それぞれの名前で）
+        const discRow = discLinesOf(h).map(x => `<tr><td>${esc(x.label)}（値引き）</td><td class="c"></td><td class="r"></td><td class="r">−${yen(x.amt)}</td></tr>`).join('');
         const payRows = h.pay
             ? `<div class="pay"><span>お支払い</span><span>${esc(h.payLabel || payLabel(h.pay))}</span></div>`
             : ((h.cash != null)
@@ -16284,7 +17022,7 @@
                         <label class="ls-unl"><span>無制限</span><input class="ios-switch" type="checkbox" ${isUnlimited(p) ? 'checked' : ''} onchange="setLiveUnlimited(${p.id}, this.checked)"></label>
                     </div>
                     ${catPicker(p.type, `setLiveType(${p.id}, '%T%')`)}
-                    ${consignOn() ? `<div class="cs-field"><label>委託先</label><input type="text" list="consign-names" maxlength="20" value="${escHtml(p.consign || '')}" placeholder="空欄＝自分の店の商品" onchange="setProductConsign(${p.id}, this.value, 'live')"></div>` : ''}
+                    ${productExtraFields(p, 'live')}
                     ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:6px; padding:6px; font-size:12px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" onchange="setProductNote(${p.id}, this.value)">` : ''}
                 </div>
             `);
@@ -16408,6 +17146,7 @@
         if (show) {
             liveAddType = 'sweet';
             ['la-name', 'la-price', 'la-stock', 'la-cost'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+            const cw = document.getElementById('la-cost-wrap'); if (cw) cw.style.display = featOn('cost') ? '' : 'none';
             renderLiveAddType();
             const n = document.getElementById('la-name');
             if (n) n.focus();
@@ -16434,7 +17173,7 @@
         const initialStock = parseInt(document.getElementById('la-stock').value, 10);
         if (isNaN(initialStock) || initialStock < 0) { playError(); alert('仕入れ数を数字で入れてください。'); return; }
         if (initialStock > MAX_STOCK) { playError(); alert(`仕入れ数は${MAX_STOCK.toLocaleString()}個までです。桁が多くありませんか？`); return; }
-        const costRaw = document.getElementById('la-cost').value;
+        const costRaw = featOn('cost') ? document.getElementById('la-cost').value : '';
         const costNum = parseInt(costRaw, 10);
         const cost = (costRaw === '' || isNaN(costNum) || costNum < 0) ? null : costNum;
         const type = CAT_TYPES.some(c => c.id === liveAddType) ? liveAddType : 'sweet';
@@ -16472,26 +17211,6 @@
         p.note = value;
         syncPushProducts();   // 備考も他の端末と同じものが見えるようにする
         saveData();
-    }
-
-    function adjustLiveStock(id, delta) {
-        const p = products.find(prod => prod.id === id);
-        if (!p) return;
-        p.stock = Math.max(0, p.stock + delta);
-        reconcileSoldOut(p);
-        saveData();
-        init();
-        renderLiveStock();
-    }
-
-    function setLiveStock(id, value) {
-        const p = products.find(prod => prod.id === id);
-        if (!p) return;
-        p.stock = Math.max(0, parseInt(value) || 0);
-        reconcileSoldOut(p);
-        saveData();
-        init();
-        renderLiveStock();
     }
 
     // 在庫調整後、在庫切れ日時を整合させる（0以下なら記録、1以上ならクリア）
@@ -16772,6 +17491,21 @@
 
     // 共有中の商品構成（名前・価格・仕入れ数）を全端末へ配る。
     // 残数そのものは送らない（残数は各端末が共有の販売実績から計算するため）。
+    // 置き場で共有するお店の設定の一覧（受け取る時に使う）。
+    //   key/by … 置き場の項目名と、書いた端末の項目名 ／ sub・render … その設定の画面 ／ after … 取り込んだ後にすること
+    function sharedCfgs() {
+        return [
+            { key: 'payCfg', by: 'payCfgBy', norm: normPayCfg, get: () => payCfg, set: (v, b) => { payCfg = v; payCfgBy = b; }, sub: 'pay', render: renderPayView },
+            { key: 'feat', by: 'featBy', norm: normFeatCfg, get: () => featCfg, set: (v, b) => { featCfg = v; featBy = b; }, sub: 'feat', render: renderFeatView, after: afterFeatChange },
+            { key: 'consign', by: 'consignBy', norm: normConsignCfg, get: () => consignCfg, set: (v, b) => { consignCfg = v; consignBy = b; }, sub: 'consign', render: renderConsignView,
+              after: () => { init(); if (currentView === 'settings' && currentSub === 'stock') renderLiveStock(); if (currentView === 'records') renderRecords(); } },
+            // 消費税（端末ごとに違うと、同じ会計でも消費税の額が変わってしまう）
+            { key: 'tax', by: 'taxBy', norm: normTaxCfg, get: () => taxCfg, set: (v, b) => { taxCfg = v; taxCfgBy = b; }, sub: 'tax', render: renderTaxView },
+            { key: 'coupons', by: 'couponsBy', arr: true, norm: normCoupons, get: () => coupons, set: (v, b) => { coupons = v; couponsBy = b; }, sub: 'coupon', render: renderCouponView },
+            // CD（明るさ・広告・支払い方法の表示）。持っていない広告の画像は取ってくる
+            { key: 'cdCfg', by: 'cdCfgBy', norm: normCdCfg, get: () => cdCfg, set: (v, b) => { cdCfg = v; cdCfgBy = b; }, sub: 'cd', render: renderCdView, after: syncCdAdsSoon }
+        ];
+    }
     function syncPushProducts() {
         if (!syncMode || !syncEventCode || !fbDb) return;
         fbDb.collection(EVENTS_COL).doc(syncEventCode)
@@ -16891,55 +17625,19 @@
                     if (currentView === 'settings' && !currentSub) renderSettingsMenu();
                 }
             }
-            // 支払い方法も全端末でそろえる
-            if (syncMode && d && d.payCfg && d.payCfgBy !== getDeviceId()
-                && JSON.stringify(normPayCfg(d.payCfg)) !== JSON.stringify(payCfg)) {
-                payCfg = normPayCfg(d.payCfg);
-                payCfgBy = d.payCfgBy || '';
+            // お店の設定（支払い方法・レジの機能・委託商品・消費税・クーポン・CD）も全端末でそろえる。
+            // 書いたのが自分でなく、中身が変わっている時だけ取り込んで、その設定の画面を描き直す。
+            if (syncMode && d) sharedCfgs().forEach(c => {
+                const v = d[c.key];
+                if (v == null || typeof v !== 'object' || (c.arr && !Array.isArray(v)) || d[c.by] === getDeviceId()) return;
+                const n = c.norm(v);
+                if (JSON.stringify(n) === JSON.stringify(c.get())) return;
+                c.set(n, d[c.by] || '');
                 saveData();
-                if (currentView === 'settings' && currentSub === 'pay') renderPayView();
+                if (c.after) c.after();
+                if (currentView === 'settings' && currentSub === c.sub) c.render();
                 if (currentView === 'settings' && !currentSub) renderSettingsMenu();
-            }
-            // 委託商品を使うか・手数料も全端末でそろえる
-            if (syncMode && d && d.consign && d.consignBy !== getDeviceId()
-                && JSON.stringify(normConsignCfg(d.consign)) !== JSON.stringify(consignCfg)) {
-                consignCfg = normConsignCfg(d.consign);
-                consignBy = d.consignBy || '';
-                saveData();
-                init();
-                if (currentView === 'settings' && currentSub === 'consign') renderConsignView();
-                if (currentView === 'settings' && currentSub === 'stock') renderLiveStock();
-                if (currentView === 'settings' && !currentSub) renderSettingsMenu();
-                if (currentView === 'records') renderRecords();
-            }
-            // 消費税の設定も全端末でそろえる（端末ごとに違うと、同じ会計でも消費税の額が変わってしまう）
-            if (syncMode && d && d.tax && d.taxBy !== getDeviceId()
-                && JSON.stringify(normTaxCfg(d.tax)) !== JSON.stringify(taxCfg)) {
-                taxCfg = normTaxCfg(d.tax);
-                taxCfgBy = d.taxBy || '';
-                saveData();
-                if (currentView === 'settings' && currentSub === 'tax') renderTaxView();
-                if (currentView === 'settings' && !currentSub) renderSettingsMenu();
-            }
-            // クーポンも全端末でそろえる
-            if (syncMode && d && Array.isArray(d.coupons) && d.couponsBy !== getDeviceId()
-                && JSON.stringify(normCoupons(d.coupons)) !== JSON.stringify(coupons)) {
-                coupons = normCoupons(d.coupons);
-                couponsBy = d.couponsBy || '';
-                saveData();
-                if (currentView === 'settings' && currentSub === 'coupon') renderCouponView();
-                if (currentView === 'settings' && !currentSub) renderSettingsMenu();
-            }
-            // CDの設定（明るさ・広告・支払い方法の表示）も全端末でそろえる
-            if (syncMode && d && d.cdCfg && d.cdCfgBy !== getDeviceId()
-                && JSON.stringify(normCdCfg(d.cdCfg)) !== JSON.stringify(cdCfg)) {
-                cdCfg = normCdCfg(d.cdCfg);
-                cdCfgBy = d.cdCfgBy || '';
-                saveData();
-                syncCdAdsSoon();          // 持っていない広告の画像を取ってくる
-                if (currentView === 'settings' && currentSub === 'cd') renderCdView();
-                if (currentView === 'settings' && !currentSub) renderSettingsMenu();
-            }
+            });
             // 店舗モードも、開店した端末にそろえる（合流した時・営業中に合流させた時）
             if (syncMode && d && validStoreMode(d.storeMode) && d.storeMode !== storeMode) {
                 storeMode = d.storeMode;
@@ -16988,7 +17686,8 @@
     // （以前は種類だけ変えても「同じ内容」と判断して取り込まれなかった）
     function applyRemoteProducts(remoteProducts) {
         const key = list => JSON.stringify(list.map(p => ({
-            n: p.name, p: p.price, i: p.initialStock, t: p.type || '', o: p.note || '', a: p.active !== false, u: !!p.unlimited, s: !!p.stopped, c: p.consign || ''
+            n: p.name, p: p.price, i: p.initialStock, t: p.type || '', o: p.note || '', a: p.active !== false, u: !!p.unlimited, s: !!p.stopped, c: p.consign || '',
+            k: p.code || '', g: p.cost != null ? p.cost : ''   // JANコードと原価も（ほかの端末で直した時に届くように）
         })));
         const before = key(products);
         const next = JSON.parse(JSON.stringify(remoteProducts));
@@ -17952,11 +18651,7 @@
     function writeCdCfg(next, logText) {
         cdCfg = normCdCfg(next);
         cdCfgBy = getDeviceId();
-        saveData();
-        if (syncMode && syncEventCode && fbDb) {
-            fbDb.collection(EVENTS_COL).doc(syncEventCode).set({ cdCfg, cdCfgBy }, { merge: true })
-                .catch(e => { console.warn('CDの設定の共有に失敗しました', e); showToast('共有に失敗しました。電波を確かめてください'); });
-        }
+        shareEventCfg({ cdCfg, cdCfgBy }, 'CDの設定');
         if (logText) logEdit(logText);
         if (currentView === 'settings' && currentSub === 'cd') renderCdView();
     }
@@ -18171,11 +18866,6 @@
 
     // ---- CDの待っている間の画面（広告を流す・支払い方法） ----
     let cdAdTimer = null, cdAdIdx = 0, cdAdKey = '';
-    function payLineText() {
-        const list = payMethods().map(m => m.label);
-        if (!list.length || (list.length === 1 && list[0] === '現金')) return 'お支払いは現金のみです';
-        return 'お支払い：' + list.join('・');
-    }
     // 支払い方法を、種類ごとの絵（ピクトグラム）と名前で並べる。
     // 会社のロゴ（商標）は使わず、QRコード・カード・現金などの形だけで表す。
     const PAY_KINDS = [
@@ -18351,11 +19041,7 @@
     }
     function afterPayChanged(logText) {
         payCfgBy = getDeviceId();
-        saveData();
-        if (syncMode && syncEventCode && fbDb) {
-            fbDb.collection(EVENTS_COL).doc(syncEventCode).set({ payCfg, payCfgBy }, { merge: true })
-                .catch(e => console.warn('支払い方法の共有に失敗しました', e));
-        }
+        shareEventCfg({ payCfg, payCfgBy }, '支払い方法');
         logEdit(logText);
         renderPayView();
     }
@@ -19495,10 +20181,6 @@
     let cdOrdersUnsub = null;
     let cdOrders = [];
     let cdReadySeen = null;
-    function setCallOnly(on) {
-        uiPrefs.cdCallOnly = !!on;
-        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) {}
-    }
     function startCallBoardSubscription(code) {
         stopCallBoardSubscription();
         // 呼び出し番号を映す端末だけが受け取る（お会計の表示では番号を出さないし、鳴らさない）
@@ -19592,6 +20274,7 @@
             .map(d => ({
                 localNo: d.no, // 送信端末内での連番（参考値。端末をまたぐと重複しうるため表示には使わない）
                 deviceLabel: d.deviceLabel || '',
+                deviceId: typeof d.deviceId === 'string' ? d.deviceId : '',
                 time: new Date(d.createdAt || Date.now()),
                 items: Array.isArray(d.items) ? d.items : [],
                 total: d.total || 0,
@@ -19599,6 +20282,8 @@
                 setDisc: d.setDisc === true,
                 setRule: normSetRule(d.setRule),
                 ...(d.coupon && typeof d.coupon === 'object' ? { coupon: { id: String(d.coupon.id || ''), name: String(d.coupon.name || 'クーポン').slice(0, 30), kind: d.coupon.kind === 'pct' ? 'pct' : 'yen', amount: Number(d.coupon.amount) || 0, solo: !!d.coupon.solo, amt: Math.max(0, Number(d.coupon.amt) || 0) } } : {}),
+                ...(normMdisc(d.mdisc) ? { mdisc: normMdisc(d.mdisc) } : {}),
+                ...(typeof d.staff === 'string' && normStaffName(d.staff) ? { staff: normStaffName(d.staff) } : {}),
                 customerType: d.customerType || '不明',
                 pendingType: !!d.pendingType,
                 ...(normSaleTax(d.tax) ? { tax: normSaleTax(d.tax) } : {}),
@@ -19742,6 +20427,8 @@
             setDisc: record.setDisc === true,
             setRule: normSetRule(record.setRule) || null,
             ...(record.coupon ? { coupon: record.coupon } : {}),
+            ...(record.mdisc ? { mdisc: record.mdisc } : {}),
+            ...(record.staff ? { staff: record.staff } : {}),
             ...(normSaleTax(record.tax) ? { tax: normSaleTax(record.tax) } : {}),
             customerType: record.customerType,
             pendingType: !!record.pendingType,

@@ -24,6 +24,8 @@ const eq = (name, got, want) => {
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
+// 初めて使う時の商品は空なので、試験ではサンプルの商品を入れて始める
+await page.addInitScript(() => { window.__POS_TEST_SAMPLE = true; });
 const errors = [];
 page.on('pageerror', e => errors.push(e.message));
 page.on('console', m => { if (m.type() === 'error') errors.push('console:' + m.text()); });
@@ -85,9 +87,9 @@ eq('取消：客数と在庫と売上に反映',
 // 整合性：品目合計＝取引合計
 eq('整合性チェックで問題なし', await page.evaluate(() => checkIntegrity()), []);
 
-// レポートは全7セクションが生成される
+// レポートは全8セクションが生成される（4.「売上の積み上がりとペース」を追加）
 await page.evaluate(() => { openSettings(); showTab('analytics'); downloadPDF(); });
-eq('レポート7セクション生成', await page.evaluate(() => document.querySelectorAll('#print-report .report-section').length), 7);
+eq('レポート：8セクション＋操作の履歴', await page.evaluate(() => [...document.querySelectorAll('#print-report .report-heading')].map(h => h.textContent.replace(/^\d+\. /, '').slice(0, 5))), ['概要', '商品別（消', '時間帯別の', '売上の積み', '商品ごとの', '客層・カテ', '完売と売り', '次回の仕入', '操作の履歴']);
 
 // ===== P2/P3 機能の回帰テスト =====
 
@@ -132,6 +134,7 @@ eq('P2-4 残りわずか/完売の通知',
 
 // あんぱんを1個販売（原価入力品）→ 粗利集計
 await page.evaluate(() => {
+  featCfg.cost = true;   // 粗利は「レジの機能 → 原価と粗利」を使う時だけ出す
   const an = products.find(x => x.name === 'あんぱん'); addToCart(an);
   openCheckout(); document.getElementById('cash-input').value = '180'; completeTransaction();
 });
@@ -157,7 +160,7 @@ eq('P3-3 精算CSVヘッダ拡充', await page.evaluate(() => {
   let captured = ''; const _d = window.triggerDownload; window.triggerDownload = (f, c) => { captured = c; };
   exportFacilityCSV(); window.triggerDownload = _d;
   return (captured.split('\n').find(l => l.startsWith('商品名')) || '');
-}), '商品名,カテゴリ,単価,仕入れ数,販売数,消化率(%),完売時刻,原価,粗利,味,売上');
+}), '商品名,カテゴリ,単価,仕入れ数,販売数,消化率(%),売れ残り数,売れ残り売価,完売時刻,原価,粗利,味,売上');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 console.log('runtime errors:', errors.length ? errors.join('\n') : 'none');
