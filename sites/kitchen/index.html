@@ -757,6 +757,14 @@
         #set-rule-cats.by-item { max-height: 330px; overflow-y: auto; border-radius: var(--r-md); padding: 2px; }
         /* スイッチを入れた直後に出てくる項目 */
         .reveal { animation: riseIn .34s cubic-bezier(.32,.72,0,1) both; }
+        /* CD：音を出すための一言（iPhone は画面に触るまで音が出ない） */
+        .cd-sound-tip { position: absolute; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 6;
+            display: inline-flex; align-items: center; gap: 8px; border: none; border-radius: 999px; padding: 10px 18px; cursor: pointer; white-space: nowrap;
+            background: rgba(255,255,255,.14); color: #fff; font: inherit; font-size: 14px; font-weight: 700; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            animation: cdTipIn .5s cubic-bezier(.32,.72,0,1) both; }
+        .cd-sound-tip .ic { width: 18px; height: 18px; }
+        #customer-display.cd-light .cd-sound-tip { background: rgba(20,24,40,.08); color: #1C1D22; }
+        @keyframes cdTipIn { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
         /* 委託商品 */
         .cs-field { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
         .cs-field label { font-size: 12px; font-weight: 700; color: var(--text-light); white-space: nowrap; }
@@ -958,8 +966,12 @@
         @media (orientation: portrait) { #customer-display .cd-call { grid-template-columns: 1fr; grid-template-rows: 1.5fr 1fr; } }
         #customer-display .cdc-h { font-size: 17px; font-weight: 800; color: #9AA0B0; letter-spacing: .06em; margin-bottom: 12px; }
         #customer-display .cdc-h span { margin-left: 8px; font-size: 14px; color: #6B7080; }
-        #customer-display .cdc-ready { background: #1D2029; border-radius: 22px; padding: 18px 20px; min-height: 0; overflow: hidden; }
-        #customer-display .cdc-nums { display: flex; flex-wrap: wrap; gap: 12px; }
+        #customer-display .cdc-ready { background: #1D2029; border-radius: 22px; padding: 18px 20px; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+        /* 番号は枠のまん中に置く（少ない時に左上に固まって、下が空かないように）。少ない時はさらに大きく */
+        #customer-display .cdc-nums { display: flex; flex-wrap: wrap; gap: 12px; flex: 1; min-height: 0; align-content: center; justify-content: center; }
+        #customer-display .cdc-nums.n-l { gap: 16px; }
+        #customer-display .cdc-nums.n-l span { font-size: clamp(64px, 15vmin, 180px); padding: 18px 30px; border-radius: 24px; }
+        #customer-display .cdc-none { margin: auto; text-align: center; }
         #customer-display .cdc-nums span {
             font-size: clamp(44px, 9vw, 96px); font-weight: 800; line-height: 1; color: #fff;
             background: #2A6FDB; border-radius: 18px; padding: 14px 22px; font-variant-numeric: tabular-nums; min-width: 1.6em; text-align: center;
@@ -2514,6 +2526,11 @@
         /* 明細が少ない時は、1行を大きくして空いた所を使う（離れた所からも読める） */
         #customer-display .cd-items.few .cd-item { font-size: calc(var(--cd-item) * 1.45); padding: 10px 0; }
         #customer-display .cd-items.few2 .cd-item { font-size: calc(var(--cd-item) * 1.2); }
+        /* 縦の画面で明細が少ない時は、明細を上に寄せず、空いている所のまん中に置く（上だけに固まって下が空かないように） */
+        #customer-display .cd-items.few, #customer-display .cd-items.few2 { justify-content: center; }
+        @media (orientation: portrait) {
+            #customer-display .cd-items.few .cd-item { font-size: calc(var(--cd-item) * 1.6); padding: 12px 0; }
+        }
         /* いま足されたばかりの1行は、ひと呼吸だけ明るくして「入りました」と伝える */
         #customer-display .cd-item.fresh { animation: cdRowIn .3s cubic-bezier(.32,.72,0,1) both, cdFresh 1.1s ease-out .3s both; }
         @keyframes cdFresh { 0% { color: var(--cd-fresh, #9EC5FF); } 100% { color: inherit; } }
@@ -2670,8 +2687,10 @@
         #customer-display.cd-light .cd-pt i { background: #F1F3F7; }
         #customer-display.cd-light .cd-pt b { color: #2A2D35; }
         /* 広告：下の横長（16:9）の枠。縦長の画像は高さに合わせて、左右を空ける */
+        /* 縦の画面では、広告を支払い方法のすぐ下に付ける（下に寄せると、幅で大きさが決まるスマホで、
+           支払い方法と広告の間に空白ができる）。余りは画面の下に回す */
         #customer-display .cd-ads-show {
-            width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+            width: 100%; flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
             container-type: size;
         }
         #customer-display .cd-ads-frame {
@@ -2722,7 +2741,7 @@
             #customer-display .cd-idle.has-ads .cd-idle-basic { grid-column: 1; grid-row: 1; text-align: center; }
             #customer-display .cd-idle.has-ads .cd-idle-pay { grid-column: 1; grid-row: 2; align-self: start; }
             #customer-display .cd-idle.has-ads { grid-template-rows: auto auto 1fr; }
-            #customer-display .cd-idle.has-ads .cd-clock { display: flex; grid-column: 1; grid-row: 3; align-self: end; margin-bottom: 6px; }
+            #customer-display .cd-idle.has-ads .cd-clock { display: flex; grid-column: 1; grid-row: 3; align-self: center; }
             #customer-display .cd-idle.has-ads .cd-ads-show { grid-column: 2; grid-row: 1 / 4; height: 100%; justify-content: center; }
         }
         @media (max-height: 560px) and (min-aspect-ratio: 13/10) {
@@ -2834,6 +2853,13 @@
             #customer-display .cd-left { flex: 1 1 0; min-width: 0; margin-bottom: 0; }
             #customer-display .cd-items { justify-content: flex-start; }
             #customer-display .cd-sum { flex: 0 0 52%; max-width: 52%; justify-content: flex-end; align-self: flex-end; }
+        }
+        /* 横の画面：会計へ進む前は、合計を右の欄のまん中に置く（下に寄せると、右上に大きな空白ができる）。
+           会計へ進んだ後は、お預かり・お釣りの行が増えて高くなるので、今までどおり下に置く */
+        @media (min-aspect-ratio: 1/1) and (min-width: 700px) and (min-height: 561px), (max-height: 560px) and (min-aspect-ratio: 13/10) {
+            #customer-display:not(.is-checkout) .cd-sum { align-self: center; }
+            #customer-display .cd-items.few .cd-item { font-size: calc(var(--cd-item) * 1.9); padding: 12px 0; }
+            #customer-display .cd-items.few2 .cd-item { font-size: calc(var(--cd-item) * 1.35); }
         }
 
         /* 2つのうちどちらかを選ぶ画面（ブラウザの確認ダイアログより、選択肢が読みやすい） */
@@ -3350,6 +3376,7 @@
   <symbol id="ic-pay-ic" viewBox="0 0 24 24"><rect x="3" y="4" width="10.5" height="16" rx="2"/><path d="M6.5 8h3.5"/><path d="M16.5 9a4.5 4.5 0 0 1 0 6M19 6.8a8 8 0 0 1 0 10.4"/></symbol>
   <symbol id="ic-pay-other" viewBox="0 0 24 24"><path d="M3.5 8.5h16a1.5 1.5 0 0 1 1.5 1.5v8a1.5 1.5 0 0 1-1.5 1.5h-14a2 2 0 0 1-2-2z"/><path d="M3.5 8.5 15 4.5v4"/><circle cx="16.8" cy="14" r="1.3"/></symbol>
   <symbol id="ic-ticket" viewBox="0 0 24 24"><path d="M3.5 7.5A1.5 1.5 0 0 1 5 6h14a1.5 1.5 0 0 1 1.5 1.5V10a2 2 0 0 0 0 4v2.5A1.5 1.5 0 0 1 19 18H5a1.5 1.5 0 0 1-1.5-1.5V14a2 2 0 0 0 0-4z"/><path d="M14.5 6.5v11" stroke-dasharray="1.6 2"/></symbol>
+  <symbol id="ic-sound" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
   <symbol id="ic-grip" viewBox="0 0 24 24"><path d="M5 8h14M5 12h14M5 16h14"/></symbol>
   <symbol id="ic-top" viewBox="0 0 24 24"><path d="M6 5h12M12 19V9M7.5 13.5 12 9l4.5 4.5"/></symbol>
   <symbol id="ic-bottom" viewBox="0 0 24 24"><path d="M6 19h12M12 5v10M7.5 10.5 12 15l4.5-4.5"/></symbol>
@@ -3853,6 +3880,17 @@
                 <div id="weather-state" class="notice" style="margin-top:10px;"></div>
                 <button class="action-btn btn-secondary" style="width:100%; margin-top:10px;" onclick="refreshWeather(true)"><svg class="ic"><use href="#ic-refresh"/></svg>天気をいますぐ取り直す</button>
 
+                <label class="field-label sec">音</label>
+                <div class="sw-row">
+                    <div class="sw-text"><b>操作音を鳴らす</b><span>商品を押した時・会計が済んだ時・まちがえた時の音（この端末だけ）</span></div>
+                    <input type="checkbox" class="ios-switch" id="opt-sound" onchange="setDeviceSound('sound', this.checked)">
+                </div>
+                <div class="sw-row">
+                    <div class="sw-text"><b>KDに注文が入ったら知らせる</b><span>ピーッ、ピーッ、ピーッと3回（この端末をKDにした時）</span></div>
+                    <input type="checkbox" class="ios-switch" id="opt-kdalert" onchange="setDeviceSound('kdAlert', this.checked)">
+                </div>
+                <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="unlockAudio(); kdAlert();"><svg class="ic"><use href="#ic-sound"/></svg>KDの知らせの音を試しに聞く</button>
+
                 <label class="field-label sec">全画面表示</label>
                 <button id="btn-fullscreen" class="action-btn btn-secondary" style="width:100%; display:none;" onclick="toggleFullscreen()"><svg class="ic"><use href="#ic-expand"/></svg>今すぐ全画面表示にする</button>
                 <p class="settings-hint" style="margin-top:10px;">ホーム画面のアイコンから起動すると、全画面で使えます。</p>
@@ -4140,6 +4178,7 @@
         <span class="cd-shop" id="cd-shop">泰山木</span>
         <span class="cd-link" id="cd-link"><i></i><span id="cd-link-text">つないでいます…</span></span>
     </div>
+    <button type="button" class="cd-sound-tip" id="cd-sound-tip" style="display:none;" onclick="unlockAudio(); unlockSpeech(); cdDoneChime(); updateCdSoundTip();"><svg class="ic"><use href="#ic-sound"/></svg>タッチで音が出ます</button>
     <div class="cd-main" id="cd-main">
         <!-- 待っている間：上から「いらっしゃいませ」→ 使える支払い方法 → 広告（下の横長の枠） -->
         <div class="cd-idle" id="cd-idle">
@@ -4307,7 +4346,7 @@
     function unlockAudio() {
         const ctx = getAudioCtx();
         if (!ctx) return;
-        if (ctx.state !== 'running') ctx.resume();
+        if (ctx.state !== 'running') { const r = ctx.resume(); if (r && r.then) r.then(() => { if (typeof updateCdSoundTip === 'function') updateCdSoundTip(); }).catch(() => {}); }
         if (!audioUnlocked) {
             try {
                 const src = ctx.createBufferSource();
@@ -4320,8 +4359,77 @@
     }
     document.addEventListener('touchend', unlockAudio, { passive: true });
     document.addEventListener('click', unlockAudio, { passive: true });
+    // 読み上げ（iPhone は、最初のタップの中で一度しゃべらせておかないと、あとで声が出ない）
+    let speechUnlocked = false;
+    function unlockSpeech() {
+        if (speechUnlocked || !('speechSynthesis' in window)) return;
+        try { const u = new SpeechSynthesisUtterance(' '); u.volume = 0; u.lang = 'ja-JP'; speechSynthesis.speak(u); speechUnlocked = true; } catch (e) { /* 無視 */ }
+        updateCdSoundTip();
+    }
+    document.addEventListener('touchend', unlockSpeech, { passive: true });
+    document.addEventListener('click', unlockSpeech, { passive: true });
+
+    // この端末の設定を読む（読み込む前に呼ばれても落ちないように）
+    function devicePref(k) { try { return uiPrefs[k]; } catch (e) { return undefined; } }
+    // 日本語の声を選ぶ（端末に入っている声を使う。無い時は端末の既定の声）
+    function jaVoice() {
+        try {
+            const vs = speechSynthesis.getVoices() || [];
+            return vs.find(v => /^ja/i.test(v.lang) && /Kyoko|O-ren|Otoya|Hattori|Google|Siri/i.test(v.name)) || vs.find(v => /^ja/i.test(v.lang)) || null;
+        } catch (e) { return null; }
+    }
+    // しゃべる。前の読み上げが残っていたら止めてから（重ならないように）
+    function speakJa(text) {
+        if (!text || !('speechSynthesis' in window)) return;
+        try {
+            speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'ja-JP';
+            const v = jaVoice();
+            if (v) u.voice = v;
+            u.rate = 1.0; u.pitch = 1.05; u.volume = 1;
+            speechSynthesis.speak(u);
+        } catch (e) { /* しゃべれない端末では何もしない */ }
+    }
+    // 伸ばす音（「ピーッ」）。すっと出て、少し伸びて、すっと消える（プツッという雑音を出さない）
+    function playTone(freq, dur, type = 'square', volume = 0.08, when = 0) {
+        try {
+            const ctx = getAudioCtx();
+            if (!ctx) return;
+            if (ctx.state !== 'running') ctx.resume();
+            const t0 = ctx.currentTime + when;
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.type = type;
+            o.frequency.setValueAtTime(freq, t0);
+            g.gain.setValueAtTime(0.0001, t0);
+            g.gain.exponentialRampToValueAtTime(volume, t0 + 0.012);
+            g.gain.setValueAtTime(volume, t0 + Math.max(0.02, dur - 0.04));
+            g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+            o.connect(g); g.connect(ctx.destination);
+            o.start(t0); o.stop(t0 + dur + 0.02);
+        } catch (e) { /* 音が出せない環境では何もしない */ }
+    }
+    // KDに注文が入った時：ピーッ、ピーッ、ピーッ（厨房のタイマーのような、よく通る音）
+    function kdAlert() {
+        if (devicePref('kdAlert') === false) return;
+        [0, 0.42, 0.84].forEach(t => playTone(2000, 0.3, 'square', 0.07, t));
+    }
+    // CDの会計完了：明るく上がる4つの音（ピロリロリン）
+    function cdDoneChime() {
+        [[1047, 0], [1319, 0.09], [1568, 0.18], [2093, 0.27]].forEach(([f, t]) => playTone(f, t === 0.27 ? 0.42 : 0.16, 'sine', 0.16, t));
+    }
+    // CDで、画面にまだ触っていない（音が出せない）時に出す一言
+    function updateCdSoundTip() {
+        const tip = document.getElementById('cd-sound-tip');
+        if (!tip) return;
+        const want = customerMode && (cdCfg.sfx || cdCfg.vThanks || cdCfg.vTotal || cdCfg.vCall);
+        const ctx = audioCtx;
+        const locked = !audioUnlocked || (ctx && ctx.state !== 'running') || (('speechSynthesis' in window) && !speechUnlocked);
+        tip.style.display = want && locked ? '' : 'none';
+    }
 
     function playSound(freq = 880, duration = 0.1, type = 'sine', volume = 0.1) {
+        if (devicePref('sound') === false) return;   // この端末の操作音を切っている
         try {
             const ctx = getAudioCtx();
             if (!ctx) return;
@@ -6982,6 +7090,39 @@
         if (sub) sub.textContent = ended ? '本日の販売は終了しました（左上の×で、ふだんの画面に戻せます）' : 'お会計の金額がこちらに出ます';
     }
 
+    // 読み上げ用の番号（E1001 → 「E 1001」のように、英字と数字の間を空けて読みやすく）
+    function callNoForSpeech(no) { return String(no || '').replace(/^([A-Za-z]+)(\d)/, '$1 $2'); }
+    // CDの音：同じ知らせで何度も鳴らさないよう、何に鳴らしたかを覚えておく
+    let cdSoundDoneAt = 0, cdSayTotalKey = '', cdSayTotalTimer = null, cdSoundStarted = 0;
+    function cdSounds(d, state) {
+        updateCdSoundTip();
+        if (!customerMode || deviceRole() === 'call') return;
+        const now = Date.now();
+        if (!cdSoundStarted) cdSoundStarted = now;
+        if (state === 'done') {
+            const at = Number(d && d.at) || 0;
+            // 前の知らせ（映し始める前の会計）では鳴らさない
+            if (at && at !== cdSoundDoneAt && now - at < 6000 && at >= cdSoundStarted - 2000) {
+                cdSoundDoneAt = at;
+                if (cdCfg.sfx !== false) cdDoneChime();
+                if (cdCfg.vThanks !== false) setTimeout(() => speakJa('ありがとうございました'), cdCfg.sfx !== false ? 520 : 0);
+            }
+        }
+        if (state === 'checkout' && cdCfg.vTotal !== false) {
+            const total = Number(d && d.total) || 0;
+            const key = total + ':' + ((d && d.payLabel) || '');
+            if (key !== cdSayTotalKey) {
+                cdSayTotalKey = key;
+                clearTimeout(cdSayTotalTimer);
+                // 続けて金額が変わる間（クーポンを入れる時など）は待ち、落ち着いてから1回だけ読む
+                cdSayTotalTimer = setTimeout(() => { if (cdSayTotalKey === key) speakJa(`お会計は、${total}円です`); }, 700);
+            }
+        } else if (state !== 'checkout') {
+            cdSayTotalKey = '';
+            clearTimeout(cdSayTotalTimer);
+        }
+    }
+
     function renderCustomerView(d, link) {
         const idle = document.getElementById('cd-idle');
         const order = document.getElementById('cd-order');
@@ -6998,6 +7139,7 @@
         }
 
         let state = (d && d.state) || 'idle';
+        cdSounds(d, state);
         // 役割が「呼び出し番号」の端末（受け取り口に置く画面）は、いつも番号だけを出す。
         // 「お会計の表示」は金額だけ（待ち受けは「いらっしゃいませ」）。1台で両方は映さない。
         const callRole = deviceRole() === 'call';
@@ -7679,7 +7821,9 @@
                     kitchenOnly: !!d.kitchenOnly,
                     kdsSum: !!d.kdsSum,
                     cdLight: d.cdLight === true,
-                    kdsStation: typeof d.kdsStation === 'string' ? d.kdsStation : 'all'
+                    kdsStation: typeof d.kdsStation === 'string' ? d.kdsStation : 'all',
+                    sound: d.sound !== false,
+                    kdAlert: d.kdAlert !== false
                 };
             }
             const w = localStorage.getItem(UI_PREF_KEY + '_weather');
@@ -7701,7 +7845,16 @@
         renderWeatherState();
     }
 
+    function setDeviceSound(key, on) {
+        if (key !== 'sound' && key !== 'kdAlert') return;
+        uiPrefs[key] = !!on;
+        try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) { /* 保存できなくても動く */ }
+        if (on) { unlockAudio(); if (key === 'sound') playSound(880, 0.08); else kdAlert(); }
+    }
     function renderClockSettings() {
+        const so = document.getElementById('opt-sound'), ka = document.getElementById('opt-kdalert');
+        if (so) so.checked = uiPrefs.sound !== false;
+        if (ka) ka.checked = uiPrefs.kdAlert !== false;
         const c = document.getElementById('opt-clock');
         const w = document.getElementById('opt-weather');
         const a = document.getElementById('opt-area');
@@ -16981,7 +17134,7 @@
                 `<button type="button" class="${mobileCfg.lead === v ? 'on' : ''}" aria-pressed="${mobileCfg.lead === v}" onclick="setMobileLead(${v})">${v}分前</button>`).join('')}</div>` : '';
         }
         kitchenHeldPrev = heldNow;
-        if (released.length && currentView === 'kitchen') kitchenChime();
+        if (released.length && currentView === 'kitchen') kdAlert();
         // 商品の合計：作りかけ（会計中・調理中）の注文にある同じ商品を足して出す（あんぱんの注文が3つなら「あんぱん 3」）
         const sumBox = document.getElementById('kds-sum');
         if (sumBox) {
@@ -17197,7 +17350,7 @@
             kitchenOrders = rows;
             saveData();
             updateNavBadges();
-            if (currentView === 'kitchen') { renderKitchen(); if (arrived) kitchenChime(); }
+            if (currentView === 'kitchen') { renderKitchen(); if (arrived) kdAlert(); }
             if (typeof onOrdersChangedForRegister === 'function') onOrdersChangedForRegister();
         }, err => { console.warn('注文の購読でエラー', err); });
         if (isRestaurant()) startBillsSubscription(code);
@@ -17391,7 +17544,7 @@
         { id: 'a4l', label: 'A4横', ar: '297 / 210', size: '横1754×縦1240' },
         { id: 'wide', label: '横長 16:9', ar: '16 / 9', size: '横1600×縦900' }
     ];
-    let cdCfg = { theme: 'dark', pay: true, ads: [], adSec: 6, doneSec: 3, adShape: 'a4p' };
+    let cdCfg = { theme: 'dark', pay: true, ads: [], adSec: 6, doneSec: 3, adShape: 'a4p', sfx: true, vThanks: true, vTotal: true, vCall: false };
     let cdCfgBy = '';
     function normCdCfg(c) {
         c = (c && typeof c === 'object') ? c : {};
@@ -17403,7 +17556,9 @@
             ads,
             adSec: CD_AD_SECS.includes(Number(c.adSec)) ? Number(c.adSec) : 6,
             doneSec: CD_DONE_SECS.includes(Number(c.doneSec)) ? Number(c.doneSec) : 3,
-            adShape: CD_AD_SHAPES.some(x => x.id === c.adShape) ? c.adShape : 'a4p'
+            adShape: CD_AD_SHAPES.some(x => x.id === c.adShape) ? c.adShape : 'a4p',
+            // 音：会計が済んだ時の効果音／「ありがとうございました」／合計の読み上げ／呼び出し番号の読み上げ
+            sfx: c.sfx !== false, vThanks: c.vThanks !== false, vTotal: c.vTotal !== false, vCall: c.vCall === true
         };
     }
     function cdSub() {
@@ -17429,6 +17584,21 @@
     }
     function setCdPay(on) { writeCdCfg(Object.assign({}, cdCfg, { pay: !!on }), on ? 'CDに支払い方法を出すようにした' : 'CDに支払い方法を出さないようにした'); }
     function setCdAdSec(v) { if (CD_AD_SECS.includes(v)) { playSound(660, 0.05); writeCdCfg(Object.assign({}, cdCfg, { adSec: v })); } }
+    function setCdSound(key, on) {
+        if (!['sfx', 'vThanks', 'vTotal', 'vCall'].includes(key)) return;
+        const labels = { sfx: '会計が済んだ時の音', vThanks: '「ありがとうございました」の読み上げ', vTotal: '合計の読み上げ', vCall: '呼び出し番号の読み上げ' };
+        writeCdCfg(Object.assign({}, cdCfg, { [key]: !!on }), `CDの${labels[key]}を${on ? 'オン' : 'オフ'}にした`);
+    }
+    // 設定の画面で、CDで出る音と声をこの端末で試す
+    function previewCdSound() {
+        unlockAudio(); unlockSpeech();
+        if (cdCfg.sfx) cdDoneChime();
+        const say = [];
+        if (cdCfg.vTotal) say.push('お会計は、1280円です');
+        if (cdCfg.vThanks) say.push('ありがとうございました');
+        if (say.length) setTimeout(() => speakJa(say.join('。')), cdCfg.sfx ? 520 : 0);
+        if (!cdCfg.sfx && !say.length) showToast('音と読み上げは、全部オフになっています');
+    }
     function setCdDoneSec(v) { if (CD_DONE_SECS.includes(v)) { playSound(660, 0.05); writeCdCfg(Object.assign({}, cdCfg, { doneSec: v }), `CDのお礼を出しておく長さを${v}秒にした`); } }
     function setCdAdShape(v) { if (CD_AD_SHAPES.some(x => x.id === v)) { playSound(660, 0.05); writeCdCfg(Object.assign({}, cdCfg, { adShape: v }), `CDの広告の枠を「${CD_AD_SHAPES.find(x => x.id === v).label}」にした`); } }
 
@@ -17589,6 +17759,25 @@
             <label class="field-label sec">お礼を出しておく長さ</label>
             <div class="chip-pick" role="group" aria-label="お礼を出しておく長さ">${CD_DONE_SECS.map(v => `<button type="button" class="${cdCfg.doneSec === v ? 'on' : ''}" aria-pressed="${cdCfg.doneSec === v}" onclick="setCdDoneSec(${v})">${v}秒</button>`).join('')}</div>
             <p class="settings-hint">会計が済んだ時の「ありがとうございました」を出しておく長さです。次のお客様の商品を打てば、すぐ次の会計の画面に変わります。</p>
+            <label class="field-label sec">音と読み上げ</label>
+            <div class="sw-row">
+                <div class="sw-text"><b>会計が済んだら音を鳴らす</b><span>「ありがとうございました」の画面が出る時に、明るい音</span></div>
+                <input type="checkbox" class="ios-switch" ${cdCfg.sfx ? 'checked' : ''} onchange="setCdSound('sfx', this.checked)" aria-label="会計が済んだら音を鳴らす">
+            </div>
+            <div class="sw-row">
+                <div class="sw-text"><b>「ありがとうございました」と読み上げる</b><span>音のあとに、CDの端末の声でしゃべります</span></div>
+                <input type="checkbox" class="ios-switch" ${cdCfg.vThanks ? 'checked' : ''} onchange="setCdSound('vThanks', this.checked)" aria-label="ありがとうございましたと読み上げる">
+            </div>
+            <div class="sw-row">
+                <div class="sw-text"><b>お会計の合計を読み上げる</b><span>「会計へ進む」を押した時に「お会計は、1280円です」</span></div>
+                <input type="checkbox" class="ios-switch" ${cdCfg.vTotal ? 'checked' : ''} onchange="setCdSound('vTotal', this.checked)" aria-label="お会計の合計を読み上げる">
+            </div>
+            ${isFastFood() ? `<div class="sw-row">
+                <div class="sw-text"><b>呼び出し番号を読み上げる</b><span>「呼び出し番号」の画面で、できた番号を「E 1001番のお客様」と呼ぶ</span></div>
+                <input type="checkbox" class="ios-switch" ${cdCfg.vCall ? 'checked' : ''} onchange="setCdSound('vCall', this.checked)" aria-label="呼び出し番号を読み上げる">
+            </div>` : ''}
+            <button type="button" class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="previewCdSound()"><svg class="ic"><use href="#ic-sound"/></svg>この端末で試しに聞く</button>
+            <p class="settings-hint">音はCDの端末から出ます。iPhone・iPad は、CDにしたあと画面に1回触ると音が出るようになります（出ない時はCDの画面の下に案内が出ます）。消音スイッチ（マナーモード）がオンだと、効果音は鳴りません。</p>
             <label class="field-label sec">支払い方法</label>
             <div class="sw-row">
                 <div class="sw-text"><b>使える支払い方法を出す</b><span>待っている間の画面に、現金・コード決済などの絵と名前で並べます（設定の「支払い方法」のとおり）</span></div>
@@ -18965,11 +19154,14 @@
             ? rd.map(o => `<span class="${fresh.includes(o) ? 'new' : ''}">${escHtml(orderNoText(o))}</span>`).join('')
             : '<div class="cdc-none">いまお呼び出し中の番号はありません</div>';
         wait.innerHTML = wt.map(o => `<span>${escHtml(orderNoText(o))}</span>`).join('');
-        fitCallBoard(ready, ['', 'n-m', 'n-s', 'n-xs'], 'cdc-nums');
+        fitCallBoard(ready, rd.length <= 4 ? ['n-l', '', 'n-m', 'n-s', 'n-xs'] : ['', 'n-m', 'n-s', 'n-xs'], 'cdc-nums');
         fitCallBoard(wait, ['', 'n-s', 'n-xs'], 'cdc-list');
         if (wn) wn.textContent = wt.length ? `（${wt.length}件）` : '';
         cdReadySeen = new Set(rd.map(o => o.id));
-        if (fresh.length) kitchenChime();
+        if (fresh.length) {
+            if (cdCfg.sfx !== false) kitchenChime();
+            if (cdCfg.vCall) setTimeout(() => speakJa(fresh.map(o => `${callNoForSpeech(orderNoText(o))}番のお客様`).join('、') + '、お待たせしました'), 450);
+        }
     }
     // ▲▲▲ ここまで ▲▲▲
 
