@@ -782,6 +782,8 @@
         .res-card .rc-memo.empty { background: none; color: var(--accent-ink); font-weight: 700; padding: 4px 2px; }
         /* まとめて登録 */
         .bulk-open { width: 100%; margin: 0 0 8px; }
+        /* 灰色の地の上でも、押せるボタンだと分かる色にする */
+        .bulk-open.btn-secondary { background: var(--accent-soft); color: var(--accent-ink); }
         #bulk-text { width: 100%; box-sizing: border-box; min-height: 150px; margin: 4px 0 0; padding: 12px 14px; font-size: 16px; line-height: 1.6; resize: vertical; font-family: inherit;
             border: none; border-radius: var(--r-md); background: var(--surface); color: var(--text-main); box-shadow: var(--shadow-card); outline: none; transition: box-shadow .2s ease; }
         #bulk-text:focus { box-shadow: var(--shadow-card), 0 0 0 2px var(--accent); }
@@ -828,13 +830,16 @@
         .kds-top-t { display: inline-flex; align-items: center; gap: 7px; font-size: 22px; font-weight: 800; letter-spacing: .02em; color: var(--text-main); flex-shrink: 0; }
         .kds-top-t .ic { width: 24px; height: 24px; color: var(--accent); }
         .kds-top-s { flex: 1; min-width: 0; font-size: 13px; font-weight: 600; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .kds-role-btn {
+        .kds-role-btn, .kds-sound-btn {
             flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px;
             border: none; border-radius: var(--r-pill); background: var(--btn-neutral); color: var(--text-main);
             font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
         }
-        .kds-role-btn .ic { width: 17px; height: 17px; }
-        .kds-role-btn:active { filter: var(--press, brightness(.9)); }
+        .kds-role-btn .ic, .kds-sound-btn .ic { width: 17px; height: 17px; }
+        .kds-sound-btn { background: var(--accent-soft); color: var(--accent-ink); }
+        .kds-sound-btn.off { background: var(--btn-neutral); color: var(--text-light); }
+        .kds-sound-btn.off .ic { opacity: .45; }
+        .kds-role-btn:active, .kds-sound-btn:active { filter: var(--press, brightness(.9)); }
         .kds-filters button {
             appearance: none; -webkit-appearance: none; border: none; cursor: pointer; font-family: inherit;
             flex-shrink: 0; min-height: 40px; padding: 8px 16px; border-radius: 999px;
@@ -1911,6 +1916,35 @@
         }
 
         /* 操作フィードバックのトースト（会計完了・取消など） */
+        #undo-toast {
+            position: fixed; left: 0; right: 0; margin: 0 auto; width: max-content; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 210;
+            display: flex; align-items: center; gap: 14px; max-width: 92vw; box-sizing: border-box;
+            padding: 8px 8px 8px 18px; border-radius: var(--r-pill);
+            background: var(--toast-bg); color: #fff; font-weight: 700; font-size: 14.5px;
+            backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 8px 28px rgba(0,0,0,.26);
+            opacity: 0; pointer-events: none; transform: translateY(14px) scale(.96);
+            transition: opacity .24s ease, transform .32s cubic-bezier(.32,.72,0,1);
+        }
+        #undo-toast.show { opacity: 1; pointer-events: auto; transform: none; }
+        #undo-toast span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+        #undo-toast button {
+            flex: none; border: none; border-radius: var(--r-pill); padding: 8px 14px; min-height: 36px; cursor: pointer; font-family: inherit;
+            background: rgba(255,255,255,.18); color: #9EC5FF; font-weight: 800; font-size: 14px;
+        }
+        #undo-toast button:active { background: rgba(255,255,255,.3); }
+        /* 空の画面の案内（予約・会計記録・集計など） */
+        .empty-state {
+            display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
+            margin: 36px auto 12px; max-width: 360px; padding: 0 12px;
+            animation: esIn .36s cubic-bezier(.2,.9,.3,1.15) both;
+        }
+        .empty-state .es-ic { width: 60px; height: 60px; border-radius: 14px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); margin-bottom: 6px; }
+        .empty-state .es-ic .ic { width: 30px; height: 30px; }
+        .empty-state > b { font-size: 17px; }
+        .empty-state > span { font-size: 13.5px; color: var(--text-light); line-height: 1.6; }
+        .empty-state .action-btn { margin-top: 10px; width: auto; min-width: 180px; padding-left: 22px; padding-right: 22px; }
+        .empty-state .es-btn { background: var(--accent-soft); color: var(--accent-ink); }
+        @media (prefers-reduced-motion: reduce) { .empty-state { animation: none; } }
         #toast {
             position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px));
             transform: translateX(-50%) translateY(14px) scale(0.96);
@@ -2107,7 +2141,7 @@
         .menu-row.is-danger > .ic:first-child { color: var(--danger); }
         .menu-row.is-disabled { opacity: .5; pointer-events: none; }
         .menu-row .mr-need { color: var(--danger); font-weight: 700; }
-        /* ---- テストモード：ひと目で分かる印（オレンジのしま模様） ---- */
+        /* ---- テストモード：ひと目で分かる印（橙色のしま模様） ---- */
         :root { --test-a: #FF9500; --test-b: #FFB340; --test-ink: #C45500; }
         #test-band { display: none; }
         #test-band > span { display: none; }
@@ -2160,11 +2194,11 @@
         /* 商品がまだ無い時の案内（何をすればよいかが、見ただけで分かるように） */
         .empty-start {
             display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
-            background: var(--surface); border-radius: var(--r-lg, 16px); box-shadow: var(--shadow-card);
+            background: var(--surface); border-radius: 20px; box-shadow: var(--shadow-card);
             padding: 22px 18px 14px; margin-bottom: 4px; grid-column: 1 / -1;
             animation: esIn .36s cubic-bezier(.2,.9,.3,1.15) both;
         }
-        .empty-start .es-ic { width: 56px; height: 56px; border-radius: 16px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+        .empty-start .es-ic { width: 56px; height: 56px; border-radius: 14px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
         .empty-start .es-ic .ic { width: 30px; height: 30px; }
         .empty-start > b { font-size: 17px; margin-top: 4px; }
         .empty-start > span { font-size: 13px; color: var(--text-light); margin-bottom: 6px; }
@@ -3594,6 +3628,8 @@
             <div class="kds-top">
                 <span class="kds-top-t"><svg class="ic"><use href="#ic-kitchen"/></svg>KD</span>
                 <span class="kds-top-s" id="kds-top-s"></span>
+                <!-- 新しい注文の「ピーッ×3」をこの端末で鳴らすか（押すたびに切り替わる） -->
+                <button type="button" class="kds-sound-btn" id="kds-sound-btn" onclick="toggleKdAlert()" aria-pressed="true"><svg class="ic"><use href="#ic-sound"/></svg><span>音あり</span></button>
                 <button type="button" class="kds-role-btn" onclick="openPanel('settings','role')" aria-label="この端末の役割を変える"><svg class="ic"><use href="#ic-device"/></svg>役割</button>
             </div>
             <div id="kds-filters" class="kds-filters" role="group" aria-label="注文の絞り込み"></div>
@@ -3649,10 +3685,7 @@
             <div class="test-note"><svg class="ic"><use href="#ic-alert"/></svg><span><b>テストモードの集計です。</b>終えると消え、過去の販売会にも残りません。</span></div>
             <div id="analytics-menu">
                 <div id="analytics-archive-note" class="notice notice-accent" style="display:none;"></div>
-                <div id="analytics-empty" class="empty-note" style="display:none;">
-                    まだ売上データがありません。<br>
-                    <span>開店して会計を始めると、ここに集計が出ます。<br>過去の販売会の集計は「設定」から見られます。</span>
-                </div>
+                <div id="analytics-empty" style="display:none;"></div>
                 <div id="analytics-menu-grid" class="menu-grid"></div>
             </div>
 
@@ -4232,6 +4265,8 @@
 
 <!-- 操作フィードバック用トースト -->
 <div id="toast"></div>
+<!-- 消した直後だけ出る「元に戻す」（iPhoneのように、確かめる代わりに戻せるようにする） -->
+<div id="undo-toast" role="status"><span id="undo-msg"></span><button type="button" onclick="runUndo()">元に戻す</button></div>
 <!-- 配色を切り替えた時だけ、いちど薄くかかる幕 -->
 <div id="theme-fade" aria-hidden="true"></div>
 
@@ -4528,6 +4563,32 @@
 
     // 画面下に短く表示する操作フィードバック（会計完了・取消など）
     let toastTimer = null;
+    // 消した直後に「元に戻す」を出す（4秒）。押すと undoFn を呼ぶ
+    let undoFn = null, undoTimer = null;
+    function showUndoToast(msg, fn) {
+        const t = document.getElementById('undo-toast');
+        if (!t) return;
+        document.getElementById('undo-msg').textContent = msg;
+        // ふつうの知らせと重ならないように、先に下げる
+        const n = document.getElementById('toast'); if (n) n.classList.remove('show');
+        undoFn = fn;
+        t.classList.add('show');
+        clearTimeout(undoTimer);
+        undoTimer = setTimeout(hideUndoToast, 4000);
+    }
+    function hideUndoToast() { const t = document.getElementById('undo-toast'); if (t) t.classList.remove('show'); undoFn = null; }
+    function runUndo() {
+        const fn = undoFn;
+        hideUndoToast();
+        if (fn) { playSound(660, 0.05); fn(); }
+    }
+    // 空の画面の案内：絵・ひとこと・次にすること（ボタン）
+    function emptyState(icon, title, sub, btnLabel, btnOnclick) {
+        return `<div class="empty-state"><div class="es-ic"><svg class="ic"><use href="#ic-${icon}"/></svg></div>`
+            + `<b>${title}</b>${sub ? `<span>${sub}</span>` : ''}`
+            + (btnLabel ? `<button type="button" class="action-btn es-btn" onclick="${btnOnclick}">${btnLabel}</button>` : '')
+            + `</div>`;
+    }
     function showToast(msg) {
         const t = document.getElementById('toast');
         if (!t) return;
@@ -4773,17 +4834,22 @@
     // ▲▲▲ ここまで ▲▲▲
 
     let lastTileQty = {};   // 前に描いた時の、商品ごとのカートの個数（増えた時だけ数字を弾ませる）
+    // 商品のボタンの控え（商品の id → ボタンと、その時の中身の印）。
+    // 1点打つたびに全部のボタンを作り直すと、商品が多い時に遅くなる（200品で1回2〜3ミリ秒）。
+    // 中身が変わったボタンだけを書き換え、ほかはそのまま使う。押したボタンが作り直されないので、
+    // 押している最中の指の下でボタンが入れ替わることも無い。
+    const tileCache = new Map();
     function init() {
         if (deferWhileTouching('init', init)) return;
         if (typeof updateOrderTargetUi === 'function') updateOrderTargetUi();
         const grid = document.getElementById('product-grid');
-        grid.innerHTML = '';
+        const wantBtns = [];
+        const seenIds = new Set();
         // カートに入っている数（商品ごと）
         const inCart = {};
         cart.forEach(i => { inCart[i.id] = (inCart[i.id] || 0) + 1; });
         const nextQty = {};
         products.filter(p => p.active !== false).forEach(p => {
-            const btn = document.createElement('button');
             const isPlaceholder = !(p.initialStock > 0) && p.price <= 0; // 未設定枠（例：準備中）
             const left = shownStock(p);   // カートに入れた分・取り置き分を引いた、いま売れる数
             const isOut = left <= 0 || !!p.stopped;
@@ -4796,18 +4862,12 @@
             const qty = inCart[p.id] || 0;
             nextQty[p.id] = qty;
             if (qty > 0) cls += ' in-cart';
-            btn.className = cls;
 
             // 面の色に加えて、ボタン上辺の帯にも濃い同系色を置く。
             // 日なたでは淡い面の色が白飛びして3色の区別がつかなくなるため、
             // 色が飛んでも残る濃い帯を「カテゴリの目印」として併用する。
-            if (isPlaceholder || isOut) {
-                btn.style.backgroundColor = 'var(--btn-neutral)';
-                btn.style.setProperty('--cat-bar', 'var(--line-strong)');
-            } else {
-                btn.style.backgroundColor = catBg(p.type);
-                btn.style.setProperty('--cat-bar', catInk(p.type));
-            }
+            const bg = (isPlaceholder || isOut) ? 'var(--btn-neutral)' : catBg(p.type);
+            const bar = (isPlaceholder || isOut) ? 'var(--line-strong)' : catInk(p.type);
 
             let badge = '';
             if (isPlaceholder) badge = `<span class="soldout-badge prep">準備中</span>`;
@@ -4821,7 +4881,7 @@
             const stockText = p.stopped ? '販売停止' : isUnlimited(p) ? '在庫:無制限' : (oversold ? `在庫:0（超過${-left}）` : `在庫:${left}${lowStock ? ' 残少' : ''}`);
             const qtyBadge = qty > 0
                 ? `<span class="cart-qty${qty !== (lastTileQty[p.id] || 0) ? ' pop' : ''}" aria-label="カートに${qty}個">${qty}</span>` : '';
-            btn.innerHTML = `
+            const html = `
                 ${qtyBadge}
                 ${badge}
                 <span class="pname">${escHtml(p.name)}</span>
@@ -4830,10 +4890,32 @@
             `;
             // 画像を付けた商品は、ボタンの背景にする（文字は読めるように、上にベールを重ねる）
             const iu = productImgUrl(p.name);
-            if (iu) { btn.classList.add('has-img'); btn.style.setProperty('--img', `url("${iu}")`); }
-            btn.onclick = () => addToCart(p);
-            grid.appendChild(btn);
+            if (iu) cls += ' has-img';
+            const sig = cls + '|' + bg + '|' + bar + '|' + (iu || '') + '|' + html;
+            let t = tileCache.get(p.id);
+            // 商品が入れ替わった（共有で届き直した等）時は、押した時に渡す商品も新しくする
+            if (!t || t.p !== p) {
+                const btn = t ? t.btn : document.createElement('button');
+                btn.onclick = () => addToCart(p);
+                t = { btn, p, sig: null };
+                tileCache.set(p.id, t);
+            }
+            if (t.sig !== sig) {
+                const btn = t.btn;
+                btn.className = cls;
+                btn.style.backgroundColor = bg;
+                btn.style.setProperty('--cat-bar', bar);
+                if (iu) btn.style.setProperty('--img', `url("${iu}")`); else btn.style.removeProperty('--img');
+                btn.innerHTML = html;
+                t.sig = sig;
+            }
+            seenIds.add(p.id);
+            wantBtns.push(t.btn);
         });
+        // 並びが変わった時・増減した時だけ、並べ直す
+        const cur = grid.children;
+        if (cur.length !== wantBtns.length || wantBtns.some((b, i) => cur[i] !== b)) grid.replaceChildren(...wantBtns);
+        for (const id of tileCache.keys()) if (!seenIds.has(id)) tileCache.delete(id);
         lastTileQty = nextQty;
         publishMobileMenu();   // モバイルオーダーのメニュー（品切れ）も新しくする
         updateCartDisplay();
@@ -5627,7 +5709,7 @@
 
         checkoutFrom = null;      // 会計が済んだら、元の一覧には戻さず次のお客様の会計へ
         closeModal('checkout-modal');
-        saveData();
+        saveAfterThisTap();
         init();
         renderReservations();
         // モーダルを閉じた後もお釣りの内訳が見えるようにトーストにも出す（渡しながら確認できる）。
@@ -5685,7 +5767,9 @@
         const list = document.getElementById('reservation-list');
         list.innerHTML = '';
         if (reservations.length === 0) {
-            list.innerHTML = '<p style="color:var(--text-light); text-align:center;">現在、保留中の予約はありません</p>';
+            list.innerHTML = currentSession
+                ? emptyState('calendar', '予約はまだありません', 'レジで商品を入れて「予約保留」を押すと、ここに並びます。<br>受け取りに来たら、ここから会計します。', 'レジへ', "navTo('register')")
+                : emptyState('calendar', '予約はまだありません', '開店すると、レジの「予約保留」で予約を受けられます。', 'レジへ', "navTo('register')");
             return;
         }
 
@@ -5778,7 +5862,7 @@
                     <div style="display:flex; gap:8px; align-items:center;">
                         ${pimgHtml(p, 'setup')}
                         <input type="text" value="${escHtml(p.name)}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
-                        <button class="step-btn" onclick="removeTempProduct(${p.id})" style="background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
+                        <button class="step-btn" onclick="removeTempProduct(${p.id}, this)" style="background:var(--danger-bg); color:var(--danger); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
                     </div>
                     ${catPicker(p.type, `updateTempProduct(${p.id}, 'type', '%T%')`)}
                     ${consignOn() ? `<div class="cs-field"><label>委託先</label><input type="text" list="consign-names" maxlength="20" value="${escHtml(p.consign || '')}" placeholder="空欄＝自分の店の商品" onchange="setProductConsign(${p.id}, this.value, 'setup')"></div>` : ''}
@@ -5825,9 +5909,31 @@
         }
     }
 
-    function removeTempProduct(id) {
-        tempSetupProducts = tempSetupProducts.filter(p => p.id !== id);
-        renderInventorySetup();
+    function removeTempProduct(id, btn) {
+        const idx = tempSetupProducts.findIndex(p => p.id === id);
+        if (idx < 0) return;
+        const removed = tempSetupProducts[idx];
+        const done = () => {
+            tempSetupProducts = tempSetupProducts.filter(p => p.id !== id);
+            renderInventorySetup();
+            showUndoToast(`「${removed.name || '名前なし'}」を消しました`, () => {
+                if (tempSetupProducts.some(p => p.id === id)) return;
+                tempSetupProducts.splice(Math.min(idx, tempSetupProducts.length), 0, removed);
+                renderInventorySetup();
+                if (currentView === 'session' && currentSub === 'open-new') renderOpenMenu();
+            });
+        };
+        const card = btn && btn.closest ? btn.closest('.setup-card') : null;
+        if (!card || REDUCE_MOTION || !card.animate) { done(); return; }
+        // iPhoneの一覧のように、横へ流れながら高さを詰めて消える
+        const h = card.offsetHeight;
+        card.style.overflow = 'hidden';
+        const a = card.animate([
+            { opacity: 1, transform: 'none', height: h + 'px' },
+            { opacity: 0, transform: 'translateX(-24px)', height: h + 'px', offset: .45 },
+            { opacity: 0, transform: 'translateX(-24px)', height: '0px', paddingTop: '0px', paddingBottom: '0px', marginTop: '0px', marginBottom: '0px' }
+        ], { duration: 280, easing: 'cubic-bezier(.32,.72,0,1)' });
+        a.onfinish = done;
     }
 
     function addTempProduct() {
@@ -5990,7 +6096,7 @@
                 <ol class="man-steps">
                     <li><b>「新しく開店する」</b>を押します。</li>
                     <li><b>「販売会の名前」</b>を確認します（例：11月1日 パン販売）。あとで集計を見分けるための名前です。直したら<b>「この名前にする」</b>を押すと前の画面に戻ります。</li>
-                    <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。入れ終えたら<b>「この商品と仕入れ数にする」</b>を押します。</li>
+                    <li><b>「商品と仕入れ数」</b>を開いて、その日に用意した個数を入れます。<br>その日に出さない商品は<b>「この回で販売する」</b>のスイッチを切ってください。入れ終えたら<b>「この商品と仕入れ数にする」</b>を押します。<br><b>初めて使う時は、商品は空です。</b>開店の画面に出る3つのボタンのどれかで入れます：<b>「メモを貼り付けて、まとめて登録」</b>（メモ帳に書いた一覧をそのまま貼る）／<b>「1品ずつ入れる」</b>（名前・値段・仕入れ数を打つ）／<b>「サンプル（パン・クッキー・ドリンク）で試す」</b>（ためしに使う時）。<b>名前と値段のある商品が1つ以上</b>あると、開店できます。</li>
                     <li><b>「前回の記録」</b>に前回の販売会が出ているか見ます。出ていれば、前回比と仕入れ数の目安に使われます。<b>「ありません」と出ていたら</b>、前回の集計結果のPDFから取り込めます（「前回の記録をPDFから取り込む」を見てください）。</li>
                     <li>共有の設定はいりません。開店すると<b>共有コード（4けたの数字）が自動で決まり</b>、ほかの端末から合流できるようになります。1台だけで使う日も、そのままで大丈夫です（通信できない時だけ、この端末だけで開店します）。</li>
                     <li>いちばん下の<b>「この内容で開店する」</b>を押して完了です。</li>
@@ -6007,6 +6113,10 @@
                     <p>名前・商品のどの画面にも、いちばん下に<b>決めるためのボタン</b>があります。押すと前の画面に戻り、決めた内容がその場に出ます。左上の<b>「戻る」</b>でも同じように残りますが、迷ったときは下のボタンを押してください。</p>
                     <p><b>画面の左端から右へなぞっても、前の画面に戻れます</b>（iPhone・iPad と同じ手つきです）。</p>
                 </div>
+                <div class="man-box tip">
+                    <div class="man-box-h">商品を消しても、すぐ戻せます</div>
+                    <p>「商品と仕入れ数」で×を押して消すと、下に<b>「元に戻す」</b>が4秒出ます。押すと同じ場所に戻ります。</p>
+                </div>
                 <div class="man-box">
                     <div class="man-box-h">名前が前と同じだったとき</div>
                     <p>過去の記録に同じ名前があると、自動で<b>「文化祭 (2)」</b>のように番号が付きます。あとで集計を見るときに、どの回のものか分からなくなるのを防ぐためです。</p>
@@ -6018,6 +6128,22 @@
                         <li><b>前回の続きや別の端末のデータから始めたい</b>…開店の画面の<b>「データを取り込んで始める」</b>を使います。</li>
                     </ul>
                 </div>`
+        },
+        {
+            id: 'test', icon: 'bulb', title: 'テストモードで練習する', sub: '会計しても記録に残らない',
+            body: `
+                <p>本番の前に、操作の練習や、レジ・KD・CD・モバイルがつながっているかを確かめたい時に使います。<b>会計・KD・CD・モバイルオーダーは本番と同じに動きますが、終えると会計は消え、記録には残りません。</b></p>
+                <ol class="man-steps">
+                    <li>「新しく開店する」の画面で、いちばん下の<b>「テストモードで開店」</b>（橙色のしま模様）を押します。</li>
+                    <li>画面のいちばん上に<b>橙色のしま模様の帯</b>が出て、上の名前が<b>「テスト中」</b>になります。お会計の画面・会計記録・売上集計にも「テスト」と出ます。</li>
+                    <li>ほかの端末は、いつもどおり合流します（一覧に「テスト」と出ます）。合流した端末も、KD・CD・ハンディも、<b>全部テストモード</b>になり、帯に「テストモード 記録に残りません」と出ます。</li>
+                    <li>終わったら右上の<b>「閉店する」</b>を押します。「テスト中の会計は記録に残さずに消します」と出るので、OKを押します。</li>
+                </ol>
+                <ul class="man-list">
+                    <li>テストの会計は、<b>過去の販売会・前回比・仕入れの目安・税務用の資料に入りません。</b></li>
+                    <li>商品・値段・設定は、そのまま残ります。続けて<b>「この内容で開店する」</b>で本番を始められます。</li>
+                    <li>テスト中に出した領収書には「テスト（本物の領収書ではありません）」と入ります。モバイルの注文画面にも「テスト中（本物の注文ではありません）」と出ます。</li>
+                </ul>`
         },
         {
             id: 'checkout', icon: 'yen', title: '② 会計する', sub: '基本の3タップ',
@@ -6117,6 +6243,7 @@
                     <li><b>まだ払っていない持ち帰りの注文は、渡せません。</b>「呼び出し」まではできますが、「受け渡し完了」はレジで会計が済むまで押せません（カードに「未会計」と出ます）。店内の注文は先に渡して、帰る時に払ってもらえます。</li>
                     <li>呼び出しを押し間違えた時は、↶ で調理中に戻せます。「完了」からも「呼び出しに戻す」で戻せます。</li>
                     <li>待たせている時間が<b>5分を過ぎると黄色</b>、<b>10分を過ぎると赤い大きな文字</b>になります。</li>
+                    <li>新しい注文が入ると、KDで<b>「ピーッ・ピーッ・ピーッ」</b>と3回鳴ります（時間指定の注文が調理中に出てきた時も）。鳴らしたくない時は、KDの右上の<b>「音あり」</b>を押すと<b>「音なし」</b>に変わります（もう一度押すと戻ります。端末ごとに覚えます）。</li>
                     <li><b>「担当」</b>で、ドリンク係はドリンク、のように分けて見られます（端末ごとに覚えます）。担当の商品が上に出て、<b>担当でない商品は下に薄い灰色</b>で出ます（押せません。何がいっしょに出るかは分かります）。</li>
                     <li>レジで会計を取り消すと、KDのカードも消えます。会計の中身を直すと、カードにも「直されました」と出ます。</li>
                     <li>KDで何を押しても、<b>売上の記録は変わりません</b>（お金の記録とは別に置いています）。</li>
@@ -6415,6 +6542,7 @@
                 <div class="man-box warn">
                     <div class="man-box-h">通信が切れたとき</div>
                     <p>レジの画面に<b>赤い帯</b>が出ます。<b>その間も会計はそのまま続けられます</b>（この端末に貯まり、つながると自動でまとめて送られます）。つながっていないまま閉店しようとすると引き止めるので、電波の良い場所で表示が緑になってから閉店してください。</p>
+                    <p>電波が切れたまま画面を読み込み直したり、アプリを閉じたりしても、<b>送れていない会計はこの端末に控えてあり</b>、つながった時にもう一度送ります（同じ会計が2つになることはありません）。</p>
                 </div>
                 <h4>共有されるもの</h4>
                 <p>会計（売上・取消）／在庫と残数／商品の追加・値段・種類・備考／販売会の名前／売上目標／セット割（オン・オフ、組み合わせと額）／予約／閉店。<b>これらは全部の端末で同じになります。</b></p>
@@ -6441,7 +6569,7 @@
                     <p>その端末がもう同じ販売会で会計しているなら、<b>コードを入れ直す必要も、共有をやめる必要もありません</b>。<b>「設定 → この端末の役割」</b>を開いて<b>「CD」</b>を押すだけです。</p>
                     <p>戻す時は、表示の左上の×か、同じ一覧の<b>「レジ」</b>1回で、<b>そのまま同じ販売会の続きから会計できます</b>。行列の具合に合わせて、レジを増やしたり表示に回したりを何度でも切り替えられます。</p>
                 </div>
-                <p>商品を打つたびに<b>明細と合計</b>が1行ずつ増えていきます。レジで<b>「会計へ進む」</b>を押すと合計の文字が大きくなり、お預かりを入れると<b>お釣り</b>も出ます。会計が終わると<b>「ありがとうございました」</b>に変わり、約18秒そのまま出ています（次のお客様の商品を1点打てば、すぐ次の会計の画面に変わります）。</p>
+                <p>商品を打つたびに<b>明細と合計</b>が1行ずつ増えていきます。レジで<b>「会計へ進む」</b>を押すと合計の文字が大きくなり、お預かりを入れると<b>お釣り</b>も出ます。会計が終わると<b>「ありがとうございました」</b>に変わり、決めた秒数（はじめは3秒）そのまま出ています（次のお客様の商品を1点打てば、すぐ次の会計の画面に変わります）。</p>
                 <p>端末を<b>横向きに寝かせても、明細はそのまま出ます</b>（左に買うもの、右に金額の2段組みになります）。</p>
                 <div class="man-box tip">
                     <div class="man-box-h">「設定 → CD（お客様用の画面）」で決められること（全部のCDにそろいます）</div>
@@ -6463,6 +6591,14 @@
                         <li>明細は上から、金額は下に並びます。レジで<b>「会計へ進む」</b>を押すと、<b>合計点数・合計・お預かり（はじめは0円）・不足・お釣り</b>が出ます。PayPay などの時は、お預かりの代わりに支払い方法が出ます。</li>
                     </ul>
                 </div>
+                <h4>音と読み上げ（設定 → CD → 音と読み上げ）</h4>
+                <ul class="man-list">
+                    <li><b>会計が済んだ時の音</b>…「ありがとうございました」が出る時に、明るい音が鳴ります。</li>
+                    <li><b>「ありがとうございました」と読み上げる</b>・<b>合計を読み上げる</b>（「お会計は、1,280円です」）…CDの端末が声で伝えます。</li>
+                    <li>ファストフードでは、<b>呼び出しの番号を読み上げる</b>こともできます（はじめは切ってあります）。</li>
+                    <li>iPhone・iPad は、<b>画面に1回さわるまで音が出ません</b>。CDに「タッチで音が出ます」と出ている時は、1回さわってください。</li>
+                    <li>「この端末で試しに聞く」で、今の設定の音を確かめられます。音を小さく・消したい時は、端末の音量で調整します。</li>
+                </ul>
                 <h4>お礼の長さ・広告の形（設定 → CD）</h4>
                 <ul class="man-list">
                     <li><b>お礼を出しておく長さ</b>…会計が済んだ時の「ありがとうございました」を出す長さです（はじめは3秒。2・3・5・8・15秒から）。次のお客様の商品を打てば、すぐ次の会計に変わります。</li>
@@ -7993,10 +8129,26 @@
         try { localStorage.setItem(UI_PREF_KEY, JSON.stringify(uiPrefs)); } catch (e) { /* 保存できなくても動く */ }
         if (on) { unlockAudio(); if (key === 'sound') playSound(880, 0.08); else kdAlert(); }
     }
+    // KDの右上の「音」：新しい注文の知らせの音を、この端末で鳴らすか
+    function toggleKdAlert() {
+        const on = uiPrefs.kdAlert === false;
+        setDeviceSound('kdAlert', on);
+        renderKdSoundBtn();
+        showToast(on ? 'この端末で、新しい注文の音を鳴らします' : 'この端末では、新しい注文の音を鳴らしません');
+    }
+    function renderKdSoundBtn() {
+        const b = document.getElementById('kds-sound-btn');
+        if (!b) return;
+        const on = uiPrefs.kdAlert !== false;
+        b.setAttribute('aria-pressed', String(on));
+        b.classList.toggle('off', !on);
+        b.querySelector('span').textContent = on ? '音あり' : '音なし';
+    }
     function renderClockSettings() {
         const so = document.getElementById('opt-sound'), ka = document.getElementById('opt-kdalert');
         if (so) so.checked = uiPrefs.sound !== false;
         if (ka) ka.checked = uiPrefs.kdAlert !== false;
+        renderKdSoundBtn();
         const c = document.getElementById('opt-clock');
         const w = document.getElementById('opt-weather');
         const a = document.getElementById('opt-area');
@@ -10485,7 +10637,12 @@
         detail.style.display = 'none';
         menu.style.display = 'block';
         const hasData = !!analyticsSections;
-        document.getElementById('analytics-empty').style.display = hasData ? 'none' : 'block';
+        const emptyBox = document.getElementById('analytics-empty');
+        emptyBox.style.display = hasData ? 'none' : 'block';
+        if (!hasData) emptyBox.innerHTML = currentSession
+            ? emptyState('chart', 'まだ会計がありません', '会計すると、売上・人気の商品・時間ごとの売れ方がここに出ます。', 'レジへ', "navTo('register')")
+            : emptyState('chart', 'まだ集計がありません', '開店して会計すると、ここに集計が出ます。',
+                sessionArchive.length ? '過去の販売会の集計を見る' : 'レジへ', sessionArchive.length ? "openPanel('settings','archive')" : "navTo('register')");
         document.getElementById('analytics-menu-grid').style.display = hasData ? '' : 'none';
         // 過去の販売会を見ている時は、どの回の集計かを一覧の上にも出す
         const note = document.getElementById('analytics-archive-note');
@@ -13666,6 +13823,13 @@
         if (saveSoonTimer) return;
         saveSoonTimer = setTimeout(() => { saveSoonTimer = null; saveData(); }, 600);
     }
+    // 会計を確定した時の保存。画面を次のお客様へ切り替えるのを先にして、そのすぐ後（同じ操作の続き）で保存する。
+    // 【なぜ】会計が数百件になると、保存に十数ミリ秒かかる。押した手応えを先に返したい。
+    // 画面を閉じる・隠す時は、その場で必ず保存する（flushSaveSoon）ので、会計が保存されずに消えることは無い。
+    function saveAfterThisTap() {
+        if (saveSoonTimer) clearTimeout(saveSoonTimer);
+        saveSoonTimer = setTimeout(() => { saveSoonTimer = null; saveData(); }, 0);
+    }
     function flushSaveSoon() { if (saveSoonTimer) { clearTimeout(saveSoonTimer); saveSoonTimer = null; saveData(); } }
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSaveSoon(); });
     window.addEventListener('pagehide', flushSaveSoon);
@@ -14183,14 +14347,16 @@
             renderRecordsConsign();
             updateRecordsSearchBox(0, 0);
             list.innerHTML = unpaid.length ? unpaidCardsHtml(unpaid)
-                : '<p style="color:var(--text-light); text-align:center; margin-top:20px;">未会計の注文はありません。</p>';
+                : emptyState('check', '未会計の注文はありません', 'あとで払う注文があると、ここに並びます。');
             return;
         }
         renderRecordsNotice(salesHistory.filter(h => h.pendingType).length);
         renderRecordsConsign();
         if (salesHistory.length === 0) {
             updateRecordsSearchBox(0, 0);
-            list.innerHTML = '<p style="color:var(--text-light); text-align:center; margin-top:20px;">まだ会計済のデータはありません。</p>';
+            list.innerHTML = currentSession
+                ? emptyState('list', '会計はまだありません', 'レジで会計すると、ここに新しい順で並びます。<br>取り消し・直し・領収書も、ここからできます。', 'レジへ', "navTo('register')")
+                : emptyState('list', '会計はまだありません', '開店して会計すると、ここに並びます。<br>前の販売会の記録は「設定 → 過去の販売会」にあります。', 'レジへ', "navTo('register')");
             return;
         }
         // 番号の順（新しい会計が上）。属性が未入力の会計も並べ替えずにその位置に置き、赤く目立たせる
@@ -16453,6 +16619,8 @@
                     checkSharedEventGone(code, docs);
                     return;
                 }
+                // 送り終わるまでの控えと、サーバーの一覧を突き合わせる（まだ手元にだけある会計は数えない）
+                if (!m.hasPendingWrites) reconcileOutbox(code, docs);
             }
             applyRemoteSales(docs);
         }, err => {
@@ -17315,6 +17483,7 @@
     }
 
     function renderKitchen() {
+        renderKdSoundBtn();
         if (deferWhileTouching('renderKitchen', renderKitchen)) return;
         const grid = document.getElementById('kds-grid');
         const fil = document.getElementById('kds-filters');
@@ -19501,6 +19670,52 @@
     }
 
     // 会計1件をFirestoreへ追加（同期中のみ）。ローカルには push せず、購読の再構築に任せる。
+    // ▼▼▼ 送り終わるまでの控え（会計を1件も落とさないため）▼▼▼
+    // 【なぜ必要か】電波が無い間の会計は、ブラウザの中の控え（IndexedDB）に貯めて後から送られる。
+    //   ところがその控えが使えない端末（容量がいっぱい・一部のブラウザの設定）だと、
+    //   電波が無いまま読み込み直した時に、まだ送っていない会計が消えてしまう。
+    //   そこで、サーバーが受け取ったと返事をするまでは、会計をこの端末の保存場所にも控えておき、
+    //   読み込み直した後にサーバーに無ければ、もう一度送る。
+    //   会計ごとに決まった名前（doc の id）で書くので、2回届いても1件のまま（二重にならない）。
+    const OUTBOX_KEY = sk('taizanboku_pos_outbox');
+    let saleOutbox = (() => { try { const a = JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } })();
+    const outboxBusy = new Set();
+    function saveOutbox() {
+        try { if (saleOutbox.length) localStorage.setItem(OUTBOX_KEY, JSON.stringify(saleOutbox)); else localStorage.removeItem(OUTBOX_KEY); } catch (e) {}
+    }
+    function outboxDone(id) {
+        const n = saleOutbox.length;
+        saleOutbox = saleOutbox.filter(e => e.id !== id);
+        if (saleOutbox.length !== n) saveOutbox();
+    }
+    function saleDocId(localId) { return 's_' + String(localId || '').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 200); }
+    // サーバーの会計の一覧（手元の控えではないもの）を受け取った時に呼ぶ。
+    // 届いている会計は控えから消し、しばらく経っても届いていない会計は送り直す。
+    function reconcileOutbox(code, docs) {
+        if (!saleOutbox.length || !fbDb) return;
+        const have = new Set(docs.map(d => d.__id));
+        let changed = false;
+        saleOutbox = saleOutbox.filter(e => {
+            if (e.code === code && have.has(e.id)) return (changed = true, false);
+            // 前の回（閉店した販売会）の控えは、もう送れないので半日で捨てる
+            if (e.code !== code && Date.now() - e.at > 12 * 3600000) return (changed = true, false);
+            return true;
+        });
+        if (changed) saveOutbox();
+        saleOutbox.forEach(e => {
+            if (e.code !== code || e.round !== syncRoundId || have.has(e.id) || outboxBusy.has(e.id)) return;
+            if (Date.now() - e.at < 15000) return;   // 送っている最中かもしれないので、少し待つ
+            outboxBusy.add(e.id);
+            const ref = fbDb.collection(EVENTS_COL).doc(code).collection('sales').doc(e.id);
+            const doc = Object.assign({}, e.doc, { time: firebase.firestore.FieldValue.serverTimestamp() });
+            // 無い時だけ書く（あとから取り消し・直しがされた会計を、元の内容で上書きしないため）
+            fbDb.runTransaction(tx => tx.get(ref).then(snap => { if (!snap.exists) tx.set(ref, doc); }))
+                .then(() => { outboxDone(e.id); logEdit(`送れていなかった会計（客No.${e.doc.no}）を送り直しました`); })
+                .catch(err => console.warn('会計の送り直しに失敗しました（次に受け取った時にまた試します）', err))
+                .finally(() => outboxBusy.delete(e.id));
+        });
+    }
+
     function syncPushSale(record) {
         const code = syncEventCode;
         const doc = {
@@ -19541,8 +19756,14 @@
             change: record.change,
             voided: false
         };
-        fbDb.collection(EVENTS_COL).doc(code).collection('sales').add(doc)
+        const id = saleDocId(doc.localId);
+        const keep = Object.assign({}, doc); delete keep.time;
+        saleOutbox.push({ code, id, round: syncRoundId, at: Date.now(), doc: keep });
+        saveOutbox();
+        fbDb.collection(EVENTS_COL).doc(code).collection('sales').doc(id).set(doc)
+            .then(() => outboxDone(id))   // サーバーが受け取った
             .catch(e => {
+                outboxDone(id);
                 // 電波が悪いだけなら、この Promise は「保留」のままで後から自動送信されるため
                 // ここには来ない。ここに来るのは権限エラー等の“本当に失敗した”ケースで、
                 // 同期中はローカルにも控えていないため、黙っていると1件まるごと消えてしまう。
