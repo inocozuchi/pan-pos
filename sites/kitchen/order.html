@@ -111,6 +111,10 @@
         .pick .sub { margin-top: 6px; }
         /* お店の見出し（アイコンと名前） */
         .brand { display: flex; align-items: center; gap: 12px; }
+        .testbar { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 10px 0 4px; padding: 8px 12px; border-radius: 12px; color: #fff; font-weight: 800;
+            background: repeating-linear-gradient(135deg, #FF9500 0 10px, #FF8A00 10px 20px); }
+        .testbar small { font-size: 12px; font-weight: 700; }
+        .testbar.hide { display: none; }
         .brand img { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; box-shadow: var(--shadow); }
         .brand h1 { margin: 0; }
         /* お店を選ぶ */
@@ -153,6 +157,8 @@
     <!-- お店を選ぶ（QRコードにお店が入っていない時） -->
     <section id="shops" class="hide"></section>
 
+    <!-- お店がテストモードの時：本物の注文ではないことを、はっきり出す -->
+    <div id="testbar" class="testbar hide">テスト中<small>本物の注文ではありません</small></div>
     <!-- 読み込み中・使えない時の知らせ -->
     <div id="msg" class="notice">読み込んでいます…</div>
     <div id="note" class="notice hide"></div>
@@ -287,7 +293,7 @@
                 if (!v.mobile || v.mobile.on !== true || !Array.isArray(v.products)) return;
                 if (v.storeMode === 'restaurant') return;       // レストランはテーブルのQRから
                 if ((Number(v.openedAt) || 0) < now - 24 * 3600000) return;     // 前の日から開いたままのものは出さない
-                rows.push({ code: d.id, name: String(v.mobile.shop || v.name || 'お店'), icon: typeof v.mobile.icon === 'string' && v.mobile.icon.startsWith('data:image/') ? v.mobile.icon : '', wait: Number(v.mobile.wait) || 0 });
+                rows.push({ code: d.id, test: !!v.test, name: String(v.mobile.shop || v.name || 'お店'), icon: typeof v.mobile.icon === 'string' && v.mobile.icon.startsWith('data:image/') ? v.mobile.icon : '', wait: Number(v.mobile.wait) || 0 });
             });
         } catch (e) { say('お店の一覧を読めませんでした。電波の良い所で、ページを読み込み直してください。', true); return; }
         rows.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
@@ -298,7 +304,7 @@
         box.classList.remove('hide');
         box.innerHTML = `<div class="shops">${rows.map(r => `<button type="button" class="shop" data-c="${esc(r.code)}">
                 <span class="ico">${r.icon ? `<img src="${r.icon}" alt="">` : esc(r.name.slice(0, 1))}</span>
-                <span class="nm">${esc(r.name)}${r.wait ? `<small>いまの待ち時間 約${r.wait}分</small>` : ''}</span>
+                <span class="nm">${r.test ? '【テスト】' : ''}${esc(r.name)}${r.wait ? `<small>いまの待ち時間 約${r.wait}分</small>` : ''}</span>
                 <span class="go">注文する</span></button>`).join('')}</div>`;
         box.querySelectorAll('.shop').forEach(b => b.onclick = () => chooseShop(b.dataset.c));
     }
@@ -412,6 +418,7 @@
             const im = $('brand-icon');
             if (typeof icon === 'string' && icon.startsWith('data:image/')) { im.src = icon; im.classList.remove('hide'); } else im.classList.add('hide');
         }
+        $('testbar').classList.toggle('hide', !(evData && evData.test && open()));
         const note = $('note');
         const noteText = evData && evData.mobile && evData.mobile.note;
         note.classList.toggle('hide', !noteText || !accepting());
