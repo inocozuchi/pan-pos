@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>モバイルオーダー</title>
     <meta name="theme-color" content="#F2F3F7" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0E1015" media="(prefers-color-scheme: dark)">
@@ -20,9 +20,15 @@
         （選んだ注文は、受け取りの何分前かにKDへ出る）
       ・流れ：QRコード → お店を選ぶ（?e= が無い時） → 商品 → 持ち帰り／店内 → 席番号（席から注文の時だけ） → 注文
       ・特注（氷少なめ など）も付けられる（お店が許している時）
+      ・画面の形は2つ（お店が設定で選ぶ）：
+          標準 … 写真の大きなメニュー・分類のタブ・おすすめの列・商品の説明の窓・下に浮かぶカート・進み具合
+          シンプル … 名前と値段の一覧（前からの形。軽い）
+      ・受け取りが済んだ注文は、上から消して「履歴」に入れる（右上の「履歴」から、番号と中身を見られる）
     -->
     <script src="data/site.js"></script>
     <script src="data/firebase-config.js"></script>
+    <!-- 写真の無い商品に出す絵（レジが商品名から選んだ絵の印を、メニューに入れて送ってくる） -->
+    <script src="vendor/menu-art.js"></script>
     <style>
         :root {
             --bg: #F2F3F7; --surface: #FFFFFF; --sunken: #F4F5F9; --text: #1C1D22; --sub: #5F6472;
@@ -44,6 +50,9 @@
             }
         }
         * { box-sizing: border-box; }
+        /* 素早く2回たたいても画面が拡大しないように（連打しても1回ずつ効く） */
+        * { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        button, .item, .rec-card, .tabs { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
         html, body { margin: 0; background: var(--bg); color: var(--text); }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
@@ -145,13 +154,140 @@
         .chips button { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; font-size: 14px; font-weight: 700; min-height: 38px; padding: 0 14px; border-radius: 999px; background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--hair); cursor: pointer; }
         .chips button.on { background: var(--accent); color: #fff; box-shadow: none; }
         .optp input { width: 100%; min-height: 40px; font-size: 16px; font-family: inherit; border-radius: 10px; border: none; padding: 0 10px; background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--hair); }
+
+        /* ---- 見出しの右の「履歴」 ---- */
+        .brand .bx { flex: 1; min-width: 0; }
+        .hist-btn { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px;
+            border-radius: 999px; background: var(--surface); color: var(--text); font-size: 14px; font-weight: 800; box-shadow: var(--shadow); cursor: pointer; }
+        .hist-btn svg { width: 17px; height: 17px; }
+        .hist-btn .hb-n { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 12px; display: inline-grid; place-items: center; }
+        .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 12px); opacity: 0; z-index: 80; max-width: calc(100% - 32px); width: max-content;
+            background: rgba(28, 29, 34, .94); color: #fff; font-size: 14px; font-weight: 700; padding: 12px 18px; border-radius: 16px; text-align: center; pointer-events: none;
+            transition: opacity .25s ease, transform .3s cubic-bezier(.32,.72,0,1); }
+        .toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+        /* ---- 下からせり上がる窓（商品の説明・履歴） ---- */
+        .sheet:not(.hide) .card2 { animation: sheetUp .34s cubic-bezier(.32,.72,0,1) both; }
+        .sheet:not(.hide) { animation: fadeIn .2s ease both; }
+        @keyframes sheetUp { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
+        @keyframes fadeIn { from { background: rgba(10, 12, 18, 0); } }
+        .sheet .x { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; width: 36px; height: 36px; border-radius: 18px; background: var(--sunken); color: var(--text); font-size: 20px; line-height: 1; cursor: pointer; flex-shrink: 0; }
+        .isheet { padding: 0 !important; overflow: hidden; max-height: calc(100dvh - 40px); display: flex; flex-direction: column; max-width: 520px !important; }
+        .isheet .is-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .isheet .ph { aspect-ratio: 16 / 10; }
+        .isheet .x { position: absolute; right: 12px; top: 12px; background: rgba(255,255,255,.9); color: #1C1D22; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+        .isheet .is-b { padding: 16px 18px 6px; }
+        .isheet h2 { margin: 6px 0 2px; font-size: 22px; line-height: 1.3; }
+        .isheet .is-pr { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .isheet .is-ds { color: var(--sub); font-size: 14.5px; margin-top: 8px; }
+        .isheet .is-bd { display: flex; flex-wrap: wrap; gap: 4px; }
+        .isheet .optp { margin-top: 12px; }
+        .isheet .is-foot { display: flex; align-items: center; gap: 12px; padding: 12px 18px calc(14px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -1px 0 var(--hair); }
+        .isheet .is-foot .btn { flex: 1; }
+        .hsheet { max-height: calc(100dvh - 60px); display: flex; flex-direction: column; max-width: 520px !important; }
+        .hsheet .sh-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .hsheet .sh-head h2 { flex: 1; margin: 0; }
+        .hsheet .h-list { overflow-y: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px 4px; }
+        .hrow { background: var(--sunken); border-radius: 16px; padding: 12px 14px; margin-bottom: 8px; }
+        .hrow .hr-top { display: flex; align-items: baseline; gap: 8px; }
+        .hrow .hno { font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+        .hrow .hst { font-size: 12px; font-weight: 800; padding: 2px 9px; border-radius: 999px; background: var(--surface); color: var(--sub); box-shadow: inset 0 0 0 1px var(--hair); }
+        .hrow .hst.act { background: var(--accent); color: #fff; box-shadow: none; }
+        .hrow .hst.rdy { background: var(--ok); color: #fff; box-shadow: none; }
+        .hrow .hst.vd { background: var(--danger-bg); color: var(--danger); box-shadow: none; }
+        .hrow .ht { margin-left: auto; font-size: 13px; color: var(--sub); font-variant-numeric: tabular-nums; }
+        .hrow .hitems { font-size: 13.5px; margin-top: 4px; overflow-wrap: anywhere; }
+        .hrow .hr-bot { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--sub); }
+        .hrow .hr-bot b { color: var(--text); font-size: 15px; font-variant-numeric: tabular-nums; }
+        .hrow .again { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; margin-left: auto; min-height: 36px; padding: 0 14px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); font-size: 13px; font-weight: 800; cursor: pointer; }
+        .h-empty { text-align: center; color: var(--sub); font-size: 14px; padding: 24px 0; }
+
+        /* ---- 標準の形：写真の大きなメニュー ---- */
+        .hero { margin: 14px 0 4px; border-radius: 22px; overflow: hidden; box-shadow: var(--shadow); background: var(--surface); }
+        .hero img { display: block; width: 100%; aspect-ratio: 2 / 1; object-fit: cover; }
+        body.std .wait { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+        body.std .wait b { color: var(--accent-ink); }
+        .tabs { position: sticky; top: 0; z-index: 20; margin: 6px -16px 0; padding: calc(8px + env(safe-area-inset-top, 0px)) 16px 10px; background: var(--bg);
+            display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tabs button { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; flex: none; min-height: 40px; padding: 0 16px; border-radius: 999px;
+            background: var(--surface); color: var(--text); font-size: 15px; font-weight: 800; box-shadow: inset 0 0 0 1px var(--hair); cursor: pointer; transition: background .2s ease, color .2s ease; }
+        .tabs button.on { background: var(--text); color: var(--bg); box-shadow: none; }
+        .sec { scroll-margin-top: calc(62px + env(safe-area-inset-top, 0px)); }
+        body.std .cat { font-size: 19px; font-weight: 900; color: var(--text); margin: 18px 2px 10px; }
+        body.std .cat i { width: 12px; height: 12px; border-radius: 4px; }
+        .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+        @media (min-width: 560px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        body.std .item { display: flex; flex-direction: column; align-items: stretch; gap: 0; padding: 0; margin: 0; overflow: hidden; border-radius: 18px; cursor: pointer; position: relative; }
+        body.std .item.in { box-shadow: inset 0 0 0 2.5px var(--accent), var(--shadow); }
+        .ph { position: relative; aspect-ratio: 1 / 1; background: var(--sunken); display: grid; place-items: center; overflow: hidden; }
+        @supports (background: color-mix(in srgb, red 10%, white)) { .ph { background: color-mix(in srgb, var(--ink, #888) 14%, var(--surface)); } }
+        .ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+        .ph .ph-art { width: 74%; height: 74%; display: grid; place-items: center; }
+        .ph .ph-art svg { width: 100%; height: 100%; display: block; }
+        .rec-card .ph .ph-art, .isheet .ph .ph-art { width: 62%; height: 86%; }
+        body.std .item.out .ph .ph-art { filter: grayscale(1); opacity: .6; }
+        .ph .ph-t { font-size: 46px; font-weight: 900; color: var(--ink, var(--sub)); opacity: .8; line-height: 1; }
+        .bds { position: absolute; left: 8px; top: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 4px; pointer-events: none; }
+        .bd { font-size: 11px; font-weight: 900; line-height: 1.2; padding: 3px 8px; border-radius: 999px; background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, .18); }
+        .bd.rec { background: #FF9500; color: #fff; }
+        .bd.nw { background: var(--accent); color: #fff; }
+        .bd.hot { background: #E5484D; color: #fff; }
+        .bd.few { color: var(--danger); }
+        .bd.so { background: #1C1D22; color: #fff; }
+        body.std .item .nm { padding: 10px 12px 0; font-size: 15px; line-height: 1.35; }
+        body.std .item .pr { font-size: 15.5px; color: var(--text); font-weight: 800; margin-top: 2px; }
+        body.std .item .ds { padding: 3px 12px 0; font-size: 12px; color: var(--sub); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        body.std .item .step { margin-top: auto; padding: 8px 10px 10px; justify-content: flex-end; }
+        body.std .item .step button { width: 40px; height: 40px; border-radius: 20px; font-size: 21px; }
+        body.std .item .so { margin: auto 10px 12px auto; }
+        body.std .item.out .ph img { filter: grayscale(1); }
+        .rec-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 -16px; padding: 2px 16px 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+        .rec-row::-webkit-scrollbar { display: none; }
+        .rec-card { flex: 0 0 74%; max-width: 320px; scroll-snap-align: start; background: var(--surface); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; cursor: pointer; position: relative; }
+        .rec-card .ph { aspect-ratio: 16 / 10; }
+        .rec-card .rb { display: flex; align-items: flex-end; gap: 10px; padding: 10px 12px 12px 14px; }
+        .rec-card .rn { flex: 1; min-width: 0; font-weight: 900; font-size: 16px; line-height: 1.35; overflow-wrap: anywhere; }
+        .rec-card .rn small { display: block; font-size: 15px; font-weight: 800; color: var(--sub); font-variant-numeric: tabular-nums; }
+        .rec-add { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; flex: none; width: 42px; height: 42px; border-radius: 21px; background: var(--accent); color: #fff; font-size: 22px; font-weight: 800; cursor: pointer; }
+        .rec-add:disabled { opacity: .35; }
+        /* 下に浮かぶカート */
+        body.std .bar { left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); padding: 8px 8px 8px 12px; border-radius: 22px; box-shadow: 0 10px 30px rgba(20, 24, 40, .22);
+            transition: transform .35s cubic-bezier(.32,.72,0,1), opacity .25s ease; max-width: 616px; margin: 0 auto; }
+        body.std .bar.empty { transform: translateY(150%); opacity: 0; pointer-events: none; }
+        .bar .bag { position: relative; width: 44px; height: 44px; border-radius: 14px; background: var(--accent-soft); color: var(--accent-ink); display: none; place-items: center; flex-shrink: 0; }
+        .bar .bag svg { width: 22px; height: 22px; }
+        body.std .bar .bag { display: grid; }
+        .bar .bag i { position: absolute; right: -4px; top: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--danger); color: #fff; font-size: 12px; font-style: normal; font-weight: 800; display: grid; place-items: center; }
+        /* 確かめる画面の進み具合（1 選ぶ → 2 確かめる → 3 受け取る） */
+        .steps { display: none; align-items: center; gap: 6px; margin: 4px 0 12px; font-size: 12.5px; font-weight: 800; color: var(--sub); }
+        body.std .steps { display: flex; }
+        .steps span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+        .steps span b { width: 20px; height: 20px; border-radius: 10px; display: inline-grid; place-items: center; background: var(--sunken); box-shadow: inset 0 0 0 1px var(--hair); font-size: 11.5px; }
+        .steps span.on { color: var(--text); }
+        .steps span.on b { background: var(--accent); color: #fff; box-shadow: none; }
+        .steps i { flex: 1; height: 2px; border-radius: 1px; background: var(--hair); min-width: 10px; }
+        /* 注文の進み具合（受付 → お作りしています → できあがり） */
+        .prog { display: none; margin: 14px 4px 4px; }
+        body.std .prog { display: block; }
+        .prog .pb { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+        .prog .pb i { height: 6px; border-radius: 3px; background: var(--hair); }
+        .prog.p1 .pb i:nth-child(-n+1), .prog.p2 .pb i:nth-child(-n+2), .prog.p3 .pb i:nth-child(-n+3) { background: var(--accent); }
+        .card.ready .prog .pb i { background: var(--ok); }
+        .prog .pl { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 6px; font-size: 11.5px; font-weight: 800; color: var(--sub); }
+        .prog .pl span:nth-child(2) { text-align: center; }
+        .prog .pl span:nth-child(3) { text-align: right; }
     </style>
 </head>
 <body>
     <header class="brand">
         <img id="brand-icon" class="hide" alt="">
-        <div><div class="sub" id="shop"></div><h1 id="title">モバイルオーダー</h1></div>
+        <div class="bx"><div class="sub" id="shop"></div><h1 id="title">モバイルオーダー</h1></div>
+        <!-- この端末で注文した履歴（受け取った後も、番号と中身をここから見られる） -->
+        <button type="button" class="hist-btn hide" id="hist-btn" onclick="openHist()" aria-label="注文の履歴"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>履歴<span class="hb-n hide" id="hist-n"></span></button>
     </header>
+    <!-- 標準の形：いちばん上の絵（お店が設定した時だけ） -->
+    <div id="hero" class="hero hide"></div>
 
     <!-- お店を選ぶ（QRコードにお店が入っていない時） -->
     <section id="shops" class="hide"></section>
@@ -166,11 +302,14 @@
     <!-- 注文した後：番号と状態 -->
     <section id="my" class="hide"></section>
 
+    <!-- 標準の形：分類のタブ（押すとその分類へ。スクロールすると、いまの分類が光る） -->
+    <nav id="tabs" class="tabs hide" aria-label="メニューの分類"></nav>
     <!-- メニュー -->
     <section id="menu" class="hide"></section>
 
     <!-- 確かめる画面 -->
     <section id="confirm" class="hide">
+        <div class="steps" aria-hidden="true"><span class="on"><b>1</b>選ぶ</span><i></i><span class="on"><b>2</b>確かめる</span><i></i><span><b>3</b>受け取る</span></div>
         <h1>ご注文の確認</h1>
         <div class="sub" id="c-dine-sub">お召し上がりを選んでください</div>
         <div class="dine" id="c-dine" role="group" aria-label="お召し上がり">
@@ -208,8 +347,20 @@
         </div>
     </div>
 
-    <!-- 下の合計 -->
+    <!-- 商品の説明と、数を選ぶ窓（標準の形で、商品を押した時） -->
+    <div class="sheet hide" id="item-sheet" role="dialog" aria-modal="true" aria-label="商品"><div class="card2 isheet" id="item-body"></div></div>
+    <!-- 注文の履歴 -->
+    <div class="sheet hide" id="hist-sheet" role="dialog" aria-modal="true" aria-labelledby="hist-title">
+        <div class="card2 hsheet">
+            <div class="sh-head"><h2 id="hist-title">注文の履歴</h2><button type="button" class="x" onclick="closeHist()" aria-label="閉じる">×</button></div>
+            <div class="h-list" id="hist-list"></div>
+        </div>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <!-- 下の合計（標準の形では、下に浮かぶカート） -->
     <div class="bar hide" id="bar">
+        <span class="bag" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><i id="b-bag">0</i></span>
         <div class="tot">合計（<span id="b-n">0</span>点）<b id="b-total">¥0</b></div>
         <button class="btn" id="b-next" onclick="showConfirm()" disabled>注文へ進む</button>
     </div>
@@ -222,6 +373,21 @@
     const PRE = SITE.id && /^[A-Za-z0-9_-]{1,32}$/.test(SITE.id) ? SITE.id + ':' : '';
     const MAX_EACH = 10, MAX_ITEMS = 20, MAX_ACTIVE = 3;
     const $ = id => document.getElementById(id);
+    // 押せる所の外（すき間・文字）を素早く2回たたいた時の拡大を止める（押せる所の連打は、そのまま1回ずつ効く）
+    (function () {
+        let last = 0;
+        const tappable = el => {
+            for (let n = el; n && n.nodeType === 1 && n !== document.body; n = n.parentElement) {
+                if (n.onclick || /^(BUTTON|A|INPUT|SELECT|TEXTAREA|LABEL|SUMMARY|OPTION)$/.test(n.tagName) || n.isContentEditable || n.hasAttribute('data-open')) return true;
+            }
+            return false;
+        };
+        document.addEventListener('touchend', e => {
+            const now = Date.now();
+            if (now - last < 320 && e.cancelable && e.changedTouches && e.changedTouches.length === 1 && !tappable(e.target)) e.preventDefault();
+            last = now;
+        }, { passive: false });
+    })();
     const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const yen = n => '¥' + Number(n || 0).toLocaleString('ja-JP');
     let code = (new URLSearchParams(location.search).get('e') || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 32);
@@ -245,6 +411,39 @@
     function loadMine() { try { return JSON.parse(localStorage.getItem(mineKey()) || '[]') || []; } catch (e) { return []; } }
     function saveMine(list) { try { localStorage.setItem(mineKey(), JSON.stringify(list.slice(-10))); } catch (e) {} }
     let mine = loadMine();
+    // ---- 注文の履歴（この端末で注文したもの。受け取った後も、番号と中身をここから見られる）----
+    const histKey = () => PRE + 'mo_hist:' + code;
+    function loadHist() { try { const v = JSON.parse(localStorage.getItem(histKey()) || '[]'); return Array.isArray(v) ? v.filter(h => h && h.id) : []; } catch (e) { return []; } }
+    function saveHist() { try { localStorage.setItem(histKey(), JSON.stringify(hist.slice(-30))); } catch (e) {} }
+    let hist = loadHist();
+    function histOf(o) {
+        return { id: o.id, no: String(o.no || ''), at: Number(o.at) || Date.now(), dine: o.dine === 'eat' ? 'eat' : 'take', total: Number(o.total) || 0, st: String(o.st || 'cook'),
+            paid: !!o.paid, seat: o.seat ? String(o.seat) : '', table: o.table ? String(o.table) : '', bill: !!o.billId, pk: pickupOf(o),
+            items: (o.items || []).map(i => ({ name: String(i.name || ''), qty: Number(i.qty) || 1, opt: i.opt ? String(i.opt) : '' })) };
+    }
+    // 届いた注文の今の状態を、履歴にも書き写す（変わった時だけ保存）
+    function syncHist() {
+        let changed = false;
+        hist.forEach((h, k) => {
+            const o = orders.find(x => x.id === h.id);
+            if (!o) return;
+            const n = histOf(o);
+            if (JSON.stringify(n) !== JSON.stringify(h)) { hist[k] = n; changed = true; }
+        });
+        if (changed) saveHist();
+    }
+    function addHist(o) { hist = hist.filter(h => h.id !== o.id).concat([histOf(o)]); saveHist(); }
+    // 標準の形で使う、商品の写真（live/menuimg）と、いちばん上の絵（live/mhero）
+    let imgs = {}, imgKeyNow = '', imgRetryAt = 0, heroAtNow = 0, heroData = '';
+    let toastTimer = null;
+    function toast(text) {
+        const t = $('toast');
+        if (!t) return;
+        t.textContent = text;
+        t.classList.add('on');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => t.classList.remove('on'), 3200);
+    }
 
     function say(text, warn) {
         const m = $('msg');
@@ -297,13 +496,13 @@
         } catch (e) { say('お店の一覧を読めませんでした。電波の良い所で、ページを読み込み直してください。', true); return; }
         rows.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
         const box = $('shops');
-        if (!rows.length) { say('いま、スマホから注文できるお店はありません。店頭でご注文ください。', true); box.classList.add('hide'); return; }
+        if (!rows.length) { say('ただいま、スマホから注文できるお店はありません。店頭でご注文ください。', true); box.classList.add('hide'); return; }
         say('');
         $('title').textContent = 'お店を選んでください';
         box.classList.remove('hide');
         box.innerHTML = `<div class="shops">${rows.map(r => `<button type="button" class="shop" data-c="${esc(r.code)}">
                 <span class="ico">${r.icon ? `<img src="${r.icon}" alt="">` : esc(r.name.slice(0, 1))}</span>
-                <span class="nm">${r.test ? '【テスト】' : ''}${esc(r.name)}${r.wait ? `<small>いまの待ち時間 約${r.wait}分</small>` : ''}</span>
+                <span class="nm">${r.test ? '【テスト】' : ''}${esc(r.name)}${r.wait ? `<small>待ち時間 約${r.wait}分</small>` : ''}</span>
                 <span class="go">注文する</span></button>`).join('')}</div>`;
         box.querySelectorAll('.shop').forEach(b => b.onclick = () => chooseShop(b.dataset.c));
     }
@@ -342,7 +541,8 @@
     function cfg() {
         const m = (evData && evData.mobile) || {};
         const int = (v, lo, hi, def) => { const n = parseInt(v, 10); return Number.isFinite(n) && n >= lo && n <= hi ? n : def; };
-        return { wait: int(m.wait, 0, 180, 0), pick: m.pick === true, lead: int(m.lead, 1, 120, 10), ahead: int(m.ahead, 30, 720, 120), seat: m.seat === true, opt: m.opt !== false };
+        return { wait: int(m.wait, 0, 180, 0), pick: m.pick === true, lead: int(m.lead, 1, 120, 10), ahead: int(m.ahead, 30, 720, 120), seat: m.seat === true, opt: m.opt !== false,
+            ui: m.ui === 'simple' ? 'simple' : 'std', heroAt: Number(m.heroAt) > 0 ? Number(m.heroAt) : 0 };
     }
     const hm = ms => { const d = new Date(ms); return d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'); };
     function pickupOf(o) {
@@ -418,6 +618,9 @@
             if (typeof icon === 'string' && icon.startsWith('data:image/')) { im.src = icon; im.classList.remove('hide'); } else im.classList.add('hide');
         }
         $('testbar').classList.toggle('hide', !(evData && evData.test && open()));
+        document.body.classList.toggle('std', stdUi());
+        renderHero();
+        renderHistBtn();
         const note = $('note');
         const noteText = evData && evData.mobile && evData.mobile.note;
         note.classList.toggle('hide', !noteText || !accepting());
@@ -436,31 +639,171 @@
         renderMenu();
         renderMine();
     }
-    // いまの待ち時間（お店が決めた目安）と、いま待っている組の数
+    // お店の待ち時間（お店が決めた目安）と、いま待っている組の数
     function renderWait() {
         const w = $('wait'), wm = cfg().wait, g = waitingGroups();
         const show = !!evData && accepting() && !restMode();    // レストランは席で待つので「◯組待ち」は出さない
         w.classList.toggle('hide', !show);
-        if (show) w.innerHTML = `<span>いま <b>${g}</b> 組待ち</span>${wm ? `<span>待ち時間 <b>約${wm}分</b></span>` : ''}`;
+        if (show) w.innerHTML = `<span>ただいま <b>${g}</b> 組待ち</span>${wm ? `<span>待ち時間 <b>約${wm}分</b></span>` : ''}`;
     }
-    function hideOrdering() { $('menu').classList.add('hide'); $('bar').classList.add('hide'); $('confirm').classList.add('hide'); }
+    function hideOrdering() { $('menu').classList.add('hide'); $('bar').classList.add('hide'); $('confirm').classList.add('hide'); $('tabs').classList.add('hide'); closeItem(); }
+    // 標準の形か（お店が「シンプル」を選んでいなければ標準）
+    function stdUi() { return !!evData && cfg().ui !== 'simple'; }
+    // いちばん上の絵：お店が置いた時だけ、置き場から1回読んで出す
+    function renderHero() {
+        const h = $('hero'), at = cfg().heroAt;
+        const show = stdUi() && accepting() && !!at;
+        if (show && at !== heroAtNow && ev) {
+            heroAtNow = at;
+            ev.collection('live').doc('mhero').get().then(doc => {
+                const d = doc.exists ? (doc.data() || {}).d : '';
+                heroData = typeof d === 'string' && /^data:image\/(png|jpeg|webp);base64,/.test(d) ? d : '';
+                renderHero();
+            }).catch(() => { heroAtNow = 0; });
+        }
+        const on = show && !!heroData && $('confirm').classList.contains('hide');
+        h.classList.toggle('hide', !on);
+        if (on && h.dataset.at !== String(at)) { h.dataset.at = String(at); h.innerHTML = `<img src="${heroData}" alt="">`; }
+    }
+    // 商品の写真：メニューの印（imgKey）が変わった時だけ、まとめて読み直す
+    function loadImgs() {
+        const k = (menu && typeof menu.imgKey === 'string') ? menu.imgKey : '';
+        if (!stdUi() || !k || k === imgKeyNow || !ev || Date.now() < imgRetryAt) return;
+        imgKeyNow = k;
+        ev.collection('live').doc('menuimg').get().then(doc => {
+            const v = doc.exists ? (doc.data() || {}) : {};
+            // 写真の文書がまだ新しくなっていない時は、少し待ってから読み直す
+            if (v.key !== k) { imgKeyNow = ''; imgRetryAt = Date.now() + 5000; setTimeout(() => { if (menu) render(); }, 5200); }
+            const next = {};
+            Object.keys(v.imgs || {}).forEach(n => { const d = v.imgs[n]; if (typeof d === 'string' && /^data:image\/(png|jpeg|webp);base64,/.test(d) && d.length < 80000) next[n] = d; });
+            imgs = next;
+            if (menu) render();
+        }).catch(() => { imgKeyNow = ''; imgRetryAt = Date.now() + 5000; });
+    }
 
     function activeMine() {
         return mine.map(id => orders.find(o => o.id === id)).filter(o => o && o.st !== 'done' && o.st !== 'void');
     }
 
-    function renderMenu() {
-        if (!$('confirm').classList.contains('hide')) { renderConfirm(); return; }
-        if (activeMine().length >= MAX_ACTIVE) { $('menu').classList.add('hide'); $('bar').classList.add('hide'); return; }
-        const box = $('menu');
-        box.classList.remove('hide');
+    // 数の − ＋ は、メニューの箱で1か所だけ受ける（作り直しても、押した1回がそのまま効く）
+    let menuBound = false;
+    function bindMenu() {
+        if (menuBound) return;
+        menuBound = true;
+        $('menu').addEventListener('click', e => {
+            const b = e.target.closest('button[data-d]');
+            if (b) { if (!b.disabled) change(b.dataset.n, +b.dataset.d); return; }
+            if (e.target.closest('.step')) return;       // 数のまわり（数字の所）を押しても、窓は開かない
+            const c = e.target.closest('[data-open]');
+            if (c) openItem(c.dataset.open);
+        });
+        $('tabs').addEventListener('click', e => {
+            const b = e.target.closest('button[data-sec]');
+            if (!b) return;
+            const sec = document.getElementById(b.dataset.sec);
+            if (sec) { tabLock = Date.now(); setTab(b.dataset.sec); sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+        });
+        window.addEventListener('scroll', () => { if (!spyQueued) { spyQueued = true; requestAnimationFrame(spyTabs); } }, { passive: true });
+    }
+    // スクロールに合わせて、いま見ている分類のタブを光らせる
+    let spyQueued = false, tabLock = 0;
+    function spyTabs() {
+        spyQueued = false;
+        const tabs = $('tabs');
+        if (tabs.classList.contains('hide') || Date.now() - tabLock < 700) return;
+        const top = tabs.getBoundingClientRect().bottom + 8;
+        let cur = '';
+        document.querySelectorAll('#menu .sec').forEach(sc => { if (sc.getBoundingClientRect().top <= top) cur = sc.id; });
+        if (!cur) { const f = document.querySelector('#menu .sec'); cur = f ? f.id : ''; }
+        setTab(cur);
+    }
+    function setTab(id) {
+        const tabs = $('tabs');
+        tabs.querySelectorAll('button').forEach(b => {
+            const on = b.dataset.sec === id;
+            if (b.classList.contains('on') === on) return;
+            b.classList.toggle('on', on);
+            if (on) { const l = b.offsetLeft - 16, r = l + b.offsetWidth + 32; if (l < tabs.scrollLeft || r > tabs.scrollLeft + tabs.clientWidth) tabs.scrollTo({ left: Math.max(0, l), behavior: 'smooth' }); }
+        });
+    }
+    function menuGroups() {
         const cats = Array.isArray(menu.cats) ? menu.cats : [];
         const groups = cats.map(c => ({ c, items: menu.items.filter(i => i.type === c.id) })).filter(g => g.items.length);
         const other = menu.items.filter(i => !cats.some(c => c.id === i.type));
         if (other.length) groups.push({ c: { id: '', label: 'そのほか' }, items: other });
+        return groups;
+    }
+    // 札（おすすめ・新商品・人気・残りわずか・売り切れ）
+    function badgesHtml(i) {
+        const b = [];
+        if (i.soldOut) b.push('<span class="bd so">売り切れ</span>');
+        else {
+            if (i.rec) b.push('<span class="bd rec">おすすめ</span>');
+            if (i.nw) b.push('<span class="bd nw">新商品</span>');
+            if (i.hot) b.push('<span class="bd hot">人気</span>');
+            if (i.few) b.push('<span class="bd few">残りわずか</span>');
+        }
+        return b.join('');
+    }
+    // 写真（無い時は、分類の色の上に名前の1文字目を大きく）
+    function photoHtml(i) {
+        const d = imgs[i.name];
+        const art = !d && i.art && window.MENU_ART && MENU_ART.has(i.art) ? MENU_ART.svg(i.art) : '';
+        return `<div class="ph" style="--ink:${INK[i.type] || 'var(--sub)'}">${d ? `<img src="${d}" alt="" loading="lazy">` : art ? `<span class="ph-art">${art}</span>` : `<span class="ph-t" aria-hidden="true">${esc(Array.from(String(i.name))[0] || '')}</span>`}<div class="bds">${badgesHtml(i)}</div></div>`;
+    }
+    function stepHtml(i) {
+        const q = qty[i.name] || 0, n = esc(i.name);
+        return `<div class="step">${q ? `<button type="button" aria-label="${n}を1つ減らす" data-n="${n}" data-d="-1">−</button><span class="q">${q}</span>` : ''}<button type="button" class="plus" aria-label="${n}を1つ増やす" ${q >= MAX_EACH ? 'disabled' : ''} data-n="${n}" data-d="1">＋</button></div>`;
+    }
+    function stdCard(i) {
+        const q = qty[i.name] || 0;
+        return `<div class="item${i.soldOut ? ' out' : ''}${q ? ' in' : ''}" data-open="${esc(i.name)}" data-k="c:${esc(i.name)}">${photoHtml(i)}
+            <div class="nm">${esc(i.name)}<span class="pr">${yen(i.price)}</span></div>${i.desc ? `<div class="ds">${esc(i.desc)}</div>` : ''}
+            ${i.soldOut ? '<span class="so">売り切れ</span>' : stepHtml(i)}</div>`;
+    }
+    function recCard(i) {
+        const q = qty[i.name] || 0;
+        return `<div class="rec-card" data-open="${esc(i.name)}" data-k="r:${esc(i.name)}">${photoHtml(i)}
+            <div class="rb"><div class="rn">${esc(i.name)}<small>${yen(i.price)}${q ? `・カートに${q}個` : ''}</small></div>
+            <button type="button" class="rec-add" aria-label="${esc(i.name)}をカートに1つ入れる" ${q >= MAX_EACH ? 'disabled' : ''} data-n="${esc(i.name)}" data-d="1">＋</button></div></div>`;
+    }
+    // 標準の形：前と同じ並びなら、中身の変わったカードだけを書き換える（写真がちらつかず、スクロールもずれない）
+    let stdStruct = '', stdCards = {};
+    function renderStdMenu(box, groups) {
+        const recs = menu.items.filter(i => i.rec && !i.soldOut);
+        const secs = (recs.length ? [{ id: 'sec-rec', label: 'おすすめ' }] : []).concat(groups.map((g, k) => ({ id: 'sec-' + k, label: g.c.label })));
+        const struct = JSON.stringify([recs.map(i => i.name), groups.map(g => [g.c.id, g.c.label, g.items.map(i => i.name)])]);
+        const cards = {};
+        recs.forEach(i => { cards['r:' + i.name] = recCard(i); });
+        groups.forEach(g => g.items.forEach(i => { cards['c:' + i.name] = stdCard(i); }));
+        if (struct !== stdStruct || !box.querySelector('.sec')) {
+            stdStruct = struct;
+            box.innerHTML = (recs.length ? `<div class="sec" id="sec-rec"><div class="cat" style="--ink:#FF9500"><i></i>おすすめ</div><div class="rec-row">${recs.map(i => cards['r:' + i.name]).join('')}</div></div>` : '')
+                + groups.map((g, k) => `<div class="sec" id="sec-${k}"><div class="cat" style="--ink:${INK[g.c.id] || 'var(--hair)'}"><i></i>${esc(g.c.label)}</div><div class="grid">${g.items.map(i => cards['c:' + i.name]).join('')}</div></div>`).join('');
+            const tabs = $('tabs');
+            tabs.innerHTML = secs.map(x => `<button type="button" data-sec="${x.id}">${esc(x.label)}</button>`).join('');
+            spyTabs();
+        } else {
+            const els = {};
+            box.querySelectorAll('[data-k]').forEach(el => { els[el.dataset.k] = el; });
+            Object.keys(cards).forEach(k => { if (cards[k] !== stdCards[k] && els[k]) els[k].outerHTML = cards[k]; });
+        }
+        stdCards = cards;
+        $('tabs').classList.toggle('hide', secs.length < 2);
+    }
+    function renderMenu() {
+        if (!$('confirm').classList.contains('hide')) { renderConfirm(); return; }
+        if (activeMine().length >= MAX_ACTIVE) { $('menu').classList.add('hide'); $('bar').classList.add('hide'); $('tabs').classList.add('hide'); return; }
+        bindMenu();
+        const box = $('menu');
+        box.classList.remove('hide');
+        const groups = menuGroups();
         // 品切れになった商品は、選んでいた数も消す
         menu.items.forEach(i => { if (i.soldOut && qty[i.name]) delete qty[i.name]; });
         Object.keys(qty).forEach(n => { if (!menu.items.some(i => i.name === n)) delete qty[n]; });
+        if (stdUi()) { loadImgs(); renderStdMenu(box, groups); renderBar(); refreshItem(); return; }
+        stdStruct = ''; stdCards = {};
+        $('tabs').classList.add('hide');
         box.innerHTML = groups.map(g => `<div class="cat" style="--ink:${INK[g.c.id] || 'var(--hair)'}"><i></i>${esc(g.c.label)}</div>` + g.items.map(i => {
             const q = qty[i.name] || 0;
             return `<div class="item${i.soldOut ? ' out' : ''}">
@@ -472,7 +815,6 @@
                 </div>`}
             </div>`;
         }).join('')).join('');
-        box.querySelectorAll('.step button').forEach(b => b.onclick = () => change(b.dataset.n, +b.dataset.d));
         renderBar();
     }
     function cartLines() {
@@ -518,7 +860,9 @@
         const n = lines.reduce((t, l) => t + l.qty, 0);
         const tot = discParts(lines, null).gross - setDiscOf(lines);   // セット割を引いた額（クーポンは確かめる画面で）
         $('bar').classList.remove('hide');
+        $('bar').classList.toggle('empty', n === 0);
         $('b-n').textContent = n;
+        $('b-bag').textContent = n;
         $('b-total').textContent = yen(tot);
         $('b-next').disabled = n === 0;
     }
@@ -529,9 +873,111 @@
         if (next) qty[name] = next; else delete qty[name];
         renderMenu();
     }
+    // ---- 商品の窓（標準の形）：写真・説明・札・特注・数を選んで、カートに入れる ----
+    let itemOpen = '', itemQty = 1;
+    function openItem(name) {
+        if (!menu || !stdUi()) return;
+        const it = menu.items.find(i => i.name === name);
+        if (!it) return;
+        itemOpen = name;
+        itemQty = Math.max(1, qty[name] || 1);
+        drawItem();
+        $('item-sheet').classList.remove('hide');
+    }
+    function closeItem() { itemOpen = ''; const sh = $('item-sheet'); if (sh) sh.classList.add('hide'); }
+    window.closeItem = closeItem;
+    // 窓を開いている間に売り切れ・値段が変わったら、窓も描き直す
+    function refreshItem() { if (itemOpen && !$('item-sheet').classList.contains('hide')) drawItem(); }
+    function drawItem() {
+        const it = menu && menu.items.find(i => i.name === itemOpen);
+        if (!it) { closeItem(); return; }
+        const inCart = qty[it.name] || 0, n = esc(it.name), sel = optSel[it.name] || {};
+        const c0 = cfg();
+        const opts = c0.opt && !it.soldOut ? `<div class="optp"><div class="g"><b>特注（任意）</b></div>${OPT_GROUPS.map(g => `<div class="g"><b>${g.label}</b><div class="chips">${g.items.map(x => {
+            const on = g.multi ? (sel.order || []).includes(x) : sel[g.id] === x;
+            return `<button type="button" class="${on ? 'on' : ''}" data-og="${g.id}" data-oi="${x}">${x}</button>`;
+        }).join('')}</div></div>`).join('')}</div>` : '';
+        $('item-body').innerHTML = `<div class="is-scroll">${photoHtml(it)}<button type="button" class="x" onclick="closeItem()" aria-label="閉じる">×</button>
+            <div class="is-b"><div class="is-bd"></div><h2>${n}</h2><div class="is-pr">${yen(it.price)}</div>${it.desc ? `<div class="is-ds">${esc(it.desc)}</div>` : ''}${opts}</div></div>
+            <div class="is-foot">${it.soldOut ? '<button type="button" class="btn full" disabled>売り切れ</button>' : `<div class="step">
+                <button type="button" id="is-minus" aria-label="1つ減らす" ${itemQty <= 1 ? 'disabled' : ''}>−</button><span class="q" id="is-q">${itemQty}</span>
+                <button type="button" class="plus" id="is-plus" aria-label="1つ増やす" ${itemQty >= MAX_EACH ? 'disabled' : ''}>＋</button></div>
+                <button type="button" class="btn" id="is-add">${inCart ? 'カートを直す' : 'カートに入れる'}　${yen(it.price * itemQty)}</button>`}</div>`;
+        const body = $('item-body');
+        const mi = $('is-minus'), pl = $('is-plus'), add = $('is-add');
+        if (mi) mi.onclick = () => { itemQty = Math.max(1, itemQty - 1); drawItem(); };
+        if (pl) pl.onclick = () => { itemQty = Math.min(MAX_EACH, itemQty + 1); drawItem(); };
+        body.querySelectorAll('[data-og]').forEach(b => b.onclick = () => {
+            const sl = optOf(it.name), g = b.dataset.og, x = b.dataset.oi;
+            if (g === 'order') sl.order = sl.order.includes(x) ? sl.order.filter(y => y !== x) : sl.order.concat([x]);
+            else sl[g] = sl[g] === x ? '' : x;
+            drawItem();
+        });
+        if (add) add.onclick = () => {
+            const others = Object.keys(qty).filter(k => k !== it.name).reduce((t, k) => t + qty[k], 0);
+            const q = Math.min(itemQty, MAX_ITEMS - others);
+            if (q <= 0) { toast(`一度に注文できるのは${MAX_ITEMS}点までです`); return; }
+            qty[it.name] = q;
+            closeItem();
+            renderMenu();
+            toast(`「${it.name}」を${q}個、カートに入れました`);
+        };
+    }
+    $('item-sheet').onclick = e => { if (e.target === $('item-sheet')) closeItem(); };
+    // ---- 注文の履歴 ----
+    function histStatus(h) {
+        if (h.bill) return h.paid ? ['お会計済み', ''] : h.st === 'void' ? ['取り消し', 'vd'] : h.st === 'done' ? ['お届け済み', ''] : h.st === 'ready' ? ['できあがり', 'rdy'] : ['お作りしています', 'act'];
+        if (h.st === 'done') return ['受け取り済み', ''];
+        if (h.st === 'void') return ['取り消し', 'vd'];
+        if (h.st === 'ready') return ['できあがり', 'rdy'];
+        return ['お作りしています', 'act'];
+    }
+    function renderHistBtn() {
+        const b = $('hist-btn');
+        b.classList.toggle('hide', !hist.length);
+        const act = hist.filter(h => !(h.bill ? h.paid || h.st === 'void' : h.st === 'done' || h.st === 'void')).length;
+        const n = $('hist-n');
+        n.classList.toggle('hide', !act);
+        n.textContent = act;
+    }
+    window.openHist = function () {
+        syncHist();
+        const list = hist.slice().reverse();
+        $('hist-list').innerHTML = list.length ? list.map(h => {
+            const [st, cls] = histStatus(h);
+            const d = new Date(h.at);
+            const when = `${d.getMonth() + 1}/${d.getDate()} ${hm(h.at)}`;
+            const items = h.items.map(i => `${esc(i.name)}${i.opt ? '（' + esc(i.opt) + '）' : ''}×${i.qty}`).join('、');
+            return `<div class="hrow"><div class="hr-top"><b class="hno">${esc(h.no + (h.seat ? '-' + h.seat : ''))}</b><span class="hst ${cls}">${st}</span><span class="ht">${when}</span></div>
+                <div class="hitems">${items}</div>
+                <div class="hr-bot"><span>${h.bill ? esc(h.table) + '番テーブル' : (h.dine === 'eat' ? '店内' : '持ち帰り')}</span><b>${yen(h.total)}</b>${accepting() && menu && (restMode() === h.bill) ? `<button type="button" class="again" data-h="${esc(h.id)}">もう一度 同じものを</button>` : ''}</div></div>`;
+        }).join('') : '<div class="h-empty">まだ注文はありません</div>';
+        $('hist-list').querySelectorAll('.again').forEach(b => b.onclick = () => again(b.dataset.h));
+        $('hist-sheet').classList.remove('hide');
+    };
+    window.closeHist = function () { $('hist-sheet').classList.add('hide'); };
+    $('hist-sheet').onclick = e => { if (e.target === $('hist-sheet')) closeHist(); };
+    // 前と同じものをカートに入れる（売り切れ・もう無い商品は入れない）
+    function again(id) {
+        const h = hist.find(x => x.id === id);
+        if (!h || !menu) return;
+        let n = 0, skip = 0;
+        h.items.forEach(i => {
+            const it = menu.items.find(x => x.name === i.name);
+            const all = Object.values(qty).reduce((t, v) => t + v, 0);
+            if (!it || it.soldOut || all >= MAX_ITEMS) { skip++; return; }
+            const add = Math.min(i.qty, MAX_EACH - (qty[i.name] || 0), MAX_ITEMS - all);
+            if (add > 0) { qty[i.name] = (qty[i.name] || 0) + add; n += add; }
+        });
+        closeHist();
+        $('confirm').classList.add('hide');
+        render();
+        toast(n ? `${n}点をカートに入れました${skip ? '（売り切れの商品は入れていません）' : ''}` : '売り切れのため、入れられませんでした');
+    }
     window.showConfirm = function () {
         if (!cartLines().length) return;
-        $('menu').classList.add('hide'); $('bar').classList.add('hide');
+        $('menu').classList.add('hide'); $('bar').classList.add('hide'); $('tabs').classList.add('hide'); $('hero').classList.add('hide');
+        closeItem();
         $('my').classList.add('hide');       // 新しい注文を確かめている間は、前の注文の番号を出さない
         $('confirm').classList.remove('hide');
         renderConfirm();
@@ -712,7 +1158,7 @@
             if (dine === 'eat' && cfg().seat && seat) doc.seat = seat;
             if (coupon) doc.coupon = { id: coupon.id, name: coupon.name };
             await ev.collection('orders').doc(id).set(doc);
-            mine.push(id); saveMine(mine);
+            mine.push(id); saveMine(mine); addHist(doc);
             Object.keys(qty).forEach(k => delete qty[k]);
             dine = ''; pickAt = 0; optOpen = ''; coupon = null;
             if ($('c-coupon')) $('c-coupon').value = '';
@@ -728,23 +1174,33 @@
         }
     };
 
-    // 受け取りが済んだ注文は、お礼を少しだけ出してから、この端末の一覧から消す（はじめの画面に戻る）。
+    // 受け取りが済んだ注文は、すぐにこの画面の上から消して「履歴」に入れる（はじめの画面に戻る）。
     // 前の注文の番号が残っていると、次に注文した時や、別のお店で買った時に、どの番号か分からなくなるため。
-    const DONE_SHOW_MS = 15000;
+    // 番号と中身は、右上の「履歴」からいつでも見られる。取り消された注文だけは、気づけるように長めに残す。
+    const VOID_SHOW_MS = 10 * 60000;
     const doneSeenAt = {};
+    const seenActive = new Set();     // この画面を開いている間に「まだ済んでいない」のを見た注文
     function dropFinished() {
         const now = Date.now();
+        let thanks = false;
         const keep = mine.filter(id => {
             const o = orders.find(x => x.id === id);
             if (!o) return true;          // まだ届いていない（送った直後など）注文は消さない
             // レストラン：料理を運んだ後も、お会計が済むまで（伝票が閉じるまで）残す
-            if (o.billId && o.st !== 'void') { if (!o.paid) return true; }
-            else if (o.st !== 'done' && o.st !== 'void') return true;
-            if (!doneSeenAt[id]) doneSeenAt[id] = now;
-            // 取り消された注文は、気づけるように長めに残す
-            return now - doneSeenAt[id] < (o.st === 'void' ? 10 * 60000 : DONE_SHOW_MS);
+            if (o.billId && o.st !== 'void') { if (!o.paid) { seenActive.add(id); return true; } }
+            else if (o.st !== 'done' && o.st !== 'void') { seenActive.add(id); return true; }
+            if (!hist.some(h => h.id === id)) addHist(o);
+            if (o.st === 'void') {
+                if (!doneSeenAt[id]) doneSeenAt[id] = now;
+                return now - doneSeenAt[id] < VOID_SHOW_MS;
+            }
+            if (seenActive.has(id)) thanks = true;
+            return false;
         });
-        if (keep.length !== mine.length) { mine = keep; saveMine(mine); }
+        if (keep.length !== mine.length) {
+            mine = keep; saveMine(mine);
+            if (thanks) toast('お受け取りありがとうございました。番号は右上の「履歴」から見られます');
+        }
     }
     setInterval(() => { const before = mine.length; dropFinished(); if (mine.length !== before) render(); }, 3000);
     // レストラン：テーブルの伝票を開いて（もう開いていればそこへ）注文を足す。
@@ -777,7 +1233,7 @@
             total: items.reduce((t, l) => t + l.qty * l.price, 0), uid, roundId, upd: at, chk: [], t: {}, dev: ''
         };
         await ev.collection('orders').doc(id).set(doc);
-        mine.push(id); saveMine(mine);
+        mine.push(id); saveMine(mine); addHist(doc);
         Object.keys(qty).forEach(k => delete qty[k]);
         Object.keys(optSel).forEach(k => delete optSel[k]);
         dine = ''; optOpen = '';
@@ -786,7 +1242,9 @@
     }
     function renderMine() {
         const box = $('my');
+        syncHist();
         dropFinished();
+        renderHistBtn();
         const list = mine.map(id => orders.find(o => o.id === id)).filter(Boolean);
         if (!list.length || !$('confirm').classList.contains('hide')) { box.classList.add('hide'); box.innerHTML = ''; return; }
         box.classList.remove('hide');
@@ -812,11 +1270,15 @@
             else if (heldNow(o, now)) { st = `受け取り ${hm(pk)}ごろ`; sub = `ご注文を受け付けました。${hm(myStart)}ごろから作り始めます`; }
             else { st = 'お作りしています'; sub = (ahead ? `あと ${ahead} 組` : 'まもなくできあがります') + (pk ? `（受け取り ${hm(pk)}ごろ）` : ''); }
             const items = (o.items || []).map(i => `${esc(i.name)}${i.opt ? '（' + esc(i.opt) + '）' : ''}×${i.qty}`).join('、');
+            // 進み具合（標準の形だけ）：受付 → お作りしています → できあがり
+            const pn = o.st === 'void' ? 0 : o.st === 'ready' || o.st === 'done' ? 3 : heldNow(o, now) ? 1 : 2;
+            const prog = pn ? `<div class="prog p${pn}" aria-hidden="true"><div class="pb"><i></i><i></i><i></i></div><div class="pl"><span>受付</span><span>お作りしています</span><span>${o.billId ? 'お持ちします' : 'できあがり'}</span></div></div>` : '';
             return `<div class="card ${cls}">
                 <div class="k">${esc(shopName() || '')}${shopName() ? ' の' : ''}${o.billId ? `${esc(o.table)}番テーブル・伝票番号` : 'ご注文の番号'}</div>
                 <div class="no">${esc(String(o.no || '') + (o.seat ? '-' + o.seat : ''))}</div>
                 <div class="st">${st}</div>
                 ${sub ? `<div class="ahead">${sub}</div>` : ''}
+                ${prog}
                 ${o.billId ? '' : `<span class="dn ${o.dine === 'eat' ? 'eat' : ''}">${o.dine === 'eat' ? '店内' : '持ち帰り'}</span>`}
                 <div class="sub" style="margin-top:10px;">${items}</div>
                 ${o.st !== 'void' && !o.paid && !o.billId ? `<div class="sub" style="margin-top:6px;">受け取りの時に、この番号を見せてレジで ${yen(o.total)} をお支払いください${Number(o.discount) > 0 ? `（セット割 −${yen(o.discount)} を引いた額）` : ''}${o.coupon && o.coupon.name ? `。クーポン「${esc(o.coupon.name)}」は、レジで引きます` : ''}</div>` : ''}

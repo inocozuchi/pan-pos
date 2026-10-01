@@ -33,10 +33,10 @@ export function siteHtml(src) {
     return '<!-- このファイルは tools/sites.mjs が作った写しです。直すときは、いちばん上の index.html を直して build してください。 -->\n' + out;
 }
 
-// お客様の注文ページ（order.html）の写し。アイコンだけ2つ上から読む
+// お客様の注文ページ（order.html）の写し。アイコンと vendor/ の絵は2つ上から読む
 export function siteOrderHtml(src) {
     let out = src;
-    for (const [a, b] of [['<link rel="icon" href="icons/', `<link rel="icon" href="${UP}icons/`], ['<link rel="apple-touch-icon" href="icons/', `<link rel="apple-touch-icon" href="${UP}icons/`]]) {
+    for (const [a, b] of [['<link rel="icon" href="icons/', `<link rel="icon" href="${UP}icons/`], ['<link rel="apple-touch-icon" href="icons/', `<link rel="apple-touch-icon" href="${UP}icons/`], ['<script src="vendor/', `<script src="${UP}vendor/`]]) {
         if (!out.includes(a)) throw new Error('order.html に、書き換えるはずの所が見つかりません: ' + a);
         out = out.split(a).join(b);
     }
