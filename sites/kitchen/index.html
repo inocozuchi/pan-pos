@@ -1897,7 +1897,7 @@
            ① はみ出す時は、テンキーと余白を2段階まで詰める（co-fit1・co-fit2）
            ② それでも入らない時だけ、画面全体を少し縮める（scale。押せる所も一緒に縮むのでずれない）
            お釣りの内訳は、出る前から場所を取っておく（押している途中でキーの位置が動かないように） */
-        #checkout-modal.co-fit .modal-content { max-height: none !important; overflow: visible !important; }
+        #checkout-modal.co-fit .modal-content { max-height: none !important; overflow: hidden !important; min-width: 0; }
         #checkout-modal.co-fit .co-action { position: static; }
         @media (min-width: 769px) {
             #checkout-modal.co-fit .modal-content { padding-top: 16px; padding-bottom: 16px; }
