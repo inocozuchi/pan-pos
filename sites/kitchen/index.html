@@ -998,9 +998,13 @@
         /* ページ式：マスの大きさは決まっていて、はみ出しは次のマスへ（カードの中はスクロールしない） */
         .kds-grid.paged { gap: 10px; align-items: stretch; overflow: hidden; }
         .kds-grid.paged .kds-card { height: 100%; min-height: 0; overflow: hidden; }
-        .kds-card.kds-cont .kds-head { min-height: 44px; background: var(--sunken); }
-        .kds-card.kds-cont .kds-head .kds-min { color: var(--text-light); font-size: 13px; }
-        .kds-card.kds-cont .kds-letter { background: var(--text-light); }
+        /* 1マスに入らない注文：横に続いたマスを1枚のカードに（枠・見出しは1つ。行は段組みで左の列から右の列へ） */
+        .kds-card.kds-wide .kds-items { display: block; columns: var(--kc, 2); column-gap: 22px; column-fill: auto; flex: 1 1 0; min-height: 0; overflow: hidden; }
+        .kds-card.kds-wide .kds-items > li { break-inside: avoid; -webkit-column-break-inside: avoid; margin-bottom: 2px; }
+        .kds-card.kds-wide .kds-items > li.kds-sep { margin: 3px 6px 5px 2px; }
+        /* とても長い注文の「つづき」のカード：見出しは元のカードと同じ色・同じ呼び名にして、同じ注文だと分かるように */
+        .kds-card.kds-cont .kds-head { min-height: 44px; }
+        .kds-card.kds-cont .kds-head .kds-min { font-size: 13px; }
         .kds-card .kds-more { margin-top: auto; padding: 4px 14px 8px 18px; font-size: 12.5px; font-weight: 800; color: var(--accent-ink); text-align: right; }
         .kds-pager { display: flex; align-items: center; gap: 6px; margin-left: auto; }
         .kds-pager + .kds-sound-btn { margin-left: 0; }
@@ -1300,6 +1304,20 @@
         .mo-tg { border: none; font: inherit; font-size: 13px; font-weight: 800; min-height: 34px; padding: 0 14px; border-radius: 999px; background: var(--sunken); color: var(--text-light); box-shadow: inset 0 0 0 1px var(--hairline); cursor: pointer; }
         .mo-tg.on { background: #FF9500; color: #fff; box-shadow: none; }
         .mo-tg.nw.on { background: var(--accent); }
+        .mo-mi-t { flex-wrap: wrap; }
+        .mo-art { border: none; font: inherit; font-size: 13px; font-weight: 700; min-height: 34px; padding: 0 12px 0 6px; border-radius: 999px; background: var(--sunken); color: var(--text-main);
+            box-shadow: inset 0 0 0 1px var(--hairline); display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+        .mo-art.open { box-shadow: inset 0 0 0 2px var(--accent); }
+        .ma-i { width: 26px; height: 26px; display: inline-grid; place-items: center; flex-shrink: 0; }
+        .ma-i svg { width: 100%; height: 100%; display: block; }
+        .mo-mi { flex-wrap: wrap; }
+        .mo-mi > .mo-art-pick { flex: 1 0 100%; }
+        .mo-art-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; padding: 8px; border-radius: var(--r-md); background: var(--sunken); }
+        .mo-art-pick button { border: none; font: inherit; background: var(--surface); color: var(--text-main); border-radius: 12px; padding: 6px 2px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; box-shadow: inset 0 0 0 1px var(--hairline); }
+        .mo-art-pick button.on { box-shadow: inset 0 0 0 2.5px var(--accent); }
+        .mo-art-pick .ma-i { width: 40px; height: 40px; }
+        .mo-art-pick small { font-size: 10.5px; font-weight: 700; line-height: 1.2; text-align: center; overflow-wrap: anywhere; }
+        .mo-art-pick .ma-none { font-size: 12px; font-weight: 800; color: var(--text-light); border-radius: 50%; box-shadow: inset 0 0 0 2px var(--hairline); }
         .mo-mi input[type="text"] { width: 100%; box-sizing: border-box; min-height: 40px; font-size: 16px; font-family: inherit; border: none; border-radius: var(--r-md); padding: 0 12px; background: var(--sunken); color: var(--text-main); box-shadow: inset 0 0 0 1px var(--hairline); }
         .mp-card { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-card), inset 6px 0 0 var(--dine); margin-bottom: 10px; --dine: var(--dine-take); }
         .mp-card.dine-eat { --dine: var(--dine-eat); }
@@ -4546,6 +4564,7 @@
 <script src="data/firebase-config.js"></script>
 <!-- 共有コードのQRコードを作る（MIT license・Kazuhiko Arase。通信なしで動くよう同じ場所に置いている） -->
 <script src="../../vendor/qrcode-generator.js"></script>
+<script src="../../vendor/menu-art.js"></script>
 
 <script>
     // ▼▼▼ この施設（アプリ）の設定（data/site.js）▼▼▼
@@ -6468,7 +6487,7 @@
                     <li>カードは表のように並び、<b>同じ段のカードは高さと下のボタンの位置がそろいます</b>。持ち帰り・店内・<b>未払い</b>（赤）・モバイル・後で会計などの札は、番号の下の決まった高さの帯に1行で並びます。</li>
                     <li>商品の行は<b>分類（パン・ドリンク など）ごと</b>にまとまり、分類の間は<b>点線</b>で区切られます。「伝票」（印刷）も同じく分類ごとに点線で区切ります。伝票は札の帯の右端の印刷の印で出します。</li>
                     <li>注文が9件より多い時は、カードを少し詰めて、1画面に多く入るようにします。</li>
-                    <li><b>横長の画面（iPad・パソコンの横置き）では、スクロールせずにページで見ます。</b>画面を横5つ×縦2段（幅がせまい時は横4つ）のマスに分け、左上から A〜J の順に並べます。品数の多い注文は<b>次のマスへ続けて</b>（「つづき」と出ます）、次の注文はその次のマスから始まります。入りきらない注文は<b>2ページ目</b>に回り、2ページ目も A から数えます。ページは上の <b>‹ ›</b> か、<b>左右にスワイプ</b>で送ります（次のページに新しい注文があると › に数が出ます）。</li>
+                    <li><b>横長の画面（iPad・パソコンの横置き）では、スクロールせずにページで見ます。</b>画面を横5つ×縦2段（幅がせまい時は横4つ）のマスに分け、左上から A〜J の順に並べます。1マスに入らない品数の多い注文は、<b>横に続いた2〜5マスを1枚のカード</b>にまとめ（枠・見出し・呼び名は1つ）、商品の行を左の列から右の列へ並べます。その段に入りきらない時は、次の段の頭から置きます。横いっぱいでも入らない、とても長い注文だけは、<b>同じ呼び名の「つづき」のカード</b>が下の段に続きます。入りきらない注文は<b>2ページ目</b>に回り、2ページ目も A から数えます。ページは上の <b>‹ ›</b> か、<b>左右にスワイプ</b>で送ります（次のページに新しい注文があると › に数が出ます）。</li>
                     <li><b>「担当」</b>で、ドリンク係はドリンク、のように分けて見られます（端末ごとに覚えます）。担当の商品が上に出て、<b>担当でない商品は下に薄い灰色</b>で出ます（押せません。何がいっしょに出るかは分かります）。</li>
                     <li>レジで会計を取り消すと、KDのカードも消えます。会計の中身を直すと、カードにも「直されました」と出ます。</li>
                     <li>KDで何を押しても、<b>売上の記録は変わりません</b>（お金の記録とは別に置いています）。</li>
@@ -6561,6 +6580,7 @@
                     <li><b>標準</b>…ファストフードのアプリや、飲食店の注文のタブレットのような形です。商品の<b>写真</b>を大きく並べ、上に<b>分類のタブ</b>（押すとその分類へ）、いちばん上に<b>おすすめ</b>の列が出ます。商品を押すと、写真・説明・特注・数を選ぶ窓が開き、「カートに入れる」で下に<b>カート</b>が浮かびます。カードの<b>＋</b>を押せば、窓を開かずに1つずつ入ります。</li>
                     <li><b>シンプル</b>…名前と値段だけの一覧です（前からの形）。軽く、古いスマホでもすぐ開きます。</li>
                     <li><b>写真・おすすめ・新商品・説明</b>…同じ設定の<b>「メニューの見せ方」</b>で、商品ごとに付けます（写真は左の四角を押して選びます。レジのボタンの写真と同じです）。<b>残りわずか</b>（残り3個以下）と<b>人気</b>（よく出ている上から3品）の札は、自動で付きます。</li>
+                    <li><b>商品の絵</b>…写真の無い商品には、用意してある絵（あんぱん・メロンパン・クロワッサン・クッキー・ケーキ・コーヒー・ジュース・たこ焼き・焼きそば など40ほど）から、<b>商品名に合うものを自動で</b>付けます。「メニューの見せ方」で商品ごとに選び直したり、「絵なし」にしたりできます。「写真の無い商品に絵を付ける」をオフにすると、名前の1文字目を出します。写真を付けた商品は、写真が出ます。</li>
                     <li><b>いちばん上の絵</b>…横長の画像を1枚置けます（新商品のお知らせ・お店の写真など）。次の回にも持ち越します。</li>
                 </ul>
                 <h4>そのほか</h4>
@@ -17954,7 +17974,7 @@
         const key = list => JSON.stringify(list.map(p => ({
             n: p.name, p: p.price, i: p.initialStock, t: p.type || '', o: p.note || '', a: p.active !== false, u: !!p.unlimited, s: !!p.stopped, c: p.consign || '',
             k: p.code || '', g: p.cost != null ? p.cost : '',   // JANコードと原価も（ほかの端末で直した時に届くように）
-            r: !!p.rec, w: !!p.isNew, d: p.desc || ''            // モバイルのおすすめ・新商品・説明も
+            r: !!p.rec, w: !!p.isNew, d: p.desc || '', ar: p.art || ''   // モバイルのおすすめ・新商品・説明・絵も
         })));
         const before = key(products);
         const next = JSON.parse(JSON.stringify(remoteProducts));
@@ -18631,74 +18651,125 @@
         meas.style.cssText = `position:absolute; left:-20000px; top:0; visibility:hidden; display:block; width:${L.cellW}px;`;
         meas.innerHTML = '';
         const fits = (el, extra) => el.offsetHeight + (extra || 0) <= L.cellH;
-        // 「次のマスへつづく」の行の高さ（続きのある切れはしには、この分を空けておく）
-        meas.innerHTML = '<article class="kds-card"><div class="kds-more">次のマスへつづく →</div></article>';
-        const moreH = (meas.querySelector('.kds-more').offsetHeight || 24) + 4;
-        meas.innerHTML = '';
-        // 1つの注文を、マスに入る大きさの切れはし（1つ以上）に分ける
-        const piecesOf = html => {
+        // 1つのマスに入らない注文は、横に続いたマスを1枚のカードにまとめる（枠も見出しも1つ。中の行は段組みで左から右へ）。
+        // 1段（横いっぱい）でも入らない、とても長い注文だけ、同じ見出しの「つづき」のカードを次の段に置く。
+        const wideW = m => L.cellW * m + L.gap * (m - 1);
+        const setWide = (card, m) => {
+            card.classList.toggle('kds-wide', m > 1);
+            card.style.setProperty('--kc', String(m));
+            card.style.width = wideW(m) + 'px';
+            card.style.height = L.cellH + 'px';
+        };
+        // 段組みのカードが、はみ出さずに入っているか
+        const wideFits = card => {
+            const ul = card.querySelector('.kds-items');
+            return card.scrollHeight <= L.cellH + 1 && (!ul || (ul.scrollWidth <= ul.clientWidth + 1 && ul.scrollHeight <= ul.clientHeight + 1));
+        };
+        const chunksOf = html => {
             const tmp = document.createElement('div');
             tmp.innerHTML = html;
             const card = tmp.firstElementChild;
             meas.appendChild(card);
-            if (fits(card)) return [card];
+            if (card.offsetHeight <= L.cellH) return [{ el: card, m: 1 }];
+            for (let m = 2; m <= L.cols; m++) { setWide(card, m); if (wideFits(card)) return [{ el: card, m }]; }
+            // 横いっぱいでも入らない：横いっぱいのカードを上から詰めて、残りを「つづき」のカードへ
             const ul = card.querySelector('.kds-items'), foot = card.querySelector('.kds-foot');
             const lis = [...ul.children];
             lis.forEach(li => li.remove());
             if (foot) foot.remove();
-            const parts = [card];
-            let cur = card, curUl = ul;
-            const newPart = () => {
+            const chunks = [{ el: card, m: L.cols }];
+            const more = () => { const d = document.createElement('div'); d.className = 'kds-more'; d.textContent = '下の段へつづく ↓'; return d; };
+            let cur = card, curUl = ul, curMore = more();
+            cur.appendChild(curMore);
+            const newChunk = () => {
                 const c = document.createElement('article');
                 c.className = card.className.replace(/\bfresh\b/, '') + ' kds-cont';
                 c.dataset.id = card.dataset.id;
                 c.innerHTML = `<div class="kds-head"><span class="kds-letter"></span><span class="kds-no">${card.querySelector('.kds-no').innerHTML}</span><span class="kds-min">つづき</span></div><ul class="kds-items"></ul>`;
                 meas.appendChild(c);
-                parts.push(c);
-                cur = c; curUl = c.querySelector('.kds-items');
+                setWide(c, L.cols);
+                chunks.push({ el: c, m: L.cols });
+                cur = c; curUl = c.querySelector('.kds-items'); curMore = more(); cur.appendChild(curMore);
             };
             lis.forEach(li => {
-                if (li.classList.contains('kds-sep') && !curUl.children.length) return;   // 切れはしの頭に点線は置かない
+                if (li.classList.contains('kds-sep') && !curUl.children.length) return;   // カードの頭に点線は置かない
                 curUl.appendChild(li);
-                if (!fits(cur, moreH) && curUl.children.length > 1) {
+                if (!wideFits(cur) && curUl.children.length > 1) {
                     li.remove();
-                    newPart();
+                    newChunk();
                     if (!li.classList.contains('kds-sep')) curUl.appendChild(li);
                 }
             });
+            // 最後のカード：「つづく」を外して下のボタンを付ける。入らなければ、最後の行をもう1枚へ
+            curMore.remove();
             if (foot) {
                 cur.appendChild(foot);
-                if (!fits(cur) && curUl.children.length > 1) {
-                    foot.remove();
+                while (!wideFits(cur) && curUl.children.length > 1) {
+                    const prevMore = more();
                     const last = curUl.lastElementChild;
-                    newPart();
+                    foot.remove();
+                    cur.appendChild(prevMore);
+                    newChunk();
+                    curMore.remove();
                     curUl.appendChild(last);
                     cur.appendChild(foot);
                 }
             }
-            // 切れはしの終わりの点線は消し、続きがある切れはしには「つづく」の印
-            parts.forEach((p, i) => {
-                const u = p.querySelector('.kds-items');
+            // 最後のカードは、入るいちばん少ない幅にする
+            const lastC = chunks[chunks.length - 1];
+            for (let m = 1; m < L.cols; m++) { setWide(lastC.el, m); if (wideFits(lastC.el)) { lastC.m = m; break; } setWide(lastC.el, L.cols); }
+            chunks.forEach(ch => {
+                const u = ch.el.querySelector('.kds-items');
                 while (u.lastElementChild && u.lastElementChild.classList.contains('kds-sep')) u.lastElementChild.remove();
-                if (i < parts.length - 1) p.insertAdjacentHTML('beforeend', '<div class="kds-more">次のマスへつづく →</div>');
             });
-            return parts;
+            return chunks;
         };
-        const orders = rows.map((o, i) => ({ o, parts: piecesOf(htmls[i]) }));
-        // ページに詰める（1つの注文の切れはしは、同じページの続いたマスに置く）
+        const orders = rows.map((o, i) => ({ o, parts: chunksOf(htmls[i]) }));
+        orders.forEach(x => x.parts.forEach(p => { p.el.style.width = ''; p.el.style.height = ''; if (p.m === 1) p.el.classList.remove('kds-wide'); }));
+        // ページに置く：左上から右へ、2段。幅のあるカードがその段に入らない時は次の段の頭から。
+        // 1つの注文のカードは同じページに置く（入らなければ次のページへ）
+        const place = (pos, parts) => {
+            let { r, c } = pos;
+            const at = [];
+            for (const p of parts) {
+                if (c + p.m > L.cols) { r++; c = 0; }
+                if (r >= 2) return null;
+                at.push({ r, c });
+                c += p.m;
+            }
+            return { at, next: { r, c } };
+        };
         const pages = [[]];
-        let used = 0;
+        let pos = { r: 0, c: 0 };
         orders.forEach(x => {
-            if (used && used + x.parts.length > L.per) { pages.push([]); used = 0; }
+            let got = place(pos, x.parts);
+            if (!got && pages[pages.length - 1].length) { pages.push([]); pos = { r: 0, c: 0 }; got = place(pos, x.parts); }
+            if (!got) {   // 2段にも入らない、とても長い注文：入る所まで置いて、残りは次のページへ
+                const rest = x.parts.slice();
+                while (rest.length) {
+                    let n = rest.length, g = null;
+                    while (n > 0 && !(g = place(pos, rest.slice(0, n)))) n--;
+                    if (!g) { pages.push([]); pos = { r: 0, c: 0 }; continue; }
+                    const part = { o: x.o, parts: rest.splice(0, n), at: g.at };
+                    pages[pages.length - 1].push(part);
+                    pos = g.next;
+                    if (rest.length) { pages.push([]); pos = { r: 0, c: 0 }; }
+                }
+                return;
+            }
+            x.at = got.at;
             pages[pages.length - 1].push(x);
-            used += x.parts.length;
+            pos = got.next;
         });
         kdsPageCount = pages.length;
         kdsPage = Math.max(0, Math.min(kdsPage, pages.length - 1));
         // 呼び名はページごとに A から
         pages.forEach(pg => pg.forEach((x, i) => {
             const letter = kdsCardLetter(i);
-            x.parts.forEach(p => {
+            x.parts.forEach((pp, k) => {
+                const p = pp.el;
+                p.style.gridRow = String(x.at[k].r + 1);
+                p.style.gridColumn = `${x.at[k].c + 1} / span ${pp.m}`;
                 p.dataset.letter = letter;
                 const lt = p.querySelector('.kds-letter');
                 if (lt) { lt.textContent = letter; lt.setAttribute('aria-label', letter + 'オーダー'); }
@@ -18710,7 +18781,7 @@
         grid.style.gridTemplateColumns = `repeat(${L.cols}, minmax(0, 1fr))`;
         grid.style.gridTemplateRows = `repeat(2, ${L.cellH}px)`;
         const els = [];
-        show.forEach(x => x.parts.forEach(p => els.push(p)));
+        show.forEach(x => x.parts.forEach(p => els.push(p.el)));
         grid.replaceChildren(...els);
         if (kdsPageDir && !REDUCE_MOTION && grid.animate) {
             grid.animate([{ transform: `translateX(${kdsPageDir * 40}px)`, opacity: 0.4 }, { transform: 'none', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.32,.72,0,1)' });
@@ -19596,10 +19667,11 @@
     // ・opt   … お客様が特注（氷少なめ など）を付けられるか
     // ・ui    … お客様の注文の画面の形（'std' 標準：写真・おすすめ・分類のタブ ／ 'simple' シンプル：名前と値段の一覧）
     // ・heroAt … 注文の画面のいちばん上の絵（横長の画像）を置いた時刻（0なら無し。画像は live/mhero に置く）
-    let mobileCfg = { on: false, stopMsg: '', note: '', wait: 0, pick: false, lead: 10, ahead: 120, shop: '', icon: '', seat: false, opt: true, ui: 'std', heroAt: 0 };
+    // ・art   … 写真の無い商品に、商品名から選んだ絵を付けるか（標準の形の時。初めはオン）
+    let mobileCfg = { on: false, stopMsg: '', note: '', wait: 0, pick: false, lead: 10, ahead: 120, shop: '', icon: '', seat: false, opt: true, ui: 'std', heroAt: 0, art: true };
     // 次の回にも持ち越す設定（受付中かどうかと待ち時間は、毎回その日に決める）
     let mobileKeep = {};
-    const MOBILE_KEEP_KEYS = ['stopMsg', 'note', 'pick', 'lead', 'ahead', 'shop', 'icon', 'seat', 'opt', 'ui', 'heroAt'];
+    const MOBILE_KEEP_KEYS = ['stopMsg', 'note', 'pick', 'lead', 'ahead', 'shop', 'icon', 'seat', 'opt', 'ui', 'heroAt', 'art'];
     function keepMobile() { mobileKeep = {}; MOBILE_KEEP_KEYS.forEach(k => { mobileKeep[k] = mobileCfg[k]; }); }
     function freshMobileCfg() { return normMobileCfg(Object.assign({}, mobileKeep, { on: false, wait: 0 })); }
     const MOBILE_WAITS = [0, 5, 10, 15, 20, 30, 45, 60];
@@ -19614,7 +19686,8 @@
             on: m.on === true, stopMsg: str(m.stopMsg, 200), note: str(m.note, 300),
             wait: int(m.wait, 0, 180, 0), pick: m.pick === true, lead: int(m.lead, 1, 120, 10), ahead: int(m.ahead, 30, 720, 120),
             shop: str(m.shop, 30).trim(), icon, seat: m.seat === true, opt: m.opt !== false,
-            ui: m.ui === 'simple' ? 'simple' : 'std', heroAt: Number.isFinite(Number(m.heroAt)) && Number(m.heroAt) > 0 ? Math.floor(Number(m.heroAt)) : 0
+            ui: m.ui === 'simple' ? 'simple' : 'std', heroAt: Number.isFinite(Number(m.heroAt)) && Number(m.heroAt) > 0 ? Math.floor(Number(m.heroAt)) : 0,
+            art: m.art !== false
         };
     }
     function mobileSub() {
@@ -19811,6 +19884,10 @@
             <input type="file" id="mo-hero-file" accept="image/*" style="display:none" onchange="onMobileHeroChosen(event)">
             <label class="field-label sec">メニューの見せ方</label>
             <p class="settings-hint" style="margin-top:0;">写真（左の四角）・「おすすめ」「新商品」の札・ひとことの説明を付けられます。「おすすめ」を付けた商品は、いちばん上の列にも並びます。残りが少ない商品には「残りわずか」、よく出ている商品には「人気」が自動で付きます。</p>
+            ${window.MENU_ART ? `<div class="sw-row">
+                <div class="sw-text"><b>写真の無い商品に絵を付ける</b><span>用意してある絵（パン・クッキー・飲み物・たこ焼き など）から、商品名に合うものを自動で選びます。商品ごとに選び直すこともできます</span></div>
+                <input type="checkbox" class="ios-switch" id="opt-mobile-art" ${mobileCfg.art ? 'checked' : ''} onchange="setMobileArt(this.checked)">
+            </div>` : ''}
             <div class="mo-mis">${list.length ? list.map(p => `<div class="mo-mi" style="--ink:${catInk(p.type)};">
                 ${pimgHtml(p, 'live')}
                 <div class="mo-mi-b">
@@ -19818,10 +19895,49 @@
                     <div class="mo-mi-t">
                         <button type="button" class="mo-tg${p.rec ? ' on' : ''}" aria-pressed="${!!p.rec}" onclick="setMenuFlag(${p.id}, 'rec')">おすすめ</button>
                         <button type="button" class="mo-tg nw${p.isNew ? ' on' : ''}" aria-pressed="${!!p.isNew}" onclick="setMenuFlag(${p.id}, 'isNew')">新商品</button>
+                        ${mobileCfg.art && window.MENU_ART ? menuArtChip(p) : ''}
                     </div>
                     <input type="text" maxlength="40" value="${escHtml(p.desc || '')}" placeholder="ひとことの説明（任意・40文字まで）" aria-label="${escHtml(p.name)}の説明" onchange="setMenuDesc(${p.id}, this.value)">
                 </div>
+                ${mobileCfg.art && window.MENU_ART && moArtOpen === p.id ? menuArtPicker(p) : ''}
             </div>`).join('') : '<p class="settings-hint">商品がありません。</p>'}</div>` : ''}`;
+    }
+    // ---- 商品の絵（写真が無い時に、注文の画面に出す絵）----
+    let moArtOpen = null;
+    // その商品に出す絵の印（写真がある時は写真を出すので、ここでは見ない）。'' は絵を出さない
+    function menuArtOf(p) {
+        if (!mobileCfg.art || !window.MENU_ART || !p || p.art === 'none') return '';
+        if (p.art && MENU_ART.has(p.art)) return p.art;
+        return MENU_ART.pick(p.name, p.type, catLabelOf(p.type));
+    }
+    function menuArtChip(p) {
+        const id = menuArtOf(p), has = !!productImgUrl(p.name);
+        const lab = p.art === 'none' ? '絵なし' : (MENU_ART.list.find(a => a.id === id) || {}).label || '';
+        return `<button type="button" class="mo-art${moArtOpen === p.id ? ' open' : ''}" onclick="toggleMenuArt(${p.id})" aria-expanded="${moArtOpen === p.id}" aria-label="${escHtml(p.name)}の絵を選ぶ" title="${has ? '写真があるので、写真を出します' : ''}">`
+            + `${id ? `<span class="ma-i">${MENU_ART.svg(id)}</span>` : ''}<span>${has ? '写真' : escHtml(lab)}${!has && !p.art && id ? '（自動）' : ''}</span></button>`;
+    }
+    function menuArtPicker(p) {
+        const auto = MENU_ART.pick(p.name, p.type, catLabelOf(p.type));
+        const cur = p.art || '';
+        const b = (v, inner, lab) => `<button type="button" class="${cur === v ? 'on' : ''}" aria-pressed="${cur === v}" onclick="setMenuArt(${p.id}, '${v}')" aria-label="${escHtml(lab)}">${inner}<small>${escHtml(lab)}</small></button>`;
+        return `<div class="mo-art-pick" role="group" aria-label="${escHtml(p.name)}の絵">`
+            + b('', `<span class="ma-i">${MENU_ART.svg(auto)}</span>`, '自動')
+            + MENU_ART.list.map(a => b(a.id, `<span class="ma-i">${MENU_ART.svg(a.id)}</span>`, a.label)).join('')
+            + b('none', '<span class="ma-i ma-none">なし</span>', '絵なし') + '</div>';
+    }
+    function toggleMenuArt(id) { moArtOpen = moArtOpen === id ? null : id; playSound(660, 0.03); renderMobileView(); fillMobileHero(); }
+    function setMenuArt(id, v) {
+        const p = products.find(x => x.id === id);
+        if (!p || (v && v !== 'none' && !(window.MENU_ART && MENU_ART.has(v)))) return;
+        if ((p.art || '') === v) { moArtOpen = null; renderMobileView(); fillMobileHero(); return; }
+        if (v) p.art = v; else delete p.art;
+        logEdit(`${p.name}の絵を${v === 'none' ? '出さないように' : v ? '「' + ((MENU_ART.list.find(a => a.id === v) || {}).label || v) + '」に' : '自動に'}した`);
+        moArtOpen = null;
+        syncPushProducts(); saveData(); publishMobileMenu(true);
+        renderMobileView(); fillMobileHero();
+    }
+    function setMobileArt(on) {
+        writeMobileCfg(Object.assign({}, mobileCfg, { art: !!on }), on ? 'モバイルの商品に絵を付けるようにした' : 'モバイルの商品に絵を付けないようにした');
     }
     function setMobileUi(v) {
         const ui = v === 'simple' ? 'simple' : 'std';
@@ -19936,6 +20052,7 @@
                 if (!it.soldOut && hot.has(p.name)) it.hot = true;
                 const im = productImgs[p.name];
                 if (im && im.d && imgBytes + im.d.length < 900000) { imgs[p.name] = im.d; imgBytes += im.d.length; it.img = 1; }
+                else { const art = menuArtOf(p); if (art) it.art = art; }   // 写真の無い商品は、用意してある絵
                 return it;
             });
             const imgKey = Object.keys(imgs).length ? String(Object.keys(imgs).map(n => n + ':' + (productImgs[n].at || 0)).join('|').split('').reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7)) : '';

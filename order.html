@@ -27,6 +27,8 @@
     -->
     <script src="data/site.js"></script>
     <script src="data/firebase-config.js"></script>
+    <!-- 写真の無い商品に出す絵（レジが商品名から選んだ絵の印を、メニューに入れて送ってくる） -->
+    <script src="vendor/menu-art.js"></script>
     <style>
         :root {
             --bg: #F2F3F7; --surface: #FFFFFF; --sunken: #F4F5F9; --text: #1C1D22; --sub: #5F6472;
@@ -221,6 +223,10 @@
         .ph { position: relative; aspect-ratio: 1 / 1; background: var(--sunken); display: grid; place-items: center; overflow: hidden; }
         @supports (background: color-mix(in srgb, red 10%, white)) { .ph { background: color-mix(in srgb, var(--ink, #888) 14%, var(--surface)); } }
         .ph img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+        .ph .ph-art { width: 74%; height: 74%; display: grid; place-items: center; }
+        .ph .ph-art svg { width: 100%; height: 100%; display: block; }
+        .rec-card .ph .ph-art, .isheet .ph .ph-art { width: 62%; height: 86%; }
+        body.std .item.out .ph .ph-art { filter: grayscale(1); opacity: .6; }
         .ph .ph-t { font-size: 46px; font-weight: 900; color: var(--ink, var(--sub)); opacity: .8; line-height: 1; }
         .bds { position: absolute; left: 8px; top: 8px; right: 8px; display: flex; flex-wrap: wrap; gap: 4px; pointer-events: none; }
         .bd { font-size: 11px; font-weight: 900; line-height: 1.2; padding: 3px 8px; border-radius: 999px; background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, .18); }
@@ -742,7 +748,8 @@
     // 写真（無い時は、分類の色の上に名前の1文字目を大きく）
     function photoHtml(i) {
         const d = imgs[i.name];
-        return `<div class="ph" style="--ink:${INK[i.type] || 'var(--sub)'}">${d ? `<img src="${d}" alt="" loading="lazy">` : `<span class="ph-t" aria-hidden="true">${esc(Array.from(String(i.name))[0] || '')}</span>`}<div class="bds">${badgesHtml(i)}</div></div>`;
+        const art = !d && i.art && window.MENU_ART && MENU_ART.has(i.art) ? MENU_ART.svg(i.art) : '';
+        return `<div class="ph" style="--ink:${INK[i.type] || 'var(--sub)'}">${d ? `<img src="${d}" alt="" loading="lazy">` : art ? `<span class="ph-art">${art}</span>` : `<span class="ph-t" aria-hidden="true">${esc(Array.from(String(i.name))[0] || '')}</span>`}<div class="bds">${badgesHtml(i)}</div></div>`;
     }
     function stepHtml(i) {
         const q = qty[i.name] || 0, n = esc(i.name);
