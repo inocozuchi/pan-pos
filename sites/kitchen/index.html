@@ -6611,7 +6611,7 @@
             id: 'kitchen', icon: 'kitchen', title: 'KDで作る・番号で呼ぶ', sub: 'ファストフードのモード',
             kitchenOnly: true,
             body: `
-                <p>KDは、<b>「設定 → この端末の役割」でKDにした端末</b>に、CDと同じく<b>画面いっぱい</b>に出ます（下のタブにはありません。レジに戻す時は、KDの<b>左上の×</b>を押します）。レジで商品を打つと、<b>会計が終わる前から</b>KDに「会計中」のカードが点滅して出て、音が鳴ります（共有している時）。先に作り始めて大丈夫です。会計が済むと、カードに<b>番号</b>が付きます。</p>
+                <p>KDは、<b>「設定 → この端末の役割」でKDにした端末</b>に、CDと同じく<b>画面いっぱい</b>に出ます（下のタブにはありません。レジに戻す時は、KDの<b>左上の×</b>を押します。KDにする前にいた画面（「この端末の役割」など）に、見ていた位置のまま戻ります）。レジで商品を打つと、<b>会計が終わる前から</b>KDに「会計中」のカードが点滅して出て、音が鳴ります（共有している時）。先に作り始めて大丈夫です。会計が済むと、カードに<b>番号</b>が付きます。</p>
                 <ol class="man-steps">
                     <li>レジの会計の窓で<b>「持ち帰り」か「店内」</b>を選んでから会計します（何もしなければ持ち帰り）。カードの色は、<b>持ち帰りが橙・店内が緑</b>です。</li>
                     <li>キッチンの人は、できた商品の行を押します。<b>赤い「未」</b>が消えます（もう一度押すと戻ります）。</li>
@@ -7030,7 +7030,8 @@
                     <div class="man-box-h">覚えておくこと</div>
                     <ul class="man-list">
                         <li>お客様用にした端末では<b>会計はできません</b>（映すだけです）。</li>
-                        <li>ふだんのレジに戻すときは、画面の<b>左上の×</b>を押します（KD・ハンディも同じです）。</li>
+                        <li>ふだんのレジに戻すときは、画面の<b>左上の×</b>を押します（KD・ハンディも同じです）。CD・KD・ハンディにする前にいた画面（「この端末の役割」「複数端末で使う」など）に、<b>見ていた位置のまま</b>戻ります。</li>
+                        <li>アプリのどの画面でも、「戻る」（左端から右へなぞった時も）は<b>ひとつ前にいた画面の、見ていた位置</b>へ戻ります。</li>
                         <li>電波が切れても表示のままです。つながり直すと自動でまた映ります。</li>
                         <li>パソコンのブラウザでCDにすると、そのまま<b>全画面</b>になります。上の右の四角いボタンで、全画面にしたり、やめたりできます。</li>
                         <li>画面が消えていた・他のアプリを使っていた場合も、<b>戻れば自動で追いつきます</b>。</li>
@@ -7638,15 +7639,31 @@
             // 映すだけだった端末（まだ販売会に入っていない）は、KD・ハンディとして合流する画面へ
             if (notRegister && !currentSession) { uiPrefs.kitchenOnly = kitchen; uiPrefs.handyOnly = handy; storeUiPrefs(); openJoinAs(role); return; }
         }
+        // KD・ハンディに入る時は、いまいる画面（とスクロール位置）を覚えておき、
+        // レジに戻る時はそこへ戻す（CDと同じく「進んだら、戻る時はその前にいた所」）
+        let returned = false;
+        if (notRegister && !roleReturnStack && navStack.some(e => e.view !== 'register')) {
+            rememberNavScroll();
+            roleReturnStack = navStack.map(e => Object.assign({}, e));
+        }
+        if (!notRegister && roleReturnStack) {
+            navStack = roleReturnStack;
+            roleReturnStack = null;
+            navDir = 'back';
+            returned = true;
+        }
+        if (!notRegister) roleReturnStack = null;
         uiPrefs.kitchenOnly = kitchen;
         uiPrefs.handyOnly = handy;
         storeUiPrefs();
         if (!notRegister && syncMode && isKitchen()) ensureKitchenLetter(syncEventCode);   // レジになったら、レジの番号を決める
         if (!handy) orderTarget = null;
         applyDeviceRole();
+        if (returned) renderNav();
         if (kitchen && currentSession) navTo('kitchen');
         if (handy && currentSession) navTo('tables');
         if (!kitchen && currentView === 'kitchen') showRegister();
+        if (!handy && !returned && currentView === 'tables' && !isRestaurant()) showRegister();
         beatPresence();
         showToast(`${roleTitle(role)}にしました`);
         autoFsForRole(role);
@@ -7695,10 +7712,14 @@
         if (role === 'register' || role === 'handy') { exitFs(); return; }
         if (window.matchMedia && window.matchMedia('(pointer: fine)').matches) enterFs();
     }
+    // KD・ハンディに入る前にいた画面（履歴）。左上の×でレジに戻る時に、ここへ戻す
+    let roleReturnStack = null;
     function exitToRegister() {
         if (typeof requirePerm === 'function' && !requirePerm('display-exit', exitToRegister)) return;
+        const back = !!roleReturnStack;
         switchDeviceRole('register').then(() => {
-            if (deviceRole() === 'register' && currentView !== 'register') showRegister();
+            // 戻る先を覚えていなかった時（最初からKDで開いた時など）は、レジの画面へ
+            if (!back && deviceRole() === 'register' && (currentView === 'kitchen' || currentView === 'tables')) showRegister();
         });
     }
     // 閉店中に レジ以外の役割を選んだ時：合流の画面を、その役割を選んだ形で開く
@@ -12989,6 +13010,16 @@
     let navDir = 'forward';     // 画面の入れ替わり方向（アニメーションの向きに使う）
 
     function navTop() { return navStack[navStack.length - 1]; }
+    // 最後に描いた画面の印（同じ画面を描き直すだけの時は、スクロール位置を動かさないため）
+    let lastNavKey = '';
+    let navTouchedAt = 0;     // 指やホイールでスクロールした時刻（戻した位置を、そのあと上書きしないため）
+    ['touchstart', 'wheel'].forEach(t => document.addEventListener(t, e => { if (e.target && e.target.closest && e.target.closest('#panel-body')) navTouchedAt = Date.now(); }, { passive: true }));
+    // いま見ている画面のスクロール位置を、履歴に覚えておく（ほかの画面へ進む前に呼ぶ）
+    function rememberNavScroll() {
+        const cur = navTop();
+        const body = document.getElementById('panel-body');
+        if (cur && cur.view !== 'register' && body) cur.scroll = body.scrollTop;
+    }
 
     // ボトムナビ：そのタブを起点にして履歴をやり直す
     function navTo(section) {
@@ -13008,8 +13039,7 @@
         const top = navTop();
         if (top && top.view === view && (top.sub || null) === (sub || null)) { renderNav(); return; }
         // 戻ってきた時に、押す前の場所から続けられるよう、いまのスクロール位置を覚えておく
-        const cur = navTop();
-        if (cur && cur.view !== 'register') cur.scroll = document.getElementById('panel-body').scrollTop;
+        rememberNavScroll();
         navStack.push({ view, sub: sub || null });
         navDir = 'forward';
         renderNav();
@@ -13065,15 +13095,21 @@
         const reg = document.getElementById('page-register');
         const panel = document.getElementById('page-panel');
         const onRegister = currentView === 'register';
+        // 同じ画面を描き直すだけか（その時は、動きも付けず、スクロール位置もそのまま）
+        const navKey = currentView + '/' + (currentSub || '') + '#' + navStack.length;
+        const samePage = navKey === lastNavKey;
+        lastNavKey = navKey;
 
         setPageActive(reg, onRegister);
         setPageActive(panel, !onRegister);
 
         if (!onRegister) {
             // 開いた直後だけ、中身を順に出す動きを付ける（開いたあとの描き直しでは動かさない）
-            panel.classList.add('entering');
-            clearTimeout(panelEnterTimer);
-            panelEnterTimer = setTimeout(() => panel.classList.remove('entering'), 520);
+            if (!samePage) {
+                panel.classList.add('entering');
+                clearTimeout(panelEnterTimer);
+                panelEnterTimer = setTimeout(() => panel.classList.remove('entering'), 520);
+            }
             // 画面の幅の決まり（設定は読みやすい幅にそろえる）に使う印
             panel.dataset.view = currentView;
             panel.dataset.sub = currentSub || '';
@@ -13089,7 +13125,7 @@
                     subs.forEach(el => {
                         const show = el.id === wantId;
                         el.style.display = show ? 'block' : 'none';
-                        if (show) animateIn(el);
+                        if (show && !samePage) animateIn(el);
                     });
                 }
             }
@@ -13097,11 +13133,13 @@
             document.getElementById('panel-title').textContent = reportKey
                 ? (ANALYTICS_TITLES[reportKey] || '')
                 : (currentSub ? (SUB_TITLES[currentSub] || '') : (VIEW_TITLES[currentView] || ''));
-            document.getElementById('panel-body').scrollTop = 0;
+            // 新しく開いた画面は上から。同じ画面の描き直しでは、見ている場所を動かさない
+            if (!samePage) document.getElementById('panel-body').scrollTop = 0;
         }
         // 「戻る」（左端からなぞった時も）で戻ってきた画面は、進む前に見ていた場所まで戻す
         const backTo = !onRegister && navDir === 'back' && top.scroll > 0 ? top.scroll : 0;
         delete top.scroll;
+        const renderedAt = Date.now();
         // 戻るボタンは「ひとつ前があるか」だけで決まる（どの画面でも同じ位置・同じ意味）
         const backBtn = document.getElementById('panel-back');
         const canBack = navStack.length > 1;
@@ -13110,9 +13148,13 @@
         setActiveNav(currentView === 'session' ? null : (currentView === 'kitchen' ? 'register' : currentView));
         if (!onRegister) refreshView(currentView, currentSub);
         if (backTo) {
+            // 中身があとから描かれて高さが足りない時もあるので、少し間を置いて何度か合わせ直す
+            // （その間に指でスクロールしたら、そこでやめる）
             const body = document.getElementById('panel-body');
+            const apply = () => { if (navTop() === top && navTouchedAt < renderedAt && Math.abs(body.scrollTop - backTo) > 1) body.scrollTop = backTo; };
             body.scrollTop = backTo;
-            requestAnimationFrame(() => { if (navTop() === top) body.scrollTop = backTo; });
+            requestAnimationFrame(apply);
+            [80, 250, 550].forEach(ms => setTimeout(apply, ms));
         }
         updateKdFull();
     }
