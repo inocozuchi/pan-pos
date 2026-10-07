@@ -110,6 +110,8 @@
         .flash { animation: flash .5s ease-in-out 6 alternate; }
         @keyframes flash { from { background: var(--bg); } to { background: var(--ok-bg); } }
         .hide { display: none !important; }
+        /* 1回の注文で頼める数の上限（お店が決めた時だけ） */
+        .lim { display: block; font-size: 12px; font-weight: 800; color: var(--danger); margin-top: 2px; }
         .center { text-align: center; }
         .foot { font-size: 12px; color: var(--sub); margin-top: 16px; text-align: center; }
         .wait { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; background: var(--accent-soft); color: var(--accent-ink); border-radius: var(--r); padding: 12px 16px; margin: 12px 0; font-weight: 700; }
@@ -332,6 +334,12 @@
             </div>
             <div class="sub" id="c-coupon-sub"></div>
         </div>
+        <!-- 申し送り（お店が「申し送り」を使っている時だけ）。お店のKDに出る -->
+        <div class="pick hide" id="c-memo-box">
+            <label for="c-memo">お店への申し送り（任意）</label>
+            <input type="text" id="c-memo" maxlength="60" autocomplete="off" placeholder="例：袋は不要・アレルギー 卵" style="width:100%; min-height:48px; font-size:17px; font-family:inherit; border-radius:12px; border:none; padding:0 12px; background:var(--sunken); color:var(--text); box-shadow:inset 0 0 0 1px var(--hair);">
+            <div class="sub">お作りする人に伝わります（60文字まで）。</div>
+        </div>
         <div class="notice" id="c-note">お支払いは、受け取りの時にレジでお願いします。注文すると番号が出ます。</div>
         <button class="btn full" id="c-send" onclick="sendOrder()" disabled>注文する</button>
         <button class="btn sec full" style="margin-top:8px;" onclick="showMenu()">メニューに戻る</button>
@@ -373,6 +381,11 @@
     const COL = /^[A-Za-z0-9_-]{1,64}$/.test(String(SITE.eventsCollection || '')) ? SITE.eventsCollection : 'events';
     const PRE = SITE.id && /^[A-Za-z0-9_-]{1,32}$/.test(SITE.id) ? SITE.id + ':' : '';
     const MAX_EACH = 10, MAX_ITEMS = 20, MAX_ACTIVE = 3;
+    // その商品を1回の注文で頼める数（お店が「個数制限」で決めた上限があれば、その数まで）
+    function maxOf(i) { const m = Number(i && i.max); return m >= 1 ? Math.min(MAX_EACH, Math.floor(m)) : MAX_EACH; }
+    function maxByName(n) { return maxOf(menu && menu.items.find(i => i.name === n)); }
+    // 上限のある商品に出す小さな注意（標準・シンプルの両方）
+    function limitNote(i) { return Number(i && i.max) >= 1 ? `<span class="lim">1回の注文で${maxOf(i)}個まで</span>` : ''; }
     const $ = id => document.getElementById(id);
     // 押せる所の外（すき間・文字）を素早く2回たたいた時の拡大を止める（押せる所の連打は、そのまま1回ずつ効く）
     (function () {
@@ -604,6 +617,12 @@
         }
         return { gross, set, coupon: c, net: Math.max(0, gross - set - c) };
     }
+    // 申し送り（お店のレジの機能「申し送り」がオンの時だけ書ける）
+    function memoOn() { return !!(evData && evData.feat && evData.feat.memo === true); }
+    function memoText() {
+        const v = String(($('c-memo') || {}).value || '').replace(/[\u0000-\u001f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+        return memoOn() ? v : '';
+    }
     function shopName() { return (evData && ((evData.mobile && evData.mobile.shop) || evData.name)) || ''; }
     // いま作っている（待っている）組の数
     function waitingGroups() { const now = Date.now(); return orders.filter(o => o.st === 'cook' && !heldNow(o, now)).length; }
@@ -754,19 +773,19 @@
     }
     function stepHtml(i) {
         const q = qty[i.name] || 0, n = esc(i.name);
-        return `<div class="step">${q ? `<button type="button" aria-label="${n}を1つ減らす" data-n="${n}" data-d="-1">−</button><span class="q">${q}</span>` : ''}<button type="button" class="plus" aria-label="${n}を1つ増やす" ${q >= MAX_EACH ? 'disabled' : ''} data-n="${n}" data-d="1">＋</button></div>`;
+        return `<div class="step">${q ? `<button type="button" aria-label="${n}を1つ減らす" data-n="${n}" data-d="-1">−</button><span class="q">${q}</span>` : ''}<button type="button" class="plus" aria-label="${n}を1つ増やす" ${q >= maxOf(i) ? 'disabled' : ''} data-n="${n}" data-d="1">＋</button></div>`;
     }
     function stdCard(i) {
         const q = qty[i.name] || 0;
         return `<div class="item${i.soldOut ? ' out' : ''}${q ? ' in' : ''}" data-open="${esc(i.name)}" data-k="c:${esc(i.name)}">${photoHtml(i)}
-            <div class="nm">${esc(i.name)}<span class="pr">${yen(i.price)}</span></div>${i.desc ? `<div class="ds">${esc(i.desc)}</div>` : ''}
+            <div class="nm">${esc(i.name)}<span class="pr">${yen(i.price)}</span>${limitNote(i)}</div>${i.desc ? `<div class="ds">${esc(i.desc)}</div>` : ''}
             ${i.soldOut ? '<span class="so">売り切れ</span>' : stepHtml(i)}</div>`;
     }
     function recCard(i) {
         const q = qty[i.name] || 0;
         return `<div class="rec-card" data-open="${esc(i.name)}" data-k="r:${esc(i.name)}">${photoHtml(i)}
             <div class="rb"><div class="rn">${esc(i.name)}<small>${yen(i.price)}${q ? `・カートに${q}個` : ''}</small></div>
-            <button type="button" class="rec-add" aria-label="${esc(i.name)}をカートに1つ入れる" ${q >= MAX_EACH ? 'disabled' : ''} data-n="${esc(i.name)}" data-d="1">＋</button></div></div>`;
+            <button type="button" class="rec-add" aria-label="${esc(i.name)}をカートに1つ入れる" ${q >= maxOf(i) ? 'disabled' : ''} data-n="${esc(i.name)}" data-d="1">＋</button></div></div>`;
     }
     // 標準の形：前と同じ並びなら、中身の変わったカードだけを書き換える（写真がちらつかず、スクロールもずれない）
     let stdStruct = '', stdCards = {};
@@ -802,17 +821,19 @@
         // 品切れになった商品は、選んでいた数も消す
         menu.items.forEach(i => { if (i.soldOut && qty[i.name]) delete qty[i.name]; });
         Object.keys(qty).forEach(n => { if (!menu.items.some(i => i.name === n)) delete qty[n]; });
+        // お店が上限を決め直した時は、選んでいた数もその上限まで
+        Object.keys(qty).forEach(n => { const mx = maxByName(n); if (qty[n] > mx) qty[n] = mx; });
         if (stdUi()) { loadImgs(); renderStdMenu(box, groups); renderBar(); refreshItem(); return; }
         stdStruct = ''; stdCards = {};
         $('tabs').classList.add('hide');
         box.innerHTML = groups.map(g => `<div class="cat" style="--ink:${INK[g.c.id] || 'var(--hair)'}"><i></i>${esc(g.c.label)}</div>` + g.items.map(i => {
             const q = qty[i.name] || 0;
             return `<div class="item${i.soldOut ? ' out' : ''}">
-                <div class="nm">${esc(i.name)}<span class="pr">${yen(i.price)}</span></div>
+                <div class="nm">${esc(i.name)}<span class="pr">${yen(i.price)}</span>${limitNote(i)}</div>
                 ${i.soldOut ? '<span class="so">売り切れ</span>' : `<div class="step">
                     <button type="button" aria-label="${esc(i.name)}を1つ減らす" ${q ? '' : 'disabled'} data-n="${esc(i.name)}" data-d="-1">−</button>
                     <span class="q">${q}</span>
-                    <button type="button" class="plus" aria-label="${esc(i.name)}を1つ増やす" ${q >= MAX_EACH ? 'disabled' : ''} data-n="${esc(i.name)}" data-d="1">＋</button>
+                    <button type="button" class="plus" aria-label="${esc(i.name)}を1つ増やす" ${q >= maxOf(i) ? 'disabled' : ''} data-n="${esc(i.name)}" data-d="1">＋</button>
                 </div>`}
             </div>`;
         }).join('')).join('');
@@ -869,7 +890,9 @@
     }
     function change(name, d) {
         const all = Object.values(qty).reduce((t, v) => t + v, 0);
-        const next = Math.max(0, Math.min(MAX_EACH, (qty[name] || 0) + d));
+        const mx = maxByName(name);
+        if (d > 0 && (qty[name] || 0) >= mx) { toast(`${name}は、1回の注文で${mx}個までです`); return; }
+        const next = Math.max(0, Math.min(mx, (qty[name] || 0) + d));
         if (d > 0 && all >= MAX_ITEMS) return;
         if (next) qty[name] = next; else delete qty[name];
         renderMenu();
@@ -881,7 +904,7 @@
         const it = menu.items.find(i => i.name === name);
         if (!it) return;
         itemOpen = name;
-        itemQty = Math.max(1, qty[name] || 1);
+        itemQty = Math.min(maxOf(it), Math.max(1, qty[name] || 1));
         drawItem();
         $('item-sheet').classList.remove('hide');
     }
@@ -899,15 +922,15 @@
             return `<button type="button" class="${on ? 'on' : ''}" data-og="${g.id}" data-oi="${x}">${x}</button>`;
         }).join('')}</div></div>`).join('')}</div>` : '';
         $('item-body').innerHTML = `<div class="is-scroll">${photoHtml(it)}<button type="button" class="x" onclick="closeItem()" aria-label="閉じる">×</button>
-            <div class="is-b"><div class="is-bd"></div><h2>${n}</h2><div class="is-pr">${yen(it.price)}</div>${it.desc ? `<div class="is-ds">${esc(it.desc)}</div>` : ''}${opts}</div></div>
+            <div class="is-b"><div class="is-bd"></div><h2>${n}</h2><div class="is-pr">${yen(it.price)}</div>${limitNote(it)}${it.desc ? `<div class="is-ds">${esc(it.desc)}</div>` : ''}${opts}</div></div>
             <div class="is-foot">${it.soldOut ? '<button type="button" class="btn full" disabled>売り切れ</button>' : `<div class="step">
                 <button type="button" id="is-minus" aria-label="1つ減らす" ${itemQty <= 1 ? 'disabled' : ''}>−</button><span class="q" id="is-q">${itemQty}</span>
-                <button type="button" class="plus" id="is-plus" aria-label="1つ増やす" ${itemQty >= MAX_EACH ? 'disabled' : ''}>＋</button></div>
+                <button type="button" class="plus" id="is-plus" aria-label="1つ増やす" ${itemQty >= maxOf(it) ? 'disabled' : ''}>＋</button></div>
                 <button type="button" class="btn" id="is-add">${inCart ? 'カートを直す' : 'カートに入れる'}　${yen(it.price * itemQty)}</button>`}</div>`;
         const body = $('item-body');
         const mi = $('is-minus'), pl = $('is-plus'), add = $('is-add');
         if (mi) mi.onclick = () => { itemQty = Math.max(1, itemQty - 1); drawItem(); };
-        if (pl) pl.onclick = () => { itemQty = Math.min(MAX_EACH, itemQty + 1); drawItem(); };
+        if (pl) pl.onclick = () => { itemQty = Math.min(maxOf(it), itemQty + 1); drawItem(); };
         body.querySelectorAll('[data-og]').forEach(b => b.onclick = () => {
             const sl = optOf(it.name), g = b.dataset.og, x = b.dataset.oi;
             if (g === 'order') sl.order = sl.order.includes(x) ? sl.order.filter(y => y !== x) : sl.order.concat([x]);
@@ -967,7 +990,7 @@
             const it = menu.items.find(x => x.name === i.name);
             const all = Object.values(qty).reduce((t, v) => t + v, 0);
             if (!it || it.soldOut || all >= MAX_ITEMS) { skip++; return; }
-            const add = Math.min(i.qty, MAX_EACH - (qty[i.name] || 0), MAX_ITEMS - all);
+            const add = Math.min(i.qty, maxOf(it) - (qty[i.name] || 0), MAX_ITEMS - all);
             if (add > 0) { qty[i.name] = (qty[i.name] || 0) + add; n += add; }
         });
         closeHist();
@@ -1076,6 +1099,8 @@
             if (sel.value !== String(pickAt)) sel.value = String(pickAt);
             $('c-pick-sub').textContent = pickAt ? `${hm(pickAt)}ごろにお渡しできるよう、少し前から作り始めます。` : 'できあがったら、この画面でお知らせします。';
         } else pickAt = 0;
+        // 申し送り（お店が使っている時だけ）
+        $('c-memo-box').classList.toggle('hide', !memoOn());
         // クーポン（お店がコード付きのクーポンを出している時だけ）
         const cb = $('c-coupon-box');
         const hasCp = codeCoupons().length > 0 && !rm;
@@ -1158,11 +1183,14 @@
             if (pickupAt) doc.pickupAt = pickupAt;
             if (dine === 'eat' && cfg().seat && seat) doc.seat = seat;
             if (coupon) doc.coupon = { id: coupon.id, name: coupon.name };
+            const memo = memoText();
+            if (memo) doc.memo = memo;
             await ev.collection('orders').doc(id).set(doc);
             mine.push(id); saveMine(mine); addHist(doc);
             Object.keys(qty).forEach(k => delete qty[k]);
             dine = ''; pickAt = 0; optOpen = ''; coupon = null;
             if ($('c-coupon')) $('c-coupon').value = '';
+            if ($('c-memo')) $('c-memo').value = '';
             if ($('c-coupon-sub')) $('c-coupon-sub').textContent = '';
             Object.keys(optSel).forEach(k => delete optSel[k]);
             $('confirm').classList.add('hide');
@@ -1233,6 +1261,9 @@
             id, no: String(bill.no).padStart(4, '0'), table: tableNo, billId: bill.id, at, dine: 'eat', items, st: 'cook', channel: 'mobile', paid: false,
             total: items.reduce((t, l) => t + l.qty * l.price, 0), uid, roundId, upd: at, chk: [], t: {}, dev: ''
         };
+        const memo = memoText();
+        if (memo) doc.memo = memo;
+        if ($('c-memo')) $('c-memo').value = '';
         await ev.collection('orders').doc(id).set(doc);
         mine.push(id); saveMine(mine); addHist(doc);
         Object.keys(qty).forEach(k => delete qty[k]);
