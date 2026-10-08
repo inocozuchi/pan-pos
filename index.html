@@ -1102,6 +1102,71 @@
             overflow-y: auto;
         }
 
+        /* ▼ タイル配置（タブレットの横向き・パソコン）：上に分類のタブ、下は決めた数のマスで、スクロールしない ▼ */
+        #product-grid.tile-mode {
+            grid-template-columns: repeat(var(--tc, 5), minmax(0, 1fr)) !important;
+            grid-template-rows: auto repeat(var(--tr, 4), minmax(0, 1fr)) !important;
+            grid-auto-rows: 0 !important; align-content: stretch; overflow: hidden !important;
+        }
+        #product-grid.tile-mode .product-btn { min-height: 0; }
+        #product-grid.tile-mode .tile-empty { min-height: 0; }
+        .tile-tabs { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .tile-tabs .tt-cats { display: flex; gap: 6px; flex: 1; min-width: 0; flex-wrap: wrap; }
+        .tile-tabs .tt-cats button {
+            display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 16px; border: none; border-radius: var(--r-pill);
+            background: var(--surface); color: var(--text-main); font-family: inherit; font-size: 15px; font-weight: 800; cursor: pointer;
+            box-shadow: var(--shadow-card);
+        }
+        .tile-tabs .tt-cats button i { width: 10px; height: 10px; border-radius: 3px; background: var(--ink); flex-shrink: 0; }
+        .tile-tabs .tt-cats button.on { background: var(--ink); color: #fff; box-shadow: none; }
+        .tile-tabs .tt-cats button.on i { background: #fff; }
+        .tile-tabs .tt-pager { display: flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 800; color: var(--text-light); font-variant-numeric: tabular-nums; }
+        .tile-tabs .tt-pager button, .tile-tabs .tt-tool {
+            min-height: 44px; min-width: 44px; border: none; border-radius: var(--r-pill); background: var(--surface); color: var(--accent-ink);
+            font-family: inherit; font-size: 14px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 5px; box-shadow: var(--shadow-card);
+        }
+        .tile-tabs .tt-tool { padding: 0 14px; color: var(--text-main); }
+        .tile-tabs .tt-pager button:disabled { opacity: .35; cursor: default; }
+
+        /* タイルの配置の画面 */
+        .te-sizes { display: flex; flex-wrap: wrap; gap: 10px 18px; margin: 4px 0 12px; }
+        .te-size { display: flex; align-items: center; gap: 8px; }
+        .te-size > span { font-size: 13px; font-weight: 800; color: var(--text-light); }
+        .te-size .seg-pick { margin: 0; }
+        .te-size .seg-pick button { min-width: 44px; }
+        .te-cats button { display: inline-flex; align-items: center; gap: 6px; }
+        .te-cats .te-dot { width: 9px; height: 9px; border-radius: 3px; background: var(--ink); }
+        .te-bar { display: flex; align-items: center; gap: 6px; margin: 4px 0 8px; flex-wrap: wrap; }
+        .te-bar .te-sp { flex: 1; }
+        .te-bar .te-pn { font-size: 13.5px; font-weight: 800; color: var(--text-light); font-variant-numeric: tabular-nums; }
+        .te-bar .te-pg { width: 40px; height: 40px; border: none; border-radius: 50%; background: var(--surface); color: var(--accent-ink); box-shadow: var(--shadow-card); cursor: pointer; display: grid; place-items: center; }
+        .te-bar .te-pg:disabled { opacity: .35; cursor: default; }
+        .te-bar .link-btn { margin: 0; }
+        .te-tip { margin: 0 0 8px; font-size: 13px; font-weight: 800; color: var(--accent-ink); }
+        .te-grid { display: grid; grid-template-columns: repeat(var(--tc, 5), minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+        .te-cell { position: relative; min-height: 72px; border-radius: var(--r-md); min-width: 0; }
+        .te-cell.empty { border: none; background: var(--sunken); color: var(--text-light); cursor: pointer; display: grid; place-items: center; font-family: inherit; }
+        .te-cell.empty .ic { width: 22px; height: 22px; }
+        .te-cell.empty.target { background: var(--accent-soft); color: var(--accent-ink); }
+        .te-cell.filled { box-shadow: inset 0 3px 0 var(--ink), var(--shadow-card); }
+        .te-cell.filled.off { opacity: .5; }
+        .te-cell.filled.sel { box-shadow: inset 0 3px 0 var(--ink), 0 0 0 3px var(--accent); transform: scale(.97); }
+        .te-cell .te-main { width: 100%; height: 100%; min-height: 72px; border: none; background: none; cursor: pointer; font-family: inherit; color: var(--text-main);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 8px 6px; text-align: center; }
+        .te-cell .te-n { font-size: 13px; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; text-wrap: balance;
+            display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+        .te-cell .te-p { font-size: 11.5px; font-weight: 700; color: var(--text-light); }
+        .te-cell .te-x { position: absolute; top: -7px; right: -7px; width: 26px; height: 26px; border: none; border-radius: 50%; background: var(--text-light); color: var(--surface); display: grid; place-items: center; cursor: pointer; padding: 0; }
+        .te-cell .te-x .ic { width: 14px; height: 14px; }
+        .te-warn { display: flex; gap: 6px; align-items: flex-start; color: var(--warn-ink); }
+        .te-warn .ic { flex-shrink: 0; width: 16px; height: 16px; margin-top: 2px; }
+        .te-pick { display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; margin: 4px 0 10px; }
+        .te-pick button { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 6px 12px; border: none; border-radius: var(--r-md); background: var(--sunken); cursor: pointer; font-family: inherit; text-align: left; color: var(--text-main); }
+        .te-pick button i { width: 6px; align-self: stretch; border-radius: 3px; background: var(--ink); flex-shrink: 0; }
+        .te-pick .tp-n { display: flex; flex-direction: column; font-size: 15px; font-weight: 800; min-width: 0; }
+        .te-pick .tp-n small { font-size: 12px; font-weight: 600; color: var(--text-light); }
+        .te-pick .tp-n small b { color: var(--warn-ink); }
+
         /* 商品の並びを下まで送った時の「いちばん上へ」。商品の並びの右下に浮かべる */
         #grid-top-btn {
             position: absolute; z-index: 5; width: 46px; height: 46px; border-radius: 50%; border: none; padding: 0;
@@ -1150,6 +1215,7 @@
         .product-btn.sold-open { color: var(--muted-ink); box-shadow: 0 1px 3px rgba(28,28,30,0.06); }
         .product-btn.sold-open .price { color: var(--muted-ink); }
         /* 長い商品名でも欠けないように、3行までで省略する（途中で切れるより読める） */
+        .product-btn .price .px-ex { font-size: 10.5px; font-weight: 700; margin-left: 2px; opacity: .65; letter-spacing: 0; }
         .product-btn .pname {
             line-height: 1.34; overflow-wrap: anywhere; word-break: break-word; letter-spacing: 0.01em;
             /* 2行になる時は行の長さをそろえる（「フロランタ／ン」のように1字だけ次の行に残さない） */
@@ -2436,9 +2502,15 @@
         .fs-amt, .fs-memo { width: 100%; box-sizing: border-box; margin: 0 0 8px; }
         .fs-amt { font-size: 24px; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
         .fs-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+        /* 端数値引き：きりのいい合計になるボタン（押すとすぐ値引きする） */
+        .fs-round { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 8px; }
+        .fs-round > span { width: 100%; font-size: 12.5px; font-weight: 700; color: var(--text-light); }
+        .fs-round button { flex: 1 1 140px; min-height: 48px; border: none; border-radius: var(--r-md); background: var(--accent-soft); color: var(--accent-ink); font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+        .fs-round button b { font-size: 16px; }
+        .fs-round button small { font-size: 11px; font-weight: 600; opacity: .8; }
         .fs-chips button { border: none; border-radius: 999px; padding: 8px 14px; min-height: 36px; background: var(--btn-neutral); color: var(--text-main); font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; }
         .fs-chips button.on { background: var(--accent); color: #fff; }
-        .co-coupon .cc-pair { display: flex; gap: 8px; }
+        .co-coupon .cc-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 8px; }
         .snd-try { flex: none; width: 40px; height: 40px; border: none; border-radius: 12px; background: var(--accent-soft); color: var(--accent-ink); display: grid; place-items: center; cursor: pointer; margin-right: 4px; }
         .snd-try .ic { width: 18px; height: 18px; }
         .snd-link.btn-secondary { background: var(--accent-soft); color: var(--accent-ink); }
@@ -3875,6 +3947,7 @@
   <!-- 天気：小さく出しても形が分かるよう、線の数をしぼった単純な形にしている -->
   <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.3"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></symbol>
   <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4 8.5 8.5 0 1020 14.5z"/></symbol>
+  <symbol id="ic-tiles" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><path d="M17 14.5v5M14.5 17h5"/></symbol>
   <symbol id="ic-table" viewBox="0 0 24 24"><path d="M3 9.5h18"/><path d="M5.5 9.5 4.5 19M18.5 9.5l1 9.5"/><path d="M8 9.5V6.5h8v3"/><path d="M7 14h10"/></symbol>
   <symbol id="ic-handy" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M8.8 5.5h6.4v5H8.8z"/><path d="M9.3 14h.01M12 14h.01M14.7 14h.01M9.3 16.8h.01M12 16.8h.01M14.7 16.8h.01" stroke-width="2.4"/></symbol>
   <symbol id="ic-receipt" viewBox="0 0 24 24"><path d="M6 2.5h12v19l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4-2 1.4z"/><path d="M9 7.5h6M9 11h6M9 14.5h4"/></symbol>
@@ -4312,6 +4385,7 @@
             <div class="sub-view" id="sub-bulk" style="display:none;"><div id="bulk-body"></div></div>
             <!-- 消費税（初期はなし）と、税務用の資料 -->
             <div class="sub-view" id="sub-tax" style="display:none;"><div id="tax-body"></div></div>
+            <div class="sub-view" id="sub-tiles" style="display:none;"><div id="tiles-body"></div></div>
 
             <!-- クーポン（一覧と、作る・直す画面） -->
             <!-- セット割・クーポン（割引はここにまとめる） -->
@@ -5309,7 +5383,7 @@
                 ${qtyBadge}
                 ${badge}
                 <span class="pname">${escHtml(p.name)}</span>
-                <span class="price">¥${p.price}</span>
+                <span class="price">¥${p.price}${taxExcl() ? '<small class="px-ex">税抜</small>' : ''}</span>
                 <span class="stock${lowStock && !oversold ? ' is-low' : ''}" style="${stockStyle}">${stockText}</span>
             `;
             // 画像を付けた商品は、ボタンの背景にする（文字は読めるように、上にベールを重ねる）
@@ -5337,9 +5411,19 @@
             wantBtns.push(t.btn);
         });
         // 機能のボタン（手打ち・バーコード）は、開店中だけ最後に並べる
-        if (currentSession && !customerMode) {
+        const tiles = tileModeOn();
+        if (currentSession && !customerMode && !tiles) {
             if (featOn('open')) wantBtns.push(toolTile('open'));
             if (featOn('code')) wantBtns.push(toolTile('code'));
+        }
+        // タイル配置：分類のタブと、決めたマスの並びにする（スクロールしない）
+        grid.classList.toggle('tile-mode', tiles);
+        if (tiles) {
+            grid.style.setProperty('--tc', tileCfg.cols);
+            grid.style.setProperty('--tr', tileCfg.rows);
+            const byId = id => { const t = tileCache.get(id); return t && seenIds.has(id) ? t.btn : null; };
+            wantBtns.length = 0;
+            tileGridEls(byId).forEach(e => wantBtns.push(e));
         }
         // 並びが変わった時・増減した時だけ、並べ直す
         const cur = grid.children;
@@ -5728,6 +5812,19 @@
                 </div>`);
         }
 
+        // 税抜きの値段の時は、足す消費税を1行で見せ、合計に入れる
+        if (cart.length && taxExcl()) {
+            const ex = exTaxOf(cart, disc, taxSnapshot(isKitchen() && checkoutDine === 'eat'));
+            if (ex.add > 0) {
+                total += ex.add;
+                parts.push(`
+                <div class="cart-item tax-line" style="border-left:6px solid transparent; padding-left:8px;">
+                    <span>消費税（外税）</span>
+                    <span class="num">＋¥${ex.add}</span>
+                </div>`);
+            }
+        }
+
         if(cart.length === 0) {
             // 空のときは「直前と同じ内容をもう一度」を出す（同じ注文が続くときの時短）
             const last = currentSession ? lastOrderSummary() : null;
@@ -5775,7 +5872,7 @@
     }
 
     // parts … 数なら「セット割の額」（前の版の呼び方）、{ set, coupon } ならその内訳
-    function generateReceiptHTML(items, parts) {
+    function generateReceiptHTML(items, parts, ex) {
         const counts = {};
         items.forEach(item => {
             const k = optKey(item);
@@ -5813,7 +5910,28 @@
                     <span class="num">−¥${p.manual}</span>
                 </li>`;
         }
+        // 税抜きの値段の時は、足す消費税を税率ごとに1行ずつ
+        if (ex && ex.rows && ex.rows.length) {
+            ex.rows.filter(x => x.rate > 0).forEach(x => {
+                html += `
+                <li class="receipt-item tax-line" style="border-left:5px solid transparent; padding-left:8px;">
+                    <span>消費税（${x.rate}%）<span style="color:var(--text-light);font-size:13px;">対象 ¥${x.net}</span></span>
+                    <span class="num">＋¥${x.tax}</span>
+                </li>`;
+            });
+        }
         return html;
+    }
+    // いまのお会計が「店内で食べる会計」か（消費税の税率に使う）：レストランの伝票・ファストフードの「店内」
+    function checkoutEatIn() {
+        const mo = isKitchen() && pendingMobileOrderId ? kitchenOrders.find(o => o.id === pendingMobileOrderId) : null;
+        return pendingBill ? true : (isKitchen() ? ((mo ? mo.dine : checkoutDine) === 'eat') : false);
+    }
+    // 税抜きの値段の時に、品目と割引から、足す消費税を出す（税込みの時は 0）
+    let checkoutEx = { add: 0, rows: [] };
+    function checkoutTotalNow() {
+        checkoutEx = exTaxOf(checkoutItems, checkoutDiscount, taxSnapshot(checkoutEatIn()));
+        return Math.max(0, itemsGross(checkoutItems) - checkoutDiscount) + checkoutEx.add;
     }
 
     function openCheckout(reservationId = null) {
@@ -5851,8 +5969,8 @@
         }
         checkoutParts = discountParts(itemsToProcess, rule, checkoutCoupon, null);
         checkoutDiscount = checkoutParts.total;
-        const total = Math.max(0, itemsGross(itemsToProcess) - checkoutDiscount);
-        document.getElementById('checkout-receipt').innerHTML = generateReceiptHTML(itemsToProcess, checkoutParts);
+        const total = checkoutTotalNow();
+        document.getElementById('checkout-receipt').innerHTML = generateReceiptHTML(itemsToProcess, checkoutParts, checkoutEx);
         renderCheckoutCoupon();
         document.getElementById('modal-total').innerText = total;
         document.getElementById('modal-count').innerText = itemsToProcess.length;
@@ -6152,6 +6270,8 @@
         // 会計対象が無い状態（画面を開かずに呼ばれた等）も念のため弾く
         if (cart.length === 0 && processingReservationId === null) return;
 
+        // 税抜きの値段の時：画面の合計が、いまの品目・割引・店内かどうかから出した額と同じか、念のため確かめる
+        if (taxExcl() && String(checkoutTotalNow()) !== document.getElementById('modal-total').textContent) recalcCheckout();
         const total = parseInt(document.getElementById('modal-total').textContent);
         const cash = parseInt(document.getElementById('cash-input').value) || 0;
         // お預かり不足はまだ記録が成立していないので、番号は消費しない（入れ直して再実行できる）
@@ -6196,9 +6316,10 @@
         const payingLater = isKitchen() && pendingMobileOrderId ? kitchenOrders.find(o => o.id === pendingMobileOrderId && o.later && o.sno) : null;
         if (!payingLater) receiptCounter++;
         // 店内で食べる会計か（消費税の税率に使う）：レストランの伝票・ファストフードの「店内」
-        const mo = isKitchen() && pendingMobileOrderId ? kitchenOrders.find(o => o.id === pendingMobileOrderId) : null;
-        const eatIn = pendingBill ? true : (isKitchen() ? ((mo ? mo.dine : checkoutDine) === 'eat') : false);
+        const eatIn = checkoutEatIn();
         const taxSnap = taxSnapshot(eatIn);
+        // 税抜きの値段の時は、記録する消費税を、記録する品目と割引から出し直す（画面の合計と同じ決まり）
+        const taxAdd = exTaxOf(itemsRecorded, checkoutDiscount, taxSnap).add;
         const record = {
             no: payingLater ? payingLater.sno : receiptCounter,
             time: new Date(),
@@ -6215,6 +6336,7 @@
             customerType: selectedType,
             pendingType: pending,
             ...(taxSnap ? { tax: taxSnap } : {}),
+            ...(taxAdd > 0 ? { taxAdd } : {}),
             ...(checkoutPay !== 'cash' ? { pay: checkoutPay, payLabel: payLabel(checkoutPay) } : {}),
             ...(isKitchen() && pendingMobileOrderId && !payingLater ? { channel: 'mobile' } : {}),
             ...(pendingBill && billById(pendingBill.id) ? { channel: 'table', billNo: billNoText(billById(pendingBill.id)), table: billById(pendingBill.id).table } : {}),
@@ -6300,8 +6422,8 @@
         const name = prompt('予約者のお名前を入力してください:');
         if (name) {
             // 予約した時のセット割を覚えておき、受け取りの会計でも同じ金額にする
-            const total = itemsNet(cart);
             const rule = currentSetRule();
+            const total = itemsNet(cart) + exTaxOf(cart, setDiscountFor(cart), taxSnapshot(false)).add;
             const res = { id: newReservationId(), name: name, items: [...cart], total: total, setDisc: !!rule, setRule: rule };
             reservations.push(res);
             syncPushReservation(res);   // 他の端末でも受け取れるようにする
@@ -7047,7 +7169,9 @@
                     <tbody>
                         <tr><td><b>消費税</b></td><td>税率を決めて、レシート・領収書に内訳を出します（「消費税と税務用の資料」を見てください）。</td></tr>
                         <tr><td><b>釣り銭とレジ締め</b></td><td>開店の画面に<b>「釣り銭準備金」</b>が出ます。「設定 → 釣り銭とレジ締め」で、入金・出金を記録し、<b>お金を数えて過不足</b>を出せます。</td></tr>
-                        <tr><td><b>手入力の値引き</b></td><td>お会計の窓に<b>「値引き」</b>が出ます。円か％と、理由（見切り品・サービス など）を選びます。</td></tr>
+                        <tr><td><b>手入力の値引き</b></td><td>お会計の窓に<b>「値引き」</b>が出ます。円か％と、理由（見切り品・サービス など）を選びます。<b>「端数を引く」</b>のボタンを押すと、合計の1の位・10の位を切った、きりのいい額にする値引きを1回で入れられます。</td></tr>
+                        <tr><td><b>会計前レシート</b></td><td>お会計の窓に<b>「会計前レシート」</b>が出ます。払う前の明細（小計・割引・消費税・合計）を印刷します（領収書ではありません）。</td></tr>
+                        <tr><td><b>タイル配置</b></td><td><b>タブレットの横向き・パソコン</b>のレジで、商品を<b>分類ごとのページ</b>にタイルで並べます。上の分類のボタンでページを替え、スクロールはしません（押したい商品の場所がいつも同じ）。<b>「設定 → タイルの配置」</b>で、列と段の数・ページの数を決め、商品を押して選んで置きたいマスを押すと並べ替えられます。<b>＋</b>のマスに商品を置き、<b>×</b>で外します。マスは空けておけます。まだ置いていない新しい商品は、その分類のページの後ろに自動で出ます。スマホ・縦向きでは今までどおりの並びです。</td></tr>
                         <tr><td><b>原価と粗利</b></td><td>商品ごとに<b>原価</b>を入れる欄が出て、売上集計に<b>粗利</b>が出ます。</td></tr>
                         <tr><td><b>手打ち</b></td><td>レジの商品ボタンの最後に<b>「手打ち」</b>が出ます。登録していない品を、金額と分類を選んで売れます（在庫は変わりません）。</td></tr>
                         <tr><td><b>バーコード</b></td><td>商品ごとに<b>JANコード</b>を入れる欄が出ます。バーコードの読み取り機で読むと、その商品がカートに入ります。レジの最後の<b>「バーコード」</b>から、数字を打つ・カメラで読む（使える端末だけ）こともできます。</td></tr>
@@ -7078,13 +7202,17 @@
             body: `
                 <p>はじめは<b>消費税なし</b>です（いまの販売会は消費税なしで販売しているため）。消費税をかける販売会では、<b>「設定 → レジの機能」</b>で<b>「消費税」</b>をオンにします（オンにすると、設定の一覧に「消費税」が出ます）。</p>
                 <ul class="man-list">
-                    <li>値段は<b>税込み</b>（総額表示）のまま使います。<b>合計の金額は変わりません。</b>合計のうち消費税がいくらかを計算します。</li>
-                    <li>分類ごとに<b>8%（軽減税率：食べ物・飲み物の持ち帰り）</b>か<b>10%</b>を選びます。ファストフード・レストランでは、<b>店内で食べる会計は10%</b>にできます（初期はそうします）。</li>
-                    <li>端数は、1回の会計の税率ごとに1回だけ切り捨てます。セット割・クーポンは、税率ごとの金額の割合で分けて引きます。</li>
+                    <li><b>商品の値段</b>を「税込み」か「税抜き」から選びます（初期は税込み）。
+                        <ul>
+                            <li><b>税込み</b>：値段は総額表示のまま使います。<b>合計の金額は変わりません。</b>合計のうち消費税がいくらかを計算します（端数は切り捨て）。</li>
+                            <li><b>税抜き</b>：値段は税抜きです。会計の時に、<b>税率ごとの消費税を足して</b>合計を出します。商品のボタンの値段には「税抜」と出て、カート・お会計の窓には足す消費税の行が出ます。1円未満は<b>切り捨て・四捨五入・切り上げ</b>から選べます。モバイルオーダーの合計にも足します。</li>
+                        </ul></li>
+                    <li>分類ごとに<b>8%（軽減税率：食べ物・飲み物の持ち帰り）</b>・<b>10%</b>・<b>非課税</b>（金券・切手など）を選びます。ファストフード・レストランでは、<b>店内で食べる会計は10%</b>にできます（初期はそうします。非課税の物は店内でも非課税）。</li>
+                    <li>端数は、1回の会計の税率ごとに1回だけ丸めます。セット割・クーポン・値引きは、税率ごとの金額の割合で分けて引きます（税抜きの時は、引いた後の額に消費税を足します）。</li>
                     <li>会計した時の税率がその会計に残るので、あとで税率を変えても、前の会計の消費税は変わりません。</li>
                     <li>インボイスの<b>登録番号</b>（T＋13けた）を入れると、レシートと領収書に印字されます。登録していなければ空欄のままで。</li>
                 </ul>
-                <p>レシートと領収書には、<b>「10%対象 ¥◯◯ 内消費税 ¥◯」</b>のように税率ごとの内訳が出ます。軽減税率の商品には<b>※</b>が付きます。</p>
+                <p>レシートと領収書には、<b>「10%対象 ¥◯◯ 内消費税 ¥◯」</b>（税抜きの時は<b>「10%対象（税抜） ¥◯◯ 消費税 ¥◯」</b>）のように税率ごとの内訳が出ます。軽減税率の商品には<b>※</b>が付きます。</p>
                 <h4>税務用の資料</h4>
                 <p>同じ画面の<b>「表を印刷・PDF」</b>で、この端末に残っている販売会の売上を<b>税率ごと・月ごと・販売会ごと・支払い方法ごと</b>の白黒の表にまとめます。<b>「会計ごとのCSV」</b>は、1件ずつの税込み金額と消費税の一覧です（帳簿付けの元に）。年ごとに絞ることもできます。消費税なしで記録した会計は「消費税なし」の欄に入ります。</p>`
         },
@@ -7514,7 +7642,8 @@
             if (checkoutParts.coupon > 0 && checkoutCoupon) discLines.push({ name: checkoutCoupon.name, amt: checkoutParts.coupon });
             if (checkoutParts.manual > 0 && checkoutManual) discLines.push({ name: '値引き', amt: checkoutParts.manual });
         } else if (discount > 0) discLines.push({ name: SET_LABEL, amt: discount });
-        const total = Math.max(0, itemsGross(src) - discount);
+        const total = Math.max(0, itemsGross(src) - discount)
+            + exTaxOf(src, discount, taxSnapshot(inCheckout ? checkoutEatIn() : (isKitchen() && checkoutDine === 'eat'))).add;
         const base = {
             items: lines.map(l => l.opt ? ({ name: l.name, qty: l.qty, subtotal: l.subtotal, opt: l.opt }) : ({ name: l.name, qty: l.qty, subtotal: l.subtotal })),
             total, count: src.length, state: src.length ? 'cart' : 'idle',
@@ -9584,7 +9713,7 @@
         const cpShow = !!checkoutCoupon || usable.length > 0;
         const mdShow = !!checkoutManual || featOn('disc');
         const moShow = memoOn() && !pendingBill;
-        if (!cpShow && !mdShow && !moShow) { box.style.display = 'none'; box.innerHTML = ''; fitCheckout(); return; }
+        if (!cpShow && !mdShow && !moShow && !featOn('pre')) { box.style.display = 'none'; box.innerHTML = ''; fitCheckout(); return; }
         box.style.display = '';
         const cp = !cpShow ? '' : (checkoutCoupon
             ? `<div class="cc-on"><svg class="ic"><use href="#ic-tag"/></svg><span class="cc-t">${escHtml(checkoutCoupon.name)}<small>${couponText(checkoutCoupon)}${checkoutCoupon.solo ? '・セット割と併用しない' : ''}${checkoutCoupon.note ? '・' + escHtml(checkoutCoupon.note) : ''}</small></span><button type="button" onclick="setCheckoutCoupon('')">外す</button></div>`
@@ -9592,12 +9721,13 @@
         const md = !mdShow ? '' : (checkoutManual
             ? `<div class="cc-on"><svg class="ic"><use href="#ic-percent"/></svg><span class="cc-t">値引き<small>${escHtml(manualText(checkoutManual))}</small></span><button type="button" onclick="setCheckoutManual(null)">外す</button></div>`
             : `<button type="button" class="cc-use" onclick="openDiscSheet()"><svg class="ic"><use href="#ic-percent"/></svg>値引き</button>`);
+        const pr = featOn('pre') ? `<button type="button" class="cc-use" onclick="printPreReceipt()"><svg class="ic"><use href="#ic-printer"/></svg>会計前レシート</button>` : '';
         const mo = !moShow ? '' : (checkoutMemo
             ? `<div class="cc-on cc-memo"><svg class="ic"><use href="#ic-pencil"/></svg><span class="cc-t" role="button" tabindex="0" onclick="openMemoSheet()">申し送り<small>${escHtml(checkoutMemo)}</small></span><button type="button" onclick="setCheckoutMemo('')">外す</button></div>`
             : `<button type="button" class="cc-use" onclick="openMemoSheet()"><svg class="ic"><use href="#ic-pencil"/></svg>申し送り</button>`);
         // まだ使っていない物（ボタン）は1段に並べ、使っている物（帯）は上に1つずつ出す
         const ons = [], uses = [];
-        [cp, md, mo].forEach(h => { if (!h) return; (h.startsWith('<div class="cc-on') ? ons : uses).push(h); });
+        [cp, md, mo, pr].forEach(h => { if (!h) return; (h.startsWith('<div class="cc-on') ? ons : uses).push(h); });
         box.innerHTML = ons.join('') + (uses.length > 1 ? `<div class="cc-pair">${uses.join('')}</div>` : uses.join(''));
         fitCheckout();   // クーポン・値引き・申し送りの欄が増えた・減ったので、画面に収め直す
     }
@@ -9639,9 +9769,57 @@
             <div class="seg-pick" role="group" aria-label="値引きのしかた"><button type="button" class="on" id="disc-k-yen" onclick="setDiscKind('yen')">円引き</button><button type="button" id="disc-k-pct" onclick="setDiscKind('pct')">％引き</button></div>
             <input type="text" inputmode="numeric" class="fs-amt" id="disc-amt" data-focus placeholder="金額（円）" oninput="discDraft.amount = this.value; renderDiscFoot()">
             <div class="fs-chips">${['見切り品', 'サービス', 'スタッフ', '傷あり', 'その他'].map(m => `<button type="button" onclick="pickDiscReason(this, '${m}')">${m}</button>`).join('')}</div>
+            ${roundOffHtml()}
             <div class="fs-foot" id="disc-foot"></div>
             <div class="opt-acts"><button type="button" class="later-cancel" onclick="closeFeatSheet()">やめる</button><button type="button" class="opt-ok" id="disc-ok" onclick="applyDiscSheet()">値引きする</button></div>`);
         renderDiscFoot();
+    }
+    // ---- 端数値引き：合計の1の位・10の位を切って、きりのいい額にする（1タップ）----
+    // 税抜きの値段の時は、引いた後に消費税を足すので、足した後の合計がきりのいい額になる値引きの額をさがす
+    function totalWithManual(yenOff) {
+        const p = discountParts(checkoutItems, checkoutSetRule, checkoutCoupon, yenOff > 0 ? { kind: 'yen', amount: yenOff } : null);
+        return Math.max(0, itemsGross(checkoutItems) - p.total) + exTaxOf(checkoutItems, p.total, taxSnapshot(checkoutEatIn())).add;
+    }
+    function roundOffAmount(unit) {
+        const t0 = totalWithManual(0);
+        const want = Math.floor(t0 / unit) * unit;
+        if (want === t0 || want <= 0) return 0;
+        // 足りるまで少しずつ増やす（いちばん少ない値引きで、合計がきりのいい額以下になる所）
+        for (let d = 1; d <= t0; d++) { if (totalWithManual(d) <= want) return d; }
+        return 0;
+    }
+    function roundOffHtml() {
+        const t0 = totalWithManual(0);
+        const opts = [10, 100].map(u => ({ u, d: roundOffAmount(u) })).filter(x => x.d > 0);
+        if (!opts.length) return '';
+        return `<div class="fs-round"><span>端数を引く</span>${opts.map(x => `<button type="button" onclick="applyRoundOff(${x.u})">${yenStr(t0)} → <b>${yenStr(totalWithManual(x.d))}</b><small>${x.u === 10 ? '1の位' : '10の位まで'}</small></button>`).join('')}</div>`;
+    }
+    function applyRoundOff(unit) {
+        const d = roundOffAmount(unit);
+        if (!(d > 0)) { playError(); return; }
+        closeFeatSheet();
+        setCheckoutManual({ kind: 'yen', amount: d, reason: '端数値引き' });
+        showToast(`端数 ${yenStr(d)} を引きました`);
+    }
+    // ---- 会計前レシート：払う前の明細を印刷する（領収書ではない）----
+    function printPreReceipt() {
+        if (!featOn('pre') || !checkoutItems || !checkoutItems.length) { playError(); return; }
+        const total = parseInt(document.getElementById('modal-total').textContent) || 0;
+        const snap = taxSnapshot(checkoutEatIn());
+        const ex = exTaxOf(checkoutItems, checkoutDiscount, snap);
+        const h = {
+            no: '', time: new Date(), items: checkoutItems.slice(), total, discount: checkoutDiscount,
+            ...(checkoutCoupon && checkoutParts.coupon > 0 ? { coupon: { name: checkoutCoupon.name, amt: checkoutParts.coupon } } : {}),
+            ...(checkoutManual && checkoutParts.manual > 0 ? { mdisc: { reason: checkoutManual.reason || '', amt: checkoutParts.manual } } : {}),
+            ...(snap ? { tax: snap } : {}), ...(ex.add > 0 ? { taxAdd: ex.add } : {})
+        };
+        const base = rcpt();
+        // お支払い・番号・QRは出さない（まだ払っていない）
+        const c = Object.assign({}, base, { items: base.items.filter(x => !['pay', 'no', 'big', 'qr'].includes(x.k)) });
+        playSound();
+        openPrintDoc('会計前レシート', `<div class="rc"><div class="blk al-c sz-m"><b>お会計前の明細</b><br><small>（領収書ではありません）</small></div>${receiptBodyHtml(h, c)}</div>`,
+            `@page { size: ${c.paper === '58' ? '58mm' : '80mm'} auto; margin: 3mm; } body { margin: 0; padding: 16px; background: #fff; } @media print { body { padding: 0; } .rw-bar { display: none; } }` + receiptCss(c.paper),
+            '払う前の明細を印刷します（レシート用の細い紙の大きさ）');
     }
     function setDiscKind(k) {
         discDraft.kind = k === 'pct' ? 'pct' : 'yen';
@@ -9663,7 +9841,7 @@
         const f = document.getElementById('disc-foot'), ok = document.getElementById('disc-ok');
         const m = discDraftObj();
         const p = discountParts(checkoutItems, checkoutSetRule, checkoutCoupon, m);
-        const after = Math.max(0, itemsGross(checkoutItems) - p.total);
+        const after = Math.max(0, itemsGross(checkoutItems) - p.total) + exTaxOf(checkoutItems, p.total, taxSnapshot(checkoutEatIn())).add;
         if (f) f.innerHTML = discDraft.kind === 'pct' && yenInput(discDraft.amount) > 100
             ? '<span class="cash-bad">100％までです</span><b></b>'
             : `<span>値引き</span><b>−${yenStr(p.manual)}</b><span>値引きした後の合計</span><b>${yenStr(after)}</b>`;
@@ -9717,8 +9895,8 @@
     function recalcCheckout() {
         checkoutParts = discountParts(checkoutItems, checkoutSetRule, checkoutCoupon, checkoutManual);
         checkoutDiscount = checkoutParts.total;
-        const total = Math.max(0, itemsGross(checkoutItems) - checkoutDiscount);
-        document.getElementById('checkout-receipt').innerHTML = generateReceiptHTML(checkoutItems, checkoutParts);
+        const total = checkoutTotalNow();
+        document.getElementById('checkout-receipt').innerHTML = generateReceiptHTML(checkoutItems, checkoutParts, checkoutEx);
         document.getElementById('modal-total').innerText = total;
         renderCheckoutCoupon();
         renderCashSuggestions(total);
@@ -10413,7 +10591,7 @@
             acceptRound(newRoundId());
             try {
                 await fbDb.collection(EVENTS_COL).doc(code).set({
-                    name: sharedName, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), consign: consignCfg, consignBy: getDeviceId(), feat: featCfg, featBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
+                    name: sharedName, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), consign: consignCfg, consignBy: getDeviceId(), feat: featCfg, featBy: getDeviceId(), tiles: tileCfg, tilesBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
                     roundId: syncRoundId,
                     setDiscount: setDiscountOn, setRule: setRuleForDoc(setRule), setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                     openedAt: Date.now(), closedAt: null, openedBy: getDeviceId(),
@@ -11322,7 +11500,7 @@
         acceptRound(newRoundId());
         try {
             await fbDb.collection(EVENTS_COL).doc(code).set({
-                name: currentSession, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), consign: consignCfg, consignBy: getDeviceId(), feat: featCfg, featBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
+                name: currentSession, status: 'open', products: products, storeMode, categories, categoriesBy: getDeviceId(), payCfg, payCfgBy: getDeviceId(), tax: taxCfg, taxBy: getDeviceId(), consign: consignCfg, consignBy: getDeviceId(), feat: featCfg, featBy: getDeviceId(), tiles: tileCfg, tilesBy: getDeviceId(), cdCfg, cdCfgBy: getDeviceId(), mobile: mobileCfg, coupons, couponsBy: getDeviceId(),
                 roundId: syncRoundId,
                 setDiscount: setDiscountOn, setRule: setRuleForDoc(setRule), setDiscountAt: Date.now(), setDiscountBy: getDeviceId(),
                 openedAt: Date.now(), closedAt: null, openedBy: getDeviceId()
@@ -13172,6 +13350,7 @@
         'bill': '伝票',
         'rest': 'テーブルと伝票',
         'tax': '消費税',
+        'tiles': 'タイルの配置',
         'bulk': 'まとめて登録',
         'consign': '委託商品',
         'feat': 'レジの機能',
@@ -13495,6 +13674,7 @@
             else if (sub === 'mobile-pay') renderMobilePayView();
             else if (sub === 'rest') renderRestView();
             else if (sub === 'tax') renderTaxView();
+            else if (sub === 'tiles') renderTileEditor();
             else if (sub === 'bulk') renderBulkView();
             else if (sub === 'consign') renderConsignView();
             else if (sub === 'feat') renderFeatView();
@@ -13614,6 +13794,7 @@
             menuRow('yen', '支払い方法', paySub(), "openPanel('settings','pay')") +
             menuRow('plus', 'レジの機能', featSub(), "openPanel('settings','feat')") +
             (taxCfg.on ? menuRow('percent', '消費税', taxSub(), "openPanel('settings','tax')") : '') +
+            (featOn('tile') ? menuRow('tiles', 'タイルの配置', tileSub(), "openPanel('settings','tiles')") : '') +
             (consignOn() ? menuRow('box', '委託商品', consignSub(), "openPanel('settings','consign')") : '') +
             (featOn('cash') ? menuRow('pay-cash', '釣り銭とレジ締め', cashSub(), "openPanel('settings','cash')") : '') +
             (featOn('staff') ? menuRow('person', '担当者', staffSub(), "openPanel('settings','staff')") : '') +
@@ -14248,10 +14429,10 @@
     // データ整合性チェック（取消・部分修正が売上/在庫に矛盾なく反映されているか）
     function checkIntegrity() {
         const issues = [];
-        let itemSum = 0, totalSum = 0, discSum = 0;
-        salesHistory.forEach(h => { totalSum += h.total; discSum += Number(h.discount) || 0; h.items.forEach(i => { itemSum += i.price; }); });
-        // 品目の合計からセット割で引いた分を除くと、取引の合計にぴったり一致するはず
-        if (itemSum - discSum !== totalSum) issues.push(`金額不一致：品目合計 ¥${itemSum}${discSum ? ` − セット割 ¥${discSum}` : ''} ≠ 取引合計 ¥${totalSum}`);
+        let itemSum = 0, totalSum = 0, discSum = 0, taxSum = 0;
+        salesHistory.forEach(h => { totalSum += h.total; discSum += Number(h.discount) || 0; taxSum += Number(h.taxAdd) || 0; h.items.forEach(i => { itemSum += i.price; }); });
+        // 品目の合計から割引を引き、税抜きの値段の会計で足した消費税を足すと、取引の合計にぴったり一致するはず
+        if (itemSum - discSum + taxSum !== totalSum) issues.push(`金額不一致：品目合計 ¥${itemSum}${discSum ? ` − 割引 ¥${discSum}` : ''}${taxSum ? ` ＋ 消費税（外税） ¥${taxSum}` : ''} ≠ 取引合計 ¥${totalSum}`);
         const orphans = new Set();
         salesHistory.forEach(h => h.items.forEach(i => { if (!products.find(p => p.id === i.id)) orphans.add(i.name); }));
         if (orphans.size) issues.push(`商品マスタに無い品目：${[...orphans].join('、')}`);
@@ -14267,7 +14448,9 @@
         // それらの合計（grossRev）から割引を引くと総売上（totalRev）になる。
         const discountTotal = sorted.reduce((s, h) => s + (Number(h.discount) || 0), 0);
         const discountCount = sorted.filter(h => (Number(h.discount) || 0) > 0).length;
-        const grossRev = totalRev + discountTotal;
+        // 税抜きの値段の会計で足した消費税は、商品の値段には入っていないので除く
+        const taxAddTotal = sorted.reduce((s, h) => s + (Number(h.taxAdd) || 0), 0);
+        const grossRev = totalRev + discountTotal - taxAddTotal;
         // 割引の内訳（セット割とクーポン）
         const setDiscTotal = sorted.reduce((a, h) => a + setPartOf(h), 0);
         const setDiscCount = sorted.filter(h => setPartOf(h) > 0).length;
@@ -14942,7 +15125,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, cdCfg, cdCfgBy, mobileKeep, coupons, couponsBy, couponCodes, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, bills, billSeqLocal, restCfg, taxCfg, taxCfgBy, consignCfg, consignBy, featCfg, featBy, cashLog, currentSession, testMode, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
+        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, cdCfg, cdCfgBy, mobileKeep, coupons, couponsBy, couponCodes, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, bills, billSeqLocal, restCfg, taxCfg, taxCfgBy, consignCfg, consignBy, featCfg, featBy, tileCfg, tileCfgBy, cashLog, currentSession, testMode, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -14966,6 +15149,8 @@
         consignCfg = normConsignCfg(data.consignCfg);
         consignBy = typeof data.consignBy === 'string' ? data.consignBy : '';
         featCfg = normFeatCfg(data.featCfg);
+        tileCfg = normTileCfg(data.tileCfg);
+        tileCfgBy = typeof data.tileCfgBy === 'string' ? data.tileCfgBy : '';
         if (!data.featCfg && Array.isArray(data.products) && data.products.some(p => p && p.cost != null)) featCfg.cost = true;
         featBy = typeof data.featBy === 'string' ? data.featBy : '';
         cashLog = normCashLog(data.cashLog);
@@ -15505,14 +15690,16 @@
             }
             // セット割はその会計をした時の設定のまま付け直す（ドリンクを消したら割引も外れる）
             const discount = recordDiscount(rec, items);
-            const total = Math.max(0, itemsGross(items) - discount);
+            // 税抜きの値段の会計は、会計した時の決まりで消費税も足し直す
+            const taxAdd = exTaxOf(items, discount, rec.tax).add;
+            const total = Math.max(0, itemsGross(items) - discount) + taxAdd;
             if (items.length === 0) {
                 syncUpdateSale(rec.remoteId, { voided: true, voidedAt: Date.now() }, rec.remoteCode);
                 kitchenOnVoid(rec);
                 editingRecordIdx = null;
                 showToast('全品目が無くなったため会計を削除しました');
             } else {
-                syncUpdateSale(rec.remoteId, Object.assign({ items, total, discount, edited: true }, rec.coupon ? { coupon: rec.coupon } : {}, rec.mdisc ? { mdisc: rec.mdisc } : {}, cashAfterEdit(rec, total)), rec.remoteCode);
+                syncUpdateSale(rec.remoteId, Object.assign({ items, total, discount, edited: true, taxAdd }, rec.coupon ? { coupon: rec.coupon } : {}, rec.mdisc ? { mdisc: rec.mdisc } : {}, cashAfterEdit(rec, total)), rec.remoteCode);
                 kitchenOnEdit(rec, items);
             }
             logEdit(`会計修正 客No.${rec.no || '-'}：${name} ${delta < 0 ? '−1' : '＋1'}`);
@@ -15536,7 +15723,9 @@
         }
         // 合計は明細から付け直す。セット割はその会計をした時の設定のまま判定する
         rec.discount = recordDiscount(rec, rec.items);
-        rec.total = Math.max(0, itemsGross(rec.items) - rec.discount);
+        const taxAdd = exTaxOf(rec.items, rec.discount, rec.tax).add;
+        if (taxAdd > 0) rec.taxAdd = taxAdd; else delete rec.taxAdd;
+        rec.total = Math.max(0, itemsGross(rec.items) - rec.discount) + taxAdd;
         Object.assign(rec, cashAfterEdit(rec, rec.total));
         rec.edited = true;
         logEdit(`会計修正 客No.${rec.no || '-'}：${name} ${delta < 0 ? '−1' : '＋1'}`);
@@ -16092,7 +16281,7 @@
     //   staff … 担当者（会計ごとに担当の名前を残す）
     //   limit … 個数制限（商品ごとに、1会計で買える数の上限を決める。モバイルオーダーにも効く）
     //   memo  … 申し送り（ファストフード：レジとモバイルオーダーで書いて、KDに出す）
-    const FEAT_KEYS = ['cash', 'disc', 'cost', 'open', 'code', 'staff', 'limit', 'memo'];
+    const FEAT_KEYS = ['cash', 'disc', 'cost', 'open', 'code', 'staff', 'limit', 'memo', 'pre', 'tile'];
     function normStaffName(v) { return String(v == null ? '' : v).normalize('NFKC').replace(/\s+/g, ' ').trim().slice(0, 12); }
     function normFeatCfg(f) {
         f = (f && typeof f === 'object') ? f : {};
@@ -16123,6 +16312,7 @@
             if (!currentSub) renderSettingsMenu();
             else if (currentSub === 'feat') renderFeatView();
             else if (currentSub === 'stock') renderLiveStock();
+            else if (currentSub === 'tiles') renderTileEditor();
         }
         if (currentView === 'session' && currentSub === 'open-stock') renderInventorySetup();
         if (currentView === 'session' && (!currentSub || currentSub === 'open-new')) renderOpenMenu();
@@ -16138,6 +16328,8 @@
             { k: 'open', ic: 'pencil', t: '手打ち', s: 'レジに「手打ち」を出し、登録していない品を金額を打って売る' },
             { k: 'code', ic: 'barcode', t: 'バーコード', s: '商品にJANコードを入れ、読み取り機やカメラで打つ' },
             { k: 'staff', ic: 'person', t: '担当者', s: '会計ごとに担当の名前を残し、担当ごとに集計する', detail: 'staff' },
+            { k: 'tile', ic: 'tiles', t: 'タイル配置', s: 'タブレットの横向き・パソコンで、商品を分類ごとのページにタイルで並べる（スクロールしない・空きのマスも作れる・自由に並べ替え）', detail: 'tiles' },
+            { k: 'pre', ic: 'printer', t: '会計前レシート', s: 'お会計の窓から、払う前の明細（小計・割引・消費税・合計）を印刷する（お客様に金額を見せる時など）' },
             { k: 'limit', ic: 'box', t: '個数制限', s: '商品ごとに「1会計で◯個まで」を決める（「商品・在庫の調整」で入れる。モバイルオーダーにも効く）' },
             ...(isKitchen() ? [{ k: 'memo', ic: 'pencil', t: '申し送り', s: 'お会計・後で会計・モバイルオーダーで申し送り（アレルギー・袋は不要 など）を書いて、KDと伝票に出す' }] : []),
             ...(!isKitchen() ? [{ k: 'consign', ic: 'box', t: '委託商品', s: 'ほかの人から預かって売る商品の売上を、委託先ごとに分ける', on: () => consignCfg.on, set: on => setConsignOn(on), detail: 'consign' }] : [])
@@ -16285,6 +16477,260 @@
         toolTiles[k] = b;
         return b;
     }
+    // ▼▼▼ タイル配置（機能：tile）▼▼▼
+    // タブレットの横向き・パソコンで、商品を「分類ごとのページ」にタイルで並べる。
+    // ・画面に入る数のマス（列×段）に固定して並べ、スクロールしない（押したい商品の場所が毎回同じ）
+    // ・マスは空けておける。並べ替えは「タイルの配置」の画面で、押して選んで、置きたいマスを押す
+    // ・まだどこにも置いていない商品（あとから足した商品など）は、その分類のページの後ろの空きに自動で出す
+    //   （置き場所を決めていないために、レジで売れない商品が出ないように）
+    const TILE_COLS = [4, 5, 6, 7], TILE_ROWS = [3, 4, 5, 6];
+    const TILE_PAGES_MAX = 6;
+    let tileCfg = { cols: 5, rows: 4, pages: {}, off: [] };
+    let tileCfgBy = '';
+    let tileCat = null, tilePage = 0;
+    function normTileCfg(t) {
+        t = (t && typeof t === 'object') ? t : {};
+        const cols = TILE_COLS.includes(Number(t.cols)) ? Number(t.cols) : 5;
+        const rows = TILE_ROWS.includes(Number(t.rows)) ? Number(t.rows) : 4;
+        const per = cols * rows;
+        const pages = {};
+        if (t.pages && typeof t.pages === 'object') {
+            Object.keys(t.pages).slice(0, 40).forEach(k => {
+                const a = Array.isArray(t.pages[k]) ? t.pages[k] : [];
+                const seen = new Set();
+                const out = a.slice(0, per * TILE_PAGES_MAX).map(id => {
+                    if (id == null || (typeof id !== 'number' && typeof id !== 'string') || seen.has(id)) return null;
+                    seen.add(id); return id;
+                });
+                pages[String(k).slice(0, 40)] = out;
+            });
+        }
+        // タイルから外した商品（自動で後ろに出さない）
+        const off = [...new Set((Array.isArray(t.off) ? t.off : []).filter(id => typeof id === 'number' || typeof id === 'string'))].slice(0, 500);
+        return { cols, rows, pages, off };
+    }
+    const TILE_MQ = window.matchMedia ? window.matchMedia('(min-width: 900px) and (orientation: landscape)') : null;
+    function tileModeOn() { return featOn('tile') && !customerMode && !!(TILE_MQ && TILE_MQ.matches); }
+    if (TILE_MQ && TILE_MQ.addEventListener) TILE_MQ.addEventListener('change', () => { try { init(); } catch (e) {} });
+    function tilePer() { return tileCfg.cols * tileCfg.rows; }
+    function tileSub() { const n = categories.length; return `${tileCfg.cols}列×${tileCfg.rows}段・${n}分類（タブレットの横向き・パソコンの時）`; }
+    // 分類のページの並び（置いた商品＋まだどこにも置いていない、その分類の商品を後ろの空きに）。
+    // 販売しない商品の場所も残しておく（また販売にした時に、同じ場所に戻る）
+    function tileRaw(cat) {
+        const per = tilePer();
+        const saved = Array.isArray(tileCfg.pages[cat]) ? tileCfg.pages[cat] : [];
+        const known = new Set(products.map(p => p.id));
+        const slots = saved.map(id => (id != null && known.has(id) ? id : null));
+        const placed = new Set(tileCfg.off || []);
+        Object.keys(tileCfg.pages).forEach(k => (tileCfg.pages[k] || []).forEach(id => { if (id != null && known.has(id)) placed.add(id); }));
+        const missing = products.filter(p => p.active !== false && p.type === cat && !placed.has(p.id));
+        let last = -1;
+        slots.forEach((id, i) => { if (id != null) last = i; });
+        let pos = last + 1;
+        missing.forEach(p => {
+            while (pos < slots.length && slots[pos] != null) pos++;
+            if (pos >= per * TILE_PAGES_MAX) return;
+            slots[pos++] = p.id;
+        });
+        const pages = Math.max(1, Math.ceil(slots.length / per));
+        while (slots.length < pages * per) slots.push(null);
+        return slots;
+    }
+    function tilePageCount(cat) { return Math.max(1, Math.ceil(tileRaw(cat).length / tilePer())); }
+    // タブに出す分類：商品がある分類と、何か置いてある分類
+    function tileCats() {
+        return categories.filter(c => products.some(p => p.type === c.id) || (tileCfg.pages[c.id] || []).some(id => id != null)).map(c => c.id);
+    }
+    function tileCurCat() {
+        const cs = tileCats();
+        if (!cs.includes(tileCat)) { tileCat = cs[0] || (categories[0] && categories[0].id) || null; tilePage = 0; }
+        tilePage = Math.max(0, Math.min(tilePage, tilePageCount(tileCat) - 1));
+        return tileCat;
+    }
+    function setTileCat(c) { if (c === tileCat) return; tileCat = c; tilePage = 0; playSound(); init(); }
+    function tileGoPage(d) {
+        const n = tilePageCount(tileCurCat());
+        const next = Math.max(0, Math.min(n - 1, tilePage + d));
+        if (next === tilePage) { playError(); return; }
+        tilePage = next; playSound(); init();
+    }
+    let tileTabsEl = null, tileTabsSig = '';
+    const tileEmpties = [];
+    function tileTabs() {
+        if (!tileTabsEl) { tileTabsEl = document.createElement('div'); tileTabsEl.className = 'tile-tabs'; tileTabsEl.setAttribute('role', 'tablist'); }
+        const cur = tileCurCat();
+        const n = tilePageCount(cur);
+        const tools = (currentSession && !customerMode ? ['open', 'code'].filter(k => featOn(k)) : []);
+        const sig = [tileCats().join(','), cur, tilePage, n, tools.join(','), categories.map(c => c.label).join(',')].join('|');
+        if (sig !== tileTabsSig) {
+            tileTabsSig = sig;
+            tileTabsEl.innerHTML = `<div class="tt-cats">${tileCats().map(c => `<button type="button" role="tab" aria-selected="${c === cur}" class="${c === cur ? 'on' : ''}" style="--ink:${catInk(c)};" onclick="setTileCat('${c}')"><i></i>${escHtml(catLabelOf(c))}</button>`).join('')}</div>`
+                + (n > 1 ? `<div class="tt-pager"><button type="button" aria-label="前のページ" ${tilePage <= 0 ? 'disabled' : ''} onclick="tileGoPage(-1)"><svg class="ic"><use href="#ic-left"/></svg></button><span>${tilePage + 1}/${n}</span><button type="button" aria-label="次のページ" ${tilePage >= n - 1 ? 'disabled' : ''} onclick="tileGoPage(1)"><svg class="ic"><use href="#ic-right"/></svg></button></div>` : '')
+                + tools.map(k => `<button type="button" class="tt-tool" onclick="${k === 'open' ? 'openOpenPriceSheet()' : 'openCodeSheet()'}"><svg class="ic"><use href="#ic-${k === 'open' ? 'pencil' : 'barcode'}"/></svg>${k === 'open' ? '手打ち' : 'バーコード'}</button>`).join('');
+        }
+        return tileTabsEl;
+    }
+    // レジの商品の並び（タイル配置の時）：見出しの帯＋いまのページのマス
+    function tileGridEls(btnOf) {
+        const per = tilePer();
+        const cur = tileCurCat();
+        const raw = tileRaw(cur).slice(tilePage * per, tilePage * per + per);
+        const els = [tileTabs()];
+        raw.forEach((id, i) => {
+            const b = id != null ? btnOf(id) : null;
+            if (b) { els.push(b); return; }
+            if (!tileEmpties[i]) { const e = document.createElement('div'); e.className = 'tile-empty'; e.setAttribute('aria-hidden', 'true'); tileEmpties[i] = e; }
+            els.push(tileEmpties[i]);
+        });
+        return els;
+    }
+    // ---- タイルの配置の画面 ----
+    let tileEdCat = null, tileEdPage = 0, tileSel = -1;
+    function tileEdCurCat() {
+        const cs = categories.map(c => c.id);
+        if (!cs.includes(tileEdCat)) { tileEdCat = tileCurCat() || cs[0] || null; tileEdPage = 0; tileSel = -1; }
+        tileEdPage = Math.max(0, Math.min(tileEdPage, tilePageCount(tileEdCat) - 1));
+        return tileEdCat;
+    }
+    // 置いていない商品（タイルから外した物）
+    function tileUnplaced() {
+        const placed = new Set();
+        categories.forEach(c => tileRaw(c.id).forEach(id => { if (id != null) placed.add(id); }));
+        return products.filter(p => p.active !== false && !placed.has(p.id));
+    }
+    function renderTileEditor() {
+        const box = document.getElementById('tiles-body');
+        if (!box) return;
+        const cat = tileEdCurCat();
+        const per = tilePer();
+        const raw = cat ? tileRaw(cat) : [];
+        const pages = Math.max(1, Math.ceil(raw.length / per));
+        const pageSlots = raw.slice(tileEdPage * per, tileEdPage * per + per);
+        const byId = new Map(products.map(p => [p.id, p]));
+        const unplaced = tileUnplaced();
+        const lastEmpty = pages > 1 && raw.slice((pages - 1) * per).every(id => id == null);
+        const seg = (label, list, cur, fn) => `<div class="te-size"><span>${label}</span><div class="seg-pick" role="group" aria-label="${label}">${list.map(n => `<button type="button" class="${cur === n ? 'on' : ''}" aria-pressed="${cur === n}" onclick="${fn}(${n})">${n}</button>`).join('')}</div></div>`;
+        box.innerHTML = `<p class="settings-hint" style="margin-top:0;"><b>タブレットの横向き・パソコン</b>のレジで、商品を分類ごとのページにタイルで並べます（スマホ・縦向きは今までどおりの並び）。商品を押して選び、置きたいマスを押すと動きます（商品のマスなら入れ替え）。<b>＋</b>のマスに商品を置けます。<b>×</b>でタイルから外します。マスは空けておけます。${syncMode ? '共有中は全部の端末で同じになります。' : ''}</p>
+            <div class="te-sizes">${seg('列', TILE_COLS, tileCfg.cols, 'setTileCols')}${seg('段', TILE_ROWS, tileCfg.rows, 'setTileRows')}</div>
+            <div class="chip-pick te-cats" role="group" aria-label="分類">${categories.map(c => `<button type="button" class="${c.id === cat ? 'on' : ''}" aria-pressed="${c.id === cat}" style="--ink:${catInk(c.id)};" onclick="setTileEdCat('${c.id}')"><i class="te-dot"></i>${escHtml(c.label)}</button>`).join('')}</div>
+            <div class="te-bar">
+                ${pages > 1 ? `<button type="button" class="te-pg" aria-label="前のページ" ${tileEdPage <= 0 ? 'disabled' : ''} onclick="tileEdGoPage(-1)"><svg class="ic"><use href="#ic-left"/></svg></button><span class="te-pn">${tileEdPage + 1}/${pages}ページ</span><button type="button" class="te-pg" aria-label="次のページ" ${tileEdPage >= pages - 1 ? 'disabled' : ''} onclick="tileEdGoPage(1)"><svg class="ic"><use href="#ic-right"/></svg></button>` : '<span class="te-pn">1ページ</span>'}
+                <span class="te-sp"></span>
+                ${pages < TILE_PAGES_MAX ? `<button type="button" class="link-btn" onclick="tileAddPage()"><svg class="ic"><use href="#ic-plus"/></svg>ページを足す</button>` : ''}
+                ${lastEmpty ? `<button type="button" class="link-btn" onclick="tileDropPage()"><svg class="ic"><use href="#ic-minus"/></svg>空きのページを消す</button>` : ''}
+            </div>
+            ${tileSel >= 0 ? '<p class="te-tip">動かす先のマスを押してください（もう一度押すと、やめます）</p>' : ''}
+            <div class="te-grid" style="--tc:${tileCfg.cols};">${pageSlots.map((id, i) => {
+                const gi = tileEdPage * per + i;
+                const p = id != null ? byId.get(id) : null;
+                if (!p) return `<button type="button" class="te-cell empty${tileSel >= 0 ? ' target' : ''}" aria-label="空きのマス（押すと商品を置く）" onclick="tileEdTap(${gi})"><svg class="ic"><use href="#ic-plus"/></svg></button>`;
+                return `<div class="te-cell filled${tileSel === gi ? ' sel' : ''}${p.active === false ? ' off' : ''}" style="--ink:${catInk(p.type)}; background:${catBg(p.type)};">
+                    <button type="button" class="te-main" onclick="tileEdTap(${gi})"><span class="te-n">${escHtml(p.name)}</span><span class="te-p">¥${p.price}${p.active === false ? '・販売しない' : ''}</span></button>
+                    <button type="button" class="te-x" aria-label="${escHtml(p.name)}をタイルから外す" onclick="tileEdRemove(${gi})"><svg class="ic"><use href="#ic-x"/></svg></button>
+                </div>`;
+            }).join('')}</div>
+            ${unplaced.length ? `<p class="settings-hint te-warn"><svg class="ic"><use href="#ic-alert"/></svg>タイルに置いていない商品が<b>${unplaced.length}品</b>あります（${unplaced.slice(0, 4).map(p => escHtml(p.name)).join('・')}${unplaced.length > 4 ? ' ほか' : ''}）。レジのタイルからは押せません。＋のマスに置いてください。</p>` : ''}
+            <button type="button" class="action-btn btn-secondary" onclick="tileResetCat()"><svg class="ic"><use href="#ic-refresh"/></svg>この分類を登録順に並べ直す</button>`;
+    }
+    function setTileEdCat(c) { tileEdCat = c; tileEdPage = 0; tileSel = -1; playSound(); renderTileEditor(); }
+    function tileEdGoPage(d) { tileEdPage += d; tileSel = -1; playSound(); renderTileEditor(); }
+    function tileSaveCat(cat, raw, logText, offChange) {
+        const pages = Object.assign({}, tileCfg.pages, { [cat]: raw });
+        const next = Object.assign({}, tileCfg, { pages }, offChange ? { off: offChange(tileCfg.off || []) } : {});
+        writeTileCfg(next, logText);
+    }
+    function tileEdTap(gi) {
+        const cat = tileEdCurCat();
+        const raw = tileRaw(cat);
+        if (tileSel >= 0) {
+            const from = tileSel;
+            tileSel = -1;
+            if (from === gi) { playSound(660, 0.05); renderTileEditor(); return; }
+            const a = raw[from];
+            raw[from] = raw[gi]; raw[gi] = a;
+            playSound(880, 0.05);
+            tileSaveCat(cat, raw, `タイルの並びを変えた（${catLabelOf(cat)}）`);
+            return;
+        }
+        if (raw[gi] != null) { tileSel = gi; playSound(); renderTileEditor(); return; }
+        openTilePicker(gi);
+    }
+    function tileEdRemove(gi) {
+        const cat = tileEdCurCat();
+        const raw = tileRaw(cat);
+        const id = raw[gi];
+        if (id == null) return;
+        raw[gi] = null;
+        tileSel = -1;
+        // ほかの分類のページにも置いていなければ、「外した」印を付ける（自動で後ろに出さない）
+        const elsewhere = categories.some(c => c.id !== cat && tileRaw(c.id).includes(id));
+        playSound(660, 0.06);
+        const p = products.find(x => x.id === id);
+        tileSaveCat(cat, raw, `タイルから外した：${p ? p.name : ''}`, elsewhere ? null : off => off.concat([id]));
+    }
+    function openTilePicker(gi) {
+        const cat = tileEdCurCat();
+        const here = new Set(tileRaw(cat).filter(id => id != null));
+        const unplaced = new Set(tileUnplaced().map(p => p.id));
+        const list = products.filter(p => p.active !== false && !here.has(p.id))
+            .sort((a, b) => (unplaced.has(b.id) - unplaced.has(a.id)) || ((b.type === cat) - (a.type === cat)));
+        playSound();
+        openFeatSheet(`<div class="later-title">マスに置く商品</div>
+            <div class="later-sub">${escHtml(catLabelOf(cat))}のページに置きます。ほかの分類の商品も置けます。</div>
+            <div class="te-pick">${list.length ? list.map(p => `<button type="button" onclick="tilePlace(${gi}, ${typeof p.id === 'number' ? p.id : `'${escArg(String(p.id))}'`})" style="--ink:${catInk(p.type)};"><i></i><span class="tp-n">${escHtml(p.name)}<small>${escHtml(catLabelOf(p.type))}・¥${p.price}${unplaced.has(p.id) ? '・<b>置いていない</b>' : ''}</small></span></button>`).join('')
+                : '<p class="settings-hint">置ける商品がありません（この分類のページに、もう全部あります）。</p>'}</div>
+            <div class="opt-acts"><button type="button" class="later-cancel" onclick="closeFeatSheet()">やめる</button></div>`);
+    }
+    function tilePlace(gi, id) {
+        closeFeatSheet();
+        const cat = tileEdCurCat();
+        const raw = tileRaw(cat);
+        if (raw.includes(id)) raw[raw.indexOf(id)] = null;
+        raw[gi] = id;
+        const p = products.find(x => x.id === id);
+        playSound(988, 0.06);
+        tileSaveCat(cat, raw, `タイルに置いた：${p ? p.name : ''}`, off => off.filter(x => x !== id));
+    }
+    function tileAddPage() {
+        const cat = tileEdCurCat();
+        const raw = tileRaw(cat);
+        if (raw.length / tilePer() >= TILE_PAGES_MAX) return;
+        for (let i = 0; i < tilePer(); i++) raw.push(null);
+        tileEdPage = raw.length / tilePer() - 1;
+        tileSaveCat(cat, raw, `タイルのページを足した（${catLabelOf(cat)}）`);
+    }
+    function tileDropPage() {
+        const cat = tileEdCurCat();
+        const per = tilePer();
+        const raw = tileRaw(cat);
+        if (raw.length <= per || raw.slice(raw.length - per).some(id => id != null)) return;
+        raw.length -= per;
+        tileEdPage = Math.min(tileEdPage, raw.length / per - 1);
+        tileSaveCat(cat, raw, `タイルの空きのページを消した（${catLabelOf(cat)}）`);
+    }
+    function tileResetCat() {
+        const cat = tileEdCurCat();
+        if (!confirm(`「${catLabelOf(cat)}」のページを、商品の登録順に並べ直します。\n（空けておいたマスは詰めます）`)) return;
+        const ids = products.filter(p => p.type === cat).map(p => p.id);
+        const pages = Object.assign({}, tileCfg.pages);
+        // ほかの分類のページに置いた、この分類の商品は、そちらから外す（2か所に出さない）
+        Object.keys(pages).forEach(k => { if (k !== cat) pages[k] = (pages[k] || []).map(id => (ids.includes(id) ? null : id)); });
+        pages[cat] = ids;
+        tileEdPage = 0; tileSel = -1;
+        writeTileCfg(Object.assign({}, tileCfg, { pages, off: (tileCfg.off || []).filter(id => !ids.includes(id)) }), `タイルを登録順に並べ直した（${catLabelOf(cat)}）`);
+    }
+    function setTileCols(n) { if (n === tileCfg.cols) return; tileSel = -1; writeTileCfg(Object.assign({}, tileCfg, { cols: n }), `タイルを${n}列にした`); }
+    function setTileRows(n) { if (n === tileCfg.rows) return; tileSel = -1; writeTileCfg(Object.assign({}, tileCfg, { rows: n }), `タイルを${n}段にした`); }
+    function writeTileCfg(next, logText) {
+        tileCfg = normTileCfg(next);
+        tileCfgBy = getDeviceId();
+        shareEventCfg({ tiles: tileCfg, tilesBy: tileCfgBy }, 'タイルの配置');
+        if (logText) logEdit(logText);
+        init();
+        renderTileEditor();
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     // 手打ち：登録していない品を、金額と分類を決めてカートへ入れる（在庫は変えない）
     let openDraft = { price: '', type: '', name: '' };
     function openOpenPriceSheet() {
@@ -16933,8 +17379,12 @@
     // ・端数は、1回の会計の税率ごとに1回だけ切り捨てる（インボイスの決まりと同じ）。
     // ・会計した時の税率を、その会計に書いておく（あとで設定を変えても、前の会計の消費税は変わらない）。
     // 初期設定は「なし」。いまの販売会は消費税なしで売っているため。
-    const TAX_RATES = [10, 8];
-    let taxCfg = { on: false, rates: {}, eat10: true, regNo: '' };
+    // 0 は「非課税」（金券・切手など、消費税がかからない物）
+    const TAX_RATES = [10, 8, 0];
+    // 値段の扱い：in … 税込み（値段に消費税が入っている）／ ex … 税抜き（会計の時に消費税を足す）
+    // 税抜きの時の端数：floor 切り捨て／round 四捨五入／ceil 切り上げ（1回の会計の税率ごとに1回だけ）
+    const TAX_ROUNDS = ['floor', 'round', 'ceil'];
+    let taxCfg = { on: false, rates: {}, eat10: true, regNo: '', ex: false, round: 'floor' };
     let taxCfgBy = '';
     function normTaxCfg(t) {
         t = (t && typeof t === 'object') ? t : {};
@@ -16943,33 +17393,81 @@
             Object.keys(t.rates).slice(0, 40).forEach(k => { const r = Number(t.rates[k]); if (TAX_RATES.includes(r)) rates[String(k).slice(0, 40)] = r; });
         }
         const reg = String(t.regNo || '').toUpperCase().replace(/[^0-9T]/g, '');
-        return { on: t.on === true, rates, eat10: t.eat10 !== false, regNo: /^T[0-9]{13}$/.test(reg) ? reg : '' };
+        return { on: t.on === true, rates, eat10: t.eat10 !== false, regNo: /^T[0-9]{13}$/.test(reg) ? reg : '',
+            ex: t.ex === true, round: TAX_ROUNDS.includes(t.round) ? t.round : 'floor' };
     }
     function taxRateOfType(type) { const r = taxCfg.rates[type]; return TAX_RATES.includes(r) ? r : 8; }
+    function taxRateLabel(r) { return r === 0 ? '非課税' : r + '%'; }
+    // 税抜きの値段で売っているか（会計の時に消費税を足す）
+    function taxExcl() { return taxCfg.on && taxCfg.ex === true; }
     // 会計に書いておく、その時の税率（分類ごと）と、店内で食べる会計か。消費税なしの時は null
+    // 税抜きの時は ex と、端数のしかた（rd）も書いておく（あとで設定を変えても、前の会計の金額は変わらない）
     function taxSnapshot(eat) {
         if (!taxCfg.on) return null;
         const r = {};
         categories.forEach(c => { r[c.id] = taxRateOfType(c.id); });
-        return { r, eat: !!(eat && taxCfg.eat10) };
+        return Object.assign({ r, eat: !!(eat && taxCfg.eat10) }, taxCfg.ex ? { ex: true, rd: taxCfg.round } : {});
     }
     function normSaleTax(t) {
         if (!t || typeof t !== 'object' || !t.r || typeof t.r !== 'object') return null;
         const r = {};
         Object.keys(t.r).slice(0, 40).forEach(k => { const v = Number(t.r[k]); if (TAX_RATES.includes(v)) r[String(k).slice(0, 40)] = v; });
-        return { r, eat: t.eat === true };
+        return Object.assign({ r, eat: t.eat === true }, t.ex === true ? { ex: true, rd: TAX_ROUNDS.includes(t.rd) ? t.rd : 'floor' } : {});
     }
-    // その会計で、この商品にかかる税率
+    // その会計の決まり（t）で、この商品にかかる税率
+    function snapItemRate(t, item) {
+        const r0 = t.r[item && item.type];
+        const r = TAX_RATES.includes(r0) ? r0 : taxRateOfType(item && item.type);
+        // 店内で食べる会計は10%（非課税の物は、店内でも非課税のまま）
+        return t.eat && r !== 0 ? 10 : r;
+    }
     function saleItemRate(h, item) {
         const t = normSaleTax(h && h.tax);
-        if (!t) return 0;
-        if (t.eat) return 10;
-        const r = t.r[item && item.type];
-        return TAX_RATES.includes(r) ? r : taxRateOfType(item && item.type);
+        return t ? snapItemRate(t, item) : 0;
     }
-    // 1回の会計の消費税（税率ごと）：[{ rate, amt: 税込みの金額, tax: うち消費税 }]。消費税なしの会計は []
+    function roundTax(x, mode) {
+        if (mode === 'round') return Math.round(x);
+        if (mode === 'ceil') return Math.ceil(x - 1e-9);
+        return Math.floor(x + 1e-9);
+    }
+    // 品目を税率ごとに分けて、割引を金額の割合で分けて引く：[{ rate, net: 割引の後の額 }]
+    function taxBuckets(items, discount, t) {
+        const by = {};
+        let gross = 0;
+        (items || []).forEach(i => {
+            const rate = snapItemRate(t, i);
+            const pr = Math.max(0, Number(i.price) || 0);
+            by[rate] = (by[rate] || 0) + pr;
+            gross += pr;
+        });
+        const rows = Object.keys(by).map(Number).sort((a, b) => b - a).map(rate => ({ rate, net: by[rate] }));
+        if (!rows.length || gross <= 0) return [];
+        const biggest = () => rows.reduce((a, b) => (b.net > a.net ? b : a), rows[0]);
+        const disc = Math.min(gross, Math.max(0, Number(discount) || 0));
+        if (disc > 0) {
+            let left = disc;
+            rows.forEach(x => { const d = Math.floor(disc * x.net / gross); x.net -= d; left -= d; });
+            biggest().net -= left;
+        }
+        return rows;
+    }
+    // 税抜きの値段の会計で、足す消費税：{ add: 足す額の合計, rows: [{ rate, net: 税抜きの額, tax }] }
+    // 端数は、1回の会計の税率ごとに1回だけ（決めたしかたで）丸める
+    function exTaxOf(items, discount, snap) {
+        const t = snap && normSaleTax(snap);
+        if (!t || !t.ex) return { add: 0, rows: [] };
+        const rows = taxBuckets(items, discount, t).map(x => ({ rate: x.rate, net: x.net, tax: x.rate ? roundTax(x.net * x.rate / 100, t.rd) : 0 }));
+        return { add: rows.reduce((a, x) => a + x.tax, 0), rows };
+    }
+    // 1回の会計の消費税（税率ごと）：[{ rate, amt: 税込みの金額, tax: うち消費税（税抜きの会計は、足した消費税）, net?, ex? }]。消費税なしの会計は []
     function saleTax(h) {
-        if (!h || !normSaleTax(h.tax)) return [];
+        const snap = h && normSaleTax(h.tax);
+        if (!snap) return [];
+        if (snap.ex) {
+            const disc = Math.max(0, Number(h.discount) || 0);
+            const r = exTaxOf(h.items, disc, snap);
+            return r.rows.filter(x => x.net + x.tax > 0).map(x => ({ rate: x.rate, amt: x.net + x.tax, tax: x.tax, net: x.net, ex: true }));
+        }
         const by = {};
         let gross = 0;
         (h.items || []).forEach(i => {
@@ -16992,7 +17490,7 @@
         // 念のため：合計が明細より大きい記録でも、内訳の合計が会計の合計とそろうようにする
         const sum = rows.reduce((a, x) => a + x.amt, 0);
         if (sum !== total) biggest().amt += total - sum;
-        return rows.filter(x => x.amt > 0).map(x => ({ rate: x.rate, amt: x.amt, tax: Math.floor(x.amt * x.rate / (100 + x.rate)) }));
+        return rows.filter(x => x.amt > 0).map(x => ({ rate: x.rate, amt: x.amt, tax: x.rate ? Math.floor(x.amt * x.rate / (100 + x.rate)) : 0 }));
     }
     // 会計をまとめた消費税：{ rows: { 10: {amt, tax, n}, 8: {...} }, none: 消費税なしの売上, noneN, total, n }
     function taxSummary(sales) {
@@ -17003,14 +17501,15 @@
             out.total += tot; out.n++;
             const tx = saleTax(h);
             if (!tx.length) { out.none += tot; out.noneN++; return; }
-            tx.forEach(x => { const r = out.rows[x.rate] || (out.rows[x.rate] = { amt: 0, tax: 0, n: 0 }); r.amt += x.amt; r.tax += x.tax; r.n++; });
+            // 非課税の物は「消費税なし」の売上に入れる
+            tx.forEach(x => { if (!x.rate) { out.none += x.amt; return; } const r = out.rows[x.rate] || (out.rows[x.rate] = { amt: 0, tax: 0, n: 0 }); r.amt += x.amt; r.tax += x.tax; r.n++; });
         });
         return out;
     }
     function taxSub() {
         if (!taxCfg.on) return 'なし（消費税を計算しない）';
         const rs = [...new Set(categories.map(c => taxRateOfType(c.id)))].sort((a, b) => b - a);
-        return `税込みの値段で計算・${rs.map(r => r + '%').join('と')}${taxCfg.regNo ? '・登録番号あり' : ''}`;
+        return `${taxCfg.ex ? '税抜きの値段（会計で消費税を足す）' : '税込みの値段で計算'}・${rs.map(taxRateLabel).join('と')}${taxCfg.regNo ? '・登録番号あり' : ''}`;
     }
     function writeTaxCfg(next, logText, fromSwitch) {
         taxCfg = normTaxCfg(next);
@@ -17019,12 +17518,32 @@
         if (logText) logEdit(logText);
         playSound(660, 0.05);
         if (fromSwitch) setTimeout(renderTaxView, 240); else renderTaxView();
+        afterTaxChange();
+    }
+    // 消費税の決まりが変わった時：税抜きの値段なら、カート・お会計の合計も変わるので出し直す
+    function afterTaxChange() {
+        init();
+        const m = document.getElementById('checkout-modal');
+        if (m && m.style.display === 'flex' && checkoutItems && checkoutItems.length) recalcCheckout();
     }
     let revealOnce = '';    // スイッチを入れた直後だけ、出てきた項目をふわっと出す（どの画面か）
     function setTaxOn(on) { revealOnce = on ? 'tax' : ''; writeTaxCfg(Object.assign({}, taxCfg, { on: !!on }), on ? '消費税を計算するようにした' : '消費税をなしにした', true); }
     function setTaxRate(type, r) {
         if (!TAX_RATES.includes(r)) return;
-        writeTaxCfg(Object.assign({}, taxCfg, { rates: Object.assign({}, taxCfg.rates, { [type]: r }) }), `「${catLabelOf(type)}」の消費税を${r}%にした`);
+        writeTaxCfg(Object.assign({}, taxCfg, { rates: Object.assign({}, taxCfg.rates, { [type]: r }) }), `「${catLabelOf(type)}」の消費税を${taxRateLabel(r)}にした`);
+    }
+    function setTaxEx(ex) {
+        ex = !!ex;
+        if (ex === taxCfg.ex) return;
+        if (currentSession && cart.length) { playError(); alert('カートに商品が入っています。\n会計を済ませるか、カートを空にしてから切り替えてください。'); renderTaxView(); return; }
+        if (!confirm(ex ? '商品の値段を「税抜き」にします。\nこれからの会計は、値段に消費税を足した額が合計になります。\n（いままでの会計の金額は変わりません）'
+                        : '商品の値段を「税込み」にします。\nこれからの会計は、値段の合計がそのまま合計になります。\n（いままでの会計の金額は変わりません）')) { renderTaxView(); return; }
+        writeTaxCfg(Object.assign({}, taxCfg, { ex }), ex ? '商品の値段を税抜きにした' : '商品の値段を税込みにした', true);
+        init();
+    }
+    function setTaxRound(r) {
+        if (!TAX_ROUNDS.includes(r) || r === taxCfg.round) return;
+        writeTaxCfg(Object.assign({}, taxCfg, { round: r }), `消費税の1円未満を「${{ floor: '切り捨て', round: '四捨五入', ceil: '切り上げ' }[r]}」にした`);
     }
     function setTaxEat10(on) { writeTaxCfg(Object.assign({}, taxCfg, { eat10: !!on }), on ? '店内で食べる会計を10%にした' : '店内で食べる会計も分類の税率にした', true); }
     function setTaxRegNo() {
@@ -17081,15 +17600,24 @@
         const picked = taxYear ? all.filter(x => String(x.date.getFullYear()) === taxYear) : all;
         const m = mergeTaxSum(picked);
         const tsum = Object.values(m.rows).reduce((a, r) => a + r.tax, 0);
-        const rateSeg = c => `<div class="seg-pick" role="group" aria-label="${escHtml(c.label)}の税率">${TAX_RATES.slice().reverse().map(r => `<button type="button" class="${taxRateOfType(c.id) === r ? 'on' : ''}" aria-pressed="${taxRateOfType(c.id) === r}" onclick="setTaxRate('${c.id}', ${r})">${r}%</button>`).join('')}</div>`;
-        box.innerHTML = `<p class="settings-hint" style="margin-top:0;">値段は<b>税込み</b>（総額表示）のまま使います。消費税を足して合計が変わることはありません。合計のうち消費税がいくらかを税率ごとに計算して、レシート・領収書・税務用の資料に出します。${syncMode ? '共有中は全部の端末で同じになります。' : ''}</p>
+        const rateSeg = c => `<div class="seg-pick" role="group" aria-label="${escHtml(c.label)}の税率">${[8, 10, 0].map(r => `<button type="button" class="${taxRateOfType(c.id) === r ? 'on' : ''}" aria-pressed="${taxRateOfType(c.id) === r}" onclick="setTaxRate('${c.id}', ${r})">${taxRateLabel(r)}</button>`).join('')}</div>`;
+        const rateNote = r => r === 8 ? '軽減税率' : (r === 10 ? '標準税率' : '消費税がかからない');
+        const ex = taxCfg.ex;
+        box.innerHTML = `<p class="settings-hint" style="margin-top:0;">${ex
+                ? '商品の値段は<b>税抜き</b>です。会計の時に、税率ごとの消費税を足して合計を出します（レシート・領収書にも、足した消費税が出ます）。'
+                : '値段は<b>税込み</b>（総額表示）のまま使います。消費税を足して合計が変わることはありません。合計のうち消費税がいくらかを税率ごとに計算して、レシート・領収書・税務用の資料に出します。'}${syncMode ? '共有中は全部の端末で同じになります。' : ''}</p>
             <div class="sw-row">
                 <div class="sw-text"><b>消費税を計算する</b><span>${on ? 'これからの会計に、税率ごとの消費税を記録します' : 'いまは「なし」です（消費税なしで販売）'}</span></div>
                 <input type="checkbox" class="ios-switch" id="opt-tax-on" ${on ? 'checked' : ''} onchange="setTaxOn(this.checked)" aria-label="消費税を計算する">
             </div>
-            ${on ? `<div class="${revealOnce === 'tax' ? 'reveal' : ''}"><label class="field-label sec">分類ごとの税率</label>
-            <p class="settings-hint" style="margin-top:0;">食べ物・飲み物（お酒を除く）の持ち帰りは<b>8%</b>（軽減税率）、雑貨・お酒などは<b>10%</b>です。</p>
-            <div class="tax-cats">${categories.map(c => `<div class="tax-cat"><span class="tc-n"><i style="background:${catInk(c.id)}"></i><span>${escHtml(c.label)}<small>${taxRateOfType(c.id) === 8 ? '軽減税率' : '標準税率'}</small></span></span>${rateSeg(c)}</div>`).join('')}</div>
+            ${on ? `<div class="${revealOnce === 'tax' ? 'reveal' : ''}"><label class="field-label sec">商品の値段</label>
+            <div class="seg-pick" role="group" aria-label="商品の値段"><button type="button" class="${!ex ? 'on' : ''}" aria-pressed="${!ex}" onclick="setTaxEx(false)">税込み</button><button type="button" class="${ex ? 'on' : ''}" aria-pressed="${ex}" onclick="setTaxEx(true)">税抜き（会計で消費税を足す）</button></div>
+            ${ex ? `<label class="field-label sec">消費税の1円未満</label>
+            <div class="seg-pick" role="group" aria-label="消費税の1円未満">${[['floor', '切り捨て'], ['round', '四捨五入'], ['ceil', '切り上げ']].map(([k, l]) => `<button type="button" class="${taxCfg.round === k ? 'on' : ''}" aria-pressed="${taxCfg.round === k}" onclick="setTaxRound('${k}')">${l}</button>`).join('')}</div>
+            <p class="settings-hint">1回の会計の、税率ごとに1回だけ丸めます。例：税抜き ¥1,234（8%）→ 消費税 ¥98（切り捨て）・¥99（四捨五入・切り上げ）。</p>` : ''}
+            <label class="field-label sec">分類ごとの税率</label>
+            <p class="settings-hint" style="margin-top:0;">食べ物・飲み物（お酒を除く）の持ち帰りは<b>8%</b>（軽減税率）、雑貨・お酒などは<b>10%</b>です。金券・切手など、消費税がかからない物は<b>非課税</b>にします。</p>
+            <div class="tax-cats">${categories.map(c => `<div class="tax-cat"><span class="tc-n"><i style="background:${catInk(c.id)}"></i><span>${escHtml(c.label)}<small>${rateNote(taxRateOfType(c.id))}</small></span></span>${rateSeg(c)}</div>`).join('')}</div>
             ${isKitchen() ? `<div class="sw-row" style="margin-top:10px;">
                 <div class="sw-text"><b>店内で食べる会計は10%にする</b><span>${isRestaurant() ? 'テーブルの伝票の会計は、すべて店内です' : '会計の窓で「店内」を選んだ会計・席からのモバイル注文'}</span></div>
                 <input type="checkbox" class="ios-switch" id="opt-tax-eat" ${taxCfg.eat10 ? 'checked' : ''} onchange="setTaxEat10(this.checked)" aria-label="店内で食べる会計は10%にする">
@@ -17097,7 +17625,7 @@
             <label class="field-label sec">登録番号（インボイス）</label>
             <input type="text" id="tax-regno" maxlength="16" autocomplete="off" placeholder="例：T1234567890123" value="${escHtml(taxCfg.regNo)}" onchange="setTaxRegNo()">
             <p class="settings-hint">適格請求書発行事業者の登録をしている時だけ入れます。レシートと領収書に印字されます。</p>
-            <p class="settings-hint">端数は、1回の会計の税率ごとに1回だけ切り捨てます。セット割・クーポンの割引は、税率ごとの金額の割合で分けて引きます。会計した時の税率がその会計に残るので、あとで税率を変えても、前の会計の消費税は変わりません。</p></div>` : ''}
+            <p class="settings-hint">${ex ? '' : '端数は、1回の会計の税率ごとに1回だけ切り捨てます。'}セット割・クーポン・値引きは、税率ごとの金額の割合で分けて引きます${ex ? '（税抜きの額から引き、引いた後の額に消費税を足します）' : ''}。会計した時の税率がその会計に残るので、あとで税率を変えても、前の会計の消費税は変わりません。</p></div>` : ''}
             <label class="field-label sec">税務用の資料</label>
             <p class="settings-hint" style="margin-top:0;">この端末に残っている販売会（閉店した回・いまの回）の売上を、<b>税率ごと・月ごと・販売会ごと</b>の表にまとめます。確定申告や帳簿付けの元にしてください。</p>
             ${years.length > 1 ? `<div class="chip-pick" role="group" aria-label="対象の年"><button type="button" class="${!taxYear ? 'on' : ''}" aria-pressed="${!taxYear}" onclick="setTaxYear('')">すべて</button>${years.map(y => `<button type="button" class="${taxYear === y ? 'on' : ''}" aria-pressed="${taxYear === y}" onclick="setTaxYear('${y}')">${y}年</button>`).join('')}</div>` : ''}
@@ -17273,6 +17801,7 @@
         const gross = lines.reduce((a, l) => a + l.subtotal, 0);
         const discs = discLinesOf(h);
         const tx = saleTax(h);
+        const ex = tx.some(x => x.ex);
         const reduced = l => tx.length > 0 && saleItemRate(h, l) === 8;
         const qrUrl = c.qr === 'mobile' && syncEventCode ? orderPageUrl(syncEventCode) : '';
         const part = {
@@ -17281,10 +17810,15 @@
             date: () => `<div>${t.getFullYear()}/${pad(t.getMonth() + 1)}/${pad(t.getDate())}（${wd}） ${pad(t.getHours())}:${pad(t.getMinutes())}</div>`,
             no: () => `<div>${isKitchen() ? `番号 ${esc(recordOrderNo(h))}　` : ''}客No. ${esc(h.no || '')}</div>`,
             lines: () => '<div class="rule"></div>' + lines.map(l => `<div class="kv"><span>${esc(l.name)}${reduced(l) ? '※' : ''}${l.qty > 1 ? ` ${yen(l.price)}×${l.qty}` : ''}${l.opt ? `<br><small>${esc(l.opt)}</small>` : ''}</span><span>${yen(l.subtotal)}</span></div>`).join(''),
-            subtotal: () => `<div class="kv"><span>小計</span><span>${yen(gross)}</span></div>`
-                + discs.map(x => `<div class="kv"><span>${esc(x.label)}</span><span>−${yen(x.amt)}</span></div>`).join('') + '<div class="rule"></div>',
+            subtotal: () => `<div class="kv"><span>小計${ex ? '（税抜）' : ''}</span><span>${yen(gross)}</span></div>`
+                + discs.map(x => `<div class="kv"><span>${esc(x.label)}</span><span>−${yen(x.amt)}</span></div>`).join('')
+                // 税抜きの値段の会計は、足した消費税を税率ごとに
+                + (ex ? tx.filter(x => x.rate > 0).map(x => `<div class="kv"><span>消費税（${x.rate}%）</span><span>${yen(x.tax)}</span></div>`).join('') : '')
+                + '<div class="rule"></div>',
             total: () => `<div class="kv tot"><span>合計${tx.length ? '（税込）' : ''}</span><span>${yen(h.total)}</span></div>`,
-            tax: () => !tx.length ? '' : tx.map(x => `<div class="kv"><span>${x.rate}%対象${x.rate === 8 ? '※' : ''}</span><span>${yen(x.amt)}</span></div><div class="kv"><span>　内消費税</span><span>${yen(x.tax)}</span></div>`).join('')
+            tax: () => !tx.length ? '' : tx.map(x => !x.rate ? `<div class="kv"><span>非課税</span><span>${yen(x.amt)}</span></div>`
+                : x.ex ? `<div class="kv"><span>${x.rate}%対象${x.rate === 8 ? '※' : ''}（税抜）</span><span>${yen(x.net)}</span></div><div class="kv"><span>　消費税</span><span>${yen(x.tax)}</span></div>`
+                : `<div class="kv"><span>${x.rate}%対象${x.rate === 8 ? '※' : ''}</span><span>${yen(x.amt)}</span></div><div class="kv"><span>　内消費税</span><span>${yen(x.tax)}</span></div>`).join('')
                 + (tx.some(x => x.rate === 8) ? '<div>※は軽減税率（8%）の対象</div>' : '')
                 + (taxCfg.regNo ? `<div>登録番号 ${esc(taxCfg.regNo)}</div>` : ''),
             count: () => `<div class="kv"><span>お買上点数</span><span>${(h.items || []).length}点</span></div>`,
@@ -17415,7 +17949,9 @@
             `<tr><td>${esc(l.name)}${tx.length && saleItemRate(h, l) === 8 ? '※' : ''}</td><td class="c">${l.qty}</td><td class="r">${yen(l.price)}</td><td class="r">${yen(l.subtotal)}</td></tr>`).join('');
         // セット割は明細の最後に「値引き」の行として載せる（明細の合計と金額がそろうように）
         // 値引きの行（セット割・クーポン・手入力の値引きを、それぞれの名前で）
-        const discRow = discLinesOf(h).map(x => `<tr><td>${esc(x.label)}（値引き）</td><td class="c"></td><td class="r"></td><td class="r">−${yen(x.amt)}</td></tr>`).join('');
+        const discRow = discLinesOf(h).map(x => `<tr><td>${esc(x.label)}（値引き）</td><td class="c"></td><td class="r"></td><td class="r">−${yen(x.amt)}</td></tr>`).join('')
+            // 税抜きの値段の会計は、足した消費税も明細に載せる（明細の合計と金額がそろうように）
+            + tx.filter(x => x.ex && x.rate > 0).map(x => `<tr><td>消費税（${x.rate}%）</td><td class="c"></td><td class="r"></td><td class="r">${yen(x.tax)}</td></tr>`).join('');
         const payRows = h.pay
             ? `<div class="pay"><span>お支払い</span><span>${esc(h.payLabel || payLabel(h.pay))}</span></div>`
             : ((h.cash != null)
@@ -17482,7 +18018,9 @@
                     <tbody>${lines}${discRow}</tbody>
                 </table>
                 <div class="total"><span>合計${tx.length ? '（税込）' : ''}</span><span>${yen(h.total)}</span></div>
-                ${tx.map(x => `<div class="pay"><span>${x.rate}%対象${x.rate === 8 ? '※' : ''}　${yen(x.amt)}</span><span>内消費税　${yen(x.tax)}</span></div>`).join('')}
+                ${tx.map(x => !x.rate ? `<div class="pay"><span>非課税　${yen(x.amt)}</span><span></span></div>`
+                    : x.ex ? `<div class="pay"><span>${x.rate}%対象${x.rate === 8 ? '※' : ''}（税抜）　${yen(x.net)}</span><span>消費税　${yen(x.tax)}</span></div>`
+                    : `<div class="pay"><span>${x.rate}%対象${x.rate === 8 ? '※' : ''}　${yen(x.amt)}</span><span>内消費税　${yen(x.tax)}</span></div>`).join('')}
                 ${tx.some(x => x.rate === 8) ? '<div class="pay"><span>※は軽減税率（8%）の対象です</span><span></span></div>' : ''}
                 ${payRows}
 
@@ -18265,7 +18803,8 @@
             { key: 'consign', by: 'consignBy', norm: normConsignCfg, get: () => consignCfg, set: (v, b) => { consignCfg = v; consignBy = b; }, sub: 'consign', render: renderConsignView,
               after: () => { init(); if (currentView === 'settings' && currentSub === 'stock') renderLiveStock(); if (currentView === 'records') renderRecords(); } },
             // 消費税（端末ごとに違うと、同じ会計でも消費税の額が変わってしまう）
-            { key: 'tax', by: 'taxBy', norm: normTaxCfg, get: () => taxCfg, set: (v, b) => { taxCfg = v; taxCfgBy = b; }, sub: 'tax', render: renderTaxView },
+            { key: 'tax', by: 'taxBy', norm: normTaxCfg, get: () => taxCfg, set: (v, b) => { taxCfg = v; taxCfgBy = b; }, sub: 'tax', render: renderTaxView, after: afterTaxChange },
+            { key: 'tiles', by: 'tilesBy', norm: normTileCfg, get: () => tileCfg, set: (v, b) => { tileCfg = v; tileCfgBy = b; }, sub: 'tiles', render: renderTileEditor, after: init },
             { key: 'coupons', by: 'couponsBy', arr: true, norm: normCoupons, get: () => coupons, set: (v, b) => { coupons = v; couponsBy = b; }, sub: 'coupon', render: renderCouponView },
             // CD（明るさ・広告・支払い方法の表示）。持っていない広告の画像は取ってくる
             { key: 'cdCfg', by: 'cdCfgBy', norm: normCdCfg, get: () => cdCfg, set: (v, b) => { cdCfg = v; cdCfgBy = b; }, sub: 'cd', render: renderCdView, after: syncCdAdsSoon }
@@ -19487,6 +20026,9 @@
         if (a) a.classList.toggle('on', checkoutDine === 'take');
         if (b) b.classList.toggle('on', checkoutDine === 'eat');
         publishKitchenDraft();   // キッチンの「会計中」の色も変える
+        // 税抜きの値段で、店内は10%の時：店内・持ち帰りで足す消費税が変わるので、合計を出し直す
+        const m = document.getElementById('checkout-modal');
+        if (taxExcl() && m && m.style.display === 'flex' && checkoutItems && checkoutItems.length) recalcCheckout();
     }
 
     // 店舗モードに合わせて、画面の出し分けを決める（起動時に1回）
@@ -20945,7 +21487,7 @@
                 <div class="rule"></div>
                 <div class="items">${rows || '<div class="ln"><span class="n">（まだ注文はありません）</span></div>'}</div>
                 <div class="rule"></div>
-                <div class="tot"><span>合計</span><span>${yenStr(tt.total)}</span></div>
+                <div class="tot"><span>合計${taxExcl() ? '（税抜）' : ''}</span><span>${yenStr(tt.total)}</span></div>
                 ${tt.paid > 0 ? `<div class="sub"><span>お支払い済み</span><span>${yenStr(tt.paid)}</span></div><div class="sub"><span>残り</span><span>${yenStr(tt.rest)}</span></div>` : ''}
                 <div class="note">お帰りの際に、この伝票をレジへお持ちください。</div>
             </div>`;
@@ -21054,9 +21596,9 @@
         box.innerHTML = `<div class="bill-head"><span class="bh-t">${escHtml(tableLabel(b.table))}</span><span class="bh-no">伝票 ${billNoText(b)}</span><span class="bh-s">${open ? `開いてから${min}分` : (b.st === 'paid' ? '会計済み' : '取り消し済み')}</span></div>
             <div class="bill-lines">${lines || '<div class="bill-line"><span class="bl-n">まだ注文はありません</span></div>'}</div>
             <div class="bill-sum">
-                <div><span>合計</span><span>${yenStr(tt.total)}</span></div>
+                <div><span>合計${taxExcl() ? '（税抜）' : ''}</span><span>${yenStr(tt.total)}</span></div>
                 ${tt.paid ? `<div><span>お支払い済み</span><span>${yenStr(tt.paid)}</span></div>` : ''}
-                <div class="big"><span>${splitting ? '今回お支払い' : '残り'}</span><span>${yenStr(splitting ? pickTotal : tt.rest)}</span></div>
+                <div class="big"><span>${splitting ? '今回お支払い' : '残り'}${taxExcl() ? '（税抜）' : ''}</span><span>${yenStr(splitting ? pickTotal : tt.rest)}</span></div>
             </div>
             <div class="bill-acts">${!open ? '' : splitting
                 ? `<button type="button" class="action-btn btn-checkout" ${pickTotal > 0 ? '' : 'disabled'} onclick="payBill(true)"><svg class="ic"><use href="#ic-yen"/></svg>選んだ分を会計する（${yenStr(pickTotal)}）</button>
@@ -21422,7 +21964,7 @@
         receiptCounter++;
         const sno = receiptCounter;
         const items = cart.slice();
-        const total = itemsNet(items);
+        const total = itemsNet(items) + exTaxOf(items, setDiscountFor(items), taxSnapshot(dine === 'eat')).add;
         const fake = { no: sno, time: new Date(), items, total };
         const memo = memoOn() ? normMemo((document.getElementById('later-memo') || {}).value || '') : '';
         const o = addKitchenOrder(fake, dine, Object.assign({ paid: false, later: true, sno }, memo ? { memo } : {}));
@@ -21546,6 +22088,7 @@
                 setRule: normSetRule(d.setRule),
                 ...(d.coupon && typeof d.coupon === 'object' ? { coupon: { id: String(d.coupon.id || ''), name: String(d.coupon.name || 'クーポン').slice(0, 30), kind: d.coupon.kind === 'pct' ? 'pct' : 'yen', amount: Number(d.coupon.amount) || 0, solo: !!d.coupon.solo, amt: Math.max(0, Number(d.coupon.amt) || 0) } } : {}),
                 ...(normMdisc(d.mdisc) ? { mdisc: normMdisc(d.mdisc) } : {}),
+                ...(Number(d.taxAdd) > 0 ? { taxAdd: Math.floor(Number(d.taxAdd)) } : {}),
                 ...(typeof d.staff === 'string' && normStaffName(d.staff) ? { staff: normStaffName(d.staff) } : {}),
                 customerType: d.customerType || '不明',
                 pendingType: !!d.pendingType,
@@ -21691,6 +22234,7 @@
             setRule: normSetRule(record.setRule) || null,
             ...(record.coupon ? { coupon: record.coupon } : {}),
             ...(record.mdisc ? { mdisc: record.mdisc } : {}),
+            ...(record.taxAdd > 0 ? { taxAdd: record.taxAdd } : {}),
             ...(record.staff ? { staff: record.staff } : {}),
             ...(record.memo ? { memo: String(record.memo).slice(0, 100) } : {}),
             ...(normSaleTax(record.tax) ? { tax: normSaleTax(record.tax) } : {}),

@@ -71,6 +71,7 @@
         .item { display: flex; align-items: center; gap: 12px; background: var(--surface); border-radius: var(--r); box-shadow: var(--shadow); padding: 12px 12px 12px 16px; margin-bottom: 8px; }
         .item .nm { flex: 1; min-width: 0; font-weight: 700; overflow-wrap: anywhere; }
         .item .pr { display: block; font-size: 14px; color: var(--sub); font-weight: 600; font-variant-numeric: tabular-nums; }
+        .txex { font-size: 10.5px; font-weight: 700; margin-left: 3px; opacity: .7; }
         .item.out { opacity: .5; }
         .item .so { font-size: 12px; font-weight: 800; color: var(--danger); background: var(--danger-bg); padding: 2px 8px; border-radius: 999px; }
         .step { display: flex; align-items: center; gap: 6px; }
@@ -616,6 +617,28 @@
         }
         return { gross, set, coupon: c, net: Math.max(0, gross - set - c) };
     }
+    // 税抜きの値段：お店が「税抜き」で売っている時は、注文の合計に消費税を足す（レジと同じ決まり）
+    function taxEx() { const t = evData && evData.tax; return t && t.on === true && t.ex === true ? t : null; }
+    function exTaxAdd(lines, discount, eat) {
+        const t = taxEx();
+        if (!t) return 0;
+        const rates = (t.rates && typeof t.rates === 'object') ? t.rates : {};
+        const rateOf = type => { const r0 = Number(rates[type]); const r = [10, 8, 0].includes(r0) ? r0 : 8; return eat && t.eat10 !== false && r !== 0 ? 10 : r; };
+        const by = {};
+        let gross = 0;
+        lines.forEach(l => { const r = rateOf(l.type || 'sweet'); const a = (Number(l.price) || 0) * (Number(l.qty) || 0); by[r] = (by[r] || 0) + a; gross += a; });
+        const rows = Object.keys(by).map(Number).sort((a, b) => b - a).map(rate => ({ rate, net: by[rate] }));
+        if (!rows.length || gross <= 0) return 0;
+        const disc = Math.min(gross, Math.max(0, Number(discount) || 0));
+        if (disc > 0) {
+            let left = disc;
+            rows.forEach(x => { const d = Math.floor(disc * x.net / gross); x.net -= d; left -= d; });
+            rows.reduce((a, b) => (b.net > a.net ? b : a), rows[0]).net -= left;
+        }
+        const rd = x => t.round === 'round' ? Math.round(x) : (t.round === 'ceil' ? Math.ceil(x - 1e-9) : Math.floor(x + 1e-9));
+        return rows.reduce((a, x) => a + (x.rate ? rd(x.net * x.rate / 100) : 0), 0);
+    }
+    function priceHtml(p) { return yen(p) + (taxEx() ? '<small class="txex">税抜</small>' : ''); }
     // 申し送り（お店のレジの機能「申し送り」がオンの時だけ書ける）
     function memoOn() { return !!(evData && evData.feat && evData.feat.memo === true); }
     function memoText() {
@@ -777,13 +800,13 @@
     function stdCard(i) {
         const q = qty[i.name] || 0;
         return `<div class="item${i.soldOut ? ' out' : ''}${q ? ' in' : ''}" data-open="${esc(i.name)}" data-k="c:${esc(i.name)}">${photoHtml(i)}
-            <div class="nm">${esc(i.name)}<span class="pr">${yen(i.price)}</span>${limitNote(i)}</div>${i.desc ? `<div class="ds">${esc(i.desc)}</div>` : ''}
+            <div class="nm">${esc(i.name)}<span class="pr">${priceHtml(i.price)}</span>${limitNote(i)}</div>${i.desc ? `<div class="ds">${esc(i.desc)}</div>` : ''}
             ${i.soldOut ? '<span class="so">売り切れ</span>' : stepHtml(i)}</div>`;
     }
     function recCard(i) {
         const q = qty[i.name] || 0;
         return `<div class="rec-card" data-open="${esc(i.name)}" data-k="r:${esc(i.name)}">${photoHtml(i)}
-            <div class="rb"><div class="rn">${esc(i.name)}<small>${yen(i.price)}${q ? `・カートに${q}個` : ''}</small></div>
+            <div class="rb"><div class="rn">${esc(i.name)}<small>${priceHtml(i.price)}${q ? `・カートに${q}個` : ''}</small></div>
             <button type="button" class="rec-add" aria-label="${esc(i.name)}をカートに1つ入れる" ${q >= maxOf(i) ? 'disabled' : ''} data-n="${esc(i.name)}" data-d="1">＋</button></div></div>`;
     }
     // 標準の形：前と同じ並びなら、中身の変わったカードだけを書き換える（写真がちらつかず、スクロールもずれない）
@@ -828,7 +851,7 @@
         box.innerHTML = groups.map(g => `<div class="cat" style="--ink:${INK[g.c.id] || 'var(--hair)'}"><i></i>${esc(g.c.label)}</div>` + g.items.map(i => {
             const q = qty[i.name] || 0;
             return `<div class="item${i.soldOut ? ' out' : ''}">
-                <div class="nm">${esc(i.name)}<span class="pr">${yen(i.price)}</span>${limitNote(i)}</div>
+                <div class="nm">${esc(i.name)}<span class="pr">${priceHtml(i.price)}</span>${limitNote(i)}</div>
                 ${i.soldOut ? '<span class="so">売り切れ</span>' : `<div class="step">
                     <button type="button" aria-label="${esc(i.name)}を1つ減らす" ${q ? '' : 'disabled'} data-n="${esc(i.name)}" data-d="-1">−</button>
                     <span class="q">${q}</span>
@@ -879,7 +902,9 @@
     function renderBar() {
         const lines = cartLines();
         const n = lines.reduce((t, l) => t + l.qty, 0);
-        const tot = discParts(lines, null).gross - setDiscOf(lines);   // セット割を引いた額（クーポンは確かめる画面で）
+        const set = setDiscOf(lines);
+        // セット割を引いた額（クーポンは確かめる画面で）。税抜きの値段のお店は、消費税も足す
+        const tot = discParts(lines, null).gross - set + exTaxAdd(lines, set, dine === 'eat');
         $('bar').classList.remove('hide');
         $('bar').classList.toggle('empty', n === 0);
         $('b-n').textContent = n;
@@ -921,7 +946,7 @@
             return `<button type="button" class="${on ? 'on' : ''}" data-og="${g.id}" data-oi="${x}">${x}</button>`;
         }).join('')}</div></div>`).join('')}</div>` : '';
         $('item-body').innerHTML = `<div class="is-scroll">${photoHtml(it)}<button type="button" class="x" onclick="closeItem()" aria-label="閉じる">×</button>
-            <div class="is-b"><div class="is-bd"></div><h2>${n}</h2><div class="is-pr">${yen(it.price)}</div>${limitNote(it)}${it.desc ? `<div class="is-ds">${esc(it.desc)}</div>` : ''}${opts}</div></div>
+            <div class="is-b"><div class="is-bd"></div><h2>${n}</h2><div class="is-pr">${priceHtml(it.price)}</div>${limitNote(it)}${it.desc ? `<div class="is-ds">${esc(it.desc)}</div>` : ''}${opts}</div></div>
             <div class="is-foot">${it.soldOut ? '<button type="button" class="btn full" disabled>売り切れ</button>' : `<div class="step">
                 <button type="button" id="is-minus" aria-label="1つ減らす" ${itemQty <= 1 ? 'disabled' : ''}>−</button><span class="q" id="is-q">${itemQty}</span>
                 <button type="button" class="plus" id="is-plus" aria-label="1つ増やす" ${itemQty >= maxOf(it) ? 'disabled' : ''}>＋</button></div>
@@ -1064,6 +1089,7 @@
         const tot = lines.reduce((t, l) => t + l.qty * l.price, 0);
         const c0 = cfg();
         const dp = discParts(lines, coupon);
+        const exAdd = exTaxAdd(lines, dp.set, dine === 'eat');
         $('c-lines').innerHTML = lines.map(l => {
             const sel = optSel[l.name] || {};
             const n = esc(l.name);
@@ -1074,7 +1100,8 @@
             return `<div class="ln"><div class="row"><span>${n} ×${l.qty}${c0.opt ? `<button type="button" class="ob" data-optp="${n}">${optOpen === l.name ? '閉じる' : '特注'}</button>` : ''}</span><span>${yen(l.qty * l.price)}</span></div>${l.opt ? `<span class="opt">${esc(l.opt)}</span>` : ''}${panel}</div>`;
         }).join('')
             + (dp.set > 0 ? `<div class="disc"><span>セット割</span><span>−${yen(dp.set)}</span></div>` : '')
-            + `<div class="t"><span>合計</span><span>${yen(tot - dp.set)}</span></div>`;
+            + (exAdd > 0 ? `<div class="disc"><span>消費税</span><span>＋${yen(exAdd)}</span></div>` : '')
+            + `<div class="t"><span>合計${exAdd > 0 ? '（税込）' : ''}</span><span>${yen(tot - dp.set + exAdd)}</span></div>`;
         bindOptButtons();
         // 席番号（席から注文で、店内の時）
         const sb = $('c-seat');
@@ -1171,7 +1198,7 @@
             // お支払いの額は、セット割を引いた額（クーポンはレジで会計する時に、使えるか確かめてから引く）
             const gross = items.reduce((t, l) => t + l.qty * l.price, 0);
             const discount = setDiscOf(items);
-            const total = Math.max(0, gross - discount);
+            const total = Math.max(0, gross - discount) + exTaxAdd(items, discount, dine === 'eat');
             // 選んだ時刻が、もう過ぎそうなら「できしだい」にする
             const pickupAt = (cfg().pick && pickAt > at + 5 * 60000) ? pickAt : 0;
             const doc = {
