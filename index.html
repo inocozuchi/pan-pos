@@ -144,7 +144,7 @@
             --display-face: #1C1D22;  /* 表示窓・主要指標の濃い面（押す場所ではないことを示す） */
             --on-display-sub: rgba(255,255,255,.62);  /* その濃い面に載せる補助文字 */
             --on-display-chip: rgba(255,255,255,.13); /* その濃い面に載せるつまみ */
-            --scrim: rgba(38, 34, 30, 0.32);          /* モーダルの背後 */
+            --scrim: rgba(38, 34, 30, 0.4);           /* モーダルの背後 */
             --veil: rgba(244,243,240,0.96);           /* レジ上に重ねる案内の背後 */
             --toast-bg: rgba(28,29,34,0.88);          /* 知らせの帯 */
             --hairline: rgba(28,29,34,.05);           /* 入力欄などの、ごく細い内側のふち */
@@ -1475,9 +1475,10 @@
 
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            /* iOSのシートと同じく、背景は強くぼかして手前の画面に集中させる */
+            /* 背景は暗くするだけにする（iOSのシートと同じ）。
+               画面全体をぼかすと、お会計の窓を開く・数字を打つたびに描き直しが重くなり、
+               タブレットで動きがひっかかる（会計の速さを優先） */
             background: var(--scrim);
-            backdrop-filter: blur(14px) saturate(140%); -webkit-backdrop-filter: blur(14px) saturate(140%);
             display: none;
             justify-content: center; align-items: center; z-index: 100;
         }
@@ -3322,6 +3323,8 @@
         .res-card:nth-child(3), .stat-tile:nth-child(3) { animation-delay: .08s; }
         .res-card:nth-child(4), .stat-tile:nth-child(4) { animation-delay: .12s; }
         .res-card:nth-child(n+5), .stat-tile:nth-child(n+5) { animation-delay: .16s; }
+        /* 動かすのは、はじめに見える数枚だけ。何十枚も同時に動かすと、遅い端末で画面がひっかかる */
+        .res-card:nth-child(n+9), .stat-tile:nth-child(n+13), .arc-card:nth-child(n+9) { animation: none; }
         .a-table { animation-delay: .06s; }
 
         /* カートに商品が入った時、その行だけがすっと現れる */
@@ -5583,7 +5586,8 @@
         publishCustomerDisplay();   // お客様用の画面にも、いまのカートを映す
         publishKitchenDraft();      // ファストフードの時は、KDにも「会計中」として出す
         const list = document.getElementById('cart-list');
-        list.innerHTML = '';
+        // 行を全部つないでから1回で入れる（1行ずつ += すると、そのたびに前の行を全部作り直す）
+        const parts = [];
         let total = 0;
         const counts = {};
 
@@ -5596,7 +5600,7 @@
         });
 
         if (cart.length > 0) {
-            list.innerHTML += `<div style="text-align:right; margin-bottom:6px;"><button class="cart-clear" onclick="clearCartAll()" style="background:none; border:none; color:var(--danger-ink); font-size:12px; font-weight:bold; cursor:pointer; padding:4px; font-family:inherit; display:inline-flex; align-items:center; gap:4px;"><svg class="ic"><use href="#ic-trash"/></svg>カートを全部取消す</button></div>`;
+            parts.push(`<div style="text-align:right; margin-bottom:6px;"><button class="cart-clear" onclick="clearCartAll()" style="background:none; border:none; color:var(--danger-ink); font-size:12px; font-weight:bold; cursor:pointer; padding:4px; font-family:inherit; display:inline-flex; align-items:center; gap:4px;"><svg class="ic"><use href="#ic-trash"/></svg>カートを全部取消す</button></div>`);
         }
 
         const optOn = isKitchen();
@@ -5604,7 +5608,7 @@
             const subtotal = data.price * data.count;
             const safeKey = escArg(key);
             const fresh = data.count > (lastCartLines[key] || 0);   // いま増えた行だけ動かす
-            list.innerHTML += `
+            parts.push(`
                 <div class="cart-item${fresh ? ' fresh' : ''}" style="border-left:6px solid ${catInk(data.type)}; padding-left:8px;">
                     <span style="display:flex; align-items:center; gap:6px; min-width:0;">
                         <button class="step-btn minus" onclick="removeOneFromCart('${safeKey}')">−</button>
@@ -5613,18 +5617,18 @@
                     </span>
                     <span class="ci-right">${optOn ? `<button type="button" class="ci-optbtn${data.opt ? ' on' : ''}" onclick="openOptSheet('${safeKey}')">特注</button>` : ''}<span class="num" style="font-weight:bold;">¥${subtotal}</span></span>
                 </div>
-            `;
+            `);
         }
 
         // セット割（ドリンク＋クッキー）。何円引いたかを明細の最後に1行で見せる
         const disc = setDiscountFor(cart);
         if (disc > 0) {
             total -= disc;
-            list.innerHTML += `
+            parts.push(`
                 <div class="cart-item disc-line" id="cart-disc" style="border-left:6px solid transparent; padding-left:8px;">
                     <span><svg class="ic"><use href="#ic-tag"/></svg>${SET_LABEL}</span>
                     <span class="num">−¥${disc}</span>
-                </div>`;
+                </div>`);
         }
 
         if(cart.length === 0) {
@@ -5636,8 +5640,9 @@
             // いまのセット割を1行で見せておく（何を組み合わせると安くなるか、レジで迷わないように）
             const rule = currentSession ? currentSetRule() : null;
             const setHint = rule ? `<br><span class="cart-set-hint" id="cart-set-hint"><svg class="ic"><use href="#ic-tag"/></svg>${SET_LABEL}：${escHtml(setRuleText(rule))}</span>` : '';
-            list.innerHTML = `<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><svg class="ic ce-icon" style="width:34px; height:34px; color:var(--line-strong);"><use href="#ic-basket"/></svg><br>商品をタップして<br>お会計に追加してください${setHint}${repeatBtn}</div>`;
+            parts.push(`<div class="cart-empty" style="color:var(--text-light); text-align:center; margin-top:40px; font-size:15px; line-height:1.8;"><svg class="ic ce-icon" style="width:34px; height:34px; color:var(--line-strong);"><use href="#ic-basket"/></svg><br>商品をタップして<br>お会計に追加してください${setHint}${repeatBtn}</div>`);
         }
+        list.innerHTML = parts.join('');
 
         lastCartLines = {};
         Object.entries(counts).forEach(([k, d]) => { lastCartLines[k] = d.count; });
@@ -5844,6 +5849,7 @@
 
     // ---- お会計の画面を、いまの画面の大きさに収める（上の CSS の co-fit を参照）----
     let fitCoBusy = false;
+    let fitCoMeasured = { key: '', h: [0, 0, 0] };   // お釣りの内訳の、いちばん長い時の高さ（画面の大きさごと）
     function fitCheckout() {
         const m = document.getElementById('checkout-modal');
         if (!m || m.style.display === 'none' || fitCoBusy) return;
@@ -5857,14 +5863,20 @@
             mc.style.scale = '';
             mc.style.height = ''; mc.style.width = ''; mc.style.flex = '';
             // お釣りの内訳は、いちばん長くなる時（9種類）の高さを先に取っておく
+            // （測るたびに画面全体の組み直しが3回起きて、お会計を開くのが遅くなるので、
+            //   画面の大きさ・文字の大きさが同じ間は、前に測った高さを使い回す）
             const bd = document.getElementById('change-breakdown');
             if (bd) {
-                const keep = bd.innerHTML;
                 bd.style.minHeight = '';
-                const sample = n => changeDenoms(n).map(d => `<span>${d.unit >= 1000 ? d.unit + '円札' : d.unit + '円'} × ${d.count}</span>`).join('');
-                const measure = () => { bd.innerHTML = sample(9999); const hh = bd.offsetHeight; bd.innerHTML = keep; return hh; };
-                bd.dataset.h1 = '';
-                [0, 1, 2].forEach(l => { m.classList.toggle('co-fit1', l >= 1); m.classList.toggle('co-fit2', l >= 2); bd.dataset['h' + l] = String(measure()); });
+                m.classList.remove('co-fit1', 'co-fit2');
+                const key = innerWidth + 'x' + innerHeight + ':' + bd.clientWidth + ':' + document.documentElement.className + ':' + document.body.className;
+                if (fitCoMeasured.key !== key) {
+                    const keep = bd.innerHTML;
+                    const sample = n => changeDenoms(n).map(d => `<span>${d.unit >= 1000 ? d.unit + '円札' : d.unit + '円'} × ${d.count}</span>`).join('');
+                    const measure = () => { bd.innerHTML = sample(9999); const hh = bd.offsetHeight; bd.innerHTML = keep; return hh; };
+                    fitCoMeasured = { key, h: [0, 1, 2].map(l => { m.classList.toggle('co-fit1', l >= 1); m.classList.toggle('co-fit2', l >= 2); return measure(); }) };
+                }
+                [0, 1, 2].forEach(l => { bd.dataset['h' + l] = String(fitCoMeasured.h[l]); });
             }
             const avail = window.innerHeight - (sheet || land ? 0 : 16);
             // スマホの横向き：画面いっぱいの高さの中に、中身が入りきっているか
@@ -6020,6 +6032,15 @@
         const cash = parseInt(document.getElementById('cash-input').value) || 0;
         // お預かり不足はまだ記録が成立していないので、番号は消費しない（入れ直して再実行できる）
         if (cash < total) { playError(); alert('お預かり金額が足りません'); return; }
+        // 予約の清算中に、ほかの端末がその予約を清算・取り消していた時は、二重に記録しない
+        if (processingReservationId !== null && !reservations.some(r => r.id === processingReservationId)) {
+            playError();
+            alert('この予約は、ほかの端末で清算されたか、取り消されています。\n記録はしていません。');
+            processingReservationId = null;
+            closeModal('checkout-modal');
+            renderReservations();
+            return;
+        }
         checkoutRecordedToken = checkoutOpenToken;
         playSuccess();
 
@@ -7626,6 +7647,7 @@
             }
             if (!syncReady) { playError(); alert('共有サーバーにつながっていないため、CDにできません。\n通信状況をご確認のうえ、少し待ってからもう一度お試しください。'); return; }
             if (cart.length > 0 && !confirm('いま打ちかけの商品があります。\nCDにすると、この端末では会計できなくなります。\n\n打ちかけの内容を取り消して切り替えますか？')) return;
+            if (!syncMode) cart.forEach(item => restockOne(products.find(p => p.id === item.id)));
             cart = [];
             const wasSyncing = syncMode;
             const wasKitchen = !!uiPrefs.kitchenOnly;
@@ -8126,7 +8148,7 @@
         if (rowStyle.flexDirection !== 'column') {
             // 同じ行に並んでいる見出しの幅と、その間の余白を引く
             const kids = [...row.children];
-            kids.forEach(c => { if (c !== el) used += c.getBoundingClientRect().width; });
+            kids.forEach(c => { if (c !== el) used += c.offsetWidth; });   // 動きの途中の拡大・縮小に左右されない幅
             const gap = parseFloat(rowStyle.columnGap || rowStyle.gap) || 0;
             used += gap * Math.max(0, kids.length - 1);
         }
@@ -13305,10 +13327,27 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
+    // 動きは Web Animations で付ける。
+    // 【なぜ】クラスを外して付け直す形だと、やり直させるために画面全体の組み直しを
+    //   その場で1回させる（しかも描き直す前の古い中身で）ので、画面を移るたびに遅い端末でひっかかる。
+    const reduceMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
     function animateIn(el) {
-        el.classList.remove('anim-forward', 'anim-back');
-        void el.offsetWidth;                      // アニメーションをやり直させる
-        el.classList.add(navDir === 'back' ? 'anim-back' : 'anim-forward');
+        if (reduceMotion && reduceMotion.matches) return;
+        const back = navDir === 'back';
+        if (typeof el.animate !== 'function') {
+            el.classList.remove('anim-forward', 'anim-back');
+            void el.offsetWidth;                      // アニメーションをやり直させる
+            el.classList.add(back ? 'anim-back' : 'anim-forward');
+            return;
+        }
+        if (el._navAnim) el._navAnim.cancel();
+        const panel = el.id === 'page-panel';
+        const dx = (back ? -1 : 1) * (panel ? 34 : 26);
+        el._navAnim = el.animate([
+            { opacity: 0, transform: `translate3d(${dx}px, 0, 0)${panel ? ' scale(.99)' : ''}` },
+            { opacity: 1, transform: 'none' }
+        ], { duration: panel ? 400 : 340, easing: 'cubic-bezier(.32, .72, 0, 1)' });
+        el._navAnim.onfinish = () => { el._navAnim = null; };
     }
 
     // 画面を開いた時に中身を作り直す
@@ -14048,7 +14087,9 @@
 
     function showNav(show) {
         const nav = document.getElementById('bottom-nav');
-        if (nav) nav.style.display = show ? 'flex' : 'none';
+        // 消す（display:none）と、その分レジの画面の高さが変わって、お会計の窓の後ろで商品のボタンが動いて見える。
+        // 場所は残したまま見えなくする（押せなくもなる）。
+        if (nav) { nav.style.display = ''; nav.style.visibility = show ? '' : 'hidden'; }
     }
 
     // 予約件数・属性未入力件数をナビにバッジ表示（気づける導線）
@@ -14783,10 +14824,15 @@
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
     function applyData(data) {
         if (!data || typeof data !== 'object' || !Array.isArray(data.products)) return false;
-        products = data.products;
-        cart = Array.isArray(data.cart) ? data.cart : [];
-        salesHistory = Array.isArray(data.salesHistory) ? data.salesHistory : [];
-        reservations = Array.isArray(data.reservations) ? data.reservations : [];
+        // 一部が壊れていても（null が混ざる・品目が無い など）起動できるように、使えない物だけ外す。
+        // 1件の傷で、レジ全体が開けなくなるのを防ぐ（売上の記録は、読めた物はすべて残す）。
+        const objs = a => (Array.isArray(a) ? a : []).filter(x => x && typeof x === 'object' && !Array.isArray(x));
+        const withItems = x => { x.items = objs(x.items); return x; };
+        products = objs(data.products);
+        cart = objs(data.cart);
+        salesHistory = objs(data.salesHistory).map(withItems).filter(h => h.items.length || Number(h.total) > 0)
+            .map(h => { if (!Number.isFinite(Number(h.total))) h.total = h.items.reduce((t, i) => t + (Number(i.price) || 0), 0) - (Number(h.discount) || 0); else h.total = Number(h.total); return h; });
+        reservations = objs(data.reservations).map(withItems);
         kitchenOrders = Array.isArray(data.orders) ? data.orders.map(normOrder).filter(Boolean) : [];
         bills = Array.isArray(data.bills) ? data.bills.map(normBill).filter(Boolean) : [];
         billSeqLocal = Number(data.billSeqLocal) || 0;
@@ -15200,7 +15246,7 @@
         const rest = total - shown;
         const view = rows.slice(0, shown);
 
-        list.innerHTML = view.map(({ h, idx }) => {
+        const cardsHtml = view.map(({ h, idx }) => {
             const t = new Date(h.time);
             const dtStr = `${t.getFullYear()}/${String(t.getMonth() + 1).padStart(2, '0')}/${String(t.getDate()).padStart(2, '0')} ${t.getHours()}:${String(t.getMinutes()).padStart(2, '0')}`;
             const editing = editingRecordIdx === idx;
@@ -15272,14 +15318,15 @@
                 </div>`;
         }).join('');
 
-        if (rest > 0) {
-            list.innerHTML += `<button class="action-btn btn-secondary" style="width:100%; margin-top:10px;" onclick="showMoreRecords()">`
-                + `<svg class="ic"><use href="#ic-down"/></svg>もっと見る（残り${rest}件）</button>`;
-        }
+        // 「もっと見る」も一緒に1回で入れる（あとから += で足すと、並べたカードを全部作り直してしまう）
+        list.innerHTML = cardsHtml + (rest > 0
+            ? `<button class="action-btn btn-secondary" style="width:100%; margin-top:10px;" onclick="showMoreRecords()">`
+                + `<svg class="ic"><use href="#ic-down"/></svg>もっと見る（残り${rest}件）</button>`
+            : '');
     }
 
     // 会計記録を一度に出す件数。画面を離れると元に戻す（次に来た時は軽い状態から）。
-    const RECORDS_PAGE = 60;
+    const RECORDS_PAGE = 30;
     let recordsShown = RECORDS_PAGE;
     function showMoreRecords() {
         recordsShown += RECORDS_PAGE;
@@ -15309,6 +15356,14 @@
         renderRecords();
     }
 
+    // 会計の後で品目を直した時の、お預かりとお釣り。
+    // 合計が増えた分は、その場で受け取ったことにする（お預かりが合計より少ない記録を残さない）。
+    // 合計が減った分は、お釣りとして返したことにする。現金以外の会計は、そのまま。
+    function cashAfterEdit(rec, total) {
+        if (!rec || (rec.pay && rec.pay !== 'cash') || rec.cash == null) return {};
+        const cash = Math.max(Number(rec.cash) || 0, total);
+        return { cash, change: cash - total };
+    }
     function adjustRecordItem(idx, name, delta) {
         const rec = salesHistory[idx];
         if (!rec) return;
@@ -15333,7 +15388,7 @@
                 editingRecordIdx = null;
                 showToast('全品目が無くなったため会計を削除しました');
             } else {
-                syncUpdateSale(rec.remoteId, Object.assign({ items, total, discount, edited: true }, rec.coupon ? { coupon: rec.coupon } : {}, rec.mdisc ? { mdisc: rec.mdisc } : {}), rec.remoteCode);
+                syncUpdateSale(rec.remoteId, Object.assign({ items, total, discount, edited: true }, rec.coupon ? { coupon: rec.coupon } : {}, rec.mdisc ? { mdisc: rec.mdisc } : {}, cashAfterEdit(rec, total)), rec.remoteCode);
                 kitchenOnEdit(rec, items);
             }
             logEdit(`会計修正 客No.${rec.no || '-'}：${name} ${delta < 0 ? '−1' : '＋1'}`);
@@ -15358,6 +15413,7 @@
         // 合計は明細から付け直す。セット割はその会計をした時の設定のまま判定する
         rec.discount = recordDiscount(rec, rec.items);
         rec.total = Math.max(0, itemsGross(rec.items) - rec.discount);
+        Object.assign(rec, cashAfterEdit(rec, rec.total));
         rec.edited = true;
         logEdit(`会計修正 客No.${rec.no || '-'}：${name} ${delta < 0 ? '−1' : '＋1'}`);
         playSound(660, 0.06);
@@ -18938,7 +18994,10 @@
         const pb = grid.closest('.panel-body');
         if (pb && pb.scrollTop) pb.scrollTop = 0;
         const cols = w >= 1100 ? 5 : 4, gap = 10;
-        const top = grid.getBoundingClientRect().top;
+        // 画面に入ってくる動き（少し縮めて横から出す）の途中に測ると、位置が数px ずれて、
+        // 次に描き直した時にカードの高さが変わって揺れて見える。動きに左右されない位置で測る。
+        let top = 0;
+        for (let e = grid; e; e = e.offsetParent) top += e.offsetTop - (e !== grid && e.scrollTop ? e.scrollTop : 0);
         const cellH = Math.floor((h - top - 20 - gap) / 2);
         if (cellH < 190) return null;            // 上の帯などで場所が足りない時は、縦に並べる
         const cellW = Math.floor((grid.clientWidth - gap * (cols - 1)) / cols);
@@ -18970,12 +19029,14 @@
             const ul = card.querySelector('.kds-items');
             return card.scrollHeight <= L.cellH + 1 && (!ul || (ul.scrollWidth <= ul.clientWidth + 1 && ul.scrollHeight <= ul.clientHeight + 1));
         };
-        const chunksOf = html => {
-            const tmp = document.createElement('div');
-            tmp.innerHTML = html;
-            const card = tmp.firstElementChild;
-            meas.appendChild(card);
-            if (card.offsetHeight <= L.cellH) return [{ el: card, m: 1 }];
+        // はじめに全部のカードを1回で入れて、高さも1回でまとめて測る
+        // （1枚ずつ入れて測ると、そのたびに画面の組み直しが起きて、注文が多い時にKDがひっかかる）
+        meas.innerHTML = htmls.join('');
+        const cards0 = [...meas.children];
+        const heights0 = cards0.map(el => el.offsetHeight);
+        const chunksOf = i => {
+            const card = cards0[i];
+            if (heights0[i] <= L.cellH) return [{ el: card, m: 1 }];
             for (let m = 2; m <= L.cols; m++) { setWide(card, m); if (wideFits(card)) return [{ el: card, m }]; }
             // 横いっぱいでも入らない：横いっぱいのカードを上から詰めて、残りを「つづき」のカードへ
             const ul = card.querySelector('.kds-items'), foot = card.querySelector('.kds-foot');
@@ -19029,7 +19090,7 @@
             });
             return chunks;
         };
-        const orders = rows.map((o, i) => ({ o, parts: chunksOf(htmls[i]) }));
+        const orders = rows.map((o, i) => ({ o, parts: chunksOf(i) }));
         orders.forEach(x => x.parts.forEach(p => { p.el.style.width = ''; p.el.style.height = ''; if (p.m === 1) p.el.classList.remove('kds-wide'); }));
         // ページに置く：左上から右へ、2段。幅のあるカードがその段に入らない時は次の段の頭から。
         // 1つの注文のカードは同じページに置く（入らなければ次のページへ）
@@ -20443,6 +20504,8 @@
         if (cart.length && !confirm('いまカートに入っている商品を取り消して、この注文の会計にしますか？')) return;
         const missing = o.items.filter(i => !products.some(p => p.name === i.name));
         if (missing.length) { playError(); alert(`次の商品がレジの商品にないため、会計できません：${missing.map(i => i.name).join('、')}`); return; }
+        // 1台だけの時は、取り消すカートの分の在庫を戻す（戻さないと、その数だけ在庫が減ったままになる）
+        if (!syncMode) cart.forEach(item => restockOne(products.find(p => p.id === item.id)));
         cart = [];
         o.items.forEach(i => {
             const p = products.find(x => x.name === i.name);
