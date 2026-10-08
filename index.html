@@ -433,7 +433,8 @@
         
         @media (min-width: 769px) {
             .checkout-wide { max-width: 940px !important; flex-direction: row !important; gap: 20px; align-items: stretch; }
-            .checkout-left { flex: 1; display: flex; flex-direction: column; padding-right: 22px; }
+            /* 左の列は「レシート」の面にする。品目が少ない時の下の余白も、紙の部分として自然に見える */
+            .checkout-left { flex: 1; display: flex; flex-direction: column; background: var(--sunken); border-radius: var(--r-lg); padding: 12px 16px 14px; min-width: 0; }
             .checkout-right { flex: 1.2; display: flex; flex-direction: column; justify-content: space-between; }
             .checkout-left .receipt-list { flex: 1; max-height: none; }
         }
@@ -1151,6 +1152,8 @@
         /* 長い商品名でも欠けないように、3行までで省略する（途中で切れるより読める） */
         .product-btn .pname {
             line-height: 1.34; overflow-wrap: anywhere; word-break: break-word; letter-spacing: 0.01em;
+            /* 2行になる時は行の長さをそろえる（「フロランタ／ン」のように1字だけ次の行に残さない） */
+            text-wrap: balance;
             display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden;
         }
         .product-btn .price { color: var(--text-main); font-size: 19px; font-weight: 800; margin-top: 5px; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
@@ -1213,7 +1216,10 @@
         .pay-seg button.on { background: var(--accent); color: #fff; box-shadow: none; }
         #checkout-right.pay-noncash .cash-display, #checkout-right.pay-noncash #cash-suggestions, #checkout-right.pay-noncash .tenkey-grid { display: none; }
         .pay-note { display: none; text-align: center; padding: 26px 12px; border-radius: var(--r-lg); background: var(--sunken); font-size: 15px; font-weight: 700; color: var(--text-light); margin-bottom: 10px; }
-        #checkout-right.pay-noncash .pay-note { display: block; }
+        /* 現金以外：テンキーの場所を、この案内で埋める（テンキーが消えたあとを空白にしない） */
+        #checkout-right.pay-noncash .pay-note { display: flex; flex: 1 1 auto; align-items: center; justify-content: center; min-height: 72px; font-size: 17px; line-height: 1.5; }
+        .pay-note b { color: var(--text-main); font-size: 20px; margin-right: 2px; }
+        .pay-note small { display: block; font-size: 13px; font-weight: 600; margin-top: 2px; }
         .pay-list { display: flex; flex-direction: column; gap: 8px; }
         .pay-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow-card); }
         .pay-row .pay-l { flex: 1; font-size: 16px; font-weight: 800; }
@@ -1580,7 +1586,7 @@
         /* 入力欄は「窓の中の数字」として見せる（枠も背景も持たせない） */
         .cash-display #cash-input {
             flex: 1; min-width: 0; width: auto; margin: 0; padding: 0;
-            background: none; border: none; border-radius: 0; outline: none;
+            background: none; border: none; border-radius: 0; outline: none; box-shadow: none;
             color: #fff; font-size: 30px; font-weight: 700; text-align: right;
             font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
         }
@@ -1589,12 +1595,43 @@
             font-size: 30px; font-weight: 800; color: var(--on-dark);
             font-variant-numeric: tabular-nums; letter-spacing: 0.01em;
         }
-        .cash-display .chg-breakdown { display: flex; flex-wrap: wrap; gap: 4px 6px; justify-content: flex-end; margin-top: 8px; }
-        .cash-display .chg-breakdown span {
-            background: var(--on-display-chip); color: #fff; border-radius: var(--r-pill);
-            padding: 3px 10px; font-size: 12.5px; font-weight: 700; white-space: nowrap;
+        /* お釣りの内訳：お札と硬貨を、いつも同じ場所に1列で並べ、要る物だけ枚数を光らせる。
+           【なぜ】要る物だけを札で並べると、種類の数で高さが変わる。高さを最大に取っておくと、
+           少ない時に下が大きく空いて見える。いつも全部並べておけば、高さも位置も変わらない。 */
+        .cash-display .chg-tray {
+            position: relative; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr));
+            gap: 3px; margin-top: 8px;
         }
-        .cash-display .chg-none { font-size: 12.5px; font-weight: 700; color: var(--on-display-sub); margin-top: 6px; text-align: right; width: 100%; }
+        .chg-tray .ct {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-width: 0; padding: 4px 0 3px; border-radius: 8px; transition: background .15s ease;
+        }
+        .chg-tray .ct:nth-child(3) { margin-right: 4px; }   /* お札と硬貨の間を少しあける */
+        .chg-tray .ct i { font-style: normal; font-size: 11px; font-weight: 700; line-height: 1.2; color: var(--on-display-sub); opacity: .5; white-space: nowrap; }
+        .chg-tray .ct b { display: block; font-size: 18px; font-weight: 800; line-height: 1.15; color: #fff; opacity: .22; font-variant-numeric: tabular-nums; }
+        .chg-tray .ct.on { background: var(--on-display-chip); }
+        .chg-tray .ct.on b { opacity: 1; }
+        .chg-tray .ct.on i { opacity: 1; color: #fff; }
+        /* 明細の欄の中が動く時は、下の端をうすくして「まだ下に続く」と分かるようにする（行が切れて見えない） */
+        #checkout-modal .receipt-list.more {
+            -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent);
+            mask-image: linear-gradient(to bottom, #000 calc(100% - 30px), transparent);
+        }
+        /* 表示窓が細い時（スマホの横向き など）は、字を小さくして重ならないようにする */
+        .cash-display { container-type: inline-size; }
+        @container (max-width: 300px) {
+            .chg-tray { gap: 1px; }
+            .chg-tray .ct:nth-child(3) { margin-right: 2px; }
+            .chg-tray .ct i { font-size: 9px; letter-spacing: -.03em; }
+            .chg-tray .ct b { font-size: 14px; }
+        }
+        /* ぴったりの時は、同じ場所に「お釣りなし」と出す（高さは変えない） */
+        .chg-tray.exact .ct { visibility: hidden; }
+        .chg-tray.exact::after {
+            content: 'ぴったり（お釣りなし）'; position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 800; color: var(--on-display-sub);
+        }
 
         /* お預かり金額の候補（表示窓のすぐ下・テンキーと役割を分ける） */
         .cash-suggest { display: flex; align-items: center; gap: 7px; margin-top: 9px; min-width: 0; }
@@ -1800,22 +1837,26 @@
                 width: 36px; height: 4px; border-radius: 999px; background: var(--line-strong);
             }
             #checkout-modal .co-head { margin-top: 6px; }
-            /* iOSのシートと同じく、画面いっぱいに広げず「中身の高さ」で下からせり上がる。
-               全画面にしていた時は、中身が足りないぶんが会計ボタンの上の空白になっていた。 */
+            /* お会計は画面いっぱいに出す（後ろのレジの画面をのぞかせて、窓を小さくしない）。
+               あまった高さはテンキーに回す（キーが大きくなって押しやすい。どこにも空白を作らない）。 */
             #checkout-modal .modal-content {
-                width: 100%; max-width: none; height: auto; max-height: 94dvh;
-                border-radius: 22px 22px 0 0;
-                /* 下の余白はボトムナビと同じだけ取る。iPhone は画面の角が丸く、
+                width: 100%; max-width: none; height: 100%; max-height: none; box-sizing: border-box;
+                border-radius: 0;
+                /* 上は時計・電池の帯の下から。下の余白はボトムナビと同じだけ取る。iPhone は画面の角が丸く、
                    下端を2回押すと Siri が出てしまうので、完了ボタンを端に寄せない。 */
-                padding: 12px 14px calc(26px + env(safe-area-inset-bottom, 0px));
+                padding: calc(6px + env(safe-area-inset-top, 0px)) 14px calc(22px + env(safe-area-inset-bottom, 0px));
                 gap: 4px;
                 animation: sheetUp .34s cubic-bezier(.32, .72, 0, 1) both !important;
             }
-            #checkout-modal .checkout-left { flex: 0 0 auto; }
-            #checkout-modal .checkout-right { flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0; }
+            #checkout-modal .sheet-grabber { display: none !important; }
+            /* 品目が多い時は、明細の欄だけが縮んで中で動く（テンキーの大きさは保つ） */
+            #checkout-modal .checkout-left { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; }
+            #checkout-modal .checkout-right { flex: 1 0 auto; display: flex; flex-direction: column; }
+            #checkout-modal .tenkey-grid { flex: 1 1 auto; grid-template-rows: repeat(4, minmax(0, 1fr)); }
+            #checkout-modal .tenkey-btn { height: auto; }
             #checkout-modal .co-head h2 { font-size: 18px; }
             #checkout-modal .sheet-back { min-height: 36px; padding: 6px 8px 6px 4px; font-size: 14px; }
-            #checkout-modal .receipt-list { max-height: 18vh; margin: 6px 0; }
+            #checkout-modal .receipt-list { flex: 0 1 auto; min-height: 0; max-height: none; overflow-y: auto; margin: 6px 0; }
             #checkout-modal .receipt-item { font-size: 15px; }
             /* 合計表示（左区画）を少し詰める */
             #checkout-modal .co-summary .co-row { padding: 2px 0; font-size: 13px; }
@@ -1834,8 +1875,7 @@
             /* テンキーを縮めて全キーを画面内に収める */
             .tenkey-grid { gap: 7px; margin-top: 7px; }
             .tenkey-btn { font-size: 22px; padding: 0; min-height: 46px; }
-            .cash-display .chg-breakdown { margin-top: 6px; gap: 3px 5px; }
-            .cash-display .chg-breakdown span { font-size: 12px; padding: 2px 8px; }
+            .cash-display .chg-tray { margin-top: 6px; }
             .co-type { margin-top: 9px; }
 
             /* 中身が画面より高くなった時だけ、会計ボタンが下に貼り付いて隠れないようにする
@@ -1869,7 +1909,7 @@
             #checkout-modal .co-head h2 { font-size: 16px; }
             #checkout-modal .co-head { margin-bottom: 0; }
             #checkout-modal .sheet-back { min-height: 32px; padding: 4px 8px 4px 4px; }
-            #checkout-modal .receipt-list { max-height: 15vh; margin: 4px 0; }
+            #checkout-modal .receipt-list { margin: 4px 0; }
             /* 点数はレシート明細と左下のカートで確認できるので、狭い端末では合計だけ出す */
             #checkout-modal .co-summary .co-row:not(.co-grand) { display: none; }
             #checkout-modal .co-summary .co-row.co-grand { font-size: 13px; margin-top: 2px; padding-top: 4px; }
@@ -1884,9 +1924,9 @@
             .cash-suggest .cs-btn { padding: 7px 3px; font-size: 14px; }
             .tenkey-grid { gap: 5px; margin-top: 5px; }
             .tenkey-btn { font-size: 20px; min-height: 40px; }
-            .cash-display .chg-breakdown { margin-top: 4px; }
-            .cash-display .chg-breakdown span { font-size: 11px; padding: 1px 7px; }
-            .cash-display .chg-none { font-size: 11.5px; margin-top: 3px; }
+            .cash-display .chg-tray { margin-top: 4px; }
+            .chg-tray .ct { padding: 2px 0; }
+            .chg-tray .ct b { font-size: 16px; }
             .co-type { margin-top: 7px; }
             .co-type .co-type-label { margin-bottom: 3px; }
             #checkout-primary { padding: 9px; }
@@ -1940,7 +1980,7 @@
                 display: grid !important; box-sizing: border-box; width: 100%; max-width: none !important; height: 100dvh; max-height: none !important; border-radius: 0;
                 padding: 8px max(14px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left)) !important;
                 grid-template-columns: minmax(0, .95fr) minmax(0, 1.1fr) minmax(0, 1fr);
-                grid-template-rows: auto auto auto auto auto minmax(0, 1fr) auto auto;
+                grid-template-rows: auto minmax(auto, 1fr) auto auto auto auto auto auto;
                 column-gap: 14px; row-gap: 0; overflow: hidden !important;
             }
             #checkout-modal .sheet-grabber { display: none !important; }
@@ -1963,6 +2003,60 @@
             #checkout-modal .tenkey-btn { min-height: 40px !important; padding: 0 !important; font-size: 21px; }
             #checkout-modal .co-action { grid-column: 2 / 4; grid-row: 8; margin-top: 6px; position: static; padding-top: 0; }
             #checkout-modal #checkout-primary { padding: 7px; }
+            /* 左の列（見出し・明細・クーポン・合計）は、ほかの列の行の高さに引っぱられないよう、1つのかたまりにする。
+               明細はレシートの面にして、品目が少ない時の下の余白も紙として見せる */
+            #checkout-modal .checkout-left { display: flex !important; flex-direction: column; grid-column: 1; grid-row: 1 / 9; min-height: 0; background: none; padding: 0; border-radius: 0; }
+            #checkout-modal .checkout-left .receipt-list { flex: 1 1 auto; min-height: 0; background: var(--sunken); border-radius: var(--r-md); padding: 4px 10px; }
+            #checkout-modal .co-summary { padding: 0 2px; margin-top: 4px; }
+            /* まん中の列：あまった高さは表示窓に回し、数字を窓のまん中に置く（下に空白を作らない） */
+            #checkout-modal .cash-display { align-self: stretch; display: flex; flex-direction: column; justify-content: center; }
+            #checkout-modal .type-btn { white-space: nowrap; font-size: 11.5px; letter-spacing: -.02em; padding-left: 0; padding-right: 0; }
+            /* 現金以外：テンキーの列も使って、案内を広く出す */
+            #checkout-modal #checkout-right.pay-noncash .pay-seg,
+            #checkout-modal #checkout-right.pay-noncash .co-dine,
+            #checkout-modal #checkout-right.pay-noncash .co-type { grid-column: 2 / 4; }
+            #checkout-modal #checkout-right.pay-noncash .pay-note { grid-column: 2 / 4; grid-row: 2 / 4; margin: 6px 0 0; }
+        }
+
+        /* ▼ 縦長のタブレット：スマホと同じ1列の形で、画面いっぱいに出す ▼
+           2列のままだと、窓が画面のまん中に小さく出て、まわりにレジの画面がのぞく。
+           1列にすると、テンキーが横に広い押しやすい形になる。あまった高さはテンキーへ。 */
+        @media (min-width: 769px) and (orientation: portrait) {
+            #checkout-modal { align-items: stretch; }
+            #checkout-modal .modal-content.checkout-wide {
+                flex-direction: column !important; width: 100%; max-width: none !important; height: 100%; max-height: none !important;
+                box-sizing: border-box; border-radius: 0; gap: 6px;
+                padding: max(16px, env(safe-area-inset-top)) max(28px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left));
+                animation: sheetUp .34s cubic-bezier(.32, .72, 0, 1) both !important;
+            }
+            #checkout-modal .checkout-left { flex: 0 1 auto; min-height: 0; background: none; padding: 0; border-radius: 0; }
+            #checkout-modal .checkout-right { flex: 1 0 auto; justify-content: flex-start; }
+            #checkout-modal .receipt-list, #checkout-modal.co-fit .checkout-left .receipt-list { flex: 0 1 auto; min-height: 0; max-height: none; overflow-y: auto; margin: 8px 0; }
+            #checkout-modal .tenkey-grid { flex: 1 1 auto; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 10px; }
+            /* 大きな画面なので、キーと数字の字も大きくする（キーの面だけ大きいと、字が小さく見える） */
+            #checkout-modal .tenkey-btn { height: auto; font-size: 34px; }
+            #checkout-modal .cash-display #cash-input, #checkout-modal .cash-display .chg-amount { font-size: 34px; }
+            #checkout-modal .co-summary .co-row.co-grand .co-val { font-size: 30px; }
+            #checkout-modal .receipt-item { font-size: 17px; }
+            #checkout-modal .co-head h2 { font-size: 24px; }
+        }
+
+        /* ▼ 横長のタブレット・小さめのパソコン：2列のまま、画面いっぱいに出す ▼
+           あまった高さは、テンキーと表示窓に分けて回す（どこにも空白を作らない）。
+           大きなパソコンの画面（マウスで使う）は、まん中に窓を出す形のまま。 */
+        @media (min-width: 769px) and (orientation: landscape) and (min-height: 521px) and (pointer: coarse),
+               (min-width: 769px) and (orientation: landscape) and (min-height: 521px) and (max-width: 1366px) {
+            #checkout-modal .modal-content.checkout-wide {
+                width: 100%; max-width: none !important; height: 100%; max-height: none !important;
+                box-sizing: border-box; border-radius: 0; gap: 24px;
+                padding: max(18px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+                animation: sheetUp .34s cubic-bezier(.32, .72, 0, 1) both !important;
+            }
+            #checkout-modal .checkout-right { justify-content: flex-start; min-height: 0; }
+            #checkout-modal .cash-display { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
+            #checkout-modal .tenkey-grid { flex: 2.6 1 auto; grid-template-rows: repeat(4, minmax(0, 1fr)); }
+            #checkout-modal .tenkey-btn { height: auto; font-size: 30px; }
+            #checkout-modal #checkout-right.pay-noncash .pay-note { flex: 1 1 auto; }
         }
 
         /* ▼ 小さいスマホの横向き：レジの下の合計・ボタンを1段にまとめて、商品のボタンを押せる広さを残す ▼ */
@@ -2134,7 +2228,10 @@
             font-weight: bold; font-size: 15px; box-shadow: 0 8px 28px rgba(0,0,0,0.26);
             opacity: 0; pointer-events: none;
             transition: opacity .24s ease, transform .32s cubic-bezier(.32,.72,0,1);
-            z-index: 200; max-width: 90vw; text-align: center;
+            z-index: 200; text-align: center;
+            /* 左を画面のまん中に置くと、幅が画面の半分までに縮んで、短い文でも変な所で折り返す。
+               中身の幅で出し、長い時だけ画面の幅で折り返す（行の長さはそろえる） */
+            width: max-content; max-width: min(90vw, 560px); box-sizing: border-box; text-wrap: balance;
         }
         #toast.show { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 
@@ -4512,7 +4609,7 @@
                     <span class="cd-label">お釣り</span>
                     <span class="chg-amount">¥<span id="change-amount">0</span></span>
                 </div>
-                <div class="chg-breakdown" id="change-breakdown"></div>
+                <div class="chg-tray" id="change-breakdown" role="status" aria-live="polite"></div>
             </div>
 
             <!-- お預かり金額の候補（よく出される紙幣・硬貨） -->
@@ -5849,7 +5946,6 @@
 
     // ---- お会計の画面を、いまの画面の大きさに収める（上の CSS の co-fit を参照）----
     let fitCoBusy = false;
-    let fitCoMeasured = { key: '', h: [0, 0, 0] };   // お釣りの内訳の、いちばん長い時の高さ（画面の大きさごと）
     function fitCheckout() {
         const m = document.getElementById('checkout-modal');
         if (!m || m.style.display === 'none' || fitCoBusy) return;
@@ -5857,47 +5953,57 @@
         if (!mc) return;
         fitCoBusy = true;
         try {
-            const sheet = window.innerWidth < 769;          // スマホ縦などは、下からせり上がるシート
-            const land = !!(window.matchMedia && window.matchMedia('(orientation: landscape) and (max-height: 520px)').matches);
+            const mm = q => !!(window.matchMedia && window.matchMedia(q).matches);
+            const land = mm('(orientation: landscape) and (max-height: 520px)');      // スマホの横向き（3列）
+            const sheet = !land && (window.innerWidth < 769 || mm('(orientation: portrait)'));   // 1列（スマホ・縦長のタブレット）
+            // 横長のタブレット・小さめのパソコン：2列で画面いっぱい
+            const wideFull = !land && !sheet && mm('(min-width: 769px) and (orientation: landscape) and (min-height: 521px) and (pointer: coarse), (min-width: 769px) and (orientation: landscape) and (min-height: 521px) and (max-width: 1366px)');
             m.classList.add('co-fit');
             mc.style.scale = '';
             mc.style.height = ''; mc.style.width = ''; mc.style.flex = '';
-            // お釣りの内訳は、いちばん長くなる時（9種類）の高さを先に取っておく
-            // （測るたびに画面全体の組み直しが3回起きて、お会計を開くのが遅くなるので、
-            //   画面の大きさ・文字の大きさが同じ間は、前に測った高さを使い回す）
-            const bd = document.getElementById('change-breakdown');
-            if (bd) {
-                bd.style.minHeight = '';
-                m.classList.remove('co-fit1', 'co-fit2');
-                const key = innerWidth + 'x' + innerHeight + ':' + bd.clientWidth + ':' + document.documentElement.className + ':' + document.body.className;
-                if (fitCoMeasured.key !== key) {
-                    const keep = bd.innerHTML;
-                    const sample = n => changeDenoms(n).map(d => `<span>${d.unit >= 1000 ? d.unit + '円札' : d.unit + '円'} × ${d.count}</span>`).join('');
-                    const measure = () => { bd.innerHTML = sample(9999); const hh = bd.offsetHeight; bd.innerHTML = keep; return hh; };
-                    fitCoMeasured = { key, h: [0, 1, 2].map(l => { m.classList.toggle('co-fit1', l >= 1); m.classList.toggle('co-fit2', l >= 2); return measure(); }) };
+            const full = sheet || land || wideFull;         // 画面いっぱいに出す形
+            const avail = window.innerHeight - (full ? 0 : 16);
+            const list = sheet ? mc.querySelector('.receipt-list') : null;
+            if (list) list.style.maxHeight = '';
+            // スマホの縦：明細の欄が縮みすぎて、2行も見えない時も「入らない」とみなす
+            const rowH = () => (list && list.firstElementChild ? list.firstElementChild.offsetHeight : 0);
+            const listNeed = () => (!list || list.scrollHeight <= list.clientHeight + 1) ? 0 : Math.max(0, Math.min(list.scrollHeight, rowH() * 2.5) - list.clientHeight);
+            const listTooSmall = () => listNeed() > 0;
+            // 明細の欄が中で動く時は、行の途中で切れないよう、見える行の数ちょうどの高さにする
+            // （あまった高さはテンキーに回る。全体を縮める時は、縮めた後の高さで合わせる）
+            const snapList = () => {
+                if (!list || list.scrollHeight <= list.clientHeight + 1) return;
+                const top = list.getBoundingClientRect().top + list.clientTop;
+                const sc = Number(mc.style.scale) || 1;
+                let fit = 0;
+                for (const li of list.children) {
+                    const bottom = (li.getBoundingClientRect().bottom - top) / sc;
+                    if (bottom > list.clientHeight + 0.5) break;
+                    fit = bottom;
                 }
-                [0, 1, 2].forEach(l => { bd.dataset['h' + l] = String(fitCoMeasured.h[l]); });
-            }
-            const avail = window.innerHeight - (sheet || land ? 0 : 16);
-            // スマホの横向き：画面いっぱいの高さの中に、中身が入りきっているか
-            const over = () => land ? mc.scrollHeight > mc.clientHeight + 1 : mc.offsetHeight > avail;
+                if (fit > 0) list.style.maxHeight = Math.floor(fit) + 'px';
+            };
+            // 画面いっぱいの形：決まった高さの中に、中身が入りきっているか
+            const over = () => full ? (mc.scrollHeight > mc.clientHeight + 1 || listTooSmall()) : mc.offsetHeight > avail;
             let lvl = 0;
             for (; lvl <= 2; lvl++) {
                 m.classList.toggle('co-fit1', lvl >= 1);
                 m.classList.toggle('co-fit2', lvl >= 2);
-                if (bd) bd.style.minHeight = (Number(bd.dataset['h' + lvl]) || 0) + 'px';
                 if (!over()) break;
             }
-            if (land) {
+            if (full) {
                 // 入らない時は、背を高くしてから全体を縮めて、ちょうど画面の高さにする
                 let k = 1;
                 for (let i = 0; i < 4 && over(); i++) {
-                    k = Math.max(0.5, k * mc.clientHeight / mc.scrollHeight - 0.005);
+                    const need = Math.max(mc.scrollHeight - mc.clientHeight, listNeed());
+                    k = Math.max(0.5, k * mc.clientHeight / (mc.clientHeight + need) - 0.005);
                     mc.style.height = Math.ceil(avail / k) + 'px';
                     mc.style.width = Math.floor(window.innerWidth / k) + 'px';   // 縮めた後も、横は画面いっぱい
                     mc.style.flex = 'none';
                 }
-                if (k < 1) { mc.style.transformOrigin = '50% 50%'; mc.style.scale = String(Math.floor(k * 1000) / 1000); }
+                if (k < 1) { mc.style.transformOrigin = sheet ? '50% 100%' : '50% 50%'; mc.style.scale = String(Math.floor(k * 1000) / 1000); }
+                snapList();
+                markListMore();
                 return;
             }
             const h = mc.offsetHeight;
@@ -5906,21 +6012,39 @@
                 mc.style.transformOrigin = sheet ? '50% 100%' : '50% 50%';
                 mc.style.scale = String(k);
             }
+            markListMore();
         } finally { fitCoBusy = false; }
     }
+    // 明細の欄の中が動く（まだ下に続く）間だけ、下の端をうすくする
+    function markListMore() {
+        const list = document.querySelector('#checkout-modal .receipt-list');
+        if (!list) return;
+        const more = list.scrollHeight > list.clientHeight + 1 && list.scrollTop + list.clientHeight < list.scrollHeight - 2;
+        list.classList.toggle('more', more);
+        if (!list.dataset.moreHook) { list.dataset.moreHook = '1'; list.addEventListener('scroll', markListMore, { passive: true }); }
+    }
     window.addEventListener('resize', () => { clearTimeout(fitCheckout.t); fitCheckout.t = setTimeout(fitCheckout, 80); });
+    const DENOM_SHORT = { 10000: '1万', 5000: '5千', 1000: '千', 500: '500', 100: '100', 50: '50', 10: '10', 5: '5', 1: '1' };
     function renderChangeBreakdown(change) {
         const box = document.getElementById('change-breakdown');
         if (!box) return;
-        if (change <= 0) {
-            // ぴったりの時は「お釣りなし」とはっきり出す（渡し忘れ・待たせの防止）
-            const cash = parseInt(document.getElementById('cash-input').value) || 0;
-            box.innerHTML = cash > 0 ? '<div class="chg-none">ぴったり（お釣りなし）</div>' : '';
-            return;
+        if (box.children.length !== DENOMS.length) {
+            box.innerHTML = DENOMS.map(u => `<span class="ct"><i>${DENOM_SHORT[u]}</i><b></b></span>`).join('');
         }
-        box.innerHTML = changeDenoms(change)
-            .map(d => `<span>${d.unit >= 1000 ? d.unit + '円札' : d.unit + '円'} × ${d.count}</span>`)
-            .join('');
+        const cash = parseInt(document.getElementById('cash-input').value) || 0;
+        // ぴったりの時は「お釣りなし」とはっきり出す（渡し忘れ・待たせの防止）
+        box.classList.toggle('exact', change <= 0 && cash > 0);
+        const n = {};
+        if (change > 0) changeDenoms(change).forEach(d => { n[d.unit] = d.count; });
+        DENOMS.forEach((u, i) => {
+            const cell = box.children[i];
+            const c = n[u] || 0;
+            cell.classList.toggle('on', c > 0);
+            cell.lastElementChild.textContent = String(c);   // 要らない物は、うすい 0（空けておくと空白に見える）
+        });
+        box.setAttribute('aria-label', change > 0
+            ? 'お釣りの内訳 ' + changeDenoms(change).map(d => `${d.unit >= 1000 ? d.unit + '円札' : d.unit + '円'}${d.count}枚`).join('、')
+            : (cash > 0 ? 'ぴったり、お釣りなし' : ''));
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -6579,7 +6703,7 @@
                     <li>お客様が選んだ商品を、<b>商品ボタン</b>から必要な数だけ押します（同じ商品を2個なら2回）。押した商品は<b>濃い枠で囲まれ、角に個数</b>が出るので、何をいくつ打ったかひと目で確かめられます。</li>
                     <li><b>「会計へ進む」</b>（青い大きなボタン）を押します。</li>
                     <li>お預かりした金額を、<b>テンキー</b>か<b>候補ボタン</b>で入れます。候補にはお釣りの額も小さく出ています。</li>
-                    <li>黒い表示窓に<b>お釣りと、その内訳</b>（例：100円×3）が出るので、その通りにお釣りを渡します。</li>
+                    <li>黒い表示窓に<b>お釣りと、その内訳</b>が出ます。内訳は「1万・5千・千・500・100・50・10・5・1」がいつも同じ場所に並び、渡す物だけ枚数が白く光ります（例：100 の下に 3 ＝ 100円玉を3枚）。その通りにお釣りを渡します。</li>
                     <li>いちばん下の<b>「完了・記録」</b>を押して会計終了です。下に<b>客No.とお釣り（何円玉を何枚）</b>が小さく出るので、見ながらお釣りを渡せます。そのまま次のお客様の商品を押して大丈夫です。</li>
                 </ol>
                 <div class="man-box tip">
@@ -6589,7 +6713,7 @@
                         <li>客属性（学生・教員など）は<b>入れなくても会計できます</b>。急いでいるときは飛ばして、あとから「会計記録」でまとめて入れられます。</li>
                         <li>お預かりが足りないときはボタンが押せなくなり、<b>あといくら足りないか</b>が出ます。</li>
                         <li>上のすりガラスの部分を押すと、商品一覧にもどれます。</li>
-                        <li>お会計の画面は、パソコンのブラウザ・スマホの横向きなど、<b>どの大きさの画面でもスクロールせずに1画面に収まります</b>（画面が小さい時は、テンキーや余白を少し詰めます）。お釣りの内訳が出ても、テンキーの位置は動きません。</li>
+                        <li>お会計の画面は、スマホとタブレットでは<b>画面いっぱい</b>に出ます（あまった高さはテンキーが大きくなって使います）。パソコンのブラウザ・スマホの横向きなど、<b>どの大きさの画面でもスクロールせずに1画面に収まります</b>（画面が小さい時は、テンキーや余白を少し詰めます）。お釣りの内訳が出ても、テンキーの位置は動きません。</li>
                     </ul>
                 </div>
                 <div class="man-box tip">
@@ -19949,7 +20073,7 @@
         }
         const nonCash = checkoutPay !== 'cash';
         if (right) right.classList.toggle('pay-noncash', nonCash);
-        if (note) note.textContent = nonCash ? `${payLabel(checkoutPay)}でのお支払い（お釣りはありません）` : '';
+        if (note) note.innerHTML = nonCash ? `<span><b>${escHtml(payLabel(checkoutPay))}</b>でのお支払い<small>お釣りはありません</small></span>` : '';
         updateCheckoutPrimary();
         fitCheckout();   // テンキーが出る・消えるので、画面に収め直す
     }
