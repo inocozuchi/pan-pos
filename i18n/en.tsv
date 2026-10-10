@@ -2597,3 +2597,90 @@ QRコードにするアドレス（https:// から始まる物）を入れてく
 カフェ	Café
 例：主催 尾崎ゼミ 泰山木班	e.g. Organized by ___
 ポスター	Posters
+# ---- POP・ポスター：画像（背景の画像・端末の写真・背景を消す）と重なり ----
+画像	Images
+重なり	Layers
+背景の画像	Background image
+合わせ方	Fit
+画面いっぱい	Fill
+全部見せる	Show all
+横の位置	Horizontal position
+縦の位置	Vertical position
+文字を読みやすくする（うすくする）	Make text easier to read (fade)
+うすくする色	Fade color
+白くする	White
+黒くする	Black
+ぼかす	Blur
+画像を替える	Change image
+背景の画像を外す	Remove background image
+端末の画像を背景にする	Use an image from this device as the background
+写真をテンプレートの背景の代わりに敷きます。文字が読みにくい時は「うすくする」「ぼかす」で整えます。	Lays a photo in place of the template background. If the text is hard to read, adjust it with "fade" and "blur".
+写真・イラストを足す	Add photos and illustrations
+端末の写真を足す	Add a photo from this device
+背景を消して足す	Remove background and add
+「背景を消して足す」は、商品の写真や季節の物の写真から、まわりを消して切り抜きます（白い台・単色の布の上で撮ると、きれいに消せます）。	"Remove background and add" cuts an item out of a photo of a product or seasonal object by erasing its surroundings (works best when shot on a white board or plain cloth).
+わたしの素材（この端末）	My images (this device)
+まだありません。読み込んだ写真・切り抜いた画像は、ここに残ります（ほかのPOPでも使えます）。	None yet. Photos you load and images you cut out are kept here (you can use them in other POPs too).
+背景に	Background
+切り抜く	Cut out
+この素材を消す	Delete this image
+切り抜いた画像を足す	Add the cut-out image
+写真を足す	Add the photo
+選んでいる画像	Selected image
+上にある物から並んでいます。「固定」した物は、見本の上で押しても選ばれません（背景の写真などに）。	Listed from the top. Locked items can't be selected by tapping the preview (useful for background photos).
+かくす	Hide
+出す	Show
+固定	Lock
+固定をやめる	Unlock
+ひとつ上へ	Up one
+ひとつ下へ	Down one
+こさ（透明度）	Opacity
+複製	Duplicate
+左右反転	Flip
+枠の中の写真の大きさ	Photo zoom in the frame
+枠の中の横の位置	Horizontal position in the frame
+枠の中の縦の位置	Vertical position in the frame
+枠の縦の長さ	Frame height
+切り抜き	Cutout
+押すと選べます。指でずらす・四すみの丸で大きさ・上の丸で向きを変えます（2本の指で広げる・ひねるでも）。	Tap to select. Drag to move, drag a corner dot to resize, and drag the top dot to rotate (or pinch and twist with two fingers).
+画像を読み込んでいます…	Loading the image…
+この画像は読み込めませんでした	This image could not be loaded
+この端末に画像をしまえませんでした（しまう場所が足りないか、使えない設定になっています）。	Could not save the image on this device (not enough space, or storage is turned off).
+画像を作れませんでした	Could not create the image
+背景にしました	Set as the background
+この素材は、作ったPOP・ポスターで使っています。消すと、そこからも消えます。消しますか？	This image is used in POPs or posters you made. Deleting it also removes it from them. Delete it?
+この素材を消しますか？	Delete this image?
+切り抜いた画像を足しました	Added the cut-out image
+背景を消す	Remove background
+切り抜く画像	Image to cut out
+タップで消す	Tap to erase
+消しゴム	Eraser
+戻すペン	Restore brush
+動かす	Move
+似た色の幅（大きいほど、たくさん消えます）	Color tolerance (higher erases more)
+似た色の幅	Color tolerance
+ペンの太さ	Brush size
+まわりを自動で消す	Auto-remove surroundings
+最初から	Start over
+大きく見る	Zoom in
+小さく見る	Zoom out
+全体	Fit
+見え方（消した所の色）	Display (color of erased areas)
+見え方	Display
+市松もよう	Checkerboard
+消した所をうすく見せる	Show erased areas faintly
+道具	Tools
+残っている背景を押すと、その色のつながった所が消えます。	Tap leftover background to erase the connected area of that color.
+指でなぞった所を消します。	Erases where you trace with your finger.
+消えすぎた所を、指でなぞって戻します。	Trace over areas that were erased too much to bring them back.
+指で画像を動かします。2本の指で広げると大きく見られます。	Drag to move the image. Spread two fingers to zoom in.
+まわりを自動で消しました。残った背景は押して消し、消えすぎた所は「戻すペン」でなぞります。	Removed the surroundings automatically. Tap leftover background to erase it, and trace over areas erased too much with the "Restore brush".
+まわりの色がまちまちで、自動では消せませんでした。「タップで消す」か「消しゴム」で消してください。	The surrounding colors vary too much to remove automatically. Use "Tap to erase" or the "Eraser".
+切り抜くのをやめますか？（いま消した所は残りません）	Stop cutting out? (Your edits will not be kept.)
+全部消えています。「元に戻す」か「戻すペン」で、残したい所を戻してください。	Everything has been erased. Use "Undo" or the "Restore brush" to bring back the parts you want to keep.
+手前へ	Bring forward
+奥へ	Send backward
+切り抜いて足す	Cut out and add
+見本のいちばん下	At the very bottom
+飾り	Decorations
+元の形	Original shape
