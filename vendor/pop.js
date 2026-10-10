@@ -173,7 +173,9 @@
     function decoSvg(id) { var x = DECO_BY[id]; return x ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' + x.svg + '</svg>' : ''; }
 
     // ---------------- スタンプ（札）。文字はフォントで描く ----------------
-    var STAMP_WORDS = ['おすすめ', '新商品', '人気No.1', '期間限定', '数量限定', '季節限定', '焼きたて', '手作り', '本日のおすすめ', 'NEW', '無添加'];
+    // 「No.1」「無添加」のような、根拠や中身を書き添えないといけない言葉は、スタンプに入れない
+    // （景品表示法の No.1 表示の考え方・食品添加物の不使用表示のガイドライン）。必要な時は、根拠と一緒に自分で書く
+    var STAMP_WORDS = ['おすすめ', '新商品', '人気', '期間限定', '数量限定', '季節限定', '焼きたて', '手作り', '本日のおすすめ', 'NEW'];
     var STAMP_STYLES = [['burst', 'ギザギザ'], ['circle', 'まる'], ['ribbon', 'リボン'], ['tag', 'ふだ'], ['bubble', '吹き出し']];
 
     // ---------------- 描く道具 ----------------
@@ -557,6 +559,8 @@
         if (e.rot) ctx.rotate(e.rot * Math.PI / 180);
         if (e.op != null && e.op < 1) ctx.globalAlpha = Math.max(.05, e.op);
         if (e.flip && e.t === 'img') ctx.scale(-1, 1);
+        // 影（文字・画像・スタンプの下に、やわらかい影）
+        if (e.shadow) { ctx.shadowColor = 'rgba(0,0,0,.32)'; ctx.shadowBlur = U * .018; ctx.shadowOffsetY = U * .007; }
         var box = null;
         if (e.t === 'text') box = drawText(ctx, d, e, W, H, U);
         else if (e.t === 'img') box = drawImg(ctx, d, e, W, H, U);
@@ -693,6 +697,12 @@
         if (shape === 'plain') {
             // 絵は縦横の比を保って、枠いっぱいに
             var iw = im.naturalWidth || 100, ih = im.naturalHeight || 100, sc = Math.min(w / iw, h / ih);
+            if (e.outline > 0) {
+                // まわりの白いふち（シール風）：形をぬりつぶした物を、まわりに少しずつずらして重ねる
+                var sil = silhouette(e.src, im, e.outlineC || '#FFFFFF'), r0 = e.outline * w * .045;
+                for (var a = 0; a < 16; a++) { var an = a * Math.PI / 8; ctx.drawImage(sil, -iw * sc / 2 + Math.cos(an) * r0, -ih * sc / 2 + Math.sin(an) * r0, iw * sc, ih * sc); }
+                ctx.shadowColor = 'transparent';
+            }
             ctx.drawImage(im, -iw * sc / 2, -ih * sc / 2, iw * sc, ih * sc);
             return [-w / 2, -h / 2, w / 2, h / 2];
         }
@@ -716,6 +726,18 @@
             if (shape === 'circle') { ctx.beginPath(); ctx.arc(0, 0, w / 2, 0, Math.PI * 2); ctx.stroke(); } else { rr(ctx, -w / 2, -h / 2, w, h, w * .08); ctx.stroke(); }
         }
         return [-w / 2, -h / 2, w / 2, h / 2];
+    }
+    // 画像の形だけを、ひとつの色でぬった物（白いふちに使う。画像ごとに一度だけ作る）
+    var SIL = {};
+    function silhouette(src, im, color) {
+        var k = src + '|' + color, c = SIL[k];
+        if (c && c.im === im) return c.cv;
+        var cv = document.createElement('canvas'), iw = im.naturalWidth || 100, ih = im.naturalHeight || 100, kk = Math.min(1, 800 / Math.max(iw, ih));
+        cv.width = Math.max(1, Math.round(iw * kk)); cv.height = Math.max(1, Math.round(ih * kk));
+        var x = cv.getContext('2d'); x.drawImage(im, 0, 0, cv.width, cv.height);
+        x.globalCompositeOperation = 'source-in'; x.fillStyle = color; x.fillRect(0, 0, cv.width, cv.height);
+        SIL[k] = { im: im, cv: cv };
+        return cv;
     }
     function drawStamp(ctx, d, e, W, H, U) {
         var s = (e.w || .16) * W, c = col(d, e, 'ck', 'color') || '#E2557F', ink = col(d, e, 'ik', 'ink') || '#fff';
@@ -884,10 +906,16 @@
                 ctx.restore();
             }
         }
+        if (opt.safe) {
+            // 印刷で切れやすい所の目安（紙のふちから 4mm）。見本だけに出し、保存する画像には入らない
+            var f0 = FMTS[d.fmt], ix = f0 ? 4 / f0.mm[0] * W : U * .03, iy = f0 ? 4 / f0.mm[1] * H : U * .03;
+            ctx.save(); ctx.strokeStyle = 'rgba(26,115,232,.7)'; ctx.lineWidth = Math.max(1, U * .003); ctx.setLineDash([U * .012, U * .01]);
+            ctx.strokeRect(ix, iy, W - ix * 2, H - iy * 2); ctx.restore();
+        }
         if (opt.guides) {
             ctx.save(); ctx.strokeStyle = '#E2557F'; ctx.lineWidth = Math.max(1, U * .003); ctx.setLineDash([U * .015, U * .01]);
-            if (opt.guides.x) { ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke(); }
-            if (opt.guides.y) { ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke(); }
+            (opt.guides.xs || []).forEach(function (x) { ctx.beginPath(); ctx.moveTo(x * W, 0); ctx.lineTo(x * W, H); ctx.stroke(); });
+            (opt.guides.ys || []).forEach(function (y) { ctx.beginPath(); ctx.moveTo(0, y * H); ctx.lineTo(W, y * H); ctx.stroke(); });
             ctx.restore();
         }
     }
@@ -916,7 +944,7 @@
         [/いちご|苺|ストロベリー/, ['甘ずっぱいいちご', 'ピンクがかわいい'], 'いちごの甘ずっぱさ。'],
         [/レモン/, ['さわやかレモン', 'すっきり甘ずっぱい'], 'レモンのさわやかな香り。'],
         [/はちみつ|ハニー/, ['はちみつのやさしい甘さ', 'とろりとはちみつ'], 'はちみつのやさしい甘さ。'],
-        [/りんご|アップル/, ['りんごの甘ずっぱさ', 'シャキッとりんご'], 'りんごの甘ずっぱさが広がります。'],
+        [/りんご|アップル/, ['りんごの甘ずっぱさ', 'りんごの香り'], 'りんごの甘ずっぱさが広がります。'],
         [/フィナンシェ/, ['バター香る焼き菓子', 'しっとり焼き上げ'], 'しっとり、バターの香り。'],
         [/フロランタン/, ['カリッと香ばしい！', 'キャラメルとアーモンド'], 'キャラメルとアーモンドのカリッと食感。'],
         [/パウンド|ケーキ/, ['しっとりやさしい甘さ', 'おやつの時間に'], 'しっとり焼き上げました。'],
@@ -932,7 +960,7 @@
         [/食パン|トースト/, ['ふんわり、もっちり', '毎日の朝ごはんに'], 'トーストしてもおいしい。']
     ];
     var COPY_DEF = {
-        sweet: [['やさしい味わい', 'ひとつひとつ手づくり'], 'ていねいに作りました。'],
+        sweet: [['やさしい味わい', 'ひとつひとつ、ていねいに'], 'ていねいに作りました。'],
         savory: [['おやつの時間に', 'ていねいに焼きました'], 'ていねいに作りました。'],
         drink: [['ほっとひと休み', 'パンのおともに'], 'パンやお菓子といっしょにどうぞ。'],
         other: [['ていねいに作りました', 'ぜひどうぞ'], 'ていねいに作りました。']
@@ -943,6 +971,13 @@
         var def = COPY_DEF[p.type] || COPY_DEF.other;
         var catches = hit ? hit[1] : def[0];
         return { catch: catches[v % catches.length], desc: p.desc || (hit ? hit[2] : def[1]) };
+    }
+    // ひとことの案（商品名に合う物 → 分類に合う物の順）。「ひとことを替える」で順に出す
+    function catchList(p) {
+        var out = [];
+        COPY.forEach(function (c) { if (c[0].test(p.name)) c[1].forEach(function (x) { if (out.indexOf(x) < 0) out.push(x); }); });
+        (COPY_DEF[p.type] || COPY_DEF.other)[0].concat(['ぜひ一度どうぞ', 'おやつの時間に', 'おみやげにもどうぞ']).forEach(function (x) { if (out.indexOf(x) < 0) out.push(x); });
+        return out;
     }
     // 季節（月）に合うテンプレート
     function seasonTpl(m) { return (m === 3 || m === 4) ? 'spring' : (m >= 9 && m <= 11) ? 'autumn' : m === 12 ? 'winter' : ''; }
@@ -971,7 +1006,8 @@
         return a ? 'art:' + a : '';
     }
     function stampWord(p) {
-        if (A.topSeller(p)) return '人気No.1';
+        // 「No.1」は、何で比べたか（当店の販売数・いつの間か）を、すぐそばに書く（下の basis）
+        if (A.topSeller(p)) return '当店人気No.1';
         if (p.isNew) return '新商品';
         if (p.rec) return 'おすすめ';
         return '';
@@ -1019,7 +1055,9 @@
             if (pr.sub) els.push(T('pricesub', pr.sub, G({ x: .5, y: .95, w: .6, size: .032, ck: 'sub' })));
             if (sw) els.push({ id: nid(), t: 'stamp', role: 'stamp', text: sw, style: t.stamp, x: .17, y: .12, w: .24, rot: -12, ck: 'acc', ik: 'onAcc', fk: 'accent', bold: true });
         }
-        if (t.footBand) els.push(T('note', A.shopName(), { x: .5, y: .965, w: .8, size: .03, ck: 'onAcc' }));
+        var basis = sw === '当店人気No.1' && A.topBasis ? A.topBasis() : '';
+        if (t.footBand) els.push(T('note', A.shopName(), { x: .5, y: basis ? .955 : .965, w: .8, size: .03, ck: 'onAcc' }));
+        if (basis) els.push(T('basis', basis, { x: .5, y: t.footBand ? .987 : .978, w: .94, size: t.footBand ? .017 : .02, ck: t.footBand ? 'onAcc' : 'sub', fk: 'body' }));
         // 飾り（すみに置く。じゃまなら消せる）
         var spots = land ? [[flip ? .1 : .93, flip ? .86 : .14, .1, 14], [flip ? .95 : .06, .9, .09, -10]] : sq ? [[.92, .1, .1, 14], [.07, .93, .08, -10]] : [[.88, .08, .12, 14], [.1, .93, .09, -10]];
         decosFor(t).slice(0, 2).forEach(function (id, i) { var s = spots[i]; if (s) els.push(IMGEL('deco:' + id, { x: s[0], y: s[1], w: s[2], rot: s[3], role: 'deco' })); });
@@ -1083,12 +1121,27 @@
 
     // ---------------- 直す（元に戻せるように、直す前の形を覚えておく） ----------------
     function clone(o) { return JSON.parse(JSON.stringify(o)); }
-    function pushHist() { if (!S.d) return; S.hist.push(JSON.stringify(S.d)); if (S.hist.length > 40) S.hist.shift(); }
+    function pushHist() { if (!S.d) return; S.hist.push(JSON.stringify(S.d)); if (S.hist.length > 40) S.hist.shift(); S.fut = []; }
     function undo() {
         if (!S.hist.length) { A.error(); return; }
+        S.fut = S.fut || []; S.fut.push(JSON.stringify(S.d)); if (S.fut.length > 40) S.fut.shift();
         S.d = JSON.parse(S.hist.pop());
         if (S.sel && !elById(S.sel)) S.sel = null;
         A.sound(660, .04); saveSoon(); render();
+    }
+    // やり直す（元に戻したのを、もう一度する）
+    function redo() {
+        if (!S.fut || !S.fut.length) { A.error(); return; }
+        S.hist.push(JSON.stringify(S.d)); if (S.hist.length > 40) S.hist.shift();
+        S.d = JSON.parse(S.fut.pop());
+        if (S.sel && !elById(S.sel)) S.sel = null;
+        A.sound(760, .04); saveSoon(); render();
+    }
+    // 元に戻す・やり直すのボタンを、押せるかどうかに合わせる
+    function histBtns() {
+        if (!host) return;
+        var u = host.querySelector('[data-act="undo"]'); if (u) u.disabled = !S.hist.length;
+        var r = host.querySelector('[data-act="redo"]'); if (r) r.disabled = !(S.fut && S.fut.length);
     }
     function elById(id) { return S.d && (S.d.els || []).filter(function (e) { return e.id === id; })[0] || null; }
     function selEl() { return S.sel ? elById(S.sel) : null; }
@@ -1115,7 +1168,7 @@
             if (o.src && o.srcSet) { e.src = o.src; e.srcSet = true; }
             if (o.shape && o.shapeSet) { e.shape = o.shape; e.shapeSet = true; }
             if (o.hide) e.hide = true;
-            ['op', 'flip', 'lock', 'zoom', 'px', 'py', 'far', 'cut', 'ar'].forEach(function (k) { if (o[k] !== undefined) e[k] = o[k]; });
+            ['op', 'flip', 'lock', 'zoom', 'px', 'py', 'far', 'cut', 'ar', 'lh', 'shadow', 'outline', 'outlineC'].forEach(function (k) { if (o[k] !== undefined) e[k] = o[k]; });
             return true;
         });
         // 自分で足した物は、そのまま残す
@@ -1268,7 +1321,7 @@
 
     // ---------------- 画面 ----------------
     function esc(s) { return A.esc(String(s == null ? '' : s)); }
-    var ROLE_LABEL = { title: '商品名', catch: 'ひとこと', desc: '説明', price: '値段', pricesub: '値段の注記', note: '下の小さな文字', brand: 'お店の名前', event: '販売会の名前', date: '日付', place: '時間・場所', fhead: 'おすすめの見出し', fname: 'おすすめの名前', fdesc: 'おすすめの説明', mhead: 'メニューの見出し', free: '文字' };
+    var ROLE_LABEL = { title: '商品名', basis: 'No.1の根拠', catch: 'ひとこと', desc: '説明', price: '値段', pricesub: '値段の注記', note: '下の小さな文字', brand: 'お店の名前', event: '販売会の名前', date: '日付', place: '時間・場所', fhead: 'おすすめの見出し', fname: 'おすすめの名前', fdesc: 'おすすめの説明', mhead: 'メニューの見出し', free: '文字' };
     function thumbHtml(p) {
         var ph = A.photo(p.name);
         if (ph) return '<img src="' + ph + '" alt="">';
@@ -1289,7 +1342,8 @@
             }).join('') + '</div>' : '<p class="settings-hint">販売する商品がまだありません。「商品と仕入れ数」か「商品・在庫の調整」で入れてください。</p>')
             + (saved.length ? '<label class="field-label sec">作ったもの（この端末）</label><div class="pp-saved">' + saved.map(function (x) {
                 return '<div class="pp-sv"><button type="button" class="pp-svb" data-act="open" data-id="' + esc(x.id) + '"><canvas class="pp-th" data-thumb="' + esc(x.id) + '" aria-hidden="true"></canvas><span>' + esc(x.name) + '</span><small>' + esc(FMTS[x.d.fmt] ? FMTS[x.d.fmt].label : '') + '</small></button>'
-                    + '<button type="button" class="pp-del" data-act="delsaved" data-id="' + esc(x.id) + '" aria-label="' + esc(x.name) + 'を消す"><svg class="ic"><use href="#ic-trash"/></svg></button></div>';
+                    + '<button type="button" class="pp-del" data-act="delsaved" data-id="' + esc(x.id) + '" aria-label="' + esc(x.name) + 'を消す"><svg class="ic"><use href="#ic-trash"/></svg></button>'
+                    + '<button type="button" class="pp-del pp-dupb" data-act="dupsaved" data-id="' + esc(x.id) + '" aria-label="' + esc(x.name) + 'を複製"><svg class="ic"><use href="#ic-copy"/></svg></button></div>';
             }).join('') + '</div>' : '')
             + '<p class="settings-hint pp-lic">素材について：テンプレート・イラスト・飾りは、このアプリのために作った物です。文字は Google Fonts の日本語フォント（SIL Open Font License 1.1）を使っていて、作った画像・印刷物は自由に使えます。AIで作った画像は使っていません。</p>'
             + '</div>';
@@ -1308,8 +1362,10 @@
             + '<div class="pp-bar">'
             + '<button type="button" class="pp-chip" data-act="list"><svg class="ic"><use href="#ic-left"/></svg>一覧へ</button>'
             + '<button type="button" class="pp-chip" data-act="undo"' + (S.hist.length ? '' : ' disabled') + '><svg class="ic"><use href="#ic-undo"/></svg>元に戻す</button>'
+            + '<button type="button" class="pp-chip" data-act="redo"' + (S.fut && S.fut.length ? '' : ' disabled') + '><svg class="ic pp-flipx"><use href="#ic-undo"/></svg>やり直す</button>'
             + '<button type="button" class="pp-chip" data-act="regen"><svg class="ic"><use href="#ic-refresh"/></svg>作り直す</button>'
             + '</div>'
+            + (function () { var g = priceGap(S.d); return g ? '<div class="pp-warn" role="status"><span>POPの値段（' + esc(g.el.text || '') + '）が、いまの登録の値段（' + esc(g.now.main) + '）と違います。</span><button type="button" class="pp-chip" data-act="fixprice">いまの値段にする</button></div>' : ''; })()
             + '<div class="pp-cv"><canvas id="pp-canvas" tabindex="0" aria-label="POPの見本。押すと文字や飾りを選び、指でずらせます"></canvas></div>'
             + '<p class="pp-tip">押すと選べます。指でずらす・四すみの丸で大きさ・上の丸で向きを変えます（2本の指で広げる・ひねるでも）。</p>'
             + fmtChips()
@@ -1318,6 +1374,7 @@
             + (canShareFiles() ? '<button type="button" class="action-btn btn-secondary" data-act="share"><svg class="ic"><use href="#ic-upload"/></svg>共有</button>' : '')
             + '<button type="button" class="action-btn btn-secondary" data-act="print"><svg class="ic"><use href="#ic-printer"/></svg>印刷</button>'
             + '</div>'
+            + '<label class="pp-check"><input type="checkbox" data-act="safe"' + (S.safe ? ' checked' : '') + '>印刷で切れやすい所の目安を出す（見本だけ）</label>'
             + (S.d.fmt !== 'a4' && n > 1 ? '<label class="pp-check"><input type="checkbox" data-act="tile"' + (S.printTile ? ' checked' : '') + '>印刷の時に、A4に' + n + '枚ならべる</label>' : '')
             + '<p class="pp-busy" hidden></p>'
             + '<p class="pp-font" aria-live="polite"></p>'
@@ -1433,6 +1490,9 @@
     function commonCtl(e) {
         return range('rot', -180, 180, 1, e.rot || 0, '向き')
             + range('op', .1, 1, .01, e.op != null ? e.op : 1, 'こさ（透明度）')
+            + '<label class="field-label">紙に合わせて揃える</label><div class="seg-pick pp-wrapseg" role="group" aria-label="紙に合わせて揃える">'
+            + [['l', '左'], ['c', '左右の中'], ['r', '右'], ['t', '上'], ['m', '上下の中'], ['b', '下']].map(function (a) { return '<button type="button" data-act="alignel" data-v="' + a[0] + '">' + a[1] + '</button>'; }).join('') + '</div>'
+            + '<label class="pp-check"><input type="checkbox" data-act="shadow"' + (e.shadow ? ' checked' : '') + '>影を付ける</label>'
             + '<div class="pp-row">'
             + '<button type="button" class="pp-chip" data-act="front">手前へ</button>'
             + '<button type="button" class="pp-chip" data-act="back">奥へ</button>'
@@ -1451,6 +1511,7 @@
         var fid = resolveFont(S.d, e), bold = resolveBold(S.d, e);
         askFonts();   // フォントを選ぶボタンの見本の字は、この時に読む
         out += '<div class="pp-edbox">'
+            + (e.role === 'catch' && S.d.kind === 'pop' && productOf(S.d) ? '<div class="pp-row"><button type="button" class="pp-chip" data-act="nextcatch"><svg class="ic"><use href="#ic-refresh"/></svg>ひとことの案を替える</button></div>' : '')
             + '<label class="field-label">文字（改行もできます）</label><textarea class="pp-ta" rows="' + Math.min(5, Math.max(2, (e.text || '').split('\n').length + 1)) + '" data-act="text" maxlength="200">' + esc(e.text || '') + '</textarea>'
             + '<label class="field-label">フォント</label><div class="pp-fonts">' + FONTS.map(function (f) {
                 return '<button type="button" class="pp-font-b' + (fid === f.id ? ' on' : '') + '" aria-pressed="' + (fid === f.id) + '" data-act="font" data-v="' + f.id + '" style="font-family:' + pickerFamily(f) + ';font-weight:' + fontWt(f, true) + '"><span class="pp-fs" translate="no">あ字A</span><small>' + f.label + '</small></button>';
@@ -1458,6 +1519,7 @@
             + '<div class="pp-row"><label class="pp-check"><input type="checkbox" data-act="bold"' + (bold ? ' checked' : '') + '>太く</label><label class="pp-check"><input type="checkbox" data-act="vert"' + (e.vert ? ' checked' : '') + '>縦書き</label></div>'
             + '<label class="field-label">大きさ</label><input type="range" min="0.015" max="0.3" step="0.002" value="' + (e.size || .06) + '" data-act="size" aria-label="文字の大きさ">'
             + '<label class="field-label">' + (e.vert ? '列の長さ' : '幅（折り返す長さ）') + '</label><input type="range" min="0.15" max="1" step="0.01" value="' + (e.w || .8) + '" data-act="w" aria-label="幅">'
+            + (e.vert ? '' : '<label class="field-label">行の間</label><input type="range" min="0.9" max="2.2" step="0.02" value="' + (e.lh || 1.28) + '" data-act="lh" aria-label="行の間">')
             + '<label class="field-label">揃え</label><div class="seg-pick" role="group" aria-label="揃え">' + [['left', '左'], ['center', '中'], ['right', '右']].map(function (a) { var on = (e.align || 'center') === a[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="align" data-v="' + a[0] + '">' + a[1] + '</button>'; }).join('') + '</div>'
             + '<label class="field-label">文字の色</label>' + swatches('color', e.ck || e.color, S.d)
             + '<label class="field-label">文字の下の飾り</label><div class="seg-pick pp-wrapseg" role="group" aria-label="文字の下の飾り">' + [['', 'なし'], ['band', '帯'], ['round', 'まるい帯'], ['circle', 'まる'], ['bubble', '吹き出し'], ['tape', 'テープ'], ['line', '下線']].map(function (a) { var on = (e.box || '') === a[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="box" data-v="' + a[0] + '">' + a[1] + '</button>'; }).join('') + '</div>'
@@ -1481,6 +1543,13 @@
             if (shp !== 'plain') out += range('zoom', 1, 3, .01, e.zoom || 1, '枠の中の写真の大きさ') + range('px', -1, 1, .01, e.px || 0, '枠の中の横の位置') + range('py', -1, 1, .01, e.py || 0, '枠の中の縦の位置')
                 + (shp === 'round' ? range('far', .4, 1.6, .01, e.far || .78, '枠の縦の長さ') : '');
         }
+        if (e.t === 'img' && (e.shape === 'plain' || !/^(photo|user):/.test(e.src) || e.cut)) {
+            out += range('outline', 0, 1, .01, e.outline || 0, 'まわりの白いふち（シール風）');
+        }
+        if (e.t === 'img' && /^(photo|user):/.test(e.src) && !e.cut && (e.shape || 'round') !== 'plain') {
+            var bcur = e.ek ? 'acc' : (e.border || '');
+            out += '<label class="field-label">写真のふち</label>' + seg('pborder', bcur, [['', 'なし'], ['#FFFFFF', '白'], ['acc', '色']], '写真のふち');
+        }
         if (e.t === 'qr') out += '<label class="field-label">QRコードの中身（アドレス）</label><input type="url" class="pp-in" data-act="qrurl" value="' + esc(e.url || '') + '" placeholder="https://…">';
         if (e.t === 'menu') {
             out += '<label class="field-label">列</label><div class="seg-pick" role="group" aria-label="列">' + [[1, '1列'], [2, '2列'], [3, '3列']].map(function (s) { var on = (e.cols || (e.items.length > 8 ? 2 : 1)) === s[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="mcols" data-v="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>'
@@ -1499,7 +1568,7 @@
         // 足す
         var t = tplOf(S.d);
         out += '<label class="field-label sec">スタンプを足す</label><div class="pp-stamps" translate="no">' + STAMP_WORDS.map(function (w) { return '<button type="button" class="pp-chip" data-act="addstamp" data-v="' + esc(w) + '">' + esc(w) + '</button>'; }).join('') + '</div>'
-            + '<p class="settings-hint" style="margin-top:4px;">「無添加」など、中身が本当にそうか、確かめてから使ってください。</p>'
+            + '<p class="settings-hint" style="margin-top:4px;">「期間限定」「焼きたて」「手作り」などは、本当にそうな時だけ使ってください。「No.1」「無添加」は、根拠や中身を書き添える決まりがあるので、スタンプには入れていません。</p>'
             + '<label class="field-label sec">イラストを足す</label><div class="pp-arts">' + DECO.map(function (x) { return '<button type="button" class="pp-art" data-act="adddeco" data-v="' + x.id + '" aria-label="' + esc(x.label) + '" title="' + esc(x.label) + '">' + decoSvg(x.id) + '</button>'; }).join('') + '</div>';
         var mine = A.products();
         var arts = window.MENU_ART ? MENU_ART.list : [];
@@ -1515,7 +1584,7 @@
         var all = A.products(), mids = d.mids || all.map(function (p) { return p.id; }), fids = d.fids || [];
         return '<div class="pp-edbox">'
             + f('shop', 'お店の名前', '例：泰山木') + f('name', '販売会の名前', '例：10月販売会') + f('date', '日付', '例：10/17（金）') + f('time', '時間', '例：11:45〜')
-            + f('place', '場所', '例：葵陵会館前（雨の時は一号館一階）') + f('catch', 'ひとこと', '例：ひとやすみしませんか？') + f('note', 'いちばん下の文字', '例：主催　尾崎ゼミ　泰山木班')
+            + f('place', '場所', '例：○○会館前（雨の時は一号館一階）') + f('catch', 'ひとこと', '例：ひとやすみしませんか？') + f('note', 'いちばん下の文字', '例：主催　○○ゼミ　泰山木班')
             + '</div>'
             + '<label class="field-label sec">おすすめ（3つまで。写真か絵と名前を大きく出します）</label><div class="pp-checks">' + all.map(function (p) { var on = fids.indexOf(p.id) >= 0; return '<label class="pp-check"><input type="checkbox" data-act="feat" data-id="' + esc(p.id) + '"' + (on ? ' checked' : '') + '>' + esc(p.name) + '</label>'; }).join('') + '</div>'
             + '<label class="field-label sec">メニューにのせる商品</label><div class="pp-checks">' + all.map(function (p) { var on = mids.indexOf(p.id) >= 0; return '<label class="pp-check"><input type="checkbox" data-act="mitem" data-id="' + esc(p.id) + '"' + (on ? ' checked' : '') + '>' + esc(p.name) + '　' + esc(A.priceInfo(p).main) + '</label>'; }).join('') + '</div>';
@@ -1542,10 +1611,20 @@
         var ps = A.products().filter(function (p) { return b.ids.indexOf(p.id) >= 0; });
         if (!ps.length) { A.error(); return; }
         var saved = store();
+        var stale = 0;
         var designs = ps.map(function (p) {
             var s = saved.filter(function (x) { return x.d.kind === 'pop' && x.d.pid === p.id && x.d.fmt === b.fmt; })[0];
-            return s ? s.d : genPop(p, b.fmt, b.tpl, 0);
+            if (!s) return genPop(p, b.fmt, b.tpl, 0);
+            // 前に直したPOPの値段が、いまの値段と違う時：値段だけの文字なら、いまの値段に直す（ほかの書き方なら、そのままにして知らせる）
+            var d = clone(s.d), g = priceGap(d);
+            if (g && /^¥[\d,]+$/.test((g.el.text || '').trim())) {
+                g.el.text = g.now.main;
+                var sub = d.els.filter(function (x) { return x.role === 'pricesub'; })[0];
+                if (sub && g.now.sub) sub.text = g.now.sub; else if (sub) d.els = d.els.filter(function (x) { return x !== sub; });
+            } else if (g) stale++;
+            return d;
         });
+        if (stale) A.toast('値段の書き方を変えてあるPOPが' + stale + '枚あり、いまの値段と違います。開いて確かめてください');
         busy(true, 'POPを作っています…');
         var mm = 300 / 25.4, PW = 2480, PH = 3508;
         var all = { v: 1, els: [] };
@@ -1588,7 +1667,7 @@
         if (!p) return render();
         p.innerHTML = panelHtml();
         host.querySelectorAll('.pp-tab').forEach(function (b) { var on = b.dataset.v === S.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
-        var u = host.querySelector('[data-act="undo"]'); if (u) u.disabled = !S.hist.length;
+        histBtns();
         drawTplThumbs();
     }
     function drawSavedThumbs() {
@@ -1652,7 +1731,7 @@
         if (!cvs || !cvs.isConnected || !S.d || S.view !== 'edit') return;
         loadFontsFor(S.d);
         S.boxes = [];
-        renderDesign(cvs.getContext('2d'), S.d, cvs.width, cvs.height, { rec: S.boxes, sel: S.sel, hs: handleSize(), guides: S.guides });
+        renderDesign(cvs.getContext('2d'), S.d, cvs.width, cvs.height, { rec: S.boxes, sel: S.sel, hs: handleSize(), guides: S.guides, safe: S.safe });
     }
     // 画面の点（CSS）→ キャンバスの点
     function canvasPt(clientX, clientY) {
@@ -1769,10 +1848,16 @@
         if (!g.pushed) { pushHist(); g.pushed = true; }
         g.moved = true;
         if (e.grp) { e.y = g.ey; delete e.grp; }
-        // 真ん中の近くでは、真ん中にぴったり合わせる（赤い点線が出る）
+        // 真ん中・ほかの物の真ん中の近くでは、ぴったり合わせる（赤い点線が出る）
         var nx = clamp(g.ex + dx, -.1, 1.1), ny = clamp(g.ey + dy, -.1, 1.1), gd = null;
-        if (Math.abs(nx - .5) < .012) { nx = .5; gd = { x: true }; }
-        if (Math.abs(ny - .5) < .012) { ny = .5; gd = Object.assign(gd || {}, { y: true }); }
+        if (!g.snaps) {
+            g.snaps = { xs: [.5], ys: [.5] };
+            S.boxes.forEach(function (b) { if (b.id !== g.id) { g.snaps.xs.push(b.cx / cvs.width); g.snaps.ys.push(b.cy / cvs.height); } });
+        }
+        var near = function (v, list) { var best = null; list.forEach(function (q) { if (Math.abs(v - q) < .012 && (best === null || Math.abs(v - q) < Math.abs(v - best))) best = q; }); return best; };
+        var sx = near(nx, g.snaps.xs), sy = near(ny, g.snaps.ys);
+        if (sx !== null) { nx = sx; gd = { xs: [sx], ys: [] }; }
+        if (sy !== null) { ny = sy; gd = gd || { xs: [], ys: [] }; gd.ys = [sy]; }
         S.guides = gd;
         e.x = nx; e.y = ny;
         drawSoon();
@@ -1783,7 +1868,7 @@
         if (S.pinch && Object.keys(S.ptrs || {}).length < 2) S.pinch = null;
         if (moved) {
             saveSoon();
-            var u = host.querySelector('[data-act="undo"]'); if (u) u.disabled = false;
+            histBtns();
             syncSliders();
         }
         S.drag = null;
@@ -1800,12 +1885,30 @@
         });
     }
     function onKey(ev) {
+        if (shortcut(ev)) return;
         var e = selEl();
         if (!e) return;
         var k = ev.key, st = ev.shiftKey ? .05 : .01;
         var mv = { ArrowLeft: [-st, 0], ArrowRight: [st, 0], ArrowUp: [0, -st], ArrowDown: [0, st] }[k];
         if (mv) { ev.preventDefault(); change(function () { if (e.grp) { e.y = e._y != null ? e._y : e.y; delete e.grp; } e.x += mv[0]; e.y += mv[1]; }, true); }
         else if (k === 'Delete' || k === 'Backspace') { ev.preventDefault(); delSel(); }
+    }
+
+    // キーボード（パソコン）：Ctrl（⌘）+Z 元に戻す・Ctrl+Shift+Z／Ctrl+Y やり直す・Ctrl+D 複製
+    function shortcut(ev) {
+        if (!(ev.ctrlKey || ev.metaKey) || ev.altKey) return false;
+        var k = (ev.key || '').toLowerCase();
+        if (k === 'z' && !ev.shiftKey) { ev.preventDefault(); undo(); return true; }
+        if ((k === 'z' && ev.shiftKey) || k === 'y') { ev.preventDefault(); redo(); return true; }
+        if (k === 'd' && selEl()) { ev.preventDefault(); dupSel(); return true; }
+        return false;
+    }
+    function onDocKey(ev) {
+        if (!host || !host.isConnected || S.view !== 'edit' || CUT) return;
+        var t = ev.target, tag = t && t.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;   // 文字を打っている所では、ふつうの動きのまま
+        if (t === cvs) return;   // 見本の上では onKey が受け持つ
+        shortcut(ev);
     }
 
     // ---------------- 操作 ----------------
@@ -1815,7 +1918,7 @@
         if (!p) { A.error(); return; }
         var ch = tplChoices(p, 'pop');
         S.d = genPop(p, 'popL', ch[0], 0); S.d.id = newId(); S.d.var = 0;
-        S.hist = []; S.sel = null; S.tab = 'tpl'; S.view = 'edit'; S.thumbs = {};
+        S.hist = []; S.fut = []; S.sel = null; S.tab = 'tpl'; S.view = 'edit'; S.thumbs = {};
         A.sound(880, .05); saveNow(); render(); scrollTop();
     }
     function openPoster() {
@@ -1827,13 +1930,15 @@
         if (!fids.length) fids = list.slice(0, 3).map(function (p) { return p.id; });
         S.d = genPoster(list, 'a4', tplChoices(null, 'poster')[0], 0, ev, fids);
         S.d.id = newId(); S.d.var = 0; S.d.fids = fids;
-        S.hist = []; S.sel = null; S.tab = 'event'; S.view = 'edit'; S.thumbs = {};
+        S.hist = []; S.fut = []; S.sel = null; S.tab = 'event'; S.view = 'edit'; S.thumbs = {};
         A.sound(880, .05); saveNow(); render(); scrollTop();
     }
     function openSaved(id) {
         var x = store().filter(function (s) { return s.id === id; })[0];
         if (!x) { A.error(); return; }
-        S.d = clone(x.d); S.d.id = x.id; S.hist = []; S.sel = null; S.tab = 'tpl'; S.view = 'edit'; S.thumbs = {};
+        S.d = clone(x.d); S.d.id = x.id; S.hist = []; S.fut = []; S.sel = null; S.tab = 'tpl'; S.view = 'edit'; S.thumbs = {};
+        // メニューの値段・名前は、いまの商品に合わせる（値段を変えたあとに古い値段のまま出さない）
+        if (S.d.kind === 'poster') refreshMenu(S.d);
         A.sound(880, .05); render(); scrollTop();
     }
     function scrollTop() { var b = document.getElementById('panel-body'); if (b) b.scrollTop = 0; }
@@ -1912,6 +2017,7 @@
                 if (usesImg(S.d, id)) { pushHist(); dropImg(S.d, id); if (S.sel && !elById(S.sel)) S.sel = null; saveSoon(); }
                 // 元に戻すと消した画像が出てくるので、元に戻す記録から、この画像を使う物を除く
                 S.hist = S.hist.filter(function (h) { return h.indexOf('user:' + id) < 0; });
+                S.fut = (S.fut || []).filter(function (h) { return h.indexOf('user:' + id) < 0; });
             }
             A.sound(660, .05); render();
         }).catch(function (er) { A.error(); alert(storeErr(er)); });
@@ -1921,6 +2027,65 @@
         var a = S.d.els, i = a.findIndex(function (x) { return x.id === id; }), j = i + dir;
         if (i < 0 || j < 0 || j >= a.length) { A.error(); return; }
         change(function () { var t = a[i]; a[i] = a[j]; a[j] = t; });
+    }
+    // 紙に合わせて揃える（ふちから少し内側。真ん中はぴったり）
+    function alignSel(v) {
+        var e = selEl(), b = e && S.boxes.filter(function (x) { return x.id === e.id; })[0];
+        if (!e || !b || !cvs) return;
+        // 向きを変えている時も、外に出ないよう、まわした形の外枠で測る
+        var a = (b.rot || 0) * Math.PI / 180, c = Math.abs(Math.cos(a)), sn = Math.abs(Math.sin(a));
+        var bw = (b.x1 - b.x0), bh = (b.y1 - b.y0), hw = (bw * c + bh * sn) / 2 / cvs.width, hh = (bw * sn + bh * c) / 2 / cvs.height;
+        var m = .04;
+        change(function () {
+            if (e.grp) { e.y = e._y != null ? e._y : e.y; delete e.grp; }
+            if (v === 'l') e.x = m + hw; else if (v === 'r') e.x = 1 - m - hw; else if (v === 'c') e.x = .5;
+            else if (v === 't') e.y = m + hh; else if (v === 'b') e.y = 1 - m - hh; else if (v === 'm') e.y = .5;
+        }, true);
+        renderPanel();
+    }
+    function nextCatch() {
+        var e = selEl(), p = S.d && productOf(S.d);
+        if (!e || !p) return;
+        var list = catchList(p), i = list.indexOf(e.text);
+        change(function () { e.text = list[(i + 1) % list.length]; });
+    }
+    // 値段の確かめ：POPの値段が、いまの登録の値段と違う時（値段を変えたあとなど）
+    function priceGap(d) {
+        if (!d || d.kind !== 'pop') return null;
+        var p = productOf(d), e = (d.els || []).filter(function (x) { return x.role === 'price'; })[0];
+        if (!p || !e) return null;
+        var pi = A.priceInfo(p);
+        if ((e.text || '').trim() === pi.main) return null;
+        return { now: pi, el: e };
+    }
+    function fixPrice() {
+        var g = priceGap(S.d);
+        if (!g) return;
+        change(function () {
+            g.el.text = g.now.main;
+            var sub = S.d.els.filter(function (x) { return x.role === 'pricesub'; })[0];
+            if (sub && g.now.sub) sub.text = g.now.sub;
+            else if (sub && !g.now.sub) S.d.els = S.d.els.filter(function (x) { return x !== sub; });
+        });
+        A.toast('いまの値段にしました');
+    }
+    // ポスターのメニュー：名前と値段を、いまの商品に合わせる
+    function refreshMenu(d) {
+        var all = A.products();
+        (d.els || []).forEach(function (e) {
+            if (e.t !== 'menu' || !e.items) return;
+            e.items.forEach(function (it) { var p = all.filter(function (x) { return x.id === it.id; })[0]; if (p) { it.n = p.name; it.p = A.priceInfo(p).value; } });
+        });
+    }
+    // 作ったものを複製して、別のものとして直す
+    function dupSaved(id) {
+        var x = store().filter(function (s) { return s.id === id; })[0];
+        if (!x) { A.error(); return; }
+        saveNow();
+        S.d = clone(x.d); S.d.id = newId(); S.hist = []; S.fut = []; S.sel = null; S.tab = 'tpl'; S.view = 'edit'; S.thumbs = {};
+        if (S.d.kind === 'poster') refreshMenu(S.d);
+        A.sound(880, .05); saveNow(); render(); scrollTop();
+        A.toast('複製しました（元のものはそのまま）');
     }
     // 複製：少しずらして、すぐ上に置く
     function dupSel() {
@@ -1981,6 +2146,7 @@
             case 'batch': S.batch = { fmt: 'card', tpl: tplChoices(null, 'pop')[0], ids: A.products().map(function (p) { return p.id; }), pages: null }; S.view = 'batch'; render(); scrollTop(); break;
             case 'list': saveNow(); S.view = 'list'; S.sel = null; render(); scrollTop(); break;
             case 'undo': undo(); break;
+            case 'redo': redo(); break;
             case 'regen': regen(); break;
             case 'fmt': setFmt(v); break;
             case 'tpl': setTpl(v); break;
@@ -2035,6 +2201,11 @@
             case 'llock': { var ll = elById(b.dataset.id); if (ll) change(function () { ll.lock = !ll.lock; }, false); break; }
             case 'lup': case 'ldown': layerStep(b.dataset.id, act === 'lup' ? 1 : -1); break;
             case 'dup': dupSel(); break;
+            case 'alignel': alignSel(v); break;
+            case 'pborder': if (e) change(function () { delete e.ek; delete e.border; if (v === 'acc') e.ek = 'acc'; else if (v) e.border = v; }); break;
+            case 'nextcatch': nextCatch(); break;
+            case 'fixprice': fixPrice(); break;
+            case 'dupsaved': dupSaved(b.dataset.id); break;
             case 'flip': if (e) change(function () { e.flip = !e.flip; }); break;
             case 'lock': if (e) change(function () { e.lock = !e.lock; }); break;
             default: return;
@@ -2055,6 +2226,8 @@
             case 'h': slide('h', Number(val)); break;
             case 'rot': slide('rot', Number(val)); break;
             case 'op': slide('op', Number(val)); break;
+            case 'lh': slide('lh', Number(val)); break;
+            case 'outline': slide('outline', Number(val)); break;
             case 'zoom': case 'px': case 'py': case 'far': slide(act, Number(val)); break;
             case 'bgzoom': case 'bgpx': case 'bgpy': case 'bgfade': case 'bgblur':
                 if (S.d && S.d.bg) { if (!typing) { pushHist(); typing = true; } S.d.bg[act.slice(2)] = Number(val); drawSoon(); saveSoon(); }
@@ -2074,6 +2247,8 @@
             case 'bold': if (e) change(function () { if (e.fk) { e.font = resolveFont(S.d, e); delete e.fk; } e.bold = b.checked; }, true); break;
             case 'vert': if (e) change(function () { e.vert = b.checked; if (b.checked && (e.w || .8) > .6) e.w = .5; }); break;
             case 'tile': S.printTile = b.checked; break;
+            case 'shadow': if (e) change(function () { e.shadow = b.checked; }, true); break;
+            case 'safe': S.safe = b.checked; drawNow(); break;
             case 'feat': {
                 var ids = (S.d.fids || []).slice(), id = num(b.dataset.id);
                 if (b.checked) { if (ids.length >= 3) { b.checked = false; A.error(); A.toast('おすすめは3つまでです'); return; } ids.push(id); }
@@ -2094,8 +2269,8 @@
                 break;
             }
             case 'text': case 'stext': case 'size': case 'w': case 'h': case 'rot': case 'qrurl':
-            case 'op': case 'zoom': case 'px': case 'py': case 'far': case 'bgzoom': case 'bgpx': case 'bgpy': case 'bgfade': case 'bgblur': {
-                var u = host.querySelector('[data-act="undo"]'); if (u) u.disabled = !S.hist.length;
+            case 'op': case 'zoom': case 'px': case 'py': case 'far': case 'lh': case 'outline': case 'bgzoom': case 'bgpx': case 'bgpy': case 'bgfade': case 'bgblur': {
+                histBtns();
                 if (act === 'stext' || act === 'text') renderElRows();
                 break;
             }
@@ -2450,6 +2625,10 @@
 .pp-svb small { font-size: 11px; color: var(--text-light); }\
 .pp-del { position: absolute; top: 4px; right: 4px; width: 44px; height: 44px; border: none; border-radius: 50%; background: var(--surface); color: var(--danger); box-shadow: var(--shadow-card); display: grid; place-items: center; cursor: pointer; }\
 .pp-del .ic { width: 18px; height: 18px; }\
+.pp-dupb { right: 54px; color: var(--accent-ink); }\
+.pp-flipx { transform: scaleX(-1); }\
+.pp-warn { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--r-md); background: #FFF4E5; color: #7A4A00; font-size: 13.5px; font-weight: 700; }\
+.pp-warn span { flex: 1 1 200px; }\
 .pp-lic { font-size: 12px; }\
 .pp-edit { display: grid; gap: 14px; }\
 @media (min-width: 900px) { .pp-edit { grid-template-columns: minmax(0, 1.2fr) minmax(320px, .8fr); align-items: start; } .pp-stage { position: sticky; top: 0; } }\
@@ -2569,13 +2748,28 @@
             el.addEventListener('change', onChange);
             el.addEventListener('focusout', function () { typing = false; });
         }
+        if (!mount.kb) { mount.kb = true; document.addEventListener('keydown', onDocKey); }
         if (!mount.rs) { mount.rs = true; window.addEventListener('resize', function () { clearTimeout(resizeT); resizeT = setTimeout(function () { if (host && host.isConnected && S.view === 'edit') sizeCanvas(); }, 120); }); }
         render();
     }
     // 画面を離れる時（設定のほかの所へ）：作りかけを残す
     function leave() { saveNow(); }
+    // 戻る（画面の上の「戻る」・左端からなぞる）：この画面の中で一つ前へ。戻せた時は true
+    //   背景を消す画面 → 直す画面 → 一覧 → （false：アプリが前の画面へ）
+    function back() {
+        if (CUT) {
+            if (!CUT.edited || confirm('切り抜くのをやめますか？（いま消した所は残りません）')) cutClose();
+            return true;
+        }
+        if (S.view === 'edit' || S.view === 'batch') {
+            saveNow(); S.view = 'list'; S.sel = null;
+            render(); scrollTop(); A.sound(660, .04);
+            return true;
+        }
+        return false;
+    }
     window.POPMAKER = {
-        mount: mount, leave: leave, render: renderDesign, genPop: function (p, f, t, v) { return genPop(p, f, t, v || 0); }, genPoster: function (l, f, t, v, ev, fids) { return genPoster(l, f, t, v || 0, ev || defaultEvent(), fids); },
+        mount: mount, leave: leave, back: back, render: renderDesign, genPop: function (p, f, t, v) { return genPop(p, f, t, v || 0); }, genPoster: function (l, f, t, v, ev, fids) { return genPoster(l, f, t, v || 0, ev || defaultEvent(), fids); },
         fonts: FONTS, templates: TPLS, formats: FMTS, decos: DECO, state: S, exportCanvas: exportCanvas, wrap: wrap, tileOf: tileOf,
         cutState: function () { return CUT; }
     };

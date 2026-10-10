@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アプリのアイコンを作る</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif; margin: 24px; color: #222; }
+  canvas { border-radius: 16px; margin: 8px 8px 0 0; box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+  a { display: inline-block; margin: 8px 12px 0 0; }
+</style>
+</head>
+<body>
+<!--
+  アプリのアイコン（icons/icon-192.png・icons/icon-512.png）の元。
+  このアプリのために、線と図形だけで描いた物（ほかの人の絵・絵文字・AIで作った画像は使っていない）。
+  形を変えた時は、このページをブラウザで開いて、下の「保存」で PNG を作り直し、icons/ に置く。
+-->
+<p>アプリのアイコン（このアプリのために描いた物）</p>
+<div id="out"></div>
+<script>
+function drawIcon(S) {
+    var c = document.createElement('canvas'); c.width = c.height = S;
+    var x = c.getContext('2d'), u = S / 100;
+    x.fillStyle = '#C25E3E'; x.fillRect(0, 0, S, S);
+    // 食パンの形：上がふくらんだ山、下は四角
+    function loaf() {
+        x.beginPath();
+        x.moveTo(24 * u, 78 * u);
+        x.lineTo(24 * u, 46 * u);
+        x.bezierCurveTo(14 * u, 44 * u, 14 * u, 24 * u, 34 * u, 24 * u);
+        x.bezierCurveTo(40 * u, 18 * u, 46 * u, 18 * u, 50 * u, 24 * u);
+        x.bezierCurveTo(54 * u, 18 * u, 60 * u, 18 * u, 66 * u, 24 * u);
+        x.bezierCurveTo(86 * u, 24 * u, 86 * u, 44 * u, 76 * u, 46 * u);
+        x.lineTo(76 * u, 78 * u);
+        x.quadraticCurveTo(76 * u, 82 * u, 72 * u, 82 * u);
+        x.lineTo(28 * u, 82 * u);
+        x.quadraticCurveTo(24 * u, 82 * u, 24 * u, 78 * u);
+        x.closePath();
+    }
+    // かげ
+    x.save(); x.translate(0, 2.2 * u); loaf(); x.fillStyle = 'rgba(0,0,0,.18)'; x.fill(); x.restore();
+    // 皮
+    loaf(); x.fillStyle = '#E9A65A'; x.fill();
+    // 中（白い所）
+    x.beginPath();
+    x.moveTo(30 * u, 76 * u); x.lineTo(30 * u, 48 * u);
+    x.bezierCurveTo(22 * u, 44 * u, 24 * u, 30 * u, 36 * u, 30 * u);
+    x.bezierCurveTo(41 * u, 25 * u, 46 * u, 26 * u, 50 * u, 30 * u);
+    x.bezierCurveTo(54 * u, 26 * u, 59 * u, 25 * u, 64 * u, 30 * u);
+    x.bezierCurveTo(76 * u, 30 * u, 78 * u, 44 * u, 70 * u, 48 * u);
+    x.lineTo(70 * u, 76 * u); x.closePath();
+    x.fillStyle = '#FFF4E2'; x.fill();
+    return c;
+}
+[192, 512].forEach(function (S) {
+    var c = drawIcon(S), out = document.getElementById('out');
+    c.style.width = c.style.height = '128px';
+    out.appendChild(c);
+    var a = document.createElement('a');
+    a.href = c.toDataURL('image/png'); a.download = 'icon-' + S + '.png'; a.textContent = 'icon-' + S + '.png を保存';
+    out.appendChild(a);
+});
+</script>
+</body>
+</html>
