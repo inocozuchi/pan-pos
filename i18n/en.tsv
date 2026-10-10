@@ -2409,3 +2409,191 @@ KD・伝票・レシートに、商品名の下に出ます（値段は変わり
 d払い	d Payment
 未	To do
 まだ	Not yet
+# ---- POP・ポスター（vendor/pop.js の画面。POP・ポスターの中の文字は日本語のまま）----
+POP・ポスター	POP / Posters
+テンプレート・スタンプ・フォントで、POPとポスターを作る	Make POPs and posters with templates, stamps and fonts
+販売中の商品を押すと、POP・ポスターの下書きを自動で作る。直して画像で保存・印刷する（テンプレート・スタンプ・イラスト・フォント）	Tap an item on sale to auto-create a POP or poster draft. Edit it, then save as an image or print (templates, stamps, illustrations, fonts)
+「設定 → レジの機能」で「POP・ポスター」をオンにすると使えます。	Turn on "POP / Posters" in "Settings → Register features" to use this.
+レジの機能を開く	Open register features
+POPを作る部品を読み込めませんでした。インターネットにつながる所で、もう一度開いてください。	Could not load the POP maker. Please open it again where you have an internet connection.
+まるゴシック	Rounded gothic
+まる手書き	Rounded hand
+ポップ	Pop
+極太	Extra bold
+太まる	Bold rounded
+マーカー	Marker
+まる文字	Round letters
+えんぴつ	Pencil
+手書き	Handwritten
+明朝	Mincho (serif)
+POP 横（はがき）	POP landscape (postcard)
+POP 縦（はがき）	POP portrait (postcard)
+名刺サイズ	Business card size
+ポスター A4	Poster A4
+正方形（SNS）	Square (social media)
+星	Star
+きらきら	Sparkle
+ハート	Heart
+花	Flower
+デイジー	Daisy
+ひまわり	Sunflower
+桜	Cherry blossom
+葉っぱ	Leaf
+もみじ	Maple leaf
+いちょう	Ginkgo
+かぼちゃ	Pumpkin
+おばけ	Ghost
+雪の結晶	Snowflake
+ひいらぎ	Holly
+オーナメント	Ornament
+ツリー	Tree
+プレゼント	Gift
+カップ	Cup
+麦	Wheat
+リボン	Ribbon
+王冠	Crown
+クローバー	Clover
+雲	Cloud
+マスキングテープ	Masking tape
+紙ふぶき	Confetti
+矢印	Arrow
+ギザギザ	Starburst
+まる	Circle
+ふだ	Tag
+吹き出し	Speech bubble
+ナチュラル	Natural
+上品	Elegant
+黒板	Chalkboard
+春・桜	Spring
+秋・ハロウィン	Autumn / Halloween
+冬・クリスマス	Winter / Christmas
+シンプル	Simple
+この端末にしまう場所が足りません。古い作ったものを消してください	Not enough space on this device. Please delete old designs
+この作ったものを消しますか？	Delete this design?
+画像を作っています…	Making the image…
+画像を作れませんでした。	Could not make the image.
+画像を保存しました（{0}×{1}）	Image saved ({0}×{1})
+画像を保存しました	Image saved
+A4に{0}枚ならべて印刷します（点線で切ってください）	Prints {0} on A4 (cut along the dotted lines)
+A4の紙に印刷します	Prints on A4 paper
+印刷の用意をしています…	Preparing to print…
+ひとこと	Catchphrase
+説明	Description
+値段	Price
+値段の注記	Price note
+下の小さな文字	Small text at bottom
+お店の名前	Shop name
+時間・場所	Time / place
+おすすめの見出し	Featured heading
+おすすめの名前	Featured name
+おすすめの説明	Featured description
+メニューの見出し	Menu heading
+メニュー	Menu
+文字	Text
+商品名	Item name
+日付	Date
+販売会の名前	Sale name
+商品を押すと、POPの下書きを自動で作ります。文字・飾り・テンプレートを直して、画像で保存・印刷できます。	Tap an item to auto-create a POP draft. Edit text, decorations and template, then save as an image or print.
+販売会のポスターを作る	Make a sale poster
+まとめて作る（A4にならべる）	Make several (on one A4 sheet)
+商品のPOPを作る	Make an item POP
+販売する商品がまだありません。「商品と仕入れ数」か「商品・在庫の調整」で入れてください。	No items to sell yet. Add them in "Items and stock".
+作ったもの（この端末）	Your designs (this device)
+{0}を消す	Delete {0}
+素材について：テンプレート・イラスト・飾りは、このアプリのために作った物です。文字は Google Fonts の日本語フォント（SIL Open Font License 1.1）を使っていて、作った画像・印刷物は自由に使えます。AIで作った画像は使っていません。	About the materials: templates, illustrations and decorations were made for this app. Text uses Japanese fonts from Google Fonts (SIL Open Font License 1.1), and the images and prints you make can be used freely. No AI-generated images are used.
+大きさ	Size
+テンプレート	Template
+飾り・写真	Decorations / Photos
+販売会・メニュー	Sale / Menu
+一覧へ	Back to list
+作り直す	New draft
+POPの見本。押すと文字や飾りを選び、指でずらせます	POP preview. Tap to select text or decorations, and drag to move them
+文字や飾りを押すと選べます。そのまま指でずらせます。	Tap text or decorations to select them, then drag to move.
+画像で保存	Save as image
+共有	Share
+印刷の時に、A4に{0}枚ならべる	Print {0} on one A4 sheet
+配色	Colors
+配色 {0}	Colors {0}
+テンプレートの色 {0}	Template color {0}
+色 {0}	Color {0}
+ほかの色	Other color
+スタンプ	Stamp
+イラスト	Illustration
+写真	Photo
+QRコード	QR code
+向き	Angle
+前へ	To front
+後ろへ	To back
+消す	Delete
+＋ 文字を足す	+ Add text
+直したい文字を、上か見本の中から選んでください。	Choose the text to edit, above or in the preview.
+文字（改行もできます）	Text (line breaks allowed)
+フォント	Font
+太く	Bold
+縦書き	Vertical
+文字の大きさ	Text size
+列の長さ	Column length
+幅（折り返す長さ）	Width (wrap length)
+幅	Width
+揃え	Align
+左	Left
+中	Center
+右	Right
+文字の色	Text color
+文字の下の飾り	Background decoration
+なし	None
+帯	Band
+まるい帯	Rounded band
+テープ	Tape
+下線	Underline
+飾りの色	Decoration color
+ふち取り	Outline
+白	White
+黒	Black
+色	Color
+スタンプの文字	Stamp text
+形	Shape
+写真の形	Photo shape
+角まる	Rounded
+そのまま	As is
+QRコードの中身（アドレス）	QR code content (address)
+1列	1 column
+2列	2 columns
+3列	3 columns
+文字の大きさ（入りきらない時は小さくなります）	Text size (shrinks if it does not fit)
+高さ	Height
+スタンプを足す	Add stamp
+「無添加」など、中身が本当にそうか、確かめてから使ってください。	For words like "additive-free", please make sure they are true before using them.
+イラストを足す	Add illustration
+食べ物・飲み物の絵	Food and drink pictures
+商品の写真を足す	Add item photo
+{0}の写真	Photo of {0}
+https://…（予約フォーム・注文ページなど）	https://… (reservation form, order page, etc.)
+QRコードを足す	Add QR code
+足す	Add
+例：泰山木	e.g. Taizanboku
+例：10月販売会	e.g. October sale
+例：10/17（金）	e.g. 10/17 (Fri)
+例：11:45〜	e.g. 11:45–
+場所	Place
+時間	Time
+例：葵陵会館前（雨の時は一号館一階）	e.g. In front of the hall (1st floor of Bldg. 1 if rainy)
+例：ひとやすみしませんか？	e.g. Take a break?
+いちばん下の文字	Text at the very bottom
+例：主催　尾崎ゼミ　泰山木班	e.g. Organized by ___
+おすすめ（3つまで。写真か絵と名前を大きく出します）	Featured (up to 3; shown large with photo or picture and name)
+メニューにのせる商品	Items on the menu
+選んだ商品のPOPを、A4の紙に{0}枚ずつならべます（点線で切って使います）。一度直して残してあるPOP（同じ大きさ）は、直した形を使います。	Lays out the chosen items' POPs {0} per A4 sheet (cut along the dotted lines). POPs you edited and saved (same size) are used as edited.
+{0}（{1}枚）	{0} ({1} per sheet)
+A4にならべて作る（{0}枚）	Make on A4 ({0} sheet{s0})
+{0}枚目	Sheet {0}
+全部選ぶ	Select all
+選ぶのをやめる	Clear selection
+POPを作っています…	Making POPs…
+文字の形（フォント）を読み込めませんでした。インターネットにつながる所で開き直すと、選んだフォントで描きます（いまは端末の文字で描いています）。	Could not load the fonts. Open again where you have an internet connection to draw with the chosen fonts (the device font is used for now).
+文字の形（フォント）を読み込んでいます…	Loading fonts…
+QRコードにするアドレス（https:// から始まる物）を入れてください。	Please enter an address for the QR code (starting with https://).
+おすすめは3つまでです	Up to 3 featured items
+カフェ	Café
+例：主催 尾崎ゼミ 泰山木班	e.g. Organized by ___
+ポスター	Posters
