@@ -59,8 +59,45 @@
         }
     })();
     </script>
+    <!-- ▼ 起動の画面（読み込んでいる間だけ）▼
+         本体（大きなプログラム）を読み込んで準備する間に、真っ白な画面ではなく、アプリの印を出す。
+         待たせるための画面ではないので、準備ができたらすぐ消す（わざと出しておく時間は作らない）。
+         見た目は、このあと読む大きな <style> に頼らず、ここだけで描く（いちばん早く出るように）。 -->
+    <style>
+        #boot { position: fixed; inset: 0; z-index: 100000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+            background: #F2F3F7; transition: opacity .22s ease; font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', system-ui, sans-serif; }
+        :root[data-theme="dark"] #boot { background: #0E1015; }
+        :root.is-customer #boot { background: #0E0F13; }
+        :root.is-customer.cd-light-root #boot { background: #F4F5F8; }
+        #boot.done { opacity: 0; pointer-events: none; }
+        #boot .bt-ic { width: 84px; height: 84px; border-radius: 20px; display: grid; place-items: center;
+            background: linear-gradient(135deg, #3D95F7, #0A5FC4); box-shadow: 0 10px 28px rgba(10, 95, 196, .28);
+            animation: btIn .45s cubic-bezier(.32, .72, 0, 1) both; }
+        #boot .bt-ic svg { width: 52px; height: 52px; fill: none; stroke: #fff; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
+        #boot .bt-body { fill: rgba(255, 255, 255, .16); }
+        /* レシートの行が、上から順に印刷されるように出ては消える */
+        #boot .bt-l { stroke-dasharray: 6; stroke-dashoffset: 6; animation: btLine 1.5s cubic-bezier(.32, .72, 0, 1) infinite; }
+        #boot .bt-l2 { animation-delay: .15s; }
+        #boot .bt-l3 { stroke-dasharray: 3.4; stroke-dashoffset: 3.4; animation-name: btLine3; animation-delay: .3s; }
+        #boot .bt-name { font-size: 15px; font-weight: 800; letter-spacing: .04em; color: #4A4D57; animation: btIn .45s .06s cubic-bezier(.32, .72, 0, 1) both; }
+        :root[data-theme="dark"] #boot .bt-name, :root.is-customer:not(.cd-light-root) #boot .bt-name { color: #A9ACB6; }
+        #boot .bt-dots { display: flex; gap: 7px; height: 8px; }
+        #boot .bt-dots i { width: 7px; height: 7px; border-radius: 50%; background: #0A6CE0; opacity: .25; animation: btDot 1.05s ease-in-out infinite; }
+        :root[data-theme="dark"] #boot .bt-dots i, :root.is-customer:not(.cd-light-root) #boot .bt-dots i { background: #5AA6FF; }
+        #boot .bt-dots i:nth-child(2) { animation-delay: .15s; }
+        #boot .bt-dots i:nth-child(3) { animation-delay: .3s; }
+        @keyframes btIn { from { opacity: 0; transform: translate3d(0, 8px, 0) scale(.94); } to { opacity: 1; transform: none; } }
+        @keyframes btLine { 0% { stroke-dashoffset: 6; } 45%, 75% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+        @keyframes btLine3 { 0% { stroke-dashoffset: 3.4; } 45%, 75% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+        @keyframes btDot { 0%, 100% { opacity: .25; transform: scale(.85); } 40% { opacity: 1; transform: scale(1); } }
+        /* 「視差効果を減らす」にしている端末では動かさない（行はずっと出しておく） */
+        @media (prefers-reduced-motion: reduce) {
+            #boot *, #boot { animation: none !important; transition: none !important; }
+            #boot .bt-l, #boot .bt-l3 { stroke-dashoffset: 0; }
+        }
+    </style>
     <link rel="manifest" href="manifest.webmanifest">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
     <link rel="icon" href="icons/icon-192.png">
     <style>
         /* ▼▼▼ 配色 ▼▼▼
@@ -4182,6 +4219,26 @@
     </style>
 </head>
 <body>
+<!-- 起動の画面（準備ができたら、下の本体の最後で消す） -->
+<div id="boot" aria-hidden="true">
+    <div class="bt-ic"><svg viewBox="0 0 24 24"><path class="bt-body" d="M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z"/><path class="bt-l" d="M9.2 8h5.6"/><path class="bt-l bt-l2" d="M9.2 11.5h5.6"/><path class="bt-l3" d="M9.2 15h3.2"/></svg></div>
+    <div class="bt-name" id="boot-name">泰山木POS</div>
+    <div class="bt-dots"><i></i><i></i><i></i></div>
+</div>
+<script>
+    // 施設ごとのアプリの名前を出す。準備ができたら消す（本体が途中で止まっても、読み込みが終われば消す。それでも8秒で必ず消す）
+    (function () {
+        try { var n = window.SITE && window.SITE.appName; if (n) document.getElementById('boot-name').textContent = n; } catch (e) {}
+        window.bootHide = function () {
+            var b = document.getElementById('boot');
+            if (!b || b.classList.contains('done')) return;
+            b.classList.add('done');
+            setTimeout(function () { if (b.parentNode) b.parentNode.removeChild(b); }, 260);
+        };
+        window.addEventListener('load', window.bootHide);
+        setTimeout(window.bootHide, 8000);
+    })();
+</script>
 <div id="test-band" role="status"><span>テストモード<small>記録に残りません</small></span></div>
 
 <!-- ▼▼▼ アイコン（ピクトグラム）の定義 ▼▼▼
@@ -24028,6 +24085,7 @@
     applyLockUi();         // この端末をロックしていれば、ヘッダーとナビに印を出す
     handleJoinLink();      // QRコードから開かれた時は、合流の画面を用意する
     smBoot();              // この端末がシンプルモードなら、その画面を出す
+    if (window.bootHide) bootHide();   // 準備ができたので、起動の画面を消す
 </script>
 </body>
     

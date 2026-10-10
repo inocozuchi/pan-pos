@@ -88,8 +88,8 @@ function create(id) {
     }
     fs.writeFileSync(path.join(dir, 'manifest.webmanifest'), JSON.stringify({
         name: id, short_name: id, start_url: './index.html', scope: './', display: 'standalone',
-        background_color: '#F4F3F0', theme_color: '#C25E3E',
-        icons: [{ src: UP + 'icons/icon-192.png', sizes: '192x192', type: 'image/png' }, { src: UP + 'icons/icon-512.png', sizes: '512x512', type: 'image/png' }]
+        background_color: '#F2F3F7', theme_color: '#F2F3F7',
+        icons: [{ src: UP + 'icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' }, { src: UP + 'icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }]
     }, null, 2) + '\n');
     build();
     console.log('sites/' + id + '/data/ の中身（名前・商品・客層・Firebase）を、その施設に合わせて書き換えてください。');
