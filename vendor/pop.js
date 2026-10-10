@@ -402,10 +402,86 @@
     function tplOf(d) { return TPL_BY[d.tpl] || TPLS[0]; }
     function palOf(d) { var t = tplOf(d); return t.pals[d.pal % t.pals.length] || t.pals[0]; }
 
+    // ---------------- 端末から読み込んだ画像（この端末の IndexedDB にしまう。localStorage には入れない） ----------------
+    // 1つの記録：{ id, kind: 'photo'（写真）|'cut'（背景を消した物）|'bg'（背景）, blob, w, h, at }
+    var IDBP = null, USERURL = {}, USERP = {};
+    function idb() {
+        if (IDBP) return IDBP;
+        IDBP = new Promise(function (res, rej) {
+            if (!window.indexedDB) { rej(new Error('no indexedDB')); return; }
+            var r = indexedDB.open(A.key('taizanboku_pop_img'), 1);
+            r.onupgradeneeded = function () { if (!r.result.objectStoreNames.contains('img')) r.result.createObjectStore('img', { keyPath: 'id' }); };
+            r.onsuccess = function () { res(r.result); };
+            r.onerror = function () { rej(r.error); };
+        });
+        IDBP.catch(function () { IDBP = null; });
+        return IDBP;
+    }
+    function idbTx(mode, fn) {
+        return idb().then(function (db) {
+            return new Promise(function (res, rej) {
+                var tx = db.transaction('img', mode), req = fn(tx.objectStore('img'));
+                tx.oncomplete = function () { res(req ? req.result : undefined); };
+                tx.onerror = function () { rej(tx.error); };
+                tx.onabort = function () { rej(tx.error || new Error('abort')); };
+            });
+        });
+    }
+    function userPut(rec) { return idbTx('readwrite', function (st) { return st.put(rec); }); }
+    function userGet(id) { return idbTx('readonly', function (st) { return st.get(id); }); }
+    function userAll() { return idbTx('readonly', function (st) { return st.getAll(); }).then(function (l) { return (l || []).sort(function (a, b) { return b.at - a.at; }); }); }
+    function userDel(id) {
+        if (USERURL[id]) { try { URL.revokeObjectURL(USERURL[id]); } catch (e) {} delete USERURL[id]; }
+        delete USERP[id]; delete IMG['user:' + id];
+        return idbTx('readwrite', function (st) { return st.delete(id); });
+    }
+    function loadUser(id) {
+        if (USERURL[id]) return Promise.resolve(USERURL[id]);
+        if (!USERP[id]) USERP[id] = userGet(id).then(function (r) {
+            if (r && r.blob) { USERURL[id] = URL.createObjectURL(r.blob); drawSoon(); drawTplThumbsSoon(); }
+            return USERURL[id] || '';
+        }).catch(function () { return ''; });
+        return USERP[id];
+    }
+    // 端末の画像を読み、長い辺を maxSide までに小さくする（大きいままだと、しまう場所と描く時間をとるため）
+    function fileToImage(file) {
+        return new Promise(function (res, rej) {
+            var u = URL.createObjectURL(file), im = new Image();
+            im.onload = function () { res(im); setTimeout(function () { URL.revokeObjectURL(u); }, 1000); };
+            im.onerror = function () { URL.revokeObjectURL(u); rej(new Error('この画像は読み込めませんでした')); };
+            im.src = u;
+        });
+    }
+    function scaledCanvas(im, maxSide, white) {
+        var w = im.naturalWidth || im.width, h = im.naturalHeight || im.height, k = Math.min(1, maxSide / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+        var x = c.getContext('2d'); x.imageSmoothingQuality = 'high';
+        if (white) { x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); }   // JPEG は透けた所が黒くなるので、白を敷く
+        x.drawImage(im, 0, 0, c.width, c.height);
+        return c;
+    }
+    function saveUserImage(c, kind, type) {
+        return new Promise(function (res) { c.toBlob(function (b) { res(b); }, type || 'image/jpeg', .88); }).then(function (b) {
+            if (!b) throw new Error('画像を作れませんでした');
+            var rec = { id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), kind: kind, blob: b, w: c.width, h: c.height, at: Date.now() };
+            return userPut(rec).then(function () { USERURL[rec.id] = URL.createObjectURL(b); return rec; });
+        });
+    }
+    function pickFile(cb) {
+        var i = document.createElement('input');
+        i.type = 'file'; i.accept = 'image/*'; i.style.display = 'none';
+        i.onchange = function () { var f = i.files && i.files[0]; i.remove(); if (f) cb(f); };
+        i.addEventListener('cancel', function () { i.remove(); });
+        document.body.appendChild(i);
+        i.click();
+    }
+
     // ---------------- 絵の読み込み（読めたら描き直す） ----------------
     var IMG = {};
     function imgSrcUrl(src) {
         if (!src) return '';
+        if (src.indexOf('user:') === 0) { var uu = USERURL[src.slice(5)]; if (!uu) loadUser(src.slice(5)); return uu || ''; }
         if (src.indexOf('deco:') === 0) { var s = decoSvg(src.slice(5)); return s ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s) : ''; }
         if (src.indexOf('art:') === 0) { var a = window.MENU_ART && MENU_ART.has(src.slice(4)) ? MENU_ART.svg(src.slice(4)).replace('<svg ', '<svg width="200" height="200" ') : ''; return a ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(a) : ''; }
         if (src.indexOf('photo:') === 0) return A ? A.photo(src.slice(6)) : '';
@@ -426,9 +502,13 @@
         return null;
     }
     function loadImgsFor(d) {
-        var ps = [];
-        (d.els || []).forEach(function (e) { if (e.t === 'img') { getImg(e.src); var c = IMG[e.src]; if (c && c.p) ps.push(c.p); } });
-        return Promise.race([Promise.all(ps), new Promise(function (r) { setTimeout(r, 4000); })]);
+        var srcs = (d.els || []).filter(function (e) { return e.t === 'img'; }).map(function (e) { return e.src; });
+        if (d.bg && d.bg.src) srcs.push(d.bg.src);
+        var ps = srcs.map(function (src) {
+            var pre = src.indexOf('user:') === 0 ? loadUser(src.slice(5)) : Promise.resolve();
+            return pre.then(function () { getImg(src); var c = IMG[src]; return c && c.p; });
+        });
+        return Promise.race([Promise.all(ps), new Promise(function (r) { setTimeout(r, 6000); })]);
     }
 
     // ---------------- 色・フォントの決め方（テンプレートに合わせる／自分で決めた物はそのまま） ----------------
@@ -475,6 +555,8 @@
         var cx = e.x * W, cy = (e._y != null ? e._y : e.y) * H;
         ctx.translate(cx, cy);
         if (e.rot) ctx.rotate(e.rot * Math.PI / 180);
+        if (e.op != null && e.op < 1) ctx.globalAlpha = Math.max(.05, e.op);
+        if (e.flip && e.t === 'img') ctx.scale(-1, 1);
         var box = null;
         if (e.t === 'text') box = drawText(ctx, d, e, W, H, U);
         else if (e.t === 'img') box = drawImg(ctx, d, e, W, H, U);
@@ -482,7 +564,7 @@
         else if (e.t === 'menu') box = drawMenu(ctx, d, e, W, H, U);
         else if (e.t === 'qr') box = drawQr(ctx, d, e, W, H, U);
         ctx.restore();
-        if (box && rec) rec.push({ id: e.id, cx: cx, cy: cy, rot: e.rot || 0, x0: box[0], y0: box[1], x1: box[2], y1: box[3] });
+        if (box && rec) rec.push({ id: e.id, lock: !!e.lock, cx: cx, cy: cy, rot: e.rot || 0, x0: box[0], y0: box[1], x1: box[2], y1: box[3] });
     }
     function textLayout(ctx, d, e, W, H, U) {
         var fid = resolveFont(d, e), bold = resolveBold(d, e);
@@ -603,10 +685,10 @@
     }
     function drawImg(ctx, d, e, W, H, U) {
         var w = (e.w || .3) * W, im = getImg(e.src);
-        var ar = e.ar || (e.shape === 'round' && e.src && e.src.indexOf('photo:') === 0 ? .78 : 1);
+        var isPhoto = /^(photo|user):/.test(e.src || '');
+        var ar = (e.shape === 'round' || e.shape === 'circle') ? (e.far || .78) : (e.ar || (e.shape === 'round' && isPhoto ? .78 : 1));
         var h = w * ar;
         if (!im) { ctx.globalAlpha = .08; ctx.fillStyle = '#000'; rr(ctx, -w / 2, -h / 2, w, h, w * .1); ctx.fill(); ctx.globalAlpha = 1; return [-w / 2, -h / 2, w / 2, h / 2]; }
-        var isPhoto = e.src.indexOf('photo:') === 0;
         var shape = e.shape || (isPhoto ? 'round' : 'plain');
         if (shape === 'plain') {
             // 絵は縦横の比を保って、枠いっぱいに
@@ -622,8 +704,11 @@
         if (bgc) { ctx.fillStyle = bgc; ctx.fill(); }
         ctx.clip();
         var iw2 = im.naturalWidth || 100, ih2 = im.naturalHeight || 100;
-        var sc2 = isPhoto ? Math.max(w / iw2, h / ih2) : Math.min(w / iw2, h / ih2) * .9;
-        ctx.drawImage(im, -iw2 * sc2 / 2, -ih2 * sc2 / 2, iw2 * sc2, ih2 * sc2);
+        var sc2 = isPhoto ? Math.max(w / iw2, h / ih2) * Math.max(1, e.zoom || 1) : Math.min(w / iw2, h / ih2) * .9;
+        var dw2 = iw2 * sc2, dh2 = ih2 * sc2;
+        // 枠の中で、写真のどこを見せるか（-1〜1）
+        var ox = isPhoto ? (e.px || 0) * (dw2 - w) / 2 : 0, oy = isPhoto ? (e.py || 0) * (dh2 - h) / 2 : 0;
+        ctx.drawImage(im, -dw2 / 2 - ox, -dh2 / 2 - oy, dw2, dh2);
         ctx.restore();
         var bc = col(d, e, 'ek', 'border');
         if (bc) {
@@ -747,6 +832,26 @@
             mem.forEach(function (e, i) { e._y = top + hs[i] / 2; top += hs[i] + gap; });
         });
     }
+    // 背景の画像（テンプレートの上に敷く）。fit：cover＝画面いっぱい／contain＝全部見せる。fade：白（黒）くうすめる。blur：ぼかす
+    function drawBg(ctx, b, W, H) {
+        var im = getImg(b.src);
+        if (!im) return;
+        var iw = im.naturalWidth || 1, ih = im.naturalHeight || 1, z = Math.max(1, b.zoom || 1);
+        var sc = (b.fit === 'contain' ? Math.min(W / iw, H / ih) : Math.max(W / iw, H / ih)) * z;
+        var dw = iw * sc, dh = ih * sc;
+        var dx = (W - dw) / 2 - (b.px || 0) * Math.abs(dw - W) / 2, dy = (H - dh) / 2 - (b.py || 0) * Math.abs(dh - H) / 2;
+        ctx.save();
+        ctx.imageSmoothingQuality = 'high';
+        if (b.blur > 0) {
+            // 小さく描いてから大きく広げると、ぼける（どの端末でも同じに描ける）
+            var k = 1 / (1 + b.blur * 14), t = document.createElement('canvas');
+            t.width = Math.max(1, Math.round(dw * k)); t.height = Math.max(1, Math.round(dh * k));
+            var tx = t.getContext('2d'); tx.imageSmoothingQuality = 'high'; tx.drawImage(im, 0, 0, t.width, t.height);
+            ctx.drawImage(t, dx, dy, dw, dh);
+        } else ctx.drawImage(im, dx, dy, dw, dh);
+        if (b.fade > 0) { ctx.globalAlpha = Math.min(.9, b.fade); ctx.fillStyle = b.dark ? '#000' : '#fff'; ctx.fillRect(0, 0, W, H); }
+        ctx.restore();
+    }
     // 下書き1枚を描く（画面の見本も、保存する画像も、同じ描き方）
     function renderDesign(ctx, d, W, H, opt) {
         opt = opt || {};
@@ -755,6 +860,7 @@
         ctx.clearRect(0, 0, W, H);
         t.draw(ctx, W, H, p, U, rng(d.seed || 7));
         ctx.restore();
+        if (d.bg && d.bg.src) drawBg(ctx, d.bg, W, H);
         (d.els || []).forEach(function (e) { delete e._y; delete e._k; });
         layoutGroups(ctx, d, W, H, U);
         var rec = opt.rec || null;
@@ -762,13 +868,27 @@
         if (opt.sel && rec) {
             var b = rec.filter(function (x) { return x.id === opt.sel; })[0];
             if (b) {
+                var hs = opt.hs || Math.max(4, U * .01), blue = b.lock ? '#8A8F98' : '#1A73E8';
                 ctx.save(); ctx.translate(b.cx, b.cy); if (b.rot) ctx.rotate(b.rot * Math.PI / 180);
-                ctx.setLineDash([U * .012, U * .008]); ctx.lineWidth = Math.max(2, U * .004); ctx.strokeStyle = '#1A73E8';
+                ctx.setLineDash([hs * 1.1, hs * .8]); ctx.lineWidth = Math.max(2, hs * .28); ctx.strokeStyle = blue;
                 ctx.strokeRect(b.x0, b.y0, b.x1 - b.x0, b.y1 - b.y0);
-                ctx.setLineDash([]); ctx.fillStyle = '#1A73E8';
-                [[b.x0, b.y0], [b.x1, b.y0], [b.x0, b.y1], [b.x1, b.y1]].forEach(function (q) { ctx.beginPath(); ctx.arc(q[0], q[1], Math.max(4, U * .008), 0, Math.PI * 2); ctx.fill(); });
+                ctx.setLineDash([]);
+                if (!b.lock) {
+                    // 四すみの丸：引っぱると大きさが変わる。上の丸：まわすと向きが変わる
+                    var mx = (b.x0 + b.x1) / 2, ry = b.y0 - hs * 3.4;
+                    ctx.lineWidth = hs * .3; ctx.beginPath(); ctx.moveTo(mx, b.y0); ctx.lineTo(mx, ry); ctx.stroke();
+                    [[b.x0, b.y0], [b.x1, b.y0], [b.x0, b.y1], [b.x1, b.y1]].forEach(function (q) { ctx.beginPath(); ctx.arc(q[0], q[1], hs, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = hs * .35; ctx.strokeStyle = blue; ctx.stroke(); });
+                    ctx.beginPath(); ctx.arc(mx, ry, hs * 1.1, 0, Math.PI * 2); ctx.fillStyle = blue; ctx.fill();
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = hs * .28; ctx.beginPath(); ctx.arc(mx, ry, hs * .55, -Math.PI * .9, Math.PI * .5); ctx.stroke();
+                }
                 ctx.restore();
             }
+        }
+        if (opt.guides) {
+            ctx.save(); ctx.strokeStyle = '#E2557F'; ctx.lineWidth = Math.max(1, U * .003); ctx.setLineDash([U * .015, U * .01]);
+            if (opt.guides.x) { ctx.beginPath(); ctx.moveTo(W / 2, 0); ctx.lineTo(W / 2, H); ctx.stroke(); }
+            if (opt.guides.y) { ctx.beginPath(); ctx.moveTo(0, H / 2); ctx.lineTo(W, H / 2); ctx.stroke(); }
+            ctx.restore();
         }
     }
 
@@ -995,11 +1115,13 @@
             if (o.src && o.srcSet) { e.src = o.src; e.srcSet = true; }
             if (o.shape && o.shapeSet) { e.shape = o.shape; e.shapeSet = true; }
             if (o.hide) e.hide = true;
+            ['op', 'flip', 'lock', 'zoom', 'px', 'py', 'far', 'cut', 'ar'].forEach(function (k) { if (o[k] !== undefined) e[k] = o[k]; });
             return true;
         });
         // 自分で足した物は、そのまま残す
         (oldD.els || []).forEach(function (e) { if (e.u) nd.els.push(clone(e)); });
         nd.id = oldD.id; nd.removed = oldD.removed || []; nd.var = oldD.var || 0;
+        if (oldD.bg) nd.bg = clone(oldD.bg);
         if (oldD.fids) nd.fids = oldD.fids;
         return nd;
     }
@@ -1179,7 +1301,7 @@
     }
     function editHtml() {
         var poster = S.d.kind === 'poster';
-        var tabs = [['tpl', 'テンプレート'], ['text', '文字'], ['deco', '飾り・写真']].concat(poster ? [['event', '販売会・メニュー']] : []);
+        var tabs = [['tpl', 'テンプレート'], ['text', '文字'], ['deco', '飾り'], ['img', '画像'], ['layer', '重なり']].concat(poster ? [['event', '販売会・メニュー']] : []);
         var t = tileOf(S.d.fmt), n = t.cols * t.rows;
         return '<div class="pp-edit">'
             + '<div class="pp-stage">'
@@ -1189,7 +1311,7 @@
             + '<button type="button" class="pp-chip" data-act="regen"><svg class="ic"><use href="#ic-refresh"/></svg>作り直す</button>'
             + '</div>'
             + '<div class="pp-cv"><canvas id="pp-canvas" tabindex="0" aria-label="POPの見本。押すと文字や飾りを選び、指でずらせます"></canvas></div>'
-            + '<p class="pp-tip">文字や飾りを押すと選べます。そのまま指でずらせます。</p>'
+            + '<p class="pp-tip">押すと選べます。指でずらす・四すみの丸で大きさ・上の丸で向きを変えます（2本の指で広げる・ひねるでも）。</p>'
             + fmtChips()
             + '<div class="pp-out">'
             + '<button type="button" class="action-btn btn-checkout" data-act="png"><svg class="ic"><use href="#ic-download"/></svg>画像で保存</button>'
@@ -1211,7 +1333,74 @@
         if (S.tab === 'text') return textPanel();
         if (S.tab === 'deco') return decoPanel();
         if (S.tab === 'event') return eventPanel();
+        if (S.tab === 'img') return imgPanel();
+        if (S.tab === 'layer') return layerPanel();
         return '';
+    }
+    // ---- 画像：背景の画像・端末の写真・わたしの素材 ----
+    function seg(act, cur, opts, label) {
+        return '<div class="seg-pick pp-wrapseg" role="group" aria-label="' + esc(label || '') + '">' + opts.map(function (o) { var on = cur === o[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="' + act + '" data-v="' + o[0] + '">' + o[1] + '</button>'; }).join('') + '</div>';
+    }
+    function range(act, min, max, step, val, label) { return '<label class="field-label">' + label + '</label><input type="range" min="' + min + '" max="' + max + '" step="' + step + '" value="' + val + '" data-act="' + act + '" aria-label="' + esc(label) + '">'; }
+    function imgPanel() {
+        var b = S.d.bg, se = selEl(), out = '';
+        // 見本で画像を選んでいる時は、その画像を直す所を上に出す
+        if (se && se.t === 'img') out += '<label class="field-label sec" style="margin-top:0;">選んでいる画像</label>' + elCtlHtml(se);
+        out += '<label class="field-label sec">背景の画像</label>';
+        if (b && b.src) {
+            var u = USERURL[b.src.slice(5)];
+            out += '<div class="pp-edbox">'
+                + (u ? '<img class="pp-bgthumb" src="' + u + '" alt="">' : '')
+                + '<label class="field-label">合わせ方</label>' + seg('bgfit', b.fit || 'cover', [['cover', '画面いっぱい'], ['contain', '全部見せる']], '合わせ方')
+                + range('bgzoom', 1, 3, .01, b.zoom || 1, '大きさ')
+                + range('bgpx', -1, 1, .01, b.px || 0, '横の位置')
+                + range('bgpy', -1, 1, .01, b.py || 0, '縦の位置')
+                + range('bgfade', 0, .8, .01, b.fade || 0, '文字を読みやすくする（うすくする）')
+                + seg('bgdark', b.dark ? '1' : '0', [['0', '白くする'], ['1', '黒くする']], 'うすくする色')
+                + range('bgblur', 0, 1, .01, b.blur || 0, 'ぼかす')
+                + '<div class="pp-row"><button type="button" class="pp-chip" data-act="bgpick">画像を替える</button><button type="button" class="pp-chip pp-danger" data-act="bgdel">背景の画像を外す</button></div>'
+                + '</div>';
+        } else {
+            out += '<button type="button" class="action-btn btn-secondary pp-wide" data-act="bgpick"><svg class="ic"><use href="#ic-image"/></svg>端末の画像を背景にする</button>'
+                + '<p class="settings-hint" style="margin-top:4px;">写真をテンプレートの背景の代わりに敷きます。文字が読みにくい時は「うすくする」「ぼかす」で整えます。</p>';
+        }
+        out += '<label class="field-label sec">写真・イラストを足す</label><div class="pp-row">'
+            + '<button type="button" class="action-btn btn-secondary pp-half" data-act="photopick"><svg class="ic"><use href="#ic-image"/></svg>端末の写真を足す</button>'
+            + '<button type="button" class="action-btn btn-secondary pp-half" data-act="cutpick"><svg class="ic"><use href="#ic-pencil"/></svg>背景を消して足す</button>'
+            + '</div><p class="settings-hint" style="margin-top:4px;">「背景を消して足す」は、商品の写真や季節の物の写真から、まわりを消して切り抜きます（白い台・単色の布の上で撮ると、きれいに消せます）。</p>'
+            + '<label class="field-label sec">わたしの素材（この端末）</label>';
+        var lib = S.lib;
+        if (!lib) { libLoad(); out += '<p class="settings-hint">読み込んでいます…</p>'; }
+        else if (!lib.length) out += '<p class="settings-hint">まだありません。読み込んだ写真・切り抜いた画像は、ここに残ります（ほかのPOPでも使えます）。</p>';
+        else out += '<div class="pp-lib">' + lib.map(function (x) {
+            var u = USERURL[x.id];
+            return '<div class="pp-li"><button type="button" class="pp-art pp-lib-b' + (x.kind === 'cut' ? ' pp-cutbg' : '') + '" data-act="useradd" data-id="' + x.id + '" aria-label="' + (x.kind === 'cut' ? '切り抜いた画像' : '写真') + 'を足す">' + (u ? '<img src="' + u + '" alt="">' : '') + '</button>'
+                + '<div class="pp-li-acts"><button type="button" class="pp-mini" data-act="userbg" data-id="' + x.id + '">背景に</button>' + (x.kind !== 'cut' ? '<button type="button" class="pp-mini" data-act="usercut" data-id="' + x.id + '">切り抜く</button>' : '') + '<button type="button" class="pp-mini pp-danger" data-act="userdel" data-id="' + x.id + '" aria-label="この素材を消す">消す</button></div></div>';
+        }).join('') + '</div>';
+        return out;
+    }
+    function libLoad() {
+        if (S.libLoading) return;
+        S.libLoading = true;
+        userAll().then(function (list) {
+            S.lib = list.map(function (r) { if (!USERURL[r.id] && r.blob) USERURL[r.id] = URL.createObjectURL(r.blob); return { id: r.id, kind: r.kind, w: r.w, h: r.h, at: r.at }; });
+        }).catch(function () { S.lib = []; }).then(function () { S.libLoading = false; if (S.view === 'edit' && S.tab === 'img') renderPanel(); });
+    }
+    // ---- 重なり：上にある物から並べる。出す／かくす・固定・上へ／下へ ----
+    function layerPanel() {
+        var els = S.d.els.slice().reverse();
+        var out = '<p class="settings-hint" style="margin-top:0;">上にある物から並んでいます。「固定」した物は、見本の上で押しても選ばれません（背景の写真などに）。</p><div class="pp-layers">';
+        out += els.map(function (e) {
+            return '<div class="pp-ly' + (S.sel === e.id ? ' on' : '') + (e.hide ? ' hid' : '') + '">' + elRow(e)
+                + '<div class="pp-ly-acts">'
+                + '<button type="button" class="pp-mini" data-act="lhide" data-id="' + e.id + '" aria-pressed="' + !!e.hide + '">' + (e.hide ? '出す' : 'かくす') + '</button>'
+                + '<button type="button" class="pp-mini' + (e.lock ? ' on' : '') + '" data-act="llock" data-id="' + e.id + '" aria-pressed="' + !!e.lock + '">' + (e.lock ? '固定をやめる' : '固定') + '</button>'
+                + '<button type="button" class="pp-mini" data-act="lup" data-id="' + e.id + '" aria-label="ひとつ上へ">▲</button>'
+                + '<button type="button" class="pp-mini" data-act="ldown" data-id="' + e.id + '" aria-label="ひとつ下へ">▼</button>'
+                + '</div></div>';
+        }).join('');
+        if (S.d.bg && S.d.bg.src) out += '<div class="pp-ly"><button type="button" class="pp-er" data-act="tab" data-v="img"><b>背景の画像</b><span>見本のいちばん下</span></button></div>';
+        return out + '</div>';
     }
     function tplPanel() {
         var t = tplOf(S.d);
@@ -1230,23 +1419,28 @@
         return '<div class="pp-sws">' + out + '<label class="pp-sw pp-swc" aria-label="ほかの色"><input type="color" data-act="' + act + '" value="#888888"></label></div>';
     }
     function elRow(e) {
-        var label = e.t === 'text' ? (ROLE_LABEL[e.role] || '文字') : e.t === 'stamp' ? 'スタンプ' : e.t === 'menu' ? 'メニュー' : e.t === 'qr' ? 'QRコード' : (e.src && e.src.indexOf('photo:') === 0 ? '写真' : 'イラスト');
+        var label = e.t === 'text' ? (ROLE_LABEL[e.role] || '文字') : e.t === 'stamp' ? 'スタンプ' : e.t === 'menu' ? 'メニュー' : e.t === 'qr' ? 'QRコード' : (e.cut ? '切り抜き' : e.src && /^(photo|user):/.test(e.src) ? '写真' : 'イラスト');
         var txt = e.t === 'text' || e.t === 'stamp' ? (e.text || '') : '';
         var ic = '';
         if (e.t === 'img') {
             if (e.src.indexOf('deco:') === 0) ic = decoSvg(e.src.slice(5));
             else if (e.src.indexOf('art:') === 0 && window.MENU_ART) ic = MENU_ART.svg(e.src.slice(4));
             else if (e.src.indexOf('photo:') === 0) { var u = A.photo(e.src.slice(6)); if (u) ic = '<img src="' + u + '" alt="">'; }
+            else if (e.src.indexOf('user:') === 0) { var uu = USERURL[e.src.slice(5)]; if (uu) ic = '<img src="' + uu + '" alt="">'; }
         }
-        return '<button type="button" class="pp-er' + (ic ? ' pp-eri' : '') + (S.sel === e.id ? ' on' : '') + '" data-act="sel" data-id="' + e.id + '">' + (ic ? '<i aria-hidden="true">' + ic + '</i>' : '') + '<b>' + esc(label) + '</b>' + (txt ? '<span translate="no">' + esc(txt.replace(/\n/g, ' ').slice(0, 24)) + '</span>' : '') + '</button>';
+        return '<button type="button" class="pp-er' + (ic ? ' pp-eri' : '') + (e.cut ? ' pp-ercut' : '') + (e.hide ? ' pp-erhid' : '') + (S.sel === e.id ? ' on' : '') + '" data-act="sel" data-id="' + e.id + '">' + (ic ? '<i aria-hidden="true">' + ic + '</i>' : '') + '<b>' + esc(label) + '</b>' + (txt ? '<span translate="no">' + esc(txt.replace(/\n/g, ' ').slice(0, 24)) + '</span>' : '') + '</button>';
     }
     function commonCtl(e) {
-        return '<div class="pp-row">'
-            + '<button type="button" class="pp-chip" data-act="front">前へ</button>'
-            + '<button type="button" class="pp-chip" data-act="back">後ろへ</button>'
+        return range('rot', -180, 180, 1, e.rot || 0, '向き')
+            + range('op', .1, 1, .01, e.op != null ? e.op : 1, 'こさ（透明度）')
+            + '<div class="pp-row">'
+            + '<button type="button" class="pp-chip" data-act="front">手前へ</button>'
+            + '<button type="button" class="pp-chip" data-act="back">奥へ</button>'
+            + '<button type="button" class="pp-chip" data-act="dup">複製</button>'
+            + (e.t === 'img' ? '<button type="button" class="pp-chip' + (e.flip ? ' on' : '') + '" data-act="flip" aria-pressed="' + !!e.flip + '">左右反転</button>' : '')
+            + '<button type="button" class="pp-chip' + (e.lock ? ' on' : '') + '" data-act="lock" aria-pressed="' + !!e.lock + '">' + (e.lock ? '固定をやめる' : '固定') + '</button>'
             + '<button type="button" class="pp-chip pp-danger" data-act="del"><svg class="ic"><use href="#ic-trash"/></svg>消す</button>'
-            + '</div>'
-            + '<label class="field-label">向き</label><input type="range" min="-45" max="45" step="1" value="' + (e.rot || 0) + '" data-act="rot" aria-label="向き">';
+            + '</div>';
     }
     function textPanel() {
         var texts = S.d.els.filter(function (e) { return e.t === 'text'; });
@@ -1273,29 +1467,35 @@
             + '</div>';
         return out;
     }
+    // 選んだ飾り・画像を直す所（「飾り」と「画像」で使う）
+    function elCtlHtml(e) {
+        var out = '<div class="pp-edbox">';
+        if (e.t === 'stamp') {
+            out += '<label class="field-label">スタンプの文字</label><input type="text" class="pp-in" maxlength="16" data-act="stext" value="' + esc(e.text || '') + '">'
+                + '<label class="field-label">形</label><div class="seg-pick pp-wrapseg" role="group" aria-label="形">' + STAMP_STYLES.map(function (s) { var on = e.style === s[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="sstyle" data-v="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>'
+                + '<label class="field-label">色</label>' + swatches('scolor', e.ck || e.color, S.d);
+        }
+        if (e.t === 'img' && /^(photo|user):/.test(e.src) && !e.cut) {
+            var shp = e.shape || 'round';
+            out += '<label class="field-label">写真の形</label>' + seg('shape', shp, [['round', '角まる'], ['circle', 'まる'], ['plain', '元の形']], '写真の形');
+            if (shp !== 'plain') out += range('zoom', 1, 3, .01, e.zoom || 1, '枠の中の写真の大きさ') + range('px', -1, 1, .01, e.px || 0, '枠の中の横の位置') + range('py', -1, 1, .01, e.py || 0, '枠の中の縦の位置')
+                + (shp === 'round' ? range('far', .4, 1.6, .01, e.far || .78, '枠の縦の長さ') : '');
+        }
+        if (e.t === 'qr') out += '<label class="field-label">QRコードの中身（アドレス）</label><input type="url" class="pp-in" data-act="qrurl" value="' + esc(e.url || '') + '" placeholder="https://…">';
+        if (e.t === 'menu') {
+            out += '<label class="field-label">列</label><div class="seg-pick" role="group" aria-label="列">' + [[1, '1列'], [2, '2列'], [3, '3列']].map(function (s) { var on = (e.cols || (e.items.length > 8 ? 2 : 1)) === s[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="mcols" data-v="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>'
+                + '<label class="field-label">文字の大きさ（入りきらない時は小さくなります）</label><input type="range" min="0.012" max="0.07" step="0.001" value="' + (e.size || .03) + '" data-act="size">'
+                + '<label class="field-label">高さ</label><input type="range" min="0.08" max="0.8" step="0.01" value="' + (e.h || .2) + '" data-act="h">';
+        }
+        out += '<label class="field-label">大きさ</label><input type="range" min="0.04" max="' + (e.t === 'menu' ? 1 : e.t === 'img' ? 1.5 : .95) + '" step="0.005" value="' + (e.w || .3) + '" data-act="w" aria-label="大きさ">'
+            + commonCtl(e) + '</div>';
+        return out;
+    }
     function decoPanel() {
         var e = selEl();
         if (e && e.t === 'text') e = null;
         var out = '<div class="pp-els">' + S.d.els.filter(function (x) { return x.t !== 'text'; }).map(elRow).join('') + '</div>';
-        if (e) {
-            out += '<div class="pp-edbox">';
-            if (e.t === 'stamp') {
-                out += '<label class="field-label">スタンプの文字</label><input type="text" class="pp-in" maxlength="16" data-act="stext" value="' + esc(e.text || '') + '">'
-                    + '<label class="field-label">形</label><div class="seg-pick pp-wrapseg" role="group" aria-label="形">' + STAMP_STYLES.map(function (s) { var on = e.style === s[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="sstyle" data-v="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>'
-                    + '<label class="field-label">色</label>' + swatches('scolor', e.ck || e.color, S.d);
-            }
-            if (e.t === 'img' && e.src.indexOf('photo:') === 0) {
-                out += '<label class="field-label">写真の形</label><div class="seg-pick" role="group" aria-label="写真の形">' + [['round', '角まる'], ['circle', 'まる'], ['plain', 'そのまま']].map(function (s) { var on = (e.shape || 'round') === s[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="shape" data-v="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>';
-            }
-            if (e.t === 'qr') out += '<label class="field-label">QRコードの中身（アドレス）</label><input type="url" class="pp-in" data-act="qrurl" value="' + esc(e.url || '') + '" placeholder="https://…">';
-            if (e.t === 'menu') {
-                out += '<label class="field-label">列</label><div class="seg-pick" role="group" aria-label="列">' + [[1, '1列'], [2, '2列'], [3, '3列']].map(function (s) { var on = (e.cols || (e.items.length > 8 ? 2 : 1)) === s[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="mcols" data-v="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>'
-                    + '<label class="field-label">文字の大きさ（入りきらない時は小さくなります）</label><input type="range" min="0.012" max="0.07" step="0.001" value="' + (e.size || .03) + '" data-act="size">'
-                    + '<label class="field-label">高さ</label><input type="range" min="0.08" max="0.8" step="0.01" value="' + (e.h || .2) + '" data-act="h">';
-            }
-            out += '<label class="field-label">大きさ</label><input type="range" min="0.04" max="' + (e.t === 'menu' ? 1 : .95) + '" step="0.005" value="' + (e.w || .3) + '" data-act="w" aria-label="大きさ">'
-                + commonCtl(e) + '</div>';
-        }
+        if (e) out += elCtlHtml(e);
         // 足す
         var t = tplOf(S.d);
         out += '<label class="field-label sec">スタンプを足す</label><div class="pp-stamps" translate="no">' + STAMP_WORDS.map(function (w) { return '<button type="button" class="pp-chip" data-act="addstamp" data-v="' + esc(w) + '">' + esc(w) + '</button>'; }).join('') + '</div>'
@@ -1349,7 +1549,8 @@
         busy(true, 'POPを作っています…');
         var mm = 300 / 25.4, PW = 2480, PH = 3508;
         var all = { v: 1, els: [] };
-        designs.forEach(function (d) { all.els = all.els.concat(d.els); });
+        // 背景の画像も、先に読んでおく
+        designs.forEach(function (d) { all.els = all.els.concat(d.els); if (d.bg && d.bg.src) all.els.push({ t: 'img', src: d.bg.src }); });
         Promise.all([loadFontsFor(all), loadImgsFor(all)]).then(function () {
             var pages = [];
             for (var i = 0; i < designs.length; i += per) {
@@ -1401,7 +1602,7 @@
         });
     }
     var thT = 0;
-    function drawTplThumbsSoon() { clearTimeout(thT); thT = setTimeout(drawTplThumbs, 200); }
+    function drawTplThumbsSoon() { clearTimeout(thT); thT = setTimeout(function () { drawTplThumbs(); if (host && S.view === 'list') drawSavedThumbs(); }, 200); }
     function drawTplThumbs() {
         if (!host || S.tab !== 'tpl' || !S.d) return;
         host.querySelectorAll('canvas[data-tplthumb]').forEach(function (c) {
@@ -1431,7 +1632,10 @@
         cvs.addEventListener('pointercancel', onUp);
         cvs.addEventListener('keydown', onKey);
         // 選べる物の上で指を置いた時だけ、画面のスクロールを止める（何もない所なら、そのままスクロールできる）
-        cvs.addEventListener('touchstart', function (ev) { var t = ev.touches[0]; if (t && hitAt(t.clientX, t.clientY)) ev.preventDefault(); }, { passive: false });
+        cvs.addEventListener('touchstart', function (ev) {
+            var t = ev.touches[0];
+            if ((S.sel && ev.touches.length >= 2) || (t && (hitHandle(t.clientX, t.clientY) || hitAt(t.clientX, t.clientY)))) ev.preventDefault();
+        }, { passive: false });
     }
     function sizeCanvas() {
         if (!cvs || !S.d) return;
@@ -1448,53 +1652,152 @@
         if (!cvs || !cvs.isConnected || !S.d || S.view !== 'edit') return;
         loadFontsFor(S.d);
         S.boxes = [];
-        renderDesign(cvs.getContext('2d'), S.d, cvs.width, cvs.height, { rec: S.boxes, sel: S.sel });
+        renderDesign(cvs.getContext('2d'), S.d, cvs.width, cvs.height, { rec: S.boxes, sel: S.sel, hs: handleSize(), guides: S.guides });
     }
-    // 押した所にある物（上にある物から）
+    // 画面の点（CSS）→ キャンバスの点
+    function canvasPt(clientX, clientY) {
+        var r = cvs.getBoundingClientRect(), k = cvs.width / Math.max(1, r.width);
+        return { x: (clientX - r.left) * k, y: (clientY - r.top) * k };
+    }
+    function handleSize() { if (!cvs) return 8; var r = cvs.getBoundingClientRect(); return 9 * cvs.width / Math.max(1, r.width); }   // 画面で 9px の丸
+    function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+    // 押した所にある物（上にある物から。固定した物は選ばない）
     function hitAt(clientX, clientY) {
         if (!cvs) return null;
-        var r = cvs.getBoundingClientRect(), sx = cvs.width / r.width;
-        var x = (clientX - r.left) * sx, y = (clientY - r.top) * sx;
+        var p = canvasPt(clientX, clientY);
         for (var i = S.boxes.length - 1; i >= 0; i--) {
             var b = S.boxes[i], a = -(b.rot || 0) * Math.PI / 180;
-            var dx = x - b.cx, dy = y - b.cy;
+            if (b.lock) continue;
+            var dx = p.x - b.cx, dy = p.y - b.cy;
             var lx = dx * Math.cos(a) - dy * Math.sin(a), ly = dx * Math.sin(a) + dy * Math.cos(a);
             if (lx >= b.x0 && lx <= b.x1 && ly >= b.y0 && ly <= b.y1) return b.id;
         }
         return null;
     }
+    // 選んだ物の取っ手（四すみ＝大きさ、上の丸＝向き）
+    function hitHandle(clientX, clientY) {
+        if (!S.sel || !cvs) return null;
+        var e = selEl();
+        if (!e || e.lock) return null;
+        var b = S.boxes.filter(function (x) { return x.id === S.sel; })[0];
+        if (!b) return null;
+        var p = canvasPt(clientX, clientY), hs = handleSize(), a = (b.rot || 0) * Math.PI / 180, reach = hs * 2.6;
+        var at = function (lx, ly) { return { x: b.cx + lx * Math.cos(a) - ly * Math.sin(a), y: b.cy + lx * Math.sin(a) + ly * Math.cos(a) }; };
+        if (dist(p, at((b.x0 + b.x1) / 2, b.y0 - hs * 3.4)) < reach) return { kind: 'rot', b: b };
+        var cs = [[b.x0, b.y0], [b.x1, b.y0], [b.x0, b.y1], [b.x1, b.y1]];
+        for (var i = 0; i < cs.length; i++) if (dist(p, at(cs[i][0], cs[i][1])) < reach) return { kind: 'scale', b: b };
+        return null;
+    }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    // 大きさを k 倍にする（文字は字の大きさと幅、メニューは幅と高さ、ほかは幅）
+    function applyScale(e, g, k) {
+        if (e.t === 'text') { e.size = clamp(g.s0 * k, .008, .5); e.w = clamp(g.w0 * k, .06, 1.4); }
+        else if (e.t === 'menu') { e.w = clamp(g.w0 * k, .1, 1.3); e.h = clamp(g.h0 * k, .04, 1.2); e.size = clamp(g.s0 * k, .006, .12); }
+        else e.w = clamp(g.w0 * k, .02, 2);
+    }
+    // 向き：0°・90°・180° の近くでは、そこにぴったり合わせる
+    function snapRot(r) {
+        r = ((r % 360) + 540) % 360 - 180;
+        [0, 90, -90, 180, -180].forEach(function (q) { if (Math.abs(r - q) < 4) r = q; });
+        return Math.round(r);
+    }
+    function startTransform(e) { return { id: e.id, w0: e.w || .3, s0: e.size || .06, h0: e.h || .2, r0: e.rot || 0, pushed: false, moved: false }; }
     function onDown(ev) {
+        S.ptrs = S.ptrs || {};
+        S.ptrs[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+        try { cvs.setPointerCapture(ev.pointerId); } catch (er) {}
+        var ids = Object.keys(S.ptrs);
+        // 2本の指：選んだ物を、広げて大きく・ひねってまわす
+        if (ids.length === 2 && S.sel) {
+            var e2 = selEl();
+            if (e2 && !e2.lock) {
+                var p1 = canvasPt(S.ptrs[ids[0]].x, S.ptrs[ids[0]].y), p2 = canvasPt(S.ptrs[ids[1]].x, S.ptrs[ids[1]].y);
+                if (S.drag && S.drag.pushed) S.drag.done = true;
+                S.drag = null;
+                S.pinch = Object.assign(startTransform(e2), { d0: dist(p1, p2), a0: Math.atan2(p2.y - p1.y, p2.x - p1.x) });
+            }
+            return;
+        }
+        var h = hitHandle(ev.clientX, ev.clientY);
+        if (h) {
+            var eh = selEl(), ph = canvasPt(ev.clientX, ev.clientY);
+            S.drag = Object.assign(startTransform(eh), { mode: h.kind, cx: h.b.cx, cy: h.b.cy, d0: dist(ph, { x: h.b.cx, y: h.b.cy }), a0: Math.atan2(ph.y - h.b.cy, ph.x - h.b.cx) });
+            return;
+        }
         var id = hitAt(ev.clientX, ev.clientY);
         if (!id) { if (S.sel) { S.sel = null; drawNow(); renderPanel(); } return; }
         var e = elById(id);
-        S.drag = { id: id, sx: ev.clientX, sy: ev.clientY, ex: e.x, ey: e.y, moved: false, pushed: false };
-        try { cvs.setPointerCapture(ev.pointerId); } catch (er) {}
+        S.drag = { mode: 'move', id: id, sx: ev.clientX, sy: ev.clientY, ex: e.x, ey: e._y != null ? e._y : e.y, moved: false, pushed: false };
         if (S.sel !== id) {
             S.sel = id;
             var want = e.t === 'text' ? 'text' : 'deco';
-            if (S.tab !== want) S.tab = want;
+            if (S.tab !== want && S.tab !== 'layer' && S.tab !== 'img') S.tab = want;
             renderPanel();
         }
         drawNow();
     }
     function onMove(ev) {
+        if (S.ptrs && S.ptrs[ev.pointerId]) S.ptrs[ev.pointerId] = { x: ev.clientX, y: ev.clientY };
+        var pz = S.pinch;
+        if (pz) {
+            var ids = Object.keys(S.ptrs || {}), ep = elById(pz.id);
+            if (ids.length < 2 || !ep) return;
+            var p1 = canvasPt(S.ptrs[ids[0]].x, S.ptrs[ids[0]].y), p2 = canvasPt(S.ptrs[ids[1]].x, S.ptrs[ids[1]].y);
+            if (!pz.pushed) { pushHist(); pz.pushed = true; }
+            pz.moved = true;
+            applyScale(ep, pz, dist(p1, p2) / Math.max(1, pz.d0));
+            ep.rot = snapRot(pz.r0 + (Math.atan2(p2.y - p1.y, p2.x - p1.x) - pz.a0) * 180 / Math.PI);
+            drawSoon();
+            return;
+        }
         var g = S.drag;
         if (!g) return;
+        var e = elById(g.id);
+        if (!e) return;
+        if (g.mode === 'scale' || g.mode === 'rot') {
+            var p = canvasPt(ev.clientX, ev.clientY);
+            if (!g.pushed) { pushHist(); g.pushed = true; }
+            g.moved = true;
+            if (g.mode === 'scale') applyScale(e, g, Math.max(.1, dist(p, { x: g.cx, y: g.cy }) / Math.max(1, g.d0)));
+            else e.rot = snapRot(g.r0 + (Math.atan2(p.y - g.cy, p.x - g.cx) - g.a0) * 180 / Math.PI);
+            drawSoon();
+            return;
+        }
         var r = cvs.getBoundingClientRect();
         var dx = (ev.clientX - g.sx) / r.width, dy = (ev.clientY - g.sy) / r.height;
         if (!g.moved && Math.abs(dx) + Math.abs(dy) < .006) return;
         if (!g.pushed) { pushHist(); g.pushed = true; }
         g.moved = true;
-        var e = elById(g.id);
-        if (!e) return;
-        if (e.grp) { e.y = e._y != null ? e._y : e.y; g.ey = e.y; delete e.grp; }
-        e.x = Math.max(-.05, Math.min(1.05, g.ex + dx));
-        e.y = Math.max(-.05, Math.min(1.05, g.ey + dy));
+        if (e.grp) { e.y = g.ey; delete e.grp; }
+        // 真ん中の近くでは、真ん中にぴったり合わせる（赤い点線が出る）
+        var nx = clamp(g.ex + dx, -.1, 1.1), ny = clamp(g.ey + dy, -.1, 1.1), gd = null;
+        if (Math.abs(nx - .5) < .012) { nx = .5; gd = { x: true }; }
+        if (Math.abs(ny - .5) < .012) { ny = .5; gd = Object.assign(gd || {}, { y: true }); }
+        S.guides = gd;
+        e.x = nx; e.y = ny;
         drawSoon();
     }
-    function onUp() {
-        if (S.drag && S.drag.moved) { saveSoon(); var u = host.querySelector('[data-act="undo"]'); if (u) u.disabled = false; }
+    function onUp(ev) {
+        if (S.ptrs && ev) delete S.ptrs[ev.pointerId];
+        var moved = (S.drag && S.drag.moved) || (S.pinch && S.pinch.moved);
+        if (S.pinch && Object.keys(S.ptrs || {}).length < 2) S.pinch = null;
+        if (moved) {
+            saveSoon();
+            var u = host.querySelector('[data-act="undo"]'); if (u) u.disabled = false;
+            syncSliders();
+        }
         S.drag = null;
+        if (S.guides) { S.guides = null; drawSoon(); }
+    }
+    // 指で動かしたあと、つまみ（大きさ・向き）を合わせる
+    function syncSliders() {
+        var e = selEl();
+        if (!e || !host) return;
+        host.querySelectorAll('.pp-panel input[type=range][data-act]').forEach(function (inp) {
+            var k = inp.dataset.act;
+            if (k === 'rot') inp.value = e.rot || 0;
+            else if ((k === 'size' || k === 'w' || k === 'h' || k === 'op') && e[k] != null) inp.value = e[k];
+        });
     }
     function onKey(ev) {
         var e = selEl();
@@ -1563,6 +1866,72 @@
         var inp = host.querySelector('#pp-qrnew'), url = inp ? inp.value.trim() : '';
         if (!/^https?:\/\/\S+$/.test(url)) { A.error(); alert('QRコードにするアドレス（https:// から始まる物）を入れてください。'); return; }
         addEl({ t: 'qr', url: url, x: .82, y: .82, w: .2 });
+    }
+    // ---- 端末の画像を読み込む・使う ----
+    function storeErr(er) {
+        var m = er && er.message || '';
+        return /[ぁ-んァ-ン]/.test(m) ? m : 'この端末に画像をしまえませんでした（しまう場所が足りないか、使えない設定になっています）。';
+    }
+    function importImage(f, max, kind, cb) {
+        if (S.busy) return;
+        // 透ける画像（PNG など）の写真は PNG のまま。ほかは JPEG にして小さくする
+        var png = kind !== 'bg' && /png|webp|gif|svg/i.test(f.type || '');
+        busy(true, '画像を読み込んでいます…');
+        fileToImage(f).then(function (im) { return saveUserImage(scaledCanvas(im, max, !png), kind, png ? 'image/png' : 'image/jpeg'); })
+            .then(function (r) { busy(false); libAdd(r); cb(r); })
+            .catch(function (er) { busy(false); A.error(); alert(storeErr(er)); });
+    }
+    function libAdd(r) { if (S.lib) S.lib.unshift({ id: r.id, kind: r.kind, w: r.w, h: r.h, at: r.at }); }
+    function libRec(id) { return (S.lib || []).filter(function (x) { return x.id === id; })[0] || null; }
+    function setBg(id) {
+        if (!S.d) return;
+        change(function () {
+            var o = S.d.bg || {};
+            S.d.bg = { src: 'user:' + id, fit: o.fit || 'cover', zoom: 1, px: 0, py: 0, fade: o.fade || 0, dark: !!o.dark, blur: o.blur || 0 };
+        });
+        A.toast('背景にしました');
+    }
+    // 画像を足す：縦横の比はそのまま。縦に長い画像は、はみ出さない大きさにする
+    function addUserImg(r) {
+        if (!S.d) return;
+        var f = FMTS[S.d.fmt], ar = (r.h || 1) / (r.w || 1);
+        var w = Math.max(.08, Math.min(r.kind === 'cut' ? .36 : .42, .6 * f.h / (f.w * ar)));
+        var e = { t: 'img', src: 'user:' + r.id, shape: 'plain', ar: ar, w: w, x: .5, y: .5 };
+        if (r.kind === 'cut') e.cut = true;
+        addEl(e);
+    }
+    function usesImg(d, id) { var s = 'user:' + id; return !!(d && ((d.bg && d.bg.src === s) || (d.els || []).some(function (e) { return e.src === s; }))); }
+    function dropImg(d, id) { var s = 'user:' + id; if (d.bg && d.bg.src === s) delete d.bg; d.els = (d.els || []).filter(function (e) { return e.src !== s; }); }
+    function delUserImg(id) {
+        var list = store(), used = usesImg(S.d, id) || list.some(function (x) { return usesImg(x.d, id); });
+        if (!confirm(used ? 'この素材は、作ったPOP・ポスターで使っています。消すと、そこからも消えます。消しますか？' : 'この素材を消しますか？')) return;
+        userDel(id).then(function () {
+            S.lib = (S.lib || []).filter(function (x) { return x.id !== id; });
+            if (used) {
+                storeSet(list.map(function (x) { if (usesImg(x.d, id)) dropImg(x.d, id); return x; }));
+                if (usesImg(S.d, id)) { pushHist(); dropImg(S.d, id); if (S.sel && !elById(S.sel)) S.sel = null; saveSoon(); }
+                // 元に戻すと消した画像が出てくるので、元に戻す記録から、この画像を使う物を除く
+                S.hist = S.hist.filter(function (h) { return h.indexOf('user:' + id) < 0; });
+            }
+            A.sound(660, .05); render();
+        }).catch(function (er) { A.error(); alert(storeErr(er)); });
+    }
+    // 重なりの順を1つ動かす（dir 1＝上へ）
+    function layerStep(id, dir) {
+        var a = S.d.els, i = a.findIndex(function (x) { return x.id === id; }), j = i + dir;
+        if (i < 0 || j < 0 || j >= a.length) { A.error(); return; }
+        change(function () { var t = a[i]; a[i] = a[j]; a[j] = t; });
+    }
+    // 複製：少しずらして、すぐ上に置く
+    function dupSel() {
+        var e = selEl();
+        if (!e) return;
+        var c = clone(e);
+        c.id = nid(); c.u = true; c.lock = false;
+        delete c.pid; delete c.grp; delete c._y; delete c._k;
+        if (c.t === 'text') c.role = 'free'; else delete c.role;
+        c.x = Math.min(1.05, (e.x || .5) + .03); c.y = Math.min(1.05, (e._y != null ? e._y : e.y || .5) + .03);
+        change(function () { S.d.els.splice(S.d.els.indexOf(e) + 1, 0, c); S.sel = c.id; });
     }
     // 販売会の情報を直した時：その文字の所だけ直す
     var EV_ROLE = { shop: 'brand', name: 'event', date: 'date', catch: 'catch', note: 'note' };
@@ -1650,6 +2019,24 @@
             case 'bmake': batchMake(); break;
             case 'bpng': (S.batch.pages || []).forEach(function (u, i) { downloadBlob(dataUrlBlob(u), 'pop-sheet-' + stamp() + '-' + (i + 1) + '.png'); }); A.toast('画像を保存しました'); break;
             case 'bprint': printPages('POP（まとめ）', S.batch.pages || [], 'a4', false); break;
+            // 画像
+            case 'bgpick': pickFile(function (f) { importImage(f, 2480, 'bg', function (r) { setBg(r.id); }); }); break;
+            case 'bgdel': change(function () { delete S.d.bg; }); break;
+            case 'bgfit': if (S.d.bg) change(function () { S.d.bg.fit = v; }); break;
+            case 'bgdark': if (S.d.bg) change(function () { S.d.bg.dark = v === '1'; if (!(S.d.bg.fade > 0)) S.d.bg.fade = .35; }); break;
+            case 'photopick': pickFile(function (f) { importImage(f, 1600, 'photo', addUserImg); }); break;
+            case 'cutpick': pickFile(function (f) { fileToImage(f).then(openCutout).catch(function (er) { A.error(); alert(er && er.message || 'この画像は読み込めませんでした'); }); }); break;
+            case 'useradd': { var lr = libRec(b.dataset.id); if (lr) addUserImg(lr); break; }
+            case 'userbg': setBg(b.dataset.id); break;
+            case 'usercut': { var cu = USERURL[b.dataset.id]; if (cu) { var ci = new Image(); ci.onload = function () { openCutout(ci); }; ci.onerror = function () { A.error(); }; ci.src = cu; } break; }
+            case 'userdel': delUserImg(b.dataset.id); break;
+            // 重なり
+            case 'lhide': { var lh = elById(b.dataset.id); if (lh) change(function () { lh.hide = !lh.hide; if (lh.hide && S.sel === lh.id) S.sel = null; }, false); break; }
+            case 'llock': { var ll = elById(b.dataset.id); if (ll) change(function () { ll.lock = !ll.lock; }, false); break; }
+            case 'lup': case 'ldown': layerStep(b.dataset.id, act === 'lup' ? 1 : -1); break;
+            case 'dup': dupSel(); break;
+            case 'flip': if (e) change(function () { e.flip = !e.flip; }); break;
+            case 'lock': if (e) change(function () { e.lock = !e.lock; }); break;
             default: return;
         }
     }
@@ -1667,6 +2054,11 @@
             case 'w': slide('w', Number(val)); break;
             case 'h': slide('h', Number(val)); break;
             case 'rot': slide('rot', Number(val)); break;
+            case 'op': slide('op', Number(val)); break;
+            case 'zoom': case 'px': case 'py': case 'far': slide(act, Number(val)); break;
+            case 'bgzoom': case 'bgpx': case 'bgpy': case 'bgfade': case 'bgblur':
+                if (S.d && S.d.bg) { if (!typing) { pushHist(); typing = true; } S.d.bg[act.slice(2)] = Number(val); drawSoon(); saveSoon(); }
+                break;
             case 'ev': setEv(b.dataset.k, val); break;
             case 'color': case 'boxcolor': case 'scolor':
                 if (e && b.type === 'color') { if (!typing) { pushHist(); typing = true; } var kk = act === 'boxcolor' ? 'bk' : 'ck', vv = act === 'boxcolor' ? 'boxColor' : 'color'; e[vv] = val; delete e[kk]; drawSoon(); saveSoon(); }
@@ -1701,7 +2093,8 @@
                 var mk = host.querySelector('[data-act="bmake"]'); if (mk) { var t = tileOf(S.batch.fmt); mk.disabled = !S.batch.ids.length; mk.textContent = 'A4にならべて作る（' + Math.max(1, Math.ceil(S.batch.ids.length / (t.cols * t.rows))) + '枚）'; }
                 break;
             }
-            case 'text': case 'stext': case 'size': case 'w': case 'h': case 'rot': case 'qrurl': {
+            case 'text': case 'stext': case 'size': case 'w': case 'h': case 'rot': case 'qrurl':
+            case 'op': case 'zoom': case 'px': case 'py': case 'far': case 'bgzoom': case 'bgpx': case 'bgpy': case 'bgfade': case 'bgblur': {
                 var u = host.querySelector('[data-act="undo"]'); if (u) u.disabled = !S.hist.length;
                 if (act === 'stext' || act === 'text') renderElRows();
                 break;
@@ -1710,6 +2103,333 @@
     }
     function renderElRows() { var box = host.querySelector('.pp-els'); if (!box) return; var tabText = S.tab === 'text'; box.innerHTML = S.d.els.filter(function (x) { return tabText ? x.t === 'text' : x.t !== 'text'; }).map(elRow).join('') + (tabText ? '<button type="button" class="pp-er pp-add" data-act="addtext"><b>＋ 文字を足す</b></button>' : ''); }
     function num(id) { return /^\d+$/.test(String(id)) ? Number(id) : id; }
+
+    // ---------------- 背景を消す（切り抜き）：AIは使わず、色の近さで消す ----------------
+    // まわりから自動で消す → 残った所をタップで消す・消しゴム・戻すペンで整える → ふちを少しなめらかにして、透ける PNG でしまう
+    var CUT = null;
+    var CUT_MAX = 1200;
+    function cutDist2(d, i, r, g, b) { var dr = d[i] - r, dg = d[i + 1] - g, db = d[i + 2] - b; return 2 * dr * dr + 4 * dg * dg + 3 * db * db; }
+    // seeds の点から、色の近い所をつながりでたどって消す（tol：0〜100）
+    function cutFlood(C, seeds, rgb, tol) {
+        var W = C.w, H = C.h, d = C.src, m = C.mask, seen = new Uint8Array(W * H), st = new Int32Array(W * H), n = 0;
+        var t2 = 9 * tol * tol * 1.6, near2 = t2 * .12, far2 = t2 * 3.2;
+        seeds.forEach(function (p) { if (!seen[p]) { seen[p] = 1; st[n++] = p; } });
+        while (n) {
+            var p = st[--n];
+            m[p] = 0;
+            var x = p % W, y = (p - x) / W, pi = p * 4;
+            for (var k = 0; k < 4; k++) {
+                var q = k === 0 ? (x > 0 ? p - 1 : -1) : k === 1 ? (x < W - 1 ? p + 1 : -1) : k === 2 ? (y > 0 ? p - W : -1) : (y < H - 1 ? p + W : -1);
+                if (q < 0 || seen[q]) continue;
+                var qi = q * 4, ds = cutDist2(d, qi, rgb[0], rgb[1], rgb[2]);
+                // 消す色に近い所、または、となりとほとんど同じ色（ゆるやかに色が変わる背景）の所
+                if (ds < t2 || (ds < far2 && cutDist2(d, qi, d[pi], d[pi + 1], d[pi + 2]) < near2)) { seen[q] = 1; st[n++] = q; }
+            }
+        }
+    }
+    // まわり（ふち）に多い色を、背景の色とみなして消す
+    function cutAuto(C, tol) {
+        var W = C.w, H = C.h, d = C.src, edge = [], bins = {}, i;
+        for (i = 0; i < W; i++) { edge.push(i, (H - 1) * W + i); }
+        for (i = 1; i < H - 1; i++) { edge.push(i * W, i * W + W - 1); }
+        edge.forEach(function (p) { if (!C.mask[p]) return; var j = p * 4, k = (d[j] >> 5) * 64 + (d[j + 1] >> 5) * 8 + (d[j + 2] >> 5); var b = bins[k] || (bins[k] = { n: 0, r: 0, g: 0, b: 0 }); b.n++; b.r += d[j]; b.g += d[j + 1]; b.b += d[j + 2]; });
+        var cols = Object.keys(bins).map(function (k) { var b = bins[k]; return { n: b.n, rgb: [b.r / b.n, b.g / b.n, b.b / b.n] }; })
+            .filter(function (b) { return b.n >= edge.length * .06; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 4);
+        var t2 = 9 * tol * tol * 1.6;
+        cols.forEach(function (c) {
+            var seeds = edge.filter(function (p) { return cutDist2(d, p * 4, c.rgb[0], c.rgb[1], c.rgb[2]) < t2; });
+            if (seeds.length) cutFlood(C, seeds, c.rgb, tol);
+        });
+        return cols.length > 0;
+    }
+    function cutWand(C, x, y, tol) {
+        var W = C.w, H = C.h, d = C.src, r = 0, g = 0, b = 0, n = 0;
+        for (var yy = Math.max(0, y - 1); yy <= Math.min(H - 1, y + 1); yy++) for (var xx = Math.max(0, x - 1); xx <= Math.min(W - 1, x + 1); xx++) { var j = (yy * W + xx) * 4; r += d[j]; g += d[j + 1]; b += d[j + 2]; n++; }
+        cutFlood(C, [y * W + x], [r / n, g / n, b / n], tol);
+    }
+    function cutOutAll(C) { var o = C.out.data, m = C.mask; for (var p = 0, n = m.length; p < n; p++) o[p * 4 + 3] = m[p]; C.octx.putImageData(C.out, 0, 0); }
+    function cutOutRect(C, x0, y0, x1, y1) {
+        x0 = Math.max(0, Math.floor(x0)); y0 = Math.max(0, Math.floor(y0)); x1 = Math.min(C.w, Math.ceil(x1)); y1 = Math.min(C.h, Math.ceil(y1));
+        if (x1 <= x0 || y1 <= y0) return;
+        var o = C.out.data, m = C.mask;
+        for (var y = y0; y < y1; y++) for (var x = x0; x < x1; x++) { var p = y * C.w + x; o[p * 4 + 3] = m[p]; }
+        C.octx.putImageData(C.out, 0, 0, x0, y0, x1 - x0, y1 - y0);
+    }
+    function cutDot(C, cx, cy, r, val) {
+        var x0 = Math.max(0, Math.floor(cx - r)), x1 = Math.min(C.w - 1, Math.ceil(cx + r)), y0 = Math.max(0, Math.floor(cy - r)), y1 = Math.min(C.h - 1, Math.ceil(cy + r)), r2 = r * r;
+        for (var y = y0; y <= y1; y++) for (var x = x0; x <= x1; x++) { var dx = x - cx, dy = y - cy; if (dx * dx + dy * dy <= r2) C.mask[y * C.w + x] = val; }
+    }
+    function cutLine(C, a, b, r, val) {
+        var L = Math.hypot(b.x - a.x, b.y - a.y), steps = Math.max(1, Math.ceil(L / Math.max(1, r / 3)));
+        for (var i = 0; i <= steps; i++) cutDot(C, a.x + (b.x - a.x) * i / steps, a.y + (b.y - a.y) * i / steps, r, val);
+        cutOutRect(C, Math.min(a.x, b.x) - r - 1, Math.min(a.y, b.y) - r - 1, Math.max(a.x, b.x) + r + 2, Math.max(a.y, b.y) + r + 2);
+    }
+    function cutPush(C) { C.undo.push(C.mask.slice()); if (C.undo.length > 10) C.undo.shift(); C.edited = true; cutSync(C); }
+    function cutHtml() {
+        var tools = [['wand', 'タップで消す'], ['erase', '消しゴム'], ['restore', '戻すペン'], ['pan', '動かす']];
+        return '<div class="pp-cut-top">'
+            + '<button type="button" class="pp-chip" data-c="cancel">やめる</button>'
+            + '<b class="pp-cut-ttl">背景を消す</b>'
+            + '<button type="button" class="pp-chip on" data-c="done"><svg class="ic"><use href="#ic-check"/></svg>切り抜いて足す</button>'
+            + '</div>'
+            + '<div class="pp-cut-stage"><canvas aria-label="切り抜く画像"></canvas></div>'
+            + '<div class="pp-cut-tools">'
+            + '<p class="pp-cut-msg" aria-live="polite"></p>'
+            + '<div class="seg-pick pp-wrapseg" role="group" aria-label="道具">' + tools.map(function (t) { return '<button type="button" data-c="tool" data-v="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>'
+            + '<div class="pp-cut-rng"><label class="field-label">似た色の幅（大きいほど、たくさん消えます）</label><input type="range" min="4" max="60" step="1" data-c="tol" aria-label="似た色の幅"></div>'
+            + '<div class="pp-cut-rng"><label class="field-label">ペンの太さ</label><input type="range" min="6" max="80" step="1" data-c="brush" aria-label="ペンの太さ"></div>'
+            + '<div class="pp-row">'
+            + '<button type="button" class="pp-chip" data-c="auto">まわりを自動で消す</button>'
+            + '<button type="button" class="pp-chip" data-c="undo"><svg class="ic"><use href="#ic-undo"/></svg>元に戻す</button>'
+            + '<button type="button" class="pp-chip" data-c="reset">最初から</button>'
+            + '<button type="button" class="pp-chip" data-c="zin" aria-label="大きく見る">＋</button>'
+            + '<button type="button" class="pp-chip" data-c="zout" aria-label="小さく見る">－</button>'
+            + '<button type="button" class="pp-chip" data-c="fit">全体</button>'
+            + '</div>'
+            + '<label class="field-label">見え方（消した所の色）</label><div class="seg-pick" role="group" aria-label="見え方">' + [['chk', '市松もよう'], ['white', '白'], ['black', '黒']].map(function (t) { return '<button type="button" data-c="view" data-v="' + t[0] + '">' + t[1] + '</button>'; }).join('') + '</div>'
+            + '<label class="pp-check"><input type="checkbox" data-c="ghost">消した所をうすく見せる</label>'
+            + '</div>';
+    }
+    function cutSync(C) {
+        var el = C.el;
+        el.querySelectorAll('[data-c="tool"]').forEach(function (b) { var on = b.dataset.v === C.tool; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+        el.querySelectorAll('[data-c="view"]').forEach(function (b) { var on = b.dataset.v === C.view; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+        el.querySelector('[data-c="undo"]').disabled = !C.undo.length;
+        var tr = el.querySelector('[data-c="tol"]').parentNode, br = el.querySelector('[data-c="brush"]').parentNode;
+        tr.hidden = C.tool === 'erase' || C.tool === 'restore' || C.tool === 'pan';
+        br.hidden = !(C.tool === 'erase' || C.tool === 'restore');
+        var msg = { wand: '残っている背景を押すと、その色のつながった所が消えます。', erase: '指でなぞった所を消します。', restore: '消えすぎた所を、指でなぞって戻します。', pan: '指で画像を動かします。2本の指で広げると大きく見られます。' }[C.tool];
+        el.querySelector('.pp-cut-msg').textContent = C.note || msg;
+    }
+    function cutFit(C) {
+        var r = C.cv.getBoundingClientRect(), s = Math.min(r.width / C.w, r.height / C.h) * .94;
+        C.v = { s: s, ox: (r.width - C.w * s) / 2, oy: (r.height - C.h * s) / 2, fit: s };
+    }
+    function cutSize(C) {
+        var r = C.cv.parentNode.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+        C.cv.style.width = r.width + 'px'; C.cv.style.height = r.height + 'px';
+        C.cv.width = Math.max(1, Math.round(r.width * dpr)); C.cv.height = Math.max(1, Math.round(r.height * dpr)); C.dpr = dpr;
+        if (!C.v) cutFit(C);
+        cutPaint(C);
+    }
+    function cutPaint(C) {
+        if (C.raf) return;
+        C.raf = requestAnimationFrame(function () {
+            C.raf = 0;
+            var x = C.cv.getContext('2d'), v = C.v, dpr = C.dpr;
+            x.setTransform(dpr, 0, 0, dpr, 0, 0);
+            x.fillStyle = '#8A8F98'; x.fillRect(0, 0, C.cv.width / dpr, C.cv.height / dpr);
+            var iw = C.w * v.s, ih = C.h * v.s;
+            if (C.view === 'chk') {
+                if (!C.pat) { var t = document.createElement('canvas'); t.width = t.height = 16; var tx = t.getContext('2d'); tx.fillStyle = '#fff'; tx.fillRect(0, 0, 16, 16); tx.fillStyle = '#D5D8DD'; tx.fillRect(0, 0, 8, 8); tx.fillRect(8, 8, 8, 8); C.pat = x.createPattern(t, 'repeat'); }
+                x.fillStyle = C.pat;
+            } else x.fillStyle = C.view === 'black' ? '#111' : '#fff';
+            x.fillRect(v.ox, v.oy, iw, ih);
+            x.imageSmoothingEnabled = v.s < 2;
+            if (C.ghost) { x.globalAlpha = .22; x.drawImage(C.orig, v.ox, v.oy, iw, ih); x.globalAlpha = 1; }
+            x.drawImage(C.oc, v.ox, v.oy, iw, ih);
+            if (C.cur && (C.tool === 'erase' || C.tool === 'restore')) {
+                x.beginPath(); x.arc(C.cur.x, C.cur.y, C.brush / 2, 0, Math.PI * 2);
+                x.lineWidth = 2; x.strokeStyle = '#fff'; x.stroke(); x.lineWidth = 1; x.strokeStyle = '#1A73E8'; x.stroke();
+            }
+        });
+    }
+    function cutPt(C, ev) { var r = C.cv.getBoundingClientRect(); return { x: ev.clientX - r.left, y: ev.clientY - r.top }; }
+    function cutImgPt(C, p) { return { x: (p.x - C.v.ox) / C.v.s, y: (p.y - C.v.oy) / C.v.s }; }
+    function cutZoom(C, k, at) {
+        var v = C.v, s = Math.max(v.fit * .5, Math.min(v.fit * 12, v.s * k));
+        at = at || { x: C.cv.clientWidth / 2, y: C.cv.clientHeight / 2 };
+        v.ox = at.x - (at.x - v.ox) * s / v.s; v.oy = at.y - (at.y - v.oy) * s / v.s; v.s = s;
+        cutPaint(C);
+    }
+    function cutRerun(C) {
+        // 「似た色の幅」を変えた時：さっき消した所を、新しい幅でやり直す
+        var L = C.last;
+        if (!L) return;
+        C.mask.set(L.base);
+        if (L.kind === 'auto') cutAuto(C, C.tol); else cutWand(C, L.x, L.y, C.tol);
+        cutOutAll(C); cutPaint(C);
+    }
+    function cutDown(ev) {
+        var C = CUT; if (!C) return;
+        ev.preventDefault();
+        try { C.cv.setPointerCapture(ev.pointerId); } catch (er) {}
+        C.ptrs[ev.pointerId] = cutPt(C, ev);
+        var ids = Object.keys(C.ptrs);
+        if (ids.length === 2) {
+            // 2本の指：広げて大きく・ずらして動かす
+            var a = C.ptrs[ids[0]], b = C.ptrs[ids[1]];
+            C.g = { kind: 'pinch', d0: Math.hypot(a.x - b.x, a.y - b.y), m0: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }, v0: Object.assign({}, C.v) };
+            return;
+        }
+        if (ids.length > 2) return;
+        var p = C.ptrs[ev.pointerId];
+        var tool = (ev.button === 1 || ev.button === 2) ? 'pan' : C.tool;
+        C.g = { kind: tool, p0: p, v0: Object.assign({}, C.v), last: cutImgPt(C, p), moved: false, pushed: false };
+        C.cur = p;
+        if (tool === 'erase' || tool === 'restore') { cutPush(C); C.g.pushed = true; C.last = null; var q = cutImgPt(C, p); cutLine(C, q, q, C.brush / 2 / C.v.s, tool === 'erase' ? 0 : 255); }
+        cutPaint(C);
+    }
+    function cutMove(ev) {
+        var C = CUT; if (!C) return;
+        var p = cutPt(C, ev);
+        if (C.ptrs[ev.pointerId]) C.ptrs[ev.pointerId] = p;
+        C.cur = p;
+        var g = C.g;
+        if (!g) { if (ev.pointerType === 'mouse') cutPaint(C); return; }
+        if (g.kind === 'pinch') {
+            var ids = Object.keys(C.ptrs); if (ids.length < 2) return;
+            var a = C.ptrs[ids[0]], b = C.ptrs[ids[1]], d = Math.hypot(a.x - b.x, a.y - b.y), m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+            var s = Math.max(g.v0.fit * .5, Math.min(g.v0.fit * 12, g.v0.s * d / Math.max(1, g.d0)));
+            var ix = (g.m0.x - g.v0.ox) / g.v0.s, iy = (g.m0.y - g.v0.oy) / g.v0.s;
+            C.v.s = s; C.v.ox = m.x - ix * s; C.v.oy = m.y - iy * s;
+            C.cur = null; cutPaint(C); return;
+        }
+        if (Math.hypot(p.x - g.p0.x, p.y - g.p0.y) > 6) g.moved = true;
+        if (g.kind === 'pan') { C.v.ox = g.v0.ox + p.x - g.p0.x; C.v.oy = g.v0.oy + p.y - g.p0.y; cutPaint(C); return; }
+        if (g.kind === 'erase' || g.kind === 'restore') {
+            var q = cutImgPt(C, p);
+            cutLine(C, g.last, q, C.brush / 2 / C.v.s, g.kind === 'erase' ? 0 : 255);
+            g.last = q; cutPaint(C);
+        }
+    }
+    function cutUp(ev) {
+        var C = CUT; if (!C) return;
+        var g = C.g, was = C.ptrs[ev.pointerId];
+        delete C.ptrs[ev.pointerId];
+        if (ev.pointerType !== 'mouse') C.cur = null;
+        if (g && g.kind === 'pinch') { if (Object.keys(C.ptrs).length < 2) C.g = null; cutPaint(C); return; }
+        C.g = null;
+        if (g && g.kind === 'wand' && !g.moved && was && ev.type === 'pointerup') {
+            var q = cutImgPt(C, g.p0), x = Math.floor(q.x), y = Math.floor(q.y);
+            if (x >= 0 && y >= 0 && x < C.w && y < C.h) {
+                cutPush(C);
+                C.last = { kind: 'wand', x: x, y: y, base: C.mask.slice() };
+                cutWand(C, x, y, C.tol); cutOutAll(C);
+            }
+        }
+        cutPaint(C);
+    }
+    function cutWheel(ev) {
+        var C = CUT; if (!C) return;
+        ev.preventDefault();
+        cutZoom(C, ev.deltaY < 0 ? 1.15 : 1 / 1.15, cutPt(C, ev));
+    }
+    function cutClick(ev) {
+        var C = CUT, b = ev.target.closest('[data-c]');
+        if (!C || !b || b.disabled || b.tagName === 'INPUT') return;
+        var c = b.dataset.c;
+        C.note = '';
+        if (c === 'cancel') { if (!C.edited || confirm('切り抜くのをやめますか？（いま消した所は残りません）')) cutClose(); return; }
+        if (c === 'done') { cutDone(C); return; }
+        if (c === 'tool') { C.tool = b.dataset.v; C.last = null; }
+        else if (c === 'view') C.view = b.dataset.v;
+        else if (c === 'undo') { if (C.undo.length) { C.mask.set(C.undo.pop()); C.last = null; cutOutAll(C); } }
+        else if (c === 'reset') { cutPush(C); C.mask.set(C.base0); C.last = null; cutOutAll(C); }
+        else if (c === 'auto') {
+            cutPush(C); C.mask.set(C.base0);
+            C.last = { kind: 'auto', base: C.mask.slice() };
+            if (!cutAuto(C, C.tol)) C.note = 'まわりの色がまちまちで、自動では消せませんでした。「タップで消す」か「消しゴム」で消してください。';
+            cutOutAll(C);
+        }
+        else if (c === 'zin') cutZoom(C, 1.4);
+        else if (c === 'zout') cutZoom(C, 1 / 1.4);
+        else if (c === 'fit') cutFit(C);
+        cutSync(C); cutPaint(C);
+    }
+    function cutInput(ev) {
+        var C = CUT, b = ev.target.closest('[data-c]');
+        if (!C || !b) return;
+        if (b.dataset.c === 'tol') { C.tol = Number(b.value); clearTimeout(C.tolT); C.tolT = setTimeout(function () { cutRerun(C); }, 60); }
+        else if (b.dataset.c === 'brush') { C.brush = Number(b.value); C.cur = { x: C.cv.clientWidth / 2, y: C.cv.clientHeight / 2 }; cutPaint(C); }
+        else if (b.dataset.c === 'ghost') { C.ghost = b.checked; cutPaint(C); }
+    }
+    function cutKey(ev) {
+        if (!CUT) return;
+        if (ev.key === 'Escape') { ev.preventDefault(); CUT.el.querySelector('[data-c="cancel"]').click(); }
+        else if ((ev.ctrlKey || ev.metaKey) && ev.key === 'z') { ev.preventDefault(); CUT.el.querySelector('[data-c="undo"]').click(); }
+    }
+    function cutResize() { if (CUT) { CUT.v = null; cutSize(CUT); } }
+    function openCutout(im) {
+        if (CUT) cutClose();
+        var c = scaledCanvas(im, CUT_MAX, false), w = c.width, h = c.height, cx = c.getContext('2d');
+        var src = cx.getImageData(0, 0, w, h);
+        var mask = new Uint8Array(w * h);
+        // すでに透けている所（PNG）は、はじめから消えた所にする
+        for (var p = 0; p < mask.length; p++) mask[p] = src.data[p * 4 + 3] < 24 ? 0 : 255;
+        var oc = document.createElement('canvas'); oc.width = w; oc.height = h;
+        var octx = oc.getContext('2d'), out = octx.createImageData(w, h);
+        out.data.set(src.data);
+        var el = document.createElement('div');
+        el.className = 'pp-cut'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', '背景を消す');
+        el.innerHTML = cutHtml();
+        document.body.appendChild(el);
+        var C = CUT = { el: el, cv: el.querySelector('canvas'), w: w, h: h, src: src.data, mask: mask, base0: mask.slice(), orig: c, oc: oc, octx: octx, out: out, undo: [], ptrs: {}, tool: 'wand', tol: 24, brush: 28, view: 'chk', ghost: true, v: null, last: null, edited: false, note: '' };
+        el.querySelector('[data-c="tol"]').value = C.tol;
+        el.querySelector('[data-c="brush"]').value = C.brush;
+        el.querySelector('[data-c="ghost"]').checked = C.ghost;
+        el.addEventListener('click', cutClick);
+        el.addEventListener('input', cutInput);
+        el.addEventListener('change', cutInput);
+        C.cv.addEventListener('pointerdown', cutDown);
+        C.cv.addEventListener('pointermove', cutMove);
+        C.cv.addEventListener('pointerup', cutUp);
+        C.cv.addEventListener('pointercancel', cutUp);
+        C.cv.addEventListener('pointerleave', function () { if (CUT && !CUT.g) { CUT.cur = null; cutPaint(CUT); } });
+        C.cv.addEventListener('wheel', cutWheel, { passive: false });
+        C.cv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        document.addEventListener('keydown', cutKey);
+        window.addEventListener('resize', cutResize);
+        // はじめに、まわりを自動で消しておく
+        C.last = { kind: 'auto', base: mask.slice() };
+        if (!cutAuto(C, C.tol)) C.note = 'まわりの色がまちまちで、自動では消せませんでした。「タップで消す」か「消しゴム」で消してください。';
+        else C.note = 'まわりを自動で消しました。残った背景は押して消し、消えすぎた所は「戻すペン」でなぞります。';
+        cutOutAll(C);
+        cutSync(C);
+        cutSize(C);
+        var first = el.querySelector('[data-c="done"]'); if (first) first.focus();
+    }
+    function cutClose() {
+        if (!CUT) return;
+        var C = CUT; CUT = null;
+        if (C.raf) cancelAnimationFrame(C.raf);
+        document.removeEventListener('keydown', cutKey);
+        window.removeEventListener('resize', cutResize);
+        C.el.remove();
+    }
+    // できた：ふちを1つぶん内側へ寄せてから少しぼかし（背景の色が残りにくい）、まわりの透けた所を切りとって、PNG でしまう
+    function cutDone(C) {
+        var W = C.w, H = C.h, m = C.mask, er = new Uint8Array(W * H), sm = new Uint8Array(W * H), x, y, p;
+        for (y = 0; y < H; y++) for (x = 0; x < W; x++) {
+            p = y * W + x;
+            var v = m[p];
+            if (v) { if ((x > 0 && !m[p - 1]) || (x < W - 1 && !m[p + 1]) || (y > 0 && !m[p - W]) || (y < H - 1 && !m[p + W])) v = 0; }
+            er[p] = v;
+        }
+        var x0 = W, y0 = H, x1 = -1, y1 = -1;
+        for (y = 0; y < H; y++) for (x = 0; x < W; x++) {
+            p = y * W + x;
+            var s = 0, n = 0;
+            for (var dy = -1; dy <= 1; dy++) { var yy = y + dy; if (yy < 0 || yy >= H) continue; for (var dx = -1; dx <= 1; dx++) { var xx = x + dx; if (xx < 0 || xx >= W) continue; s += er[yy * W + xx]; n++; } }
+            sm[p] = s / n;
+            if (sm[p] > 8) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        }
+        if (x1 < 0) { A.error(); alert('全部消えています。「元に戻す」か「戻すペン」で、残したい所を戻してください。'); return; }
+        x0 = Math.max(0, x0 - 2); y0 = Math.max(0, y0 - 2); x1 = Math.min(W - 1, x1 + 2); y1 = Math.min(H - 1, y1 + 2);
+        var cw = x1 - x0 + 1, ch = y1 - y0 + 1, c = document.createElement('canvas');
+        c.width = cw; c.height = ch;
+        var cx = c.getContext('2d'), img = cx.createImageData(cw, ch), o = img.data, d = C.src;
+        for (y = 0; y < ch; y++) for (x = 0; x < cw; x++) {
+            var sp = (y + y0) * W + (x + x0), op = (y * cw + x) * 4;
+            o[op] = d[sp * 4]; o[op + 1] = d[sp * 4 + 1]; o[op + 2] = d[sp * 4 + 2]; o[op + 3] = Math.min(sm[sp], d[sp * 4 + 3]);
+        }
+        cx.putImageData(img, 0, 0);
+        var btn = C.el.querySelector('[data-c="done"]'); if (btn) btn.disabled = true;
+        saveUserImage(c, 'cut', 'image/png').then(function (r) {
+            cutClose(); libAdd(r);
+            if (S.d && S.view === 'edit') { addUserImg(r); A.toast('切り抜いた画像を足しました'); }
+        }).catch(function (e) { if (btn) btn.disabled = false; A.error(); alert(storeErr(e)); });
+    }
 
     // ---------------- 見た目（この画面だけ） ----------------
     var CSS = '\
@@ -1750,8 +2470,9 @@
 .pp-check { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; font-size: 14px; font-weight: 700; color: var(--text-main); }\
 .pp-check input { width: 22px; height: 22px; flex-shrink: 0; }\
 .pp-ctl { display: flex; flex-direction: column; gap: 10px; min-width: 0; }\
-.pp-tabs { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-pill); background: var(--sunken); }\
-.pp-tab { flex: 1; min-height: 44px; border: none; border-radius: var(--r-pill); background: transparent; color: var(--text-light); font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; padding: 0 6px; }\
+.pp-tabs { display: flex; gap: 4px; padding: 4px; border-radius: var(--r-pill); background: var(--sunken); overflow-x: auto; scrollbar-width: none; }\
+.pp-tabs::-webkit-scrollbar { display: none; }\
+.pp-tab { flex: 1 0 auto; white-space: nowrap; min-height: 44px; border: none; border-radius: var(--r-pill); background: transparent; color: var(--text-light); font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; padding: 0 10px; }\
 .pp-tab.on { background: var(--surface); color: var(--text-main); box-shadow: var(--shadow-card); }\
 .pp-panel { display: flex; flex-direction: column; gap: 8px; }\
 .pp-tpls { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }\
@@ -1796,6 +2517,40 @@
 .pp-pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }\
 .pp-pages figure { margin: 0; text-align: center; font-size: 12px; color: var(--text-light); }\
 .pp-pages img { width: 100%; height: auto; display: block; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.18); background: #fff; }\
+.pp-wide { width: 100%; margin: 0; }\
+.pp-half { flex: 1 1 160px; margin: 0; }\
+.pp-bgthumb { display: block; width: 100%; max-height: 140px; object-fit: cover; border-radius: 10px; }\
+.pp-lib { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }\
+.pp-li { display: flex; flex-direction: column; gap: 4px; }\
+.pp-lib-b { width: 100%; padding: 4px; }\
+.pp-lib-b img { object-fit: contain; }\
+.pp-cutbg, .pp-ercut i { background-color: #fff; background-image: conic-gradient(#E3E5EA 25%, transparent 0 50%, #E3E5EA 0 75%, transparent 0); background-size: 12px 12px; }\
+.pp-li-acts { display: flex; gap: 4px; flex-wrap: wrap; }\
+.pp-mini { flex: 1 1 auto; min-height: 36px; padding: 0 8px; border: none; border-radius: 10px; background: var(--sunken); color: var(--text-main); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }\
+.pp-mini.on { background: var(--accent); color: #fff; }\
+.pp-mini.pp-danger { color: var(--danger); }\
+.pp-layers { display: flex; flex-direction: column; gap: 8px; }\
+.pp-ly { display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow-card); }\
+.pp-ly .pp-er { flex: 1 1 auto; min-width: 0; overflow: hidden; box-shadow: none; background: transparent; padding: 4px 6px; }\
+.pp-ly .pp-er span { max-width: 100%; }\
+.pp-ly.on { box-shadow: 0 0 0 3px var(--accent); }\
+.pp-ly.hid .pp-er, .pp-erhid { opacity: .45; }\
+.pp-ly-acts { display: flex; gap: 4px; flex-shrink: 0; }\
+.pp-ly-acts .pp-mini { flex: 0 0 auto; min-width: 38px; min-height: 40px; padding: 0 6px; }\
+@media (max-width: 420px) { .pp-ly { flex-wrap: wrap; } .pp-ly-acts { width: 100%; } .pp-ly-acts .pp-mini { flex: 1 1 auto; } }\
+.pp-cut { position: fixed; inset: 0; z-index: 5000; display: flex; flex-direction: column; background: var(--bg-color, #F2F3F7); padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }\
+.pp-cut-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; }\
+.pp-cut-ttl { font-size: 16px; font-weight: 800; color: var(--text-main); }\
+.pp-cut-stage { flex: 1 1 auto; min-height: 160px; position: relative; overflow: hidden; }\
+.pp-cut-stage canvas { position: absolute; inset: 0; display: block; touch-action: none; cursor: crosshair; }\
+.pp-cut-tools { flex: 0 0 auto; max-height: 46vh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 16px 14px; }\
+.pp-cut-tools .field-label { margin: 2px 0 0; }\
+.pp-cut-tools .seg-pick { flex-wrap: wrap; }\
+.pp-cut-tools .seg-pick button { flex: 1 0 auto; }\
+.pp-cut-tools input[type=range] { width: 100%; min-height: 32px; }\
+.pp-cut-msg { margin: 0; font-size: 13px; color: var(--text-light); min-height: 1.4em; }\
+.pp-cut-rng[hidden] { display: none; }\
+@media (min-width: 900px) { .pp-cut { flex-direction: row; flex-wrap: wrap; } .pp-cut-top { width: 100%; } .pp-cut-stage { flex: 1 1 0; height: calc(100% - 60px); } .pp-cut-tools { width: 340px; max-height: none; } }\
 ';
     function injectCss() {
         if (document.getElementById('pop-css')) return;
@@ -1821,6 +2576,7 @@
     function leave() { saveNow(); }
     window.POPMAKER = {
         mount: mount, leave: leave, render: renderDesign, genPop: function (p, f, t, v) { return genPop(p, f, t, v || 0); }, genPoster: function (l, f, t, v, ev, fids) { return genPoster(l, f, t, v || 0, ev || defaultEvent(), fids); },
-        fonts: FONTS, templates: TPLS, formats: FMTS, decos: DECO, state: S, exportCanvas: exportCanvas, wrap: wrap, tileOf: tileOf
+        fonts: FONTS, templates: TPLS, formats: FMTS, decos: DECO, state: S, exportCanvas: exportCanvas, wrap: wrap, tileOf: tileOf,
+        cutState: function () { return CUT; }
     };
 })();
