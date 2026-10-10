@@ -1,5 +1,6 @@
 # 施設ごとのフォルダ（sites/）の index.html が、いちばん上の index.html とそろっているかを確かめる。
 # そろっていない時は「node tools/sites.mjs build」を実行してからコミットする。
+# 英語の表示の辞書（index.html の #i18n-en）が i18n/en.tsv とそろっているかも確かめる（node tools/i18n.mjs build）。
 name: 施設のフォルダの確認
 on:
   push:
@@ -13,3 +14,4 @@ jobs:
         with:
           node-version: 20
       - run: node tools/sites.mjs check
+      - run: node tools/i18n.mjs check
