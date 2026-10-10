@@ -2711,3 +2711,7 @@ Open-Meteo の無料の窓口は、営利を目的としない使い方に限ら
 このアプリで使っている物と、使う時に気をつけること	What this app uses, and what to watch for
 上	Top
 下	Bottom
+読み上げの声を自然にするには：iPhone・iPad の「設定 → アクセシビリティ → 読み上げコンテンツ → 声 → 日本語」で、「拡張」「プレミアム」と付いた声（Kyoko・O-ren など）をダウンロードしてください。このアプリは、端末に入っている声の中から、いちばん自然な声を選んで使います。	For a more natural voice: on iPhone/iPad, go to Settings → Accessibility → Spoken Content → Voices → Japanese and download a voice marked "Enhanced" or "Premium" (e.g. Kyoko, O-ren). This app automatically uses the most natural voice installed on the device.
+次にすること・押した商品・金額を声で読みます（音を消している時も、画面には必ず出ます）。声は、端末に入っている声の中から、いちばん自然な声を使います（「設定 → 音と読み上げ」に、声をよくする方法があります）	Reads the next action, tapped items and amounts aloud (always shown on screen even when sound is off). Uses the most natural voice installed on the device (see "Settings → Sounds & speech" for how to improve it).
+未会計の注文はありません	No unpaid orders
+モバイルオーダーや「後で会計」の注文があると、ここに並びます。	Mobile orders and "pay later" orders appear here.

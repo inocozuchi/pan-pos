@@ -14,46 +14,39 @@
 <!--
   アプリのアイコン（icons/icon-192.png・icons/icon-512.png）の元。
   このアプリのために、線と図形だけで描いた物（ほかの人の絵・絵文字・AIで作った画像は使っていない）。
+  青の面に、アプリの中の記号と同じ「レジ（レシート）」の記号。icon-180 は iPhone・iPad のホーム画面用。
   形を変えた時は、このページをブラウザで開いて、下の「保存」で PNG を作り直し、icons/ に置く。
 -->
 <p>アプリのアイコン（このアプリのために描いた物）</p>
 <div id="out"></div>
 <script>
 function drawIcon(S) {
+    // 青の面に、レジの記号（レシート）を白い線で。アプリの中の記号（index.html の #ic-register）と同じ形・同じ線の描き方
     var c = document.createElement('canvas'); c.width = c.height = S;
-    var x = c.getContext('2d'), u = S / 100;
-    x.fillStyle = '#C25E3E'; x.fillRect(0, 0, S, S);
-    // 食パンの形：上がふくらんだ山、下は四角
-    function loaf() {
-        x.beginPath();
-        x.moveTo(24 * u, 78 * u);
-        x.lineTo(24 * u, 46 * u);
-        x.bezierCurveTo(14 * u, 44 * u, 14 * u, 24 * u, 34 * u, 24 * u);
-        x.bezierCurveTo(40 * u, 18 * u, 46 * u, 18 * u, 50 * u, 24 * u);
-        x.bezierCurveTo(54 * u, 18 * u, 60 * u, 18 * u, 66 * u, 24 * u);
-        x.bezierCurveTo(86 * u, 24 * u, 86 * u, 44 * u, 76 * u, 46 * u);
-        x.lineTo(76 * u, 78 * u);
-        x.quadraticCurveTo(76 * u, 82 * u, 72 * u, 82 * u);
-        x.lineTo(28 * u, 82 * u);
-        x.quadraticCurveTo(24 * u, 82 * u, 24 * u, 78 * u);
-        x.closePath();
-    }
-    // かげ
-    x.save(); x.translate(0, 2.2 * u); loaf(); x.fillStyle = 'rgba(0,0,0,.18)'; x.fill(); x.restore();
-    // 皮
-    loaf(); x.fillStyle = '#E9A65A'; x.fill();
-    // 中（白い所）
-    x.beginPath();
-    x.moveTo(30 * u, 76 * u); x.lineTo(30 * u, 48 * u);
-    x.bezierCurveTo(22 * u, 44 * u, 24 * u, 30 * u, 36 * u, 30 * u);
-    x.bezierCurveTo(41 * u, 25 * u, 46 * u, 26 * u, 50 * u, 30 * u);
-    x.bezierCurveTo(54 * u, 26 * u, 59 * u, 25 * u, 64 * u, 30 * u);
-    x.bezierCurveTo(76 * u, 30 * u, 78 * u, 44 * u, 70 * u, 48 * u);
-    x.lineTo(70 * u, 76 * u); x.closePath();
-    x.fillStyle = '#FFF4E2'; x.fill();
+    var x = c.getContext('2d');
+    var g = x.createLinearGradient(0, 0, S, S);
+    g.addColorStop(0, '#3D95F7'); g.addColorStop(1, '#0A5FC4');
+    x.fillStyle = g; x.fillRect(0, 0, S, S);
+    // 上から少し光が当たっているように（やわらかく）
+    var r = x.createRadialGradient(S * .3, S * .18, 0, S * .3, S * .18, S * .75);
+    r.addColorStop(0, 'rgba(255,255,255,.22)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = r; x.fillRect(0, 0, S, S);
+    // 記号は 24 の升目で描いたものを、まん中に大きく置く（端末が角を丸めたり丸く切ったりしても欠けない大きさ）
+    var k = S * .56 / 18;
+    x.save();
+    x.translate(S / 2 - 12 * k, S / 2 - 12 * k + S * .01);
+    x.scale(k, k);
+    x.lineJoin = 'round'; x.lineCap = 'round';
+    var body = new Path2D('M6 3h12v18l-2-1.5L14 21l-2-1.5L10 21l-2-1.5L6 21z');
+    x.save(); x.translate(0, .35); x.strokeStyle = 'rgba(0,30,80,.25)'; x.lineWidth = 1.7; x.stroke(body); x.restore();
+    x.fillStyle = 'rgba(255,255,255,.16)'; x.fill(body);
+    x.strokeStyle = '#FFFFFF'; x.lineWidth = 1.7; x.stroke(body);
+    x.lineWidth = 1.6;
+    x.stroke(new Path2D('M9.2 8h5.6M9.2 11.5h5.6M9.2 15h3.2'));
+    x.restore();
     return c;
 }
-[192, 512].forEach(function (S) {
+[180, 192, 512].forEach(function (S) {
     var c = drawIcon(S), out = document.getElementById('out');
     c.style.width = c.style.height = '128px';
     out.appendChild(c);
