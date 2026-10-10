@@ -729,7 +729,7 @@
         .pimg-x { position: absolute; top: -7px; right: -7px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--surface); padding: 0; cursor: pointer; box-sizing: border-box;
             background: rgba(60, 60, 67, .78); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 800; line-height: 1; }
         /* ▼ 在庫の画面：さがす・並び・並べ替え ▼ */
-        .st-tools { position: sticky; top: -14px; z-index: 4; margin: 0 -16px 8px; padding: 8px 16px 6px; background: var(--bg); }
+        .st-tools { position: sticky; top: -14px; z-index: 4; margin: 0 -16px 8px; padding: 8px 16px 6px; background: var(--bg-color); }
         .st-tools input[type="search"] { width: 100%; box-sizing: border-box; margin: 0; font-size: 16px; }
         /* 並びのボタンは折り返して並べる（横に動く所を作らない。画面は縦にだけ動かす） */
         .chip-pick.st-sorts { flex-wrap: wrap; margin: 8px 0 0; padding: 0 0 2px; }
@@ -1101,6 +1101,236 @@
             padding: 15px;
             overflow-y: auto;
         }
+
+        /* ▼▼▼ シンプルモード（利用者の方が自分で会計する画面）▼▼▼
+           色の決まり：みどり＝すすむ／はいいろ＝もどる／あか＝けす／オレンジ＝スタッフを呼ぶ（どの画面でも同じ。色だけでなく絵と文字も付ける） */
+        #simple-root {
+            --sm-k: 1; --sm-go: #1E8E3E; --sm-go-ink: #fff; --sm-del: #C62828; --sm-call: #E8710A; --sm-bg: var(--bg-color); --sm-card: var(--surface);
+            --sm-text: var(--text-main); --sm-sub: var(--text-light); --sm-line: transparent;
+            position: fixed; inset: 0; z-index: 160; display: flex; flex-direction: column; gap: calc(10px * var(--sm-k));
+            background: var(--sm-bg); color: var(--sm-text); font-family: inherit;
+            padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+            box-sizing: border-box; overflow: hidden; -webkit-user-select: none; user-select: none;
+        }
+        #simple-root[hidden] { display: none; }
+        body.sm-on #checkout-modal { display: none !important; }
+        #simple-root.sm-k-xl { --sm-k: 1.18; }
+        #simple-root.sm-k-xxl { --sm-k: 1.36; }
+        #simple-root.sm-hc { --sm-bg: #fff; --sm-card: #fff; --sm-text: #000; --sm-sub: #222; --sm-line: #000; --sm-go: #0B6B28; --sm-del: #B00020; --sm-call: #B34700; }
+        #simple-root.sm-hc .sm-prod, #simple-root.sm-hc .sm-btn, #simple-root.sm-hc .sm-mbtn, #simple-root.sm-hc .sm-key, #simple-root.sm-hc .sm-guide,
+        #simple-root.sm-hc .sm-cart, #simple-root.sm-hc .sm-paybox, #simple-root.sm-hc .sm-gv, #simple-root.sm-hc .sm-rb { box-shadow: inset 0 0 0 3px #000 !important; }
+        #simple-root.sm-still *, #simple-root.sm-still *::before, #simple-root.sm-still *::after { animation: none !important; transition: none !important; }
+        #simple-root ruby rt { font-size: .5em; font-weight: 700; letter-spacing: 0; }
+        #simple-root button { font-family: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        #simple-root button:focus-visible { outline: 4px solid #1A73E8; outline-offset: 3px; }
+        #simple-root svg { display: block; }
+        /* 上の帯：手順・スタッフを呼ぶ・終わる */
+        .sm-top { display: flex; align-items: center; gap: 10px; flex-shrink: 0; min-width: 0; }
+        .sm-steps { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; min-width: 0; }
+        .sm-steps li { display: flex; align-items: center; gap: 6px; padding: calc(6px * var(--sm-k)) calc(12px * var(--sm-k)); border-radius: 999px; background: var(--sm-card); color: var(--sm-sub); font-weight: 800; font-size: calc(15px * var(--sm-k)); box-shadow: inset 0 0 0 2px var(--sm-line); min-width: 0; }
+        .sm-steps li .sm-sn { width: calc(26px * var(--sm-k)); height: calc(26px * var(--sm-k)); border-radius: 50%; display: grid; place-items: center; background: var(--btn-neutral); color: var(--sm-text); font-size: calc(15px * var(--sm-k)); flex-shrink: 0; }
+        .sm-steps li .sm-si { width: calc(26px * var(--sm-k)); height: calc(26px * var(--sm-k)); flex-shrink: 0; }
+        .sm-steps li.now { background: var(--sm-go); color: #fff; }
+        .sm-steps li.now .sm-sn { background: #fff; color: var(--sm-go); }
+        .sm-steps li.past { opacity: .55; }
+        .sm-prac { padding: 6px 12px; border-radius: 999px; background: #FFF1D6; color: #8A4B00; font-weight: 900; font-size: calc(14px * var(--sm-k)); white-space: nowrap; }
+        .sm-sp { flex: 1; }
+        .sm-call { display: flex; align-items: center; gap: 6px; min-height: 56px; padding: 0 16px; border: none; border-radius: 16px; background: var(--sm-call); color: #fff; font-weight: 900; font-size: calc(15px * var(--sm-k)); cursor: pointer; white-space: nowrap; }
+        .sm-call .sm-bi { width: 26px; height: 26px; }
+        .sm-exit { position: relative; overflow: hidden; min-height: 56px; min-width: 64px; padding: 0 12px; border: none; border-radius: 16px; background: var(--btn-neutral); color: var(--sm-sub); font-weight: 800; font-size: 13px; cursor: pointer; }
+        .sm-exit i { position: absolute; left: 0; bottom: 0; height: 5px; width: 0; background: var(--sm-del); }
+        .sm-exit.holding i { width: 100%; transition: width 1.5s linear; }
+        /* ガイド：次にすること */
+        .sm-guide { display: flex; align-items: center; gap: 12px; flex-shrink: 0; padding: calc(10px * var(--sm-k)) 14px; border-radius: 18px; background: #FFF6D8; color: #3D2A00; box-shadow: inset 0 0 0 2px var(--sm-line); }
+        .sm-guide .sm-gp { width: calc(44px * var(--sm-k)); height: calc(44px * var(--sm-k)); flex-shrink: 0; }
+        .sm-guide .sm-gt { flex: 1; font-size: calc(24px * var(--sm-k)); font-weight: 900; line-height: 1.45; min-width: 0; }
+        .sm-say { width: 60px; height: 60px; border: none; border-radius: 50%; background: #fff; color: #3D2A00; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,.15); }
+        .sm-say .sm-bi { width: 30px; height: 30px; }
+        :root[data-theme="dark"] .sm-guide { background: #3A3016; color: #FFF0C2; }
+        @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sm-guide { background: #3A3016; color: #FFF0C2; } }
+        #simple-root.sm-hc .sm-guide { background: #FFF6D8; color: #000; }
+        /* ボタン */
+        .sm-btn { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: calc(72px * var(--sm-k)); padding: 0 18px; border: none; border-radius: 20px; cursor: pointer;
+            font-size: calc(22px * var(--sm-k)); font-weight: 900; color: var(--sm-text); background: var(--btn-neutral); flex: 1; min-width: 0; }
+        .sm-btn .sm-bi { width: calc(26px * var(--sm-k)); height: calc(26px * var(--sm-k)); flex-shrink: 0; }
+        .sm-btn.go { background: var(--sm-go); color: var(--sm-go-ink); flex: 1.6; }
+        .sm-btn.go .sm-bi { order: 2; }
+        .sm-btn.del { background: transparent; color: var(--sm-del); box-shadow: inset 0 0 0 3px var(--sm-del); }
+        .sm-btn.exact { background: #E3EEFC; color: #0B4FA0; }
+        .sm-btn.sub, .sm-btn.back { background: var(--sm-card); box-shadow: var(--shadow-card); }
+        .sm-btn:disabled { opacity: .35; cursor: default; }
+        .sm-acts { display: flex; gap: 10px; flex-shrink: 0; }
+        .sm-acts { flex-wrap: wrap; }
+        .sm-acts .sm-btn { white-space: nowrap; padding: 0 12px; flex-basis: auto; }
+        .sm-payin .sm-acts .sm-btn { font-size: calc(19px * var(--sm-k)); }
+        #simple-root.sm-left .sm-acts { flex-direction: row-reverse; }
+        /* 本体 */
+        /* 入りきらない時（小さい画面で文字をいちばん大きくした時など）は、ここが縦に動く（切れて見えなくならない） */
+        .sm-main { flex: 1; min-height: 0; display: flex; gap: 14px; overflow-y: auto; overflow-x: hidden; }
+        #simple-root.sm-left .sm-main { flex-direction: row-reverse; }
+        .sm-prods { flex: 1.6; min-width: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(170px * var(--sm-k)), 1fr)); grid-auto-rows: min-content; gap: 12px; padding: 2px 4px 8px 2px; align-content: start; }
+        .sm-prod { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px 12px; border: none; border-radius: 20px; background: var(--sm-card); color: var(--sm-text); cursor: pointer;
+            box-shadow: inset 0 6px 0 var(--ink), var(--shadow-card); min-width: 0; }
+        .sm-prod .sm-pimg { width: calc(96px * var(--sm-k)); height: calc(96px * var(--sm-k)); border-radius: 16px; background: var(--bg); overflow: hidden; display: grid; place-items: center; margin-top: 6px; }
+        .sm-prod .sm-pimg img { width: 100%; height: 100%; object-fit: cover; }
+        .sm-prod .sm-pimg svg { width: 92%; height: 92%; }
+        .sm-prod .sm-pn { font-size: calc(19px * var(--sm-k)); font-weight: 900; line-height: 1.35; text-align: center; overflow-wrap: anywhere; text-wrap: balance; }
+        .sm-prod .sm-pp { font-size: calc(21px * var(--sm-k)); font-weight: 900; color: var(--sm-sub); font-variant-numeric: tabular-nums; }
+        .sm-prod .sm-pc { position: absolute; top: 8px; right: 8px; min-width: calc(40px * var(--sm-k)); height: calc(40px * var(--sm-k)); padding: 0 8px; border-radius: 999px; background: var(--sm-go); color: #fff; font-size: calc(22px * var(--sm-k)); font-weight: 900; display: grid; place-items: center; box-sizing: border-box; }
+        .sm-prod.in { box-shadow: inset 0 6px 0 var(--ink), 0 0 0 4px var(--sm-go); }
+        .sm-prod.out { opacity: .55; }
+        .sm-prod .sm-pout { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg); padding: 4px 14px; border-radius: 10px; background: var(--sm-del); color: #fff; font-size: calc(20px * var(--sm-k)); font-weight: 900; white-space: nowrap; }
+        .sm-empty, .sm-none { font-size: calc(18px * var(--sm-k)); font-weight: 800; color: var(--sm-sub); text-align: center; margin: 20px 0; }
+        .sm-cart, .sm-paybox { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 22px; background: var(--sm-card); box-shadow: var(--shadow-card); }
+        .sm-ch { display: flex; justify-content: space-between; align-items: baseline; font-size: calc(18px * var(--sm-k)); font-weight: 900; color: var(--sm-sub); }
+        .sm-ch b { font-size: calc(22px * var(--sm-k)); color: var(--sm-text); }
+        .sm-rows { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .sm-row { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 10px; border-radius: 16px; background: var(--sm-bg); box-shadow: inset 5px 0 0 var(--ink); }
+        .sm-row .sm-rimg { width: calc(44px * var(--sm-k)); height: calc(44px * var(--sm-k)); flex-shrink: 0; display: grid; place-items: center; }
+        .sm-row .sm-rimg svg, .sm-row .sm-rimg img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+        .sm-row .sm-rn { flex: 1; min-width: 0; font-size: calc(19px * var(--sm-k)); font-weight: 900; overflow-wrap: anywhere; }
+        .sm-row .sm-rq { font-size: calc(22px * var(--sm-k)); font-weight: 900; font-variant-numeric: tabular-nums; }
+        .sm-rb { width: 64px; height: 64px; border: none; border-radius: 16px; font-size: 32px; font-weight: 900; cursor: pointer; flex-shrink: 0; }
+        .sm-rb.minus { background: transparent; color: var(--sm-del); box-shadow: inset 0 0 0 3px var(--sm-del); }
+        .sm-rb.plus { background: var(--btn-neutral); color: var(--sm-text); }
+        .sm-tot, .sm-big { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-weight: 900; }
+        .sm-tot span, .sm-big span { font-size: calc(20px * var(--sm-k)); color: var(--sm-sub); }
+        .sm-tot b { font-size: calc(38px * var(--sm-k)); font-variant-numeric: tabular-nums; }
+        .sm-big b { font-size: calc(54px * var(--sm-k)); font-variant-numeric: tabular-nums; line-height: 1.1; }
+        .sm-big.chg b { color: var(--sm-go); }
+        /* お客様に言う言葉 */
+        .sm-line { position: relative; padding: 12px 16px; border-radius: 18px; background: #E3EEFC; color: #0B3D7A; }
+        .sm-line .sm-lk { display: block; font-size: calc(14px * var(--sm-k)); font-weight: 800; opacity: .75; }
+        .sm-line .sm-lt { display: block; font-size: calc(24px * var(--sm-k)); font-weight: 900; line-height: 1.45; }
+        :root[data-theme="dark"] .sm-line { background: #13304F; color: #D6E6FF; }
+        @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .sm-line { background: #13304F; color: #D6E6FF; } }
+        #simple-root.sm-hc .sm-line { background: #fff; color: #000; box-shadow: inset 0 0 0 3px #000; }
+        /* れんしゅうのお題 */
+        .sm-odai { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 14px; border-radius: 16px; background: #FFF1D6; color: #5A3300; font-size: calc(19px * var(--sm-k)); font-weight: 900; }
+        .sm-odai .sm-ok { padding: 2px 10px; border-radius: 999px; background: #E8710A; color: #fff; font-size: calc(14px * var(--sm-k)); }
+        .sm-odai .sm-ol { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+        .sm-odai .sm-ol .ok { color: var(--sm-go); }
+        /* お金をもらう */
+        .sm-payin { flex: 1.3; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+        .sm-money { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+        .sm-mrow { flex: 1; min-height: 0; display: grid; gap: 10px; grid-template-rows: minmax(0, 1fr); }
+        .sm-mrow.bills { grid-template-columns: repeat(3, minmax(0, 1fr)); flex: .9; }
+        .sm-mrow.coins { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); flex: 1.6; }
+        .sm-mbtn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: calc(72px * var(--sm-k)); padding: 6px; border: none; border-radius: 18px; background: var(--sm-card); color: var(--sm-text); cursor: pointer; box-shadow: var(--shadow-card); min-width: 0; }
+        /* お金の絵は、ボタンの空いている所いっぱいに（絵の大きさでボタンが伸びないように） */
+        .sm-mbtn .sm-mi { position: relative; width: 100%; flex: 1 1 0; min-height: 28px; }
+        .sm-mbtn .sm-mi svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+        .sm-mbtn .sm-ml { font-size: calc(17px * var(--sm-k)); font-weight: 900; white-space: nowrap; }
+        .sm-recv { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; padding: 10px 14px; border-radius: 16px; background: var(--sm-bg); font-weight: 900; }
+        .sm-recv span { font-size: calc(18px * var(--sm-k)); color: var(--sm-sub); }
+        .sm-recv b { font-size: calc(40px * var(--sm-k)); font-variant-numeric: tabular-nums; }
+        .sm-recv small { width: 100%; text-align: right; font-size: calc(20px * var(--sm-k)); color: #B35C00; }
+        .sm-recv.ok small { color: var(--sm-go); }
+        .sm-tray { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 4px; }
+        .sm-tray .sm-ti { width: calc(48px * var(--sm-k)); }
+        .sm-tray .sm-ti svg { width: 100%; height: auto; }
+        .sm-keys { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 1fr; gap: 10px; }
+        .sm-key { border: none; border-radius: 18px; background: var(--sm-card); color: var(--sm-text); font-size: calc(36px * var(--sm-k)); font-weight: 900; cursor: pointer; box-shadow: var(--shadow-card); min-height: 64px; }
+        .sm-key.clr { color: var(--sm-del); }
+        /* おつりを渡す */
+        .sm-give { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .sm-gv { display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; align-items: center; gap: 2px 14px; padding: 10px 16px; border: none; border-radius: 18px; background: var(--sm-card); color: var(--sm-text); cursor: pointer; text-align: left; box-shadow: var(--shadow-card); min-height: calc(84px * var(--sm-k)); }
+        .sm-gv .sm-gi { grid-column: 1; grid-row: 1 / 3; display: flex; align-items: center; }
+        .sm-gv .sm-gim { width: calc(56px * var(--sm-k)); margin-right: -14px; }
+        .sm-gv .sm-gim svg { width: 100%; height: auto; }
+        .sm-gv .sm-gl { grid-column: 2; grid-row: 1; font-size: calc(22px * var(--sm-k)); font-weight: 900; padding-left: 12px; }
+        .sm-gv .sm-gc { grid-column: 3; grid-row: 1 / 3; font-size: calc(34px * var(--sm-k)); font-weight: 900; font-variant-numeric: tabular-nums; }
+        .sm-gv .sm-gk { grid-column: 2; grid-row: 2; font-size: calc(15px * var(--sm-k)); font-weight: 800; color: var(--sm-sub); padding-left: 12px; }
+        .sm-gv { flex: 1 1 0; max-height: calc(140px * var(--sm-k)); }
+        .sm-main.change .sm-paybox { align-self: flex-start; }
+        .sm-gv.done { background: #E3F4E8; box-shadow: inset 0 0 0 3px var(--sm-go); }
+        .sm-gv.done .sm-gk { color: var(--sm-go); }
+        :root[data-theme="dark"] .sm-gv.done { background: #133A21; }
+        .sm-nochg { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; font-size: calc(30px * var(--sm-k)); font-weight: 900; }
+        .sm-nochg svg { width: calc(96px * var(--sm-k)); height: calc(96px * var(--sm-k)); }
+        /* おわり */
+        .sm-main.done { align-items: center; justify-content: center; }
+        .sm-donebox { display: flex; flex-direction: column; align-items: center; gap: 18px; width: min(560px, 100%); }
+        .sm-donebox > svg { width: calc(120px * var(--sm-k)); height: calc(120px * var(--sm-k)); }
+        .sm-donebox .sm-line { width: 100%; box-sizing: border-box; text-align: center; }
+        .sm-donebox .sm-btn { width: 100%; flex: none; }
+        .sm-closed { font-size: calc(26px * var(--sm-k)); font-weight: 900; text-align: center; }
+        /* 重ねて出す窓（スタッフを呼ぶ・はい／いいえ） */
+        .sm-ov { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0,0,0,.45); }
+        .sm-ovc { display: flex; flex-direction: column; align-items: center; gap: 18px; width: min(560px, 100%); padding: 24px; border-radius: 26px; background: var(--sm-card); color: var(--sm-text); text-align: center; }
+        .sm-ovc > b { font-size: calc(28px * var(--sm-k)); line-height: 1.45; }
+        .sm-ovc .sm-acts { width: 100%; }
+        .sm-ov.call { background: rgba(232,113,10,.35); }
+        .sm-ov.call .sm-ovc { box-shadow: 0 0 0 8px var(--sm-call); animation: smCallFlash 1s ease-in-out infinite alternate; }
+        .sm-ov.call .sm-ovc > .sm-bi { width: 72px; height: 72px; color: var(--sm-call); }
+        .sm-ov.call .sm-btn { width: 100%; flex: none; }
+        @keyframes smCallFlash { from { box-shadow: 0 0 0 8px var(--sm-call); } to { box-shadow: 0 0 0 18px rgba(232,113,10,.35); } }
+        /* 縦長・スマホ：上下に並べる */
+        @media (max-width: 820px), (orientation: portrait) {
+            .sm-main, #simple-root.sm-left .sm-main { flex-direction: column; }
+            .sm-prods { flex: 1 1 auto; grid-template-columns: repeat(auto-fill, minmax(calc(140px * var(--sm-k)), 1fr)); }
+            .sm-cart { flex: 0 0 auto; max-height: 46%; }
+            .sm-rows { max-height: 24vh; }
+            .sm-paybox { flex: 0 0 auto; }
+            .sm-payin { flex: 1 1 auto; min-height: calc(300px * var(--sm-k)); }
+            .sm-steps li .sm-st { display: none; }
+            .sm-steps li.now .sm-st { display: inline; }
+        }
+        /* スマホ：詰めて1画面に収める（ボタンの大きさは、いちばん小さくても 52px 以上） */
+        @media (max-width: 560px) {
+            #simple-root { gap: 8px; padding-left: max(10px, env(safe-area-inset-left)); padding-right: max(10px, env(safe-area-inset-right)); }
+            .sm-top { gap: 6px; }
+            .sm-steps { gap: 4px; }
+            .sm-steps li { padding: 4px 6px; }
+            .sm-steps li .sm-st, .sm-steps li.now .sm-st { display: none; }
+            .sm-call { min-height: 52px; padding: 0 12px; }
+            .sm-call span:last-child { display: none; }
+            .sm-exit { min-height: 52px; min-width: 56px; font-size: 11px; white-space: nowrap; padding: 0 8px; }
+            .sm-guide { padding: 8px 10px; gap: 8px; }
+            .sm-guide .sm-gp { width: 34px; height: 34px; }
+            .sm-guide .sm-gt { font-size: calc(18px * var(--sm-k)); }
+            .sm-say { width: 52px; height: 52px; }
+            .sm-main { gap: 8px; }
+            .sm-prod { padding: 8px 6px 10px; }
+            .sm-prod .sm-pimg { width: calc(64px * var(--sm-k)); height: calc(64px * var(--sm-k)); }
+            .sm-prod .sm-pn { font-size: calc(16px * var(--sm-k)); }
+            .sm-prod .sm-pp { font-size: calc(17px * var(--sm-k)); }
+            .sm-cart, .sm-paybox { padding: 10px; gap: 6px; border-radius: 18px; }
+            .sm-row .sm-rn { font-size: calc(16px * var(--sm-k)); }
+            .sm-rb { width: 52px; height: 52px; font-size: 26px; }
+            .sm-tot b { font-size: calc(30px * var(--sm-k)); }
+            .sm-btn { font-size: calc(17px * var(--sm-k)); min-height: calc(58px * var(--sm-k)); padding: 0 8px; gap: 4px; border-radius: 16px; }
+            .sm-acts { gap: 6px; }
+            .sm-payin .sm-acts .sm-btn { font-size: calc(16px * var(--sm-k)); }
+            .sm-big b { font-size: calc(34px * var(--sm-k)); }
+            .sm-big span, .sm-recv span { font-size: calc(15px * var(--sm-k)); }
+            .sm-line { padding: 8px 12px; }
+            .sm-line .sm-lt { font-size: calc(18px * var(--sm-k)); }
+            .sm-recv { padding: 6px 10px; }
+            .sm-recv b { font-size: calc(26px * var(--sm-k)); }
+            .sm-recv small { font-size: calc(15px * var(--sm-k)); }
+            .sm-tray { display: none; }
+            .sm-money, .sm-mrow { gap: 6px; }
+            .sm-mbtn { min-height: 56px; padding: 4px; border-radius: 14px; }
+            .sm-mbtn .sm-ml { font-size: calc(12px * var(--sm-k)); }
+            .sm-gv { padding: 8px 10px; gap: 0 8px; min-height: calc(64px * var(--sm-k)); }
+            .sm-gv .sm-gim { width: calc(40px * var(--sm-k)); margin-right: -10px; }
+            .sm-gv .sm-gim:nth-child(n+3) { display: none; }
+            .sm-gv .sm-gl { font-size: calc(17px * var(--sm-k)); white-space: nowrap; padding-left: 8px; }
+            .sm-gv .sm-gk { font-size: calc(12px * var(--sm-k)); padding-left: 8px; }
+            .sm-gv .sm-gc { font-size: calc(26px * var(--sm-k)); white-space: nowrap; }
+        }
+        /* 設定の画面（スタッフ用） */
+        .smset-list { display: flex; flex-direction: column; gap: 8px; }
+        .smset-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 8px; align-items: center; padding: 8px 10px; border-radius: var(--r-md); background: var(--surface); box-shadow: var(--shadow-card); }
+        .smset-row.off { opacity: .55; }
+        .smset-show { display: flex; align-items: center; gap: 8px; font-weight: 800; min-width: 0; }
+        .smset-show input { width: 22px; height: 22px; flex-shrink: 0; }
+        .smset-show span { overflow-wrap: anywhere; }
+        .smset-in { width: 100%; box-sizing: border-box; margin: 0; padding: 8px 10px; font-size: 15px; }
+        .smset-in.need { box-shadow: inset 0 0 0 2px var(--warn-ink, #B35C00); }
+        @media (max-width: 560px) { .smset-row { grid-template-columns: 1fr 1fr; } .smset-show { grid-column: 1 / -1; } }
+        /* ▲▲▲ ここまで ▲▲▲ */
 
         /* ▼ タイル配置（タブレットの横向き・パソコン）：上に分類のタブ、下は決めた数のマスで、スクロールしない ▼ */
         #product-grid.tile-mode {
@@ -3947,6 +4177,7 @@
   <!-- 天気：小さく出しても形が分かるよう、線の数をしぼった単純な形にしている -->
   <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.3"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></symbol>
   <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 019.5 4 8.5 8.5 0 1020 14.5z"/></symbol>
+  <symbol id="ic-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1.8 2 5.2 2 7 0"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.6"/></symbol>
   <symbol id="ic-tiles" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><path d="M17 14.5v5M14.5 17h5"/></symbol>
   <symbol id="ic-table" viewBox="0 0 24 24"><path d="M3 9.5h18"/><path d="M5.5 9.5 4.5 19M18.5 9.5l1 9.5"/><path d="M8 9.5V6.5h8v3"/><path d="M7 14h10"/></symbol>
   <symbol id="ic-handy" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2"/><path d="M8.8 5.5h6.4v5H8.8z"/><path d="M9.3 14h.01M12 14h.01M14.7 14h.01M9.3 16.8h.01M12 16.8h.01M14.7 16.8h.01" stroke-width="2.4"/></symbol>
@@ -4386,6 +4617,7 @@
             <!-- 消費税（初期はなし）と、税務用の資料 -->
             <div class="sub-view" id="sub-tax" style="display:none;"><div id="tax-body"></div></div>
             <div class="sub-view" id="sub-tiles" style="display:none;"><div id="tiles-body"></div></div>
+            <div class="sub-view" id="sub-simple" style="display:none;"><div id="simple-body"></div></div>
 
             <!-- クーポン（一覧と、作る・直す画面） -->
             <!-- セット割・クーポン（割引はここにまとめる） -->
@@ -4617,6 +4849,8 @@
 </div>
 
 <!-- パスコード（6けた）を入れる窓。ロックを外す時と、決める時に使う -->
+<!-- シンプルモード（利用者の方が自分で会計する画面）。この端末をシンプルモードにした時だけ出す -->
+<div id="simple-root" hidden role="main" aria-label="シンプルモード"></div>
 <div id="passcode-modal" class="pc-overlay" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="pc-title">
     <div class="pc-card">
         <svg class="ic pc-ic"><use href="#ic-lock"/></svg>
@@ -5090,6 +5324,8 @@
     function showToast(msg) {
         const t = document.getElementById('toast');
         if (!t) return;
+        // シンプルモードの間は、ふつうの画面向けの知らせは出さない（画面の中で、やさしい言葉で知らせる）
+        if (smShown && !String(msg).startsWith('シンプルモード')) return;
         t.textContent = msg;
         t.classList.add('show');
         clearTimeout(toastTimer);
@@ -5435,6 +5671,7 @@
         updatePendingReminder();
         updateNavBadges();
         updateClosedState();
+        if (smShown) smRenderSoon();   // シンプルモードの画面も、在庫・共有の変化に合わせて描き直す
     }
 
     const LOW_STOCK_ALERT = 3; // この残数に到達したら「残りわずか」を通知
@@ -7217,6 +7454,36 @@
                 <p>同じ画面の<b>「表を印刷・PDF」</b>で、この端末に残っている販売会の売上を<b>税率ごと・月ごと・販売会ごと・支払い方法ごと</b>の白黒の表にまとめます。<b>「会計ごとのCSV」</b>は、1件ずつの税込み金額と消費税の一覧です（帳簿付けの元に）。年ごとに絞ることもできます。消費税なしで記録した会計は「消費税なし」の欄に入ります。</p>`
         },
         {
+            id: 'simple', icon: 'smile', title: 'シンプルモード', sub: '利用者の方が自分で会計する',
+            body: `
+                <p>利用者の方（就労継続支援の作業で作ったパン・クッキーを売る方）が、自分で会計できるようにする画面です。<b>「設定 → シンプルモード」</b>で、<b>この端末だけ</b>を切り替えます（ほかの端末はいまの画面のまま。共有中も会計は共有されます）。初めはオフです。</p>
+                <h4>会計の手順（いつも同じ3つ）</h4>
+                <ol class="man-steps">
+                    <li><b>えらぶ</b>：お客様がほしい商品の絵を押します。右に「えらんだ もの」と合計が出ます。全部えらんだら<b>「おかいけいへ」</b>。</li>
+                    <li><b>おかねを もらう</b>：吹き出しの言葉（「380えんです」）をお客様に言い、もらったお札・硬貨の絵を押します（数字を打つ形も選べます）。足りれば<b>「つぎへ」</b>。ここで会計が記録されます。</li>
+                    <li><b>おつりを わたす</b>：渡すお札・硬貨と枚数が絵で出ます。渡したら、その行を押して印を付けます。全部渡したら<b>「おわり」</b>。「ありがとうございました」と言って、<b>「つぎの おきゃくさん」</b>。</li>
+                </ol>
+                <ul class="man-list">
+                    <li>画面の上の帯に<b>いまの手順</b>、その下に<b>次にすること</b>が大きな文で出ます。声でも読みます（🔊でもう一度聞けます）。</li>
+                    <li>色の決まり：<b>みどり＝すすむ</b>、<b>はいいろ＝もどる</b>、<b>あか＝けす</b>、<b>オレンジ＝スタッフを よぶ</b>。</li>
+                    <li>困った時は<b>「スタッフを よぶ」</b>。画面が光って音が鳴りつづけます（スタッフが「とめる」を押す）。</li>
+                    <li>売り切れの商品は押せません。セット割・個数制限・消費税は、ふつうの会計と同じ決まりで計算します。値引き・クーポン・客属性・設定などは出しません（客属性は「後で」として記録されます）。</li>
+                </ul>
+                <h4>利用者の方に合わせる（設定 → シンプルモード）</h4>
+                <ul class="man-list">
+                    <li><b>ことば</b>：漢字／ふりがな／ひらがな／English。商品の<b>よみ（ひらがな）</b>と<b>英語の名前</b>も、同じ画面で入れます（漢字の入った名前には、よみを入れてください）。</li>
+                    <li><b>文字の大きさ</b>（3段）・<b>くっきりした配色</b>・<b>動きを少なく</b>・<b>声</b>（オン・オフ、ゆっくり）。</li>
+                    <li><b>手のふるえ対策</b>：続けて押してしまった時は1回にする（0.3秒・0.6秒・1秒）。<b>右きき・左きき</b>で、すすむボタンの側を入れかえます。</li>
+                    <li><b>おつりを1つずつ確かめる</b>・<b>もらったお金の入れ方</b>（お金の絵／数字）・<b>出す商品</b>（その日に売る物だけにする）。</li>
+                    <li><b>れんしゅうモード</b>：売上に記録しません。「メロンパンを 2こ ください」「1000えん だします」のようなお題が出るので、ひとりでも練習できます。</li>
+                    <li>キーボード・スイッチコントロール・画面の読み上げ（VoiceOver など）でも操作できます。</li>
+                </ul>
+                <div class="man-box tip">
+                    <div class="man-box-h">終わる時（スタッフ）</div>
+                    <p>画面の右上の<b>「スタッフ」を1.5秒長く押します</b>。「この端末の設定」で<b>パスコード</b>を決めておくと、終わる時にパスコードを聞きます（利用者の方がうっかり終わらないように）。読み込み直しても、シンプルモードのままです。</p>
+                </div>`
+        },
+        {
             id: 'consign', icon: 'box', title: '委託商品', sub: 'ほかの人から預かって売る',
             body: `
                 <p>作家さんやほかの団体から預かって売る商品です。既製品の販売のモードで、<b>「設定 → レジの機能」</b>の<b>「委託商品」</b>をオンにすると使えます（はじめはオフ。オンにすると、設定の一覧に「委託商品」が出ます）。</p>
@@ -8940,7 +9207,8 @@
                     cdLight: d.cdLight === true,
                     kdsStation: typeof d.kdsStation === 'string' ? d.kdsStation : 'all',
                     sound: d.sound !== false,
-                    kdAlert: d.kdAlert !== false
+                    kdAlert: d.kdAlert !== false,
+                    simple: normSmPrefs(d.simple)     // シンプルモード（この端末だけ）
                 };
             }
             const w = localStorage.getItem(UI_PREF_KEY + '_weather');
@@ -13351,6 +13619,7 @@
         'rest': 'テーブルと伝票',
         'tax': '消費税',
         'tiles': 'タイルの配置',
+        'simple': 'シンプルモード',
         'bulk': 'まとめて登録',
         'consign': '委託商品',
         'feat': 'レジの機能',
@@ -13675,6 +13944,7 @@
             else if (sub === 'rest') renderRestView();
             else if (sub === 'tax') renderTaxView();
             else if (sub === 'tiles') renderTileEditor();
+            else if (sub === 'simple') renderSimpleSettings();
             else if (sub === 'bulk') renderBulkView();
             else if (sub === 'consign') renderConsignView();
             else if (sub === 'feat') renderFeatView();
@@ -13807,6 +14077,7 @@
             menuRow('users', 'CD（お客様用の画面）', cdSub(), "openPanel('settings','cd')") +
             menuRow('clock', 'この端末の設定', (isLocked() ? '制限中・' : '') + clockSub, "openPanel('settings','display')") +
             menuRow('sound', '音と読み上げ', soundSub(), "openPanel('settings','sound')") +
+            menuRow('smile', 'シンプルモード', '利用者の方が自分で会計する画面・' + smSub(), "openPanel('settings','simple')") +
             head('印刷') +
             menuRow('printer', 'レシート', 'ヘッダー・フッター・QR・大きな番号・並べる項目', "openPanel('settings','rcpt')") +
             menuRow('file', '領収書', `発行者「${escHtml(shopInfo().name)}」・宛名・但し書き`, "openPanel('settings','receipt')") +
@@ -18993,7 +19264,8 @@
             n: p.name, p: p.price, i: p.initialStock, t: p.type || '', o: p.note || '', a: p.active !== false, u: !!p.unlimited, s: !!p.stopped, c: p.consign || '',
             k: p.code || '', g: p.cost != null ? p.cost : '',   // JANコードと原価も（ほかの端末で直した時に届くように）
             r: !!p.rec, w: !!p.isNew, d: p.desc || '', ar: p.art || '',   // モバイルのおすすめ・新商品・説明・絵も
-            lm: p.limit || 0                                            // 1会計の上限も
+            lm: p.limit || 0,                                           // 1会計の上限も
+            kn: p.kana || '', en: p.en || ''                            // シンプルモードのよみ・英語の名前も
         })));
         const before = key(products);
         const next = JSON.parse(JSON.stringify(remoteProducts));
@@ -22315,6 +22587,643 @@
     }
     // ▲▲▲ ここまで ▲▲▲
 
+    // ▼▼▼ シンプルモード（利用者の方が自分で会計する画面）▼▼▼
+    // 就労継続支援B型で作ったパン・クッキーを、利用者の方（主に知的障害のある方）が自分で会計できるようにする。
+    // ・端末ごとに切り替える（uiPrefs.simple）。初めはオフ。いまの画面は何も変えず、上に別の画面を重ねる
+    // ・手順はいつも同じ3つ：① えらぶ → ② おかねを もらう → ③ おつりを わたす
+    // ・次にすることを、動作ごとに大きな文と声で出す。お客様に言う言葉も吹き出しで出す
+    // ・ことば：漢字／ふりがな／ひらがな／English。文字の大きさ・くっきりした配色・動きを少なく・ふるえ対策・左きき
+    // ・会計の記録は、ふつうのお会計と同じしくみ（openCheckout → completeTransaction）を通す（金額の決まりを2つ持たない）
+    // くわしくは docs/シンプルモード草案.md
+    var SM_DEF = { on: false, size: 'l', lang: 'ruby', voice: true, rate: 'slow', money: 'pic', check: true, contrast: false, motion: false, debounce: 300, hand: 'right', hide: [], practice: false };
+    var smStep = 'pick', smRecv = [], smKey = '', smTotal = 0, smChange = 0, smGiven = {}, smOdai = null, smCall = null, smAsk = null;
+    var smLastGuide = '', smSayQueue = [], smRaf = 0, smLastTap = 0, smHold = null, smShown = false;
+    // 保存してあるシンプルモードの設定を、使える値だけにする
+    function normSmPrefs(v) {
+        if (!v || typeof v !== 'object') return undefined;
+        const pick = (x, list, d) => (list.includes(x) ? x : d);
+        return {
+            on: v.on === true, size: pick(v.size, ['l', 'xl', 'xxl'], 'l'), lang: pick(v.lang, ['ja', 'ruby', 'kana', 'en'], 'ruby'),
+            voice: v.voice !== false, rate: pick(v.rate, ['slow', 'normal'], 'slow'), money: pick(v.money, ['pic', 'key'], 'pic'),
+            check: v.check !== false, contrast: v.contrast === true, motion: v.motion === true,
+            debounce: pick(Number(v.debounce), [0, 300, 600, 1000], 300), hand: pick(v.hand, ['right', 'left'], 'right'),
+            hide: Array.isArray(v.hide) ? v.hide.filter(x => typeof x === 'number' || typeof x === 'string').slice(0, 500) : [],
+            practice: v.practice === true
+        };
+    }
+    function smPrefs() { const s = Object.assign({}, SM_DEF, (uiPrefs && uiPrefs.simple) || {}); if (!Array.isArray(s.hide)) s.hide = []; return s; }
+    function smOn() { return !!(uiPrefs && uiPrefs.simple && uiPrefs.simple.on) && !customerMode; }
+    function setSmPref(k, v) {
+        uiPrefs.simple = Object.assign({}, smPrefs(), { [k]: v });
+        storeUiPrefs();
+        playSound(660, 0.04);
+        if (smShown) smRender();
+        renderSimpleSettings();
+    }
+    // ---- ことば ----
+    // ja は「{漢字|かんじ}」の形でふりがなを付けて書く。kana はひらがな（言葉ごとに間をあける）。en は英語
+    function smRuby(ja) { return escHtml(ja).replace(/\{([^|{}]+)\|([^{}]+)\}/g, '<ruby>$1<rt>$2</rt></ruby>'); }
+    function smStrip(ja) { return String(ja).replace(/\{([^|{}]+)\|([^{}]+)\}/g, '$1'); }
+    function smT(ja, kana, en) {
+        const l = smPrefs().lang;
+        if (l === 'en') return escHtml(en);
+        if (l === 'kana') return escHtml(kana);
+        if (l === 'ruby') return smRuby(ja);
+        return escHtml(smStrip(ja));
+    }
+    // 声で読む文（漢字・ふりがなの時もひらがなの文を読む。読み間違いをしないように）
+    function smV(ja, kana, en) { return smPrefs().lang === 'en' ? en : kana; }
+    function smYen(n) {
+        const s = Math.max(0, Math.round(Number(n) || 0)).toLocaleString('ja-JP');
+        const l = smPrefs().lang;
+        return l === 'en' ? '¥' + s : (l === 'kana' ? s + 'えん' : s + '円');
+    }
+    function smYenV(n) { return smPrefs().lang === 'en' ? Math.round(n) + ' yen' : Math.round(n) + 'えん'; }
+    function smHasKanji(s) { return /[一-鿿々]/.test(String(s || '')); }
+    function smHira(s) { return String(s || '').replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60)); }
+    // 商品の名前（ことばに合わせて）
+    function smNameText(p) {
+        const l = smPrefs().lang;
+        if (l === 'en') return p.en || p.name;
+        if (l === 'kana') return p.kana || p.name;   // カタカナの名前はそのまま（漢字の名前は「よみ」を使う）
+        return p.name;
+    }
+    function smName(p) {
+        const l = smPrefs().lang;
+        if (l === 'ruby' && p.kana && smHasKanji(p.name)) return `<ruby>${escHtml(p.name)}<rt>${escHtml(p.kana)}</rt></ruby>`;
+        return escHtml(smNameText(p));
+    }
+    function smNameV(p) { const l = smPrefs().lang; return l === 'en' ? (p.en || p.name) : (p.kana || p.name); }
+    function smDenom(u) {
+        return smT(`${u}{円|えん}${u >= 1000 ? '{札|さつ}' : '{玉|だま}'}`, `${u}えん${u >= 1000 ? 'さつ' : 'だま'}`, `¥${u} ${u >= 1000 ? 'bill' : 'coin'}`);
+    }
+    // ---- 声 ----
+    function smSpeak(list) {
+        const p = smPrefs();
+        if (!p.voice || !('speechSynthesis' in window)) return;
+        const texts = (Array.isArray(list) ? list : [list]).filter(Boolean);
+        if (!texts.length) return;
+        try {
+            speechSynthesis.cancel();
+            const en = p.lang === 'en';
+            const v = en ? ((speechSynthesis.getVoices() || []).find(x => /^en/i.test(x.lang)) || null) : jaVoice();
+            texts.forEach(t => {
+                const u = new SpeechSynthesisUtterance(t);
+                u.lang = en ? 'en-US' : 'ja-JP';
+                if (v) u.voice = v;
+                u.rate = p.rate === 'slow' ? 0.85 : 1.0;
+                u.pitch = 1.0; u.volume = 1;
+                speechSynthesis.speak(u);
+            });
+        } catch (e) { /* しゃべれない端末では何もしない */ }
+    }
+    // ---- 絵 ----
+    // お札・硬貨（本物そっくりにはせず、色と形と数字で見分ける）
+    function smMoneySvg(u) {
+        if (u >= 1000) {
+            const c = u === 10000 ? ['#C9A27E', '#7A5530'] : (u === 5000 ? ['#B9A8DD', '#5B4796'] : ['#8DB8E3', '#2D5F92']);
+            return `<svg viewBox="0 0 160 84" class="sm-bill" aria-hidden="true"><rect x="3" y="3" width="154" height="78" rx="9" fill="${c[0]}" stroke="${c[1]}" stroke-width="4"/><rect x="12" y="12" width="136" height="60" rx="5" fill="none" stroke="${c[1]}" stroke-width="2" opacity=".45"/><circle cx="122" cy="42" r="15" fill="#fff" opacity=".5"/><text x="64" y="54" text-anchor="middle" font-size="36" font-weight="900" fill="${c[1]}" font-family="system-ui, sans-serif">${u}</text></svg>`;
+        }
+        const d = { 1: ['#EEF0F2', '#9AA1A9', 30, false], 5: ['#E8C766', '#A57F1C', 33, true], 10: ['#D08A55', '#8A4B22', 35, false], 50: ['#E3E6EA', '#8E959D', 32, true], 100: ['#D9DDE2', '#868D96', 34, false], 500: ['#E4C66E', '#9B7A1F', 40, false] }[u] || ['#ddd', '#888', 34, false];
+        return `<svg viewBox="0 0 100 100" class="sm-coin" aria-hidden="true"><circle cx="50" cy="50" r="${d[2] + 6}" fill="${d[0]}" stroke="${d[1]}" stroke-width="4"/><circle cx="50" cy="50" r="${d[2]}" fill="none" stroke="${d[1]}" stroke-width="1.5" opacity=".5"/>${d[3] ? `<circle cx="50" cy="34" r="7" fill="var(--sm-bg)" stroke="${d[1]}" stroke-width="2"/>` : ''}<text x="50" y="${d[3] ? 70 : 61}" text-anchor="middle" font-size="${String(u).length >= 3 ? 26 : 32}" font-weight="900" fill="${d[1]}" font-family="system-ui, sans-serif">${u}</text></svg>`;
+    }
+    function smProdImg(p) {
+        const url = productImgUrl(p.name);
+        if (url) return `<img src="${url}" alt="">`;
+        if (window.MENU_ART && p.art !== 'none') {
+            const id = p.art && MENU_ART.has(p.art) ? p.art : MENU_ART.pick(p.name, p.type, catLabelOf(p.type));
+            if (id) return MENU_ART.svg(id);
+        }
+        return `<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="34" fill="${catBg(p.type)}" stroke="${catInk(p.type)}" stroke-width="4"/></svg>`;
+    }
+    const SM_ICON = {
+        pick: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M20 40V18a4 4 0 0 1 8 0v10l9 2a4 4 0 0 1 3 4.6L38.5 44H22z" fill="#FFD7A8" stroke="#8A5A2B" stroke-width="2.5" stroke-linejoin="round"/><path d="M14 12l-4-4M24 8V3M34 12l4-4" stroke="#E8710A" stroke-width="3" stroke-linecap="round"/></svg>',
+        pay: '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="4" y="12" width="32" height="18" rx="3" fill="#8DB8E3" stroke="#2D5F92" stroke-width="2.5"/><circle cx="34" cy="32" r="10" fill="#E4C66E" stroke="#9B7A1F" stroke-width="2.5"/><text x="34" y="36" text-anchor="middle" font-size="10" font-weight="900" fill="#9B7A1F">¥</text></svg>',
+        change: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 30h14l8-6c2-1.5 4.5.5 3 3l-5 6H14" fill="#FFD7A8" stroke="#8A5A2B" stroke-width="2.5" stroke-linejoin="round"/><circle cx="34" cy="14" r="8" fill="#D9DDE2" stroke="#868D96" stroke-width="2.5"/><circle cx="20" cy="12" r="6" fill="#D08A55" stroke="#8A4B22" stroke-width="2.5"/></svg>',
+        done: '<svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="#1E8E3E"/><path d="M14 25l7 7 13-15" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+        speak: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+        call: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="3.5" fill="currentColor"/><path d="M5 21c0-4 3-7 7-7s7 3 7 7" fill="currentColor"/><path d="M19 3v5M21.5 5.5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+        next: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4l9 8-9 8z" fill="currentColor"/></svg>',
+        back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 4L7 12l9 8z" fill="currentColor"/></svg>',
+        del: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>'
+    };
+    // ---- 状態 ----
+    function smVisibleProducts() {
+        const hide = new Set(smPrefs().hide);
+        return products.filter(p => p.active !== false && !(Number(p.price) <= 0) && !hide.has(p.id));
+    }
+    function smCartCount(id) { return cart.filter(i => i.id === id && !i.manual).length; }
+    function smRecvTotal() {
+        if (smPrefs().money === 'key') return parseInt(smKey, 10) || 0;
+        return smRecv.reduce((a, u) => a + u, 0);
+    }
+    function smRenderSoon() {
+        if (!smShown || smRaf) return;
+        smRaf = requestAnimationFrame(() => { smRaf = 0; if (smShown) smRender(); });
+    }
+    // 次にすることの文（ガイド）：[漢字, ひらがな, 英語]
+    function smGuide() {
+        if (!currentSession) return ['まだお{店|みせ}が{開|あ}いていません。スタッフを{呼|よ}んでね', 'まだ おみせが あいて いません。スタッフを よんでね', 'The shop is not open yet. Please call a staff member.'];
+        if (smStep === 'pick') {
+            if (!cart.length) return ['お{客|きゃく}さんが ほしい{物|もの}を{押|お}してね', 'おきゃくさんが ほしい ものを おしてね', 'Tap what the customer wants.'];
+            if (smOdai && !smOdaiDone()) return ['お{題|だい}と{同|おな}じになるように{押|お}してね', 'おだいと おなじに なるように おしてね', 'Match the order card.'];
+            return ['{全部|ぜんぶ}{選|えら}んだら「お{会計|かいけい}へ」を{押|お}してね', 'ぜんぶ えらんだら 「おかいけいへ」を おしてね', 'When everything is chosen, tap "Pay".'];
+        }
+        if (smStep === 'pay') {
+            const r = smRecvTotal();
+            if (!r) return [`お{客|きゃく}さんから お{金|かね}をもらって、もらったお{金|かね}を{押|お}してね`, 'おきゃくさんから おかねを もらって、もらった おかねを おしてね', 'Take the money and tap the money you received.'];
+            if (r < smTotal) return [`あと ${(smTotal - r).toLocaleString()}{円|えん} たりないよ`, `あと ${smTotal - r}えん たりないよ`, `${smYen(smTotal - r)} more is needed.`];
+            return ['「つぎへ」を{押|お}してね', '「つぎへ」を おしてね', 'Tap "Next".'];
+        }
+        if (smStep === 'change') {
+            if (smChange <= 0) return ['おつりは ありません。「おわり」を{押|お}してね', 'おつりは ありません。「おわり」を おしてね', 'No change. Tap "Done".'];
+            const left = smChangeList().filter(d => !smGiven[d.unit]).length;
+            if (smPrefs().check && left) return ['おつりを{渡|わた}したら、その お{金|かね}を{押|お}してね', 'おつりを わたしたら、その おかねを おしてね', 'Give the change, then tap each one you gave.'];
+            return ['おつりを{渡|わた}したら「おわり」を{押|お}してね', 'おつりを わたしたら 「おわり」を おしてね', 'After giving the change, tap "Done".'];
+        }
+        return ['「ありがとうございました」と{言|い}ってね', '「ありがとうございました」と いってね', 'Say "Thank you very much".'];
+    }
+    // お客様に言う言葉（吹き出し）
+    function smLine() {
+        if (smStep === 'pay') return [`${smTotal.toLocaleString()}{円|えん}です`, `${smTotal}えんです`, `That will be ${smYen(smTotal)}.`];
+        if (smStep === 'change') {
+            const r = smRecvTotal();
+            return smChange > 0 ? [`${r.toLocaleString()}{円|えん} お{預|あず}かりします。${smChange.toLocaleString()}{円|えん}のお{返|かえ}しです`, `${r}えん おあずかり します。${smChange}えんの おかえしです`, `${smYen(r)} received. Here is ${smYen(smChange)} change.`]
+                : ['ちょうど いただきます', 'ちょうど いただきます', 'That is the exact amount.'];
+        }
+        if (smStep === 'done') return ['ありがとうございました', 'ありがとうございました', 'Thank you very much!'];
+        return null;
+    }
+    function smChangeList() { return changeDenoms(smChange); }
+    // ---- 画面 ----
+    function smBtn(cls, label, onclick, opts) {
+        const o = opts || {};
+        return `<button type="button" class="sm-btn ${cls}"${o.disabled ? ' disabled' : ''}${o.aria ? ` aria-label="${escHtml(o.aria)}"` : ''}${o.pressed != null ? ` aria-pressed="${o.pressed}"` : ''} onclick="${onclick}">${o.icon ? `<span class="sm-bi">${SM_ICON[o.icon]}</span>` : ''}<span class="sm-bl">${label}</span></button>`;
+    }
+    function smStepsHtml() {
+        const steps = [['pick', '{選|えら}ぶ', 'えらぶ', 'Choose'], ['pay', 'お{金|かね}をもらう', 'おかねを もらう', 'Get money'], ['change', 'おつりを{渡|わた}す', 'おつりを わたす', 'Give change']];
+        const cur = smStep === 'done' ? 'change' : smStep;
+        const idx = steps.findIndex(s => s[0] === cur);
+        return `<ol class="sm-steps">${steps.map((s, i) => `<li class="${i === idx ? 'now' : (i < idx ? 'past' : '')}"${i === idx ? ' aria-current="step"' : ''}><span class="sm-sn">${i + 1}</span><span class="sm-si">${SM_ICON[s[0]]}</span><span class="sm-st">${smT(s[1], s[2], s[3])}</span></li>`).join('')}</ol>`;
+    }
+    function smTopHtml() {
+        const p = smPrefs();
+        return `<div class="sm-top">
+            ${smStepsHtml()}
+            ${p.practice ? `<span class="sm-prac">${smT('れんしゅう{中|ちゅう}', 'れんしゅう ちゅう', 'Practice')}</span>` : ''}
+            <span class="sm-sp"></span>
+            <button type="button" class="sm-call" onclick="smCallStaff()"><span class="sm-bi">${SM_ICON.call}</span><span>${smT('スタッフを{呼|よ}ぶ', 'スタッフを よぶ', 'Call staff')}</span></button>
+            <button type="button" class="sm-exit" aria-label="スタッフ用：長く押すと、シンプルモードを終わります" onpointerdown="smHoldStart(event)" onpointerup="smHoldEnd()" onpointerleave="smHoldEnd()" onpointercancel="smHoldEnd()" onclick="smExitClick(event)" oncontextmenu="return false;"><span>スタッフ</span><i></i></button>
+        </div>`;
+    }
+    function smGuideHtml() {
+        const g = smGuide();
+        return `<div class="sm-guide" role="status" aria-live="polite"><span class="sm-gp">${SM_ICON[smStep === 'done' ? 'done' : smStep]}</span><span class="sm-gt">${smT(g[0], g[1], g[2])}</span><button type="button" class="sm-say" onclick="smSayAgain()" aria-label="もういちど きく"><span class="sm-bi">${SM_ICON.speak}</span></button></div>`;
+    }
+    function smLineHtml() {
+        const l = smLine();
+        return l ? `<div class="sm-line"><span class="sm-lk">${smT('お{客|きゃく}さんに{言|い}う', 'おきゃくさんに いう', 'Say to the customer')}</span><span class="sm-lt">「${smT(l[0], l[1], l[2])}」</span></div>` : '';
+    }
+    function smOdaiDone() { return !!smOdai && smOdai.items.every(x => smCartCount(x.id) === x.qty) && cart.length === smOdai.items.reduce((a, x) => a + x.qty, 0); }
+    function smOdaiHtml() {
+        if (!smOdai) return '';
+        const byId = new Map(products.map(p => [p.id, p]));
+        return `<div class="sm-odai"><span class="sm-ok">${smT('お{題|だい}', 'おだい', 'Order')}</span><span class="sm-ol">${smOdai.items.map(x => { const p = byId.get(x.id); const ok = smCartCount(x.id) === x.qty; return p ? `<span class="${ok ? 'ok' : ''}">${ok ? '✓ ' : ''}${smName(p)} ${x.qty}${smT('{個|こ}', 'こ', '')}</span>` : ''; }).join('')}</span><span class="sm-oc">${smT('ください', 'ください', 'please')}</span></div>`;
+    }
+    function smPickHtml() {
+        const list = smVisibleProducts();
+        const lim = p => limitOf(p);
+        const prods = list.map(p => {
+            const n = smCartCount(p.id);
+            const out = shownStock(p) <= 0 || !!p.stopped;
+            const full = lim(p) && n >= lim(p);
+            return `<button type="button" class="sm-prod${out ? ' out' : ''}${n ? ' in' : ''}" style="--ink:${catInk(p.type)}; --bg:${catBg(p.type)};" onclick="smAdd(${typeof p.id === 'number' ? p.id : `'${escArg(String(p.id))}'`})" aria-label="${escHtml(smNameText(p))} ${smYenV(p.price)}${out ? ' うりきれ' : ''}${n ? ` いま ${n}こ` : ''}"${out || full ? ' aria-disabled="true"' : ''}>
+                <span class="sm-pimg">${smProdImg(p)}</span>
+                <span class="sm-pn">${smName(p)}</span>
+                <span class="sm-pp">${smYen(p.price)}</span>
+                ${n ? `<span class="sm-pc">${n}</span>` : ''}
+                ${out ? `<span class="sm-pout">${smT('{売|う}り{切|き}れ', 'うりきれ', 'Sold out')}</span>` : ''}
+            </button>`;
+        }).join('');
+        const lines = itemLines(cart).filter(l => !l.manual);
+        const cartRows = lines.map(l => {
+            const p = products.find(x => x.name === l.name) || { name: l.name, type: l.type };
+            const key = escArg(optKey(l));
+            const pid = p.id != null ? (typeof p.id === 'number' ? p.id : `'${escArg(String(p.id))}'`) : 'null';
+            return `<div class="sm-row" style="--ink:${catInk(p.type)};"><span class="sm-rimg">${smProdImg(p)}</span><span class="sm-rn">${smName(p)}</span><span class="sm-rq">×${l.qty}</span>
+                <button type="button" class="sm-rb minus" onclick="smRemove('${key}')" aria-label="${escHtml(smNameText(p))}を 1つ けす">−</button>
+                <button type="button" class="sm-rb plus" onclick="smAdd(${pid})" aria-label="${escHtml(smNameText(p))}を 1つ ふやす">＋</button></div>`;
+        }).join('');
+        const total = smCartTotal();
+        return `<div class="sm-main">
+            <div class="sm-prods" id="sm-prods">${prods || `<p class="sm-empty">${smT('{出|だ}す{商品|しょうひん}がありません。スタッフを{呼|よ}んでね', 'だす しょうひんが ありません。スタッフを よんでね', 'No items. Please call a staff member.')}</p>`}</div>
+            <div class="sm-cart">
+                ${smOdaiHtml()}
+                <div class="sm-ch"><span>${smT('{選|えら}んだ{物|もの}', 'えらんだ もの', 'Chosen')}</span><b>${cart.length}${smT('{個|こ}', 'こ', ' items')}</b></div>
+                <div class="sm-rows">${cartRows || `<p class="sm-none">${smT('まだ ありません', 'まだ ありません', 'Nothing yet')}</p>`}</div>
+                <div class="sm-tot"><span>${smT('{合計|ごうけい}', 'ごうけい', 'Total')}</span><b>${smYen(total)}</b></div>
+                <div class="sm-acts">
+                    ${smBtn('del', smT('{全部|ぜんぶ}{消|け}す', 'ぜんぶ けす', 'Clear all'), 'smClearAsk()', { icon: 'del', disabled: !cart.length })}
+                    ${smBtn('go', smT('お{会計|かいけい}へ', 'おかいけいへ', 'Pay'), 'smToPay()', { icon: 'next', disabled: !cart.length })}
+                </div>
+            </div>
+        </div>`;
+    }
+    // カートの合計（セット割・消費税もふつうのお会計と同じ決まりで）
+    function smCartTotal() {
+        if (!cart.length) return 0;
+        const disc = setDiscountFor(cart);
+        return Math.max(0, itemsGross(cart) - disc) + exTaxOf(cart, disc, taxSnapshot(false)).add;
+    }
+    function smPayHtml() {
+        const p = smPrefs();
+        const r = smRecvTotal();
+        const enough = r >= smTotal;
+        const units = [10000, 5000, 1000, 500, 100, 50, 10, 5, 1];
+        const pad = p.money === 'key'
+            ? `<div class="sm-keys">${['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '00'].map(k => `<button type="button" class="sm-key" onclick="smKeyIn('${k}')">${k}</button>`).join('')}<button type="button" class="sm-key clr" onclick="smKeyClear()" aria-label="けす">C</button></div>`
+            : `<div class="sm-money"><div class="sm-mrow bills">${units.slice(0, 3).map(u => `<button type="button" class="sm-mbtn" onclick="smRecvAdd(${u})" aria-label="${u}えん さつを もらった"><span class="sm-mi">${smMoneySvg(u)}</span><span class="sm-ml">${smDenom(u)}</span></button>`).join('')}</div>
+                <div class="sm-mrow coins">${units.slice(3).map(u => `<button type="button" class="sm-mbtn" onclick="smRecvAdd(${u})" aria-label="${u}えん だまを もらった"><span class="sm-mi">${smMoneySvg(u)}</span><span class="sm-ml">${smDenom(u)}</span></button>`).join('')}</div></div>`;
+        const tray = p.money === 'key' ? '' : `<div class="sm-tray" aria-label="もらった おかね">${smRecv.map(u => `<span class="sm-ti">${smMoneySvg(u)}</span>`).join('')}</div>`;
+        const odaiPay = smOdai && smOdai.pay ? `<div class="sm-odai"><span class="sm-ok">${smT('お{題|だい}', 'おだい', 'Order')}</span><span class="sm-ol">${smT(`お{客|きゃく}さんが ${smOdai.pay.toLocaleString()}{円|えん}{出|だ}しました`, `おきゃくさんが ${smOdai.pay}えん だしました`, `The customer gives ${smYen(smOdai.pay)}.`)}</span></div>` : '';
+        return `<div class="sm-main pay">
+            <div class="sm-paybox">
+                <div class="sm-big"><span>${smT('{合計|ごうけい}', 'ごうけい', 'Total')}</span><b>${smYen(smTotal)}</b></div>
+                ${smLineHtml()}
+                ${odaiPay}
+                <div class="sm-recv${enough ? ' ok' : ''}"><span>${smT('もらったお{金|かね}', 'もらった おかね', 'Received')}</span><b>${smYen(r)}</b>
+                    <small>${r && !enough ? smT(`あと ${(smTotal - r).toLocaleString()}{円|えん}`, `あと ${smTotal - r}えん`, `${smYen(smTotal - r)} more`) : (enough ? smT('たりています', 'たりて います', 'Enough') : '')}</small></div>
+                ${tray}
+            </div>
+            <div class="sm-payin">
+                ${pad}
+                <div class="sm-acts">
+                    ${smBtn('back', smT('{戻|もど}る', 'もどる', 'Back'), 'smBackToPick()', { icon: 'back' })}
+                    ${smBtn('sub', smT('やりなおす', 'やりなおす', 'Redo'), 'smRecvClear()', { disabled: !r })}
+                    ${smBtn('exact', smT('ちょうど', 'ちょうど', 'Exact'), 'smRecvExact()')}
+                    ${smBtn('go', smT('つぎへ', 'つぎへ', 'Next'), 'smToChange()', { icon: 'next', disabled: !enough })}
+                </div>
+            </div>
+        </div>`;
+    }
+    function smChangeHtml() {
+        const p = smPrefs();
+        const list = smChangeList();
+        const allGiven = !p.check || list.every(d => smGiven[d.unit]);
+        return `<div class="sm-main change">
+            <div class="sm-paybox">
+                <div class="sm-big chg"><span>${smT('おつり', 'おつり', 'Change')}</span><b>${smYen(smChange)}</b></div>
+                ${smLineHtml()}
+            </div>
+            <div class="sm-payin">
+                ${smChange > 0 ? `<div class="sm-give">${list.map(d => {
+                    const done = !!smGiven[d.unit];
+                    return `<button type="button" class="sm-gv${done ? ' done' : ''}" aria-pressed="${done}" onclick="smGive(${d.unit})" aria-label="${d.unit}えん ${d.count}まい ${done ? 'わたした' : ''}">
+                        <span class="sm-gi">${Array.from({ length: Math.min(d.count, 4) }, () => `<span class="sm-gim">${smMoneySvg(d.unit)}</span>`).join('')}</span>
+                        <span class="sm-gl">${smDenom(d.unit)}</span>
+                        <span class="sm-gc">× ${d.count}${smT('{枚|まい}', 'まい', '')}</span>
+                        <span class="sm-gk">${done ? '✓ ' + smT('{渡|わた}した', 'わたした', 'Given') : (p.check ? smT('{渡|わた}したら{押|お}す', 'わたしたら おす', 'Tap when given') : '')}</span>
+                    </button>`;
+                }).join('')}</div>` : `<div class="sm-nochg">${SM_ICON.done}<span>${smT('おつりは ありません', 'おつりは ありません', 'No change')}</span></div>`}
+                <div class="sm-acts">${smBtn('go', smT('おわり', 'おわり', 'Done'), 'smFinish()', { icon: 'next', disabled: !allGiven })}</div>
+            </div>
+        </div>`;
+    }
+    function smDoneHtml() {
+        return `<div class="sm-main done"><div class="sm-donebox">${SM_ICON.done}${smLineHtml()}
+            ${smBtn('go', smT('つぎのお{客|きゃく}さん', 'つぎの おきゃくさん', 'Next customer'), 'smNext()', { icon: 'next' })}</div></div>`;
+    }
+    function smClosedHtml() {
+        return `<div class="sm-main done"><div class="sm-donebox"><p class="sm-closed">${smT('まだお{店|みせ}が{開|あ}いていません', 'まだ おみせが あいて いません', 'The shop is not open yet.')}</p></div></div>`;
+    }
+    function smOverlayHtml() {
+        if (smCall) return `<div class="sm-ov call" role="alertdialog" aria-label="スタッフを よんでいます"><div class="sm-ovc"><span class="sm-bi">${SM_ICON.call}</span><b>${smT('スタッフを{呼|よ}んでいます', 'スタッフを よんで います', 'Calling staff…')}</b>
+            <button type="button" class="sm-btn back" onclick="smCallStop()"><span class="sm-bl">${smT('とめる', 'とめる', 'Stop')}</span></button></div></div>`;
+        if (smAsk) return `<div class="sm-ov" role="alertdialog" aria-label="${escHtml(smAsk.v)}"><div class="sm-ovc"><b>${smAsk.html}</b><div class="sm-acts">
+            ${smBtn('back', smT('いいえ', 'いいえ', 'No'), 'smAskNo()')}${smBtn('del', smT('はい', 'はい', 'Yes'), 'smAskYes()')}</div></div></div>`;
+        return '';
+    }
+    function smRender() {
+        const root = document.getElementById('simple-root');
+        if (!root || !smShown) return;
+        const p = smPrefs();
+        if (!currentSession && smStep !== 'pick') smStep = 'pick';
+        const keepScroll = (document.getElementById('sm-prods') || {}).scrollTop || 0;
+        root.className = `sm-k-${p.size}${p.contrast ? ' sm-hc' : ''}${p.motion ? ' sm-still' : ''}${p.hand === 'left' ? ' sm-left' : ''}`;
+        const body = !currentSession ? smClosedHtml() : (smStep === 'pick' ? smPickHtml() : smStep === 'pay' ? smPayHtml() : smStep === 'change' ? smChangeHtml() : smDoneHtml());
+        // キーボード・スイッチで使っている時は、描き直しても同じボタンに居つづける
+        const ae = document.activeElement;
+        const focusKey = ae && root.contains(ae) && ae.tagName === 'BUTTON' ? ae.getAttribute('onclick') : null;
+        root.innerHTML = smTopHtml() + smGuideHtml() + body + smOverlayHtml();
+        if (focusKey) {
+            const btns = [...root.querySelectorAll('button')];
+            const t = btns.find(b => b.getAttribute('onclick') === focusKey && !b.disabled) || root.querySelector('.sm-ov button, .sm-btn.go:not([disabled]), .sm-prod');
+            if (t) { try { t.focus({ preventScroll: true }); } catch (e) {} }
+        }
+        const pr = document.getElementById('sm-prods');
+        if (pr && keepScroll) pr.scrollTop = keepScroll;
+        // 次にすることが変わった時は、声でも読む（先にしゃべることがあれば、その後に）
+        const g = smGuide();
+        const gv = smV(g[0], g[1], g[2]);
+        const say = smSayQueue.slice();
+        smSayQueue = [];
+        if (gv !== smLastGuide) { smLastGuide = gv; say.push(gv); }
+        if (say.length) smSpeak(say);
+    }
+    function smSayAgain() {
+        const g = smGuide();
+        const l = smLine();
+        smSpeak([l ? smV(l[0], l[1], l[2]) : '', smV(g[0], g[1], g[2])]);
+    }
+    // ---- 操作 ----
+    function smAdd(id) {
+        if (!currentSession || smStep !== 'pick') return;
+        const p = products.find(x => x.id === id);
+        if (!p) return;
+        if (shownStock(p) <= 0 || p.stopped) {
+            playError();
+            smSayQueue.push(smV('{売|う}り{切|き}れです', 'うりきれです', 'Sold out'));
+            smRender();
+            return;
+        }
+        const lim = limitOf(p);
+        if (lim && smCartCount(p.id) >= lim) {
+            playError();
+            smSayQueue.push(smPrefs().lang === 'en' ? `Up to ${lim}` : `${lim}こまでです`);
+            smRender();
+            return;
+        }
+        addToCart(p);
+        smSayQueue.push(`${smNameV(p)} ${smCartCount(p.id)}${smPrefs().lang === 'en' ? '' : 'こ'}`);
+        smRender();
+    }
+    function smRemove(key) {
+        if (smStep !== 'pick') return;
+        removeOneFromCart(key);
+        smRender();
+    }
+    function smAskOpen(ja, kana, en, yes) { smAsk = { html: smT(ja, kana, en), v: smV(ja, kana, en), yes }; smSayQueue.push(smAsk.v); smRender(); }
+    function smAskNo() { smAsk = null; playSound(660, 0.04); smRender(); }
+    function smAskYes() { const f = smAsk && smAsk.yes; smAsk = null; if (f) f(); smRender(); }
+    function smClearAsk() {
+        if (!cart.length) return;
+        smAskOpen('{全部|ぜんぶ}{消|け}しますか？', 'ぜんぶ けしますか？', 'Clear everything?', () => {
+            if (!syncMode) cart.forEach(item => restockOne(products.find(p => p.id === item.id)));
+            cart = [];
+            playSound(660, 0.08);
+            saveData();
+            init();
+        });
+    }
+    function smToPay() {
+        if (!cart.length || !currentSession) { playError(); return; }
+        openCheckout();
+        // ふつうのお会計の窓は見せない（合計・割引・記録の番号は、ふつうのお会計と同じしくみで決める）
+        smTotal = parseInt(document.getElementById('modal-total').textContent, 10) || 0;
+        smRecv = []; smKey = ''; smGiven = {};
+        smStep = 'pay';
+        if (smOdai) smOdai.pay = smOdaiPay(smTotal);
+        playSound();
+        smRender();
+    }
+    function smBackToPick() {
+        closeModal('checkout-modal');
+        smStep = 'pick';
+        smRecv = []; smKey = '';
+        playSound(660, 0.05);
+        smRender();
+    }
+    function smRecvAdd(u) {
+        if (smStep !== 'pay') return;
+        if (smRecv.length >= 40) { playError(); return; }
+        smRecv.push(u);
+        playSound(880, 0.04);
+        smSayQueue.push(smYenV(smRecvTotal()));
+        smRender();
+    }
+    function smRecvClear() { smRecv = []; smKey = ''; playSound(660, 0.05); smRender(); }
+    function smRecvExact() {
+        if (smStep !== 'pay') return;
+        if (smPrefs().money === 'key') smKey = String(smTotal);
+        else { smRecv = []; changeDenoms(smTotal).forEach(d => { for (let i = 0; i < d.count; i++) smRecv.push(d.unit); }); }
+        playSound(880, 0.04);
+        smRender();
+    }
+    function smKeyIn(k) {
+        if (smStep !== 'pay') return;
+        if ((smKey + k).replace(/^0+/, '').length > 6) { playError(); return; }
+        smKey = (smKey + k).replace(/^0+(?=\d)/, '');
+        playSound(880, 0.03);
+        smRender();
+    }
+    function smKeyClear() { smKey = ''; playSound(660, 0.04); smRender(); }
+    // お金を受け取ったところで、会計を記録する（ふつうのお会計の「完了」と同じ）
+    function smToChange() {
+        if (smStep !== 'pay') return;
+        const r = smRecvTotal();
+        if (r < smTotal) { playError(); return; }
+        if (smPrefs().practice) {
+            // れんしゅう：売上にしない。カートを空にして、在庫も戻す
+            if (!syncMode) cart.forEach(item => restockOne(products.find(p => p.id === item.id)));
+            cart = [];
+            closeModal('checkout-modal');
+            init();
+            playSuccess();
+        } else {
+            document.getElementById('cash-input').value = String(r);
+            calcChange();
+            completeTransaction();
+            if (checkoutRecordedToken !== checkoutOpenToken) { playError(); smRender(); return; }
+        }
+        smChange = r - smTotal;
+        smGiven = {};
+        smStep = 'change';
+        smRender();
+    }
+    function smGive(u) {
+        if (smStep !== 'change') return;
+        smGiven[u] = !smGiven[u];
+        playSound(smGiven[u] ? 988 : 660, 0.05);
+        smRender();
+    }
+    function smFinish() {
+        if (smStep !== 'change') return;
+        if (smPrefs().check && smChange > 0 && !smChangeList().every(d => smGiven[d.unit])) { playError(); return; }
+        smStep = 'done';
+        playSound(1046, 0.08);
+        const l = smLine();
+        if (l) smSayQueue.push(smV(l[0], l[1], l[2]));
+        smRender();
+    }
+    function smNext() {
+        smStep = 'pick';
+        smRecv = []; smKey = ''; smTotal = 0; smChange = 0; smGiven = {};
+        smOdai = smPrefs().practice ? smMakeOdai() : null;
+        playSound();
+        smRender();
+    }
+    // ---- れんしゅう：お題 ----
+    function smMakeOdai() {
+        const list = smVisibleProducts().filter(p => shownStock(p) > 2 && !p.stopped);
+        if (!list.length) return null;
+        const pick = [];
+        const n = 1 + Math.floor(Math.random() * Math.min(3, list.length));
+        const pool = list.slice();
+        for (let i = 0; i < n; i++) {
+            const p = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
+            const lim = limitOf(p) || 3;
+            pick.push({ id: p.id, qty: 1 + Math.floor(Math.random() * Math.min(2, lim)) });
+        }
+        return { items: pick, pay: 0 };
+    }
+    function smOdaiPay(total) {
+        const opts = [total, Math.ceil(total / 100) * 100, Math.ceil(total / 500) * 500, Math.ceil(total / 1000) * 1000, Math.ceil(total / 5000) * 5000, 10000].filter(x => x >= total);
+        return opts[Math.floor(Math.random() * Math.min(opts.length, 4))];
+    }
+    // ---- スタッフを呼ぶ ----
+    function smCallStaff() {
+        if (smCall) return;
+        const ring = () => { playSound(1175, 0.12); setTimeout(() => playSound(1568, 0.14), 160); };
+        ring();
+        smCall = setInterval(ring, 2200);
+        smSayQueue.push(smV('スタッフを{呼|よ}んでいます', 'スタッフを よんで います', 'Calling staff'));
+        smRender();
+    }
+    function smCallStop() { if (smCall) clearInterval(smCall); smCall = null; playSound(660, 0.05); smRender(); }
+    // ---- 終わる（スタッフ）：長く押す。パスコードを決めていれば聞く ----
+    function smHoldStart(e) {
+        smHoldEnd();
+        const b = e.currentTarget;
+        b.classList.add('holding');
+        smHold = { b, t: setTimeout(() => { smHold = null; b.classList.remove('holding'); smExitAsk(); }, 1500) };
+    }
+    function smHoldEnd() { if (smHold) { clearTimeout(smHold.t); smHold.b.classList.remove('holding'); smHold = null; } }
+    // キーボードで押した時（長押しできない）は、そのまま確かめる
+    function smExitClick(e) { if (e && e.detail === 0) smExitAsk(); }
+    function smExitAsk() {
+        if (uiPrefs.lock && uiPrefs.lock.hash) {
+            askPasscode({ title: 'シンプルモードを終わる', msg: 'スタッフのパスコードを入れてください。', onOk: () => exitSimpleMode() });
+            return;
+        }
+        if (confirm('シンプルモードを終わって、いつもの画面に戻しますか？\n（スタッフの方が操作してください）')) exitSimpleMode();
+    }
+    // ---- 入る・終わる ----
+    function enterSimpleMode() {
+        uiPrefs.simple = Object.assign({}, smPrefs(), { on: true });
+        storeUiPrefs();
+        logEdit('この端末をシンプルモードにした');
+        smShow();
+    }
+    function exitSimpleMode() {
+        if (smStep === 'pay') closeModal('checkout-modal');
+        if (smCall) { clearInterval(smCall); smCall = null; }
+        uiPrefs.simple = Object.assign({}, smPrefs(), { on: false });
+        storeUiPrefs();
+        logEdit('この端末のシンプルモードを終わった');
+        smHide();
+        try { speechSynthesis.cancel(); } catch (e) {}
+        showRegister();
+        init();
+        showToast('シンプルモードを終わりました');
+    }
+    function smShow() {
+        const root = document.getElementById('simple-root');
+        if (!root) return;
+        smShown = true;
+        smStep = 'pick'; smRecv = []; smKey = ''; smGiven = {}; smAsk = null; smLastGuide = '';
+        smOdai = smPrefs().practice ? smMakeOdai() : null;
+        document.body.classList.add('sm-on');
+        root.hidden = false;
+        // 後ろのいつもの画面は、押せない・読み上げない・Tabで行けないようにする（パスコードの窓と知らせは残す）
+        [...document.body.children].forEach(el => {
+            if (el === root || el.id === 'passcode-modal' || el.id === 'toast' || el.tagName === 'SCRIPT' || el.tagName === 'svg' || el.tagName === 'SVG') return;
+            if (!el.inert) { el.inert = true; el.dataset.smInert = '1'; }
+        });
+        smRender();
+        const first = root.querySelector('.sm-prod, .sm-btn');
+        if (first) setTimeout(() => { try { first.focus({ preventScroll: true }); } catch (e) {} }, 0);
+    }
+    function smHide() {
+        const root = document.getElementById('simple-root');
+        smShown = false;
+        document.body.classList.remove('sm-on');
+        document.querySelectorAll('[data-sm-inert]').forEach(el => { el.inert = false; delete el.dataset.smInert; });
+        if (root) { root.hidden = true; root.innerHTML = ''; }
+    }
+    // 手のふるえ対策：続けて押したボタンは1回にする
+    function smTapGuard(e) {
+        const ms = Number(smPrefs().debounce) || 0;
+        if (!ms || !e.target.closest('button')) return;
+        const now = Date.now();
+        if (now - smLastTap < ms) { e.stopPropagation(); e.preventDefault(); return; }
+        smLastTap = now;
+    }
+    function smBoot() {
+        const root = document.getElementById('simple-root');
+        if (root && !root.dataset.hooked) { root.dataset.hooked = '1'; root.addEventListener('click', smTapGuard, true); }
+        if (smOn()) smShow();
+    }
+    // ---- 設定の画面（スタッフ用）----
+    function smSub() { const p = smPrefs(); return `${smOn() ? 'いまシンプルモード・' : ''}${{ ja: '漢字', ruby: 'ふりがな', kana: 'ひらがな', en: 'English' }[p.lang]}・文字${{ l: '大きい', xl: 'とても大きい', xxl: 'いちばん大きい' }[p.size]}${p.practice ? '・れんしゅう' : ''}`; }
+    function renderSimpleSettings() {
+        const box = document.getElementById('simple-body');
+        if (!box) return;
+        const p = smPrefs();
+        const seg = (label, k, opts) => `<label class="field-label sec">${label}</label><div class="seg-pick" role="group" aria-label="${label}">${opts.map(([v, l]) => `<button type="button" class="${p[k] === v ? 'on' : ''}" aria-pressed="${p[k] === v}" onclick="setSmPref('${k}', ${typeof v === 'number' ? v : `'${v}'`})">${l}</button>`).join('')}</div>`;
+        const sw = (k, t, s) => `<div class="sw-row"><div class="sw-text"><b>${t}</b><span>${s}</span></div><input type="checkbox" class="ios-switch" ${p[k] ? 'checked' : ''} onchange="setSmPref('${k}', this.checked)" aria-label="${t}"></div>`;
+        const hide = new Set(p.hide);
+        const rows = products.filter(x => x.active !== false && Number(x.price) > 0).map(x => {
+            const needKana = smHasKanji(x.name) && !x.kana;
+            const pid = typeof x.id === 'number' ? x.id : `'${escArg(String(x.id))}'`;
+            return `<div class="smset-row${hide.has(x.id) ? ' off' : ''}">
+                <label class="smset-show"><input type="checkbox" ${hide.has(x.id) ? '' : 'checked'} onchange="smSetShow(${pid}, this.checked)" aria-label="${escHtml(x.name)}を出す"><span>${escHtml(x.name)}</span></label>
+                <input type="text" class="smset-in${needKana ? ' need' : ''}" value="${escHtml(x.kana || '')}" placeholder="${smHasKanji(x.name) ? 'よみ（ひらがな）' : 'よみ（なくてもよい）'}" maxlength="30" onchange="smSetKana(${pid}, this.value)" aria-label="${escHtml(x.name)}のよみ">
+                <input type="text" class="smset-in" value="${escHtml(x.en || '')}" placeholder="English" maxlength="40" onchange="smSetEn(${pid}, this.value)" aria-label="${escHtml(x.name)}の英語の名前">
+            </div>`;
+        }).join('');
+        const need = products.filter(x => x.active !== false && smHasKanji(x.name) && !x.kana).length;
+        box.innerHTML = `<p class="settings-hint" style="margin-top:0;">利用者の方が自分で会計するための画面です。手順はいつも「① えらぶ → ② おかねを もらう → ③ おつりを わたす」の3つで、次にすることを大きな文と声で出します。<b>この端末だけ</b>が切り替わります（ほかの端末はいまの画面のまま。共有中も会計は共有されます）。</p>
+            <button type="button" class="action-btn btn-checkout" onclick="enterSimpleMode()"><svg class="ic"><use href="#ic-smile"/></svg>この端末をシンプルモードにする</button>
+            <p class="settings-hint">終わる時は、画面の右上の<b>「スタッフ」を長く押します</b>（1.5秒）。${uiPrefs.lock && uiPrefs.lock.hash ? 'この端末のパスコードを聞きます。' : '「この端末の設定」でパスコードを決めておくと、終わる時にパスコードを聞きます（利用者の方がうっかり終わらないように）。'}</p>
+            ${seg('ことば', 'lang', [['ja', '漢字'], ['ruby', 'ふりがな'], ['kana', 'ひらがな'], ['en', 'English']])}
+            ${seg('文字の大きさ', 'size', [['l', '大きい'], ['xl', 'とても大きい'], ['xxl', 'いちばん大きい']])}
+            ${seg('もらったお金の入れ方', 'money', [['pic', 'お金の絵を押す'], ['key', '数字を打つ']])}
+            ${seg('続けて押してしまった時（手のふるえ対策）', 'debounce', [[0, 'そのまま'], [300, '0.3秒は1回'], [600, '0.6秒は1回'], [1000, '1秒は1回']])}
+            ${seg('すすむボタンの側', 'hand', [['right', '右（右きき）'], ['left', '左（左きき）']])}
+            ${seg('声の速さ', 'rate', [['slow', 'ゆっくり'], ['normal', 'ふつう']])}
+            ${sw('voice', '声で読む', '次にすること・押した商品・金額を声で読みます（音を消している時も、画面には必ず出ます）')}
+            ${sw('check', 'おつりを1つずつ確かめる', '渡したお金を押して印を付けてから「おわり」を押します（数え間違いを防ぐ）')}
+            ${sw('contrast', 'くっきりした配色', '白地に黒い文字・太い枠にします（見えにくい方に）')}
+            ${sw('motion', '動きを少なくする', '画面の動きを止めます')}
+            ${sw('practice', 'れんしゅうモード', '売上に記録しません。お題（「メロンパンを2こください」「1000えん出します」）が出るので、ひとりでも練習できます')}
+            <label class="field-label sec">出す商品と、よみがな・English</label>
+            <p class="settings-hint" style="margin-top:0;">チェックを外した商品は、シンプルモードに出しません（その日に売る物だけにすると押しやすくなります）。漢字の入った名前には<b>よみ（ひらがな）</b>を入れてください。ふりがな・ひらがなの時に使います（カタカナの名前は、そのまま出します）。${need ? `<b class="cash-bad">よみの無い商品が${need}品あります。</b>` : ''}</p>
+            <div class="smset-list">${rows}</div>`;
+    }
+    function smSetShow(id, show) {
+        const hide = new Set(smPrefs().hide);
+        if (show) hide.delete(id); else hide.add(id);
+        setSmPref('hide', [...hide]);
+    }
+    function smSetKana(id, v) {
+        const p = products.find(x => x.id === id);
+        if (!p) return;
+        const s = smHira(String(v || '').normalize('NFKC').replace(/\s+/g, ' ').trim()).slice(0, 30);
+        if (s) p.kana = s; else delete p.kana;
+        syncPushProducts(); saveData();
+        logEdit(`よみを決めた：${p.name}${s ? '（' + s + '）' : '（なし）'}`);
+        renderSimpleSettings();
+    }
+    function smSetEn(id, v) {
+        const p = products.find(x => x.id === id);
+        if (!p) return;
+        const s = String(v || '').normalize('NFKC').replace(/\s+/g, ' ').trim().slice(0, 40);
+        if (s) p.en = s; else delete p.en;
+        syncPushProducts(); saveData();
+        renderSimpleSettings();
+    }
+    // ▲▲▲ ここまで ▲▲▲
+
     loadData();
     startClock();          // 時計・天気の設定を読み、ヘッダーの表示を始める
     prepareOpenSetup();
@@ -22329,6 +23238,7 @@
     init();
     applyLockUi();         // この端末をロックしていれば、ヘッダーとナビに印を出す
     handleJoinLink();      // QRコードから開かれた時は、合流の画面を用意する
+    smBoot();              // この端末がシンプルモードなら、その画面を出す
 </script>
 </body>
     
