@@ -500,17 +500,25 @@
         try {
             const snap = await db.collection(COL).where('status', '==', 'open').get();
             const now = Date.now();
-            snap.forEach(d => {
+            const cand = [];
+            snap.forEach(d => cand.push(d));
+            // お店の端末が動いている印（無い時は、開いた時刻で見る）
+            const alive = {};
+            await Promise.all(cand.map(d => d.ref.collection('live').doc('alive').get().then(a => { alive[d.id] = a.exists ? (Number((a.data() || {}).at) || 0) : 0; }).catch(() => { alive[d.id] = 0; })));
+            cand.forEach(d => {
                 const v = d.data() || {};
                 if (!v.mobile || v.mobile.on !== true || !Array.isArray(v.products)) return;
-                if (v.storeMode === 'restaurant') return;       // レストランはテーブルのQRから
-                if ((Number(v.openedAt) || 0) < now - 24 * 3600000) return;     // 前の日から開いたままのものは出さない
+                // テーブルのQR（t）から来た時はレストランだけ、それ以外はレストラン以外だけ
+                if (tableNo ? v.storeMode !== 'restaurant' : v.storeMode === 'restaurant') return;
+                if (alive[d.id] > 0 ? now - alive[d.id] > ALIVE_MAX : (Number(v.openedAt) || 0) < now - 24 * 3600000) return;     // 止まったまま・前の日から開いたままのものは出さない
                 rows.push({ code: d.id, test: !!v.test, name: String(v.mobile.shop || v.name || 'お店'), icon: typeof v.mobile.icon === 'string' && v.mobile.icon.startsWith('data:image/') ? v.mobile.icon : '', wait: Number(v.mobile.wait) || 0 });
             });
         } catch (e) { say('お店の一覧を読めませんでした。電波の良い所で、ページを読み込み直してください。', true); return; }
         rows.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
         const box = $('shops');
-        if (!rows.length) { say('ただいま、スマホから注文できるお店はありません。店頭でご注文ください。', true); box.classList.add('hide'); return; }
+        // 受付中のお店が1つだけなら、選ばずにそのまま開く（印刷したQRコードは、このページを開く）
+        if (rows.length === 1) { chooseShop(rows[0].code, true); return; }
+        if (!rows.length) { say(tableNo ? 'ただいま、スマホからの注文を受け付けていません。お店の人にお声がけください。' : 'ただいま、スマホから注文できるお店はありません。店頭でご注文ください。', true); box.classList.add('hide'); return; }
         say('');
         $('title').textContent = 'お店を選んでください';
         box.classList.remove('hide');
@@ -521,10 +529,12 @@
         box.querySelectorAll('.shop').forEach(b => b.onclick = () => chooseShop(b.dataset.c));
     }
     window.__attachOrderList = listShops;
-    function chooseShop(c) {
+    function chooseShop(c, auto) {
         code = String(c || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 32);
         if (!code) return;
-        try { history.pushState(null, '', location.pathname + '?e=' + encodeURIComponent(code)); } catch (e) {}
+        // ひとりでに開いた時は、履歴を置きかえる（戻るで、また同じお店が開いてしまわないように）
+        const q = '?e=' + encodeURIComponent(code) + (tableNo ? '&t=' + encodeURIComponent(tableNo) : '');
+        try { if (auto) history.replaceState(null, '', location.pathname + q); else history.pushState(null, '', location.pathname + q); } catch (e) {}
         $('shops').classList.add('hide');
         mine = loadMine();
         window.scrollTo(0, 0);
@@ -539,6 +549,8 @@
         ev = db.collection(COL).doc(code);
         ev.onSnapshot(doc => { evData = doc.exists ? (doc.data() || {}) : null; render(); }, () => say('つながりが切れました。電波を確かめてください。', true));
         ev.collection('live').doc('menu').onSnapshot(doc => { menu = doc.exists ? (doc.data() || null) : null; render(); }, () => {});
+        // お店の端末が動いている印（しばらく届いていなければ、注文を受けない）
+        ev.collection('live').doc('alive').onSnapshot(doc => { aliveAt = doc.exists ? (Number((doc.data() || {}).at) || 0) : 0; staleWas = stale(); render(); }, () => {});
         ev.collection('orders').onSnapshot(snap => {
             const rows = [];
             snap.forEach(d => { const v = d.data() || {}; if (v && v.id) rows.push(v); });
@@ -550,7 +562,21 @@
     window.__attachOrderPage = attach;
 
     function open() { return !!(evData && evData.status === 'open'); }
-    function accepting() { return open() && !!(evData.mobile && evData.mobile.on) && !!(menu && menu.on !== false); }
+    // お店の端末が止まったままか。閉店をしないまま端末が止まった（電池切れ・電源を切った）販売会に、
+    // QRコードから注文が入り続けて、誰も気づかないことがないように。
+    // 端末は5分ごとに印を書く。1時間届いていなければ止まっているとみなす（お客様のスマホの時計のずれも見込んで長めに）。
+    // 印がまだ無い販売会（前の版のアプリで開いた所）は、開いてから24時間で止まっているとみなす（お店の一覧と同じ）
+    const ALIVE_MAX = 60 * 60000;
+    let aliveAt = 0, staleWas = false;
+    function stale() {
+        if (!evData) return false;
+        if (aliveAt > 0) return Date.now() - aliveAt > ALIVE_MAX;
+        const op = Number(evData.openedAt) || 0;
+        return op > 0 && Date.now() - op > 24 * 3600000;
+    }
+    function accepting() { return open() && !stale() && !!(evData.mobile && evData.mobile.on) && !!(menu && menu.on !== false); }
+    // 開いたままのページでも、止まったことに気づけるように（変わった時だけ描き直す）
+    setInterval(() => { const s = stale(); if (s !== staleWas) { staleWas = s; render(); } }, 30000);
     // お店の設定（index.html の normMobileCfg と同じ決まりで読む）
     function cfg() {
         const m = (evData && evData.mobile) || {};
@@ -670,6 +696,7 @@
         renderWait();
         if (!evData) { say('このお店の注文は受け付けていません（QRコードをもう一度お確かめください）。', true); hideOrdering(); renderMine(); return; }
         if (!open()) { say('本日の受付は終了しました。ありがとうございました。', true); hideOrdering(); renderMine(); return; }
+        if (stale()) { say('ただいま、スマホからの注文を受け付けていません（お店の端末が止まっています）。店頭でご注文ください。', true); hideOrdering(); renderMine(); return; }
         if (!accepting()) {
             const m = evData.mobile && evData.mobile.stopMsg;
             say(m || 'ただいま、スマホからの注文を止めています。店頭でご注文ください。', true);
