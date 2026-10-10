@@ -1120,7 +1120,8 @@
             word-break: keep-all; overflow-wrap: break-word; line-break: strict;   /* 言葉の途中で改行しない（言葉の切れ目・空白で改行する） */
             position: fixed; inset: 0; z-index: 160; display: flex; flex-direction: column; gap: calc(10px * var(--sm-k));
             background: var(--sm-bg); color: var(--sm-text); font-family: inherit;
-            padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+            /* 下は、ふつうの画面のお会計の窓と同じだけあける（iPhone は画面の下のすみが丸く、左右の下のボタンが欠けるため） */
+            padding: max(10px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) calc(26px + env(safe-area-inset-bottom, 0px)) max(14px, env(safe-area-inset-left));
             box-sizing: border-box; overflow: hidden; -webkit-user-select: none; user-select: none;
         }
         #simple-root[hidden] { display: none; }
@@ -1192,6 +1193,9 @@
         .sm-btn, .sm-prod, .sm-mbtn, .sm-key, .sm-gv, .sm-rb, .sm-cat, .sm-tc { transition: transform .08s ease-out; }
         .sm-acts { display: flex; gap: 10px; flex-shrink: 0; }
         .sm-acts { flex-wrap: wrap; }
+        /* 言葉のまとまり（ふりがなの付いた漢字・「」・、。を含む）は、途中で改行しない。
+           iPhone の Safari は、ふりがなの付いた字の前後で、どこでも改行してしまう（「 の後ろ・言葉の途中）ため */
+        #simple-root .sm-w { white-space: nowrap; }
         .sm-acts .sm-btn { white-space: nowrap; padding: 0 12px; flex-basis: auto; }
         .sm-payin .sm-acts .sm-btn { font-size: calc(19px * var(--sm-k)); }
         #simple-root.sm-left .sm-acts { flex-direction: row-reverse; }
@@ -1355,8 +1359,11 @@
             .sm-row .sm-rn small { font-size: calc(13px * var(--sm-k)); }
             .sm-cat { min-height: 52px; padding: 0 14px; font-size: calc(16px * var(--sm-k)); }
             .sm-btn { font-size: calc(17px * var(--sm-k)); min-height: calc(58px * var(--sm-k)); padding: 0 8px; gap: 4px; border-radius: 16px; }
-            .sm-acts { gap: 6px; }
-            .sm-payin .sm-acts .sm-btn { font-size: calc(16px * var(--sm-k)); }
+            .sm-acts { gap: 6px; flex-wrap: nowrap; }
+            .sm-acts .sm-btn { flex: 1 1 0; min-width: 0; padding: 0 4px; }
+            .sm-payin .sm-acts .sm-btn { font-size: min(calc(16px * var(--sm-k)), 4.3vw); }
+            /* 画面が低くて入りきらない時は、お金の所だけ動かし、下のボタンはいつも見えるようにする */
+            .sm-main.pay .sm-payin > .sm-acts, .sm-main.change .sm-acts { position: sticky; bottom: 0; z-index: 2; background: var(--sm-bg); box-shadow: 0 -6px 8px var(--sm-bg); }
             .sm-big b { font-size: calc(32px * var(--sm-kh)); }
             .sm-big span, .sm-recv span { font-size: calc(15px * var(--sm-k)); }
             .sm-line { padding: 8px 12px; }
@@ -1367,7 +1374,7 @@
             .sm-tray { display: none; }
             .sm-money, .sm-mrow { gap: 6px; }
             .sm-mbtn { min-height: 56px; padding: 4px; border-radius: 14px; }
-            .sm-mbtn .sm-ml { font-size: calc(12px * var(--sm-k)); }
+            .sm-mbtn .sm-ml { font-size: calc(12px * var(--sm-k)); line-height: 1.75; }   /* ふりがなが、お金の絵に重ならないように */
             .sm-gv { padding: 8px 10px; gap: 0 8px; min-height: calc(64px * var(--sm-k)); }
             .sm-gv .sm-gim { width: calc(40px * var(--sm-k)); margin-right: -10px; }
             .sm-gv .sm-gim:nth-child(n+3) { display: none; }
@@ -2564,7 +2571,7 @@
         .empty-state {
             display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px;
             margin: 36px auto 12px; max-width: 360px; padding: 0 12px;
-            animation: esIn .36s cubic-bezier(.2,.9,.3,1.15) both;
+            /* 動きは、画面を開いた時だけ（下の #page-panel.entering .empty-state） */
         }
         .empty-state .es-ic { width: 60px; height: 60px; border-radius: 14px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); margin-bottom: 6px; }
         .empty-state .es-ic .ic { width: 30px; height: 30px; }
@@ -2572,7 +2579,8 @@
         .empty-state > span { font-size: 13.5px; color: var(--text-light); line-height: 1.6; }
         .empty-state .action-btn { margin-top: 10px; width: auto; min-width: 180px; padding-left: 22px; padding-right: 22px; }
         .empty-state .es-btn { background: var(--accent-soft); color: var(--accent-ink); }
-        @media (prefers-reduced-motion: reduce) { .empty-state { animation: none; } }
+        #page-panel.entering .empty-state { animation: esIn .36s cubic-bezier(.2,.9,.3,1.15) both; }
+        @media (prefers-reduced-motion: reduce) { .empty-state { animation: none !important; } }
         #toast {
             position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px));
             transform: translateX(-50%) translateY(14px) scale(0.96);
@@ -2782,7 +2790,6 @@
         .feat-go {
             display: flex; align-items: center; justify-content: space-between; width: 100%; border: none; cursor: pointer; font-family: inherit;
             background: var(--accent-soft); color: var(--accent-ink); font-size: 13.5px; font-weight: 700; padding: 10px 14px; min-height: 44px;
-            animation: esIn .3s cubic-bezier(.2,.9,.3,1.15) both;
         }
         .feat-go .ic { width: 16px; height: 16px; }
         /* 機能の入力の窓 */
@@ -3711,8 +3718,9 @@
             display: flex; align-items: center; gap: 11px;
             background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card);
             padding: 11px 14px; margin-bottom: 7px; min-height: 52px;
-            animation: riseIn .3s cubic-bezier(.32,.72,0,1) both;
         }
+        /* 端末の一覧は、つながり具合が変わるたびに描き直すので、画面を開いた時だけ動かす（点滅しないように） */
+        #page-panel.entering .dev-row { animation: riseIn .3s cubic-bezier(.32,.72,0,1) both; }
         .dev-row .dev-dot {
             width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
             background: var(--positive-ink);
@@ -3773,7 +3781,9 @@
 
         /* 一覧に並ぶカードが、少しずつ時間をずらして出てくる（並び順が目で追える） */
         @keyframes riseIn { from { opacity: 0; transform: translate3d(0, 10px, 0); } to { opacity: 1; transform: none; } }
-        .res-card, .stat-tile, .a-table, .menu-list, .chart-box, .arc-card {
+        /* 動かすのは画面を開いた時だけ（#page-panel.entering）。あとから描き直した時（同期で届いた・切り替えた時）に
+           毎回動くと、画面が点滅して見えるため */
+        #page-panel.entering .res-card, #page-panel.entering .stat-tile, #page-panel.entering .a-table, #page-panel.entering .chart-box, #page-panel.entering .arc-card {
             animation: riseIn .34s cubic-bezier(.32, .72, 0, 1) both;
         }
         .res-card:nth-child(2), .stat-tile:nth-child(2) { animation-delay: .04s; }
@@ -3813,7 +3823,7 @@
         .product-btn .stock.is-low { animation: lowPulse 2.4s ease-in-out infinite; }
 
         /* ▼ 商品を追加・削除した時の、開店前リストの動き ▼ */
-        .setup-card { animation: riseIn .3s cubic-bezier(.32,.72,0,1) both; }
+        #page-panel.entering .setup-card { animation: riseIn .3s cubic-bezier(.32,.72,0,1) both; }
 
         /* ▼ 種類を選び直した時、左の色帯がすっと塗り替わる ▼ */
         .setup-card { transition: border-left-color .25s ease; }
@@ -3832,11 +3842,11 @@
 
         /* 数字のタイルは、ふわっと浮き上がってくる */
         @keyframes tileIn { from { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.97); } to { opacity: 1; transform: none; } }
-        .stat-tile { animation: tileIn .42s cubic-bezier(.32, .72, 0, 1) both; }
+        #page-panel.entering .stat-tile { animation: tileIn .42s cubic-bezier(.32, .72, 0, 1) both; }
 
         /* 表の行も、上から順に現れる（10行目以降はまとめて出す） */
         @keyframes rowIn { from { opacity: 0; transform: translate3d(0, 6px, 0); } to { opacity: 1; transform: none; } }
-        .analytics-sec tbody tr { animation: rowIn .3s cubic-bezier(.32, .72, 0, 1) both; }
+        #page-panel.entering .analytics-sec tbody tr { animation: rowIn .3s cubic-bezier(.32, .72, 0, 1) both; }
         .analytics-sec tbody tr:nth-child(1) { animation-delay: .02s; }
         .analytics-sec tbody tr:nth-child(2) { animation-delay: .05s; }
         .analytics-sec tbody tr:nth-child(3) { animation-delay: .08s; }
@@ -3849,13 +3859,14 @@
 
         /* グラフの棒は下から伸び、折れ線は左から引かれる */
         @keyframes barGrow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
-        .chart-box svg rect { transform-box: fill-box; transform-origin: bottom; animation: barGrow .5s cubic-bezier(.32, .72, 0, 1) both; }
+        .chart-box svg rect { transform-box: fill-box; transform-origin: bottom; }
+        #page-panel.entering .chart-box svg rect { animation: barGrow .5s cubic-bezier(.32, .72, 0, 1) both; }
         /* 折れ線は「線を引く」演出にしない。
            CSS で stroke-dasharray を触ると、9商品目以降を破線で見分けている指定を
            上書きしてしまい、どの線がどの商品か分からなくなるため。
            グラフ全体をふわっと出すだけにする。 */
         @keyframes chartIn { from { opacity: 0; } to { opacity: 1; } }
-        .chart-box svg { animation: chartIn .45s ease-out both; }
+        #page-panel.entering .chart-box svg { animation: chartIn .45s ease-out both; }
 
         /* 集計メニューのカードは、押すと少し沈む */
         .menu-card { transition: transform .14s cubic-bezier(.32,.72,0,1), box-shadow .14s ease, background .14s ease; }
@@ -3864,7 +3875,8 @@
         /* ▼ 割合の横棒が、左から伸びる ▼
            （レジには出てこない集計だけの演出。数字は最初から出ているので読むのを邪魔しない） */
         @keyframes barFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-        .a-bar > i { transform-origin: left center; animation: barFill .55s cubic-bezier(.32,.72,0,1) both; }
+        .a-bar > i { transform-origin: left center; }
+        #page-panel.entering .a-bar > i { animation: barFill .55s cubic-bezier(.32,.72,0,1) both; }
         .a-table tbody tr:nth-child(2) .a-bar > i { animation-delay: .04s; }
         .a-table tbody tr:nth-child(3) .a-bar > i { animation-delay: .08s; }
         .a-table tbody tr:nth-child(4) .a-bar > i { animation-delay: .12s; }
@@ -3895,7 +3907,7 @@
 
         /* ▼ 設定などの1行スイッチも、他のカードと同じように下から出る ▼ */
         /* スイッチの行は、画面を開いた時だけ出てくる（切り替えて描き直した時は動かさない＝点滅しない） */
-        #page-panel.entering .sw-row, .dg-pick, .man-item { animation: riseIn .34s cubic-bezier(.32,.72,0,1) both; }
+        #page-panel.entering .sw-row, #page-panel.entering .dg-pick, #page-panel.entering .man-item { animation: riseIn .34s cubic-bezier(.32,.72,0,1) both; }
         .man-item:nth-child(2), .dg-pick:nth-child(2) { animation-delay: .03s; }
         .man-item:nth-child(3), .dg-pick:nth-child(3) { animation-delay: .06s; }
         .man-item:nth-child(4), .dg-pick:nth-child(4) { animation-delay: .09s; }
@@ -3942,7 +3954,7 @@
         /* テーブルに注文を足している帯・伝票の合計は、上からすっと出る */
         @keyframes dropIn { from { opacity: 0; transform: translate3d(0, -8px, 0); } to { opacity: 1; transform: none; } }
         .order-target, #page-panel.entering .bill-head, #page-panel.entering .bill-sum { animation: dropIn .3s cubic-bezier(.32,.72,0,1) both; }
-        .tax-sum > div { animation: tileIn .38s cubic-bezier(.32,.72,0,1) both; }
+        #page-panel.entering .tax-sum > div { animation: tileIn .38s cubic-bezier(.32,.72,0,1) both; }
         .tax-sum > div:nth-child(2) { animation-delay: .04s; }
         .tax-sum > div:nth-child(3) { animation-delay: .08s; }
 
@@ -10609,7 +10621,7 @@
         box.innerHTML = manualSections().map(sec => {
             const open = manualOpenId === sec.id;
             return `
-                <div class="man-item${open ? ' open' : ''}">
+                <div class="man-item${open ? ' open' : ''}" data-man="${sec.id}">
                     <button class="man-head" onclick="toggleManual('${sec.id}')" aria-expanded="${open}">
                         <svg class="ic man-ic"><use href="#ic-${sec.icon}"/></svg>
                         <span class="man-h-text"><span class="man-h-t">${sec.title}</span><span class="man-h-s">${sec.sub}</span></span>
@@ -10620,9 +10632,31 @@
         }).join('');
     }
 
+    // 項目を開く・閉じる。一覧を全部作り直すと、全部の項目がもう一度出てきて点滅して見えるので、
+    // 開く・閉じる項目だけを書きかえる。押した見出しは、押した所から動かさない（上の項目が閉じても跳ねない）
     function toggleManual(id) {
-        manualOpenId = (manualOpenId === id) ? null : id;
-        renderManual();
+        const prevId = manualOpenId;
+        manualOpenId = (prevId === id) ? null : id;
+        const box = document.getElementById('manual-body');
+        const item = box && box.querySelector(`.man-item[data-man="${id}"]`);
+        if (!item) { renderManual(); return; }
+        const head = item.querySelector('.man-head');
+        const top0 = head.getBoundingClientRect().top;
+        const setOpen = (it, open) => {
+            const sec = manualSections().find(x => x.id === it.dataset.man);
+            it.classList.toggle('open', open);
+            const h = it.querySelector('.man-head');
+            h.setAttribute('aria-expanded', String(open));
+            const caret = h.querySelector('.man-caret use');
+            if (caret) caret.setAttribute('href', '#ic-' + (open ? 'up' : 'down'));
+            const old = it.querySelector('.man-body');
+            if (old) old.remove();
+            if (open && sec) it.insertAdjacentHTML('beforeend', `<div class="man-body man-root">${sec.body}</div>`);
+        };
+        if (prevId && prevId !== id) { const p = box.querySelector(`.man-item[data-man="${prevId}"]`); if (p) setOpen(p, false); }
+        setOpen(item, manualOpenId === id);
+        const pb = document.getElementById('panel-body'), d = head.getBoundingClientRect().top - top0;
+        if (pb && Math.abs(d) > 1) pb.scrollTop += d;
     }
 
     // マニュアルを1つの文書にして、印刷（PDF保存）できるように別ウィンドウで開く
@@ -13793,6 +13827,7 @@
     // ・項目を開いた時           … 履歴に積む（戻るボタンが出る）
     let navStack = [{ view: 'register', sub: null }];
     let currentView = 'register';
+    let navSwipeBack = false;   // なぞって戻っている最中（その時は、画面の中の部分ごとの動きを付けない）
     let currentSub = null;
     let navDir = 'forward';     // 画面の入れ替わり方向（アニメーションの向きに使う）
 
@@ -13898,11 +13933,12 @@
         setPageActive(panel, !onRegister);
 
         if (!onRegister) {
-            // 開いた直後だけ、中身を順に出す動きを付ける（開いたあとの描き直しでは動かさない）
-            if (!samePage) {
+            // 開いた直後だけ、中身を順に出す動きを付ける（開いたあとの描き直しでは動かさない）。
+            // 戻った時は付けない：画面ごと横にすっと動かすだけにする（中身まで順に出すと、点滅して見える）
+            if (!samePage && navDir !== 'back') {
                 panel.classList.add('entering');
                 clearTimeout(panelEnterTimer);
-                panelEnterTimer = setTimeout(() => panel.classList.remove('entering'), 520);
+                panelEnterTimer = setTimeout(() => panel.classList.remove('entering'), 800);   // いちばん遅く終わる動き（横棒が伸びる .55秒＋ずらし .16秒）より長く
             }
             // 画面の幅の決まり（設定は読みやすい幅にそろえる）に使う印
             panel.dataset.view = currentView;
@@ -13919,7 +13955,7 @@
                     subs.forEach(el => {
                         const show = el.id === wantId;
                         el.style.display = show ? 'block' : 'none';
-                        if (show && !samePage) animateIn(el);
+                        if (show && !samePage && !navSwipeBack) animateIn(el);
                     });
                 }
             }
@@ -13993,6 +14029,8 @@
         return false;
     }
 
+    // なぞって戻った時は、前の画面を描いてから、画面ごと1回だけふわっと出す。
+    // （前は、古い画面が一瞬もとの位置に戻り、そのあと中身が順に出てきて、点滅して見えた）
     function swipeEnd(commit) {
         const panel = document.getElementById('page-panel');
         if (!panel) { swipe = null; return; }
@@ -14000,9 +14038,21 @@
         panel.classList.add('swipe-settle');
         panel.style.transform = commit ? 'translate3d(100%,0,0)' : '';
         const done = () => {
+            if (commit) {
+                // 画面の外にある間に、前の画面を描いておく
+                navDir = 'back'; navSwipeBack = true;
+                try { panelBack(); } finally { navSwipeBack = false; }
+            }
             panel.classList.remove('swipe-settle');
             panel.style.transform = '';
-            if (commit) { navDir = 'back'; panelBack(); }
+            if (commit && typeof panel.animate === 'function' && !(reduceMotion && reduceMotion.matches)) {
+                if (panel._navAnim) panel._navAnim.cancel();
+                panel._navAnim = panel.animate([
+                    { opacity: 0, transform: 'translate3d(-24px, 0, 0)' },
+                    { opacity: 1, transform: 'none' }
+                ], { duration: 240, easing: 'cubic-bezier(.32, .72, 0, 1)' });
+                panel._navAnim.onfinish = () => { panel._navAnim = null; };
+            }
         };
         setTimeout(done, commit ? 210 : 220);
         swipe = null;
@@ -23128,9 +23178,12 @@
         if (l === 'kana') return escHtml(kana);
         return smPhrase(ja, kana, l === 'ruby');
     }
-    // 漢字・ふりがなの文に、言葉の切れ目（ひらがなの文で空白をあけた所）で改行できる印 <wbr> を入れる。
-    // 画面は「言葉の途中では改行しない」にしてあるので、「お客様が選んだ / 商品を押します」のように切れる。
-    // ひらがなの文と読みが合わない時は、印を入れずにそのまま出す（読みのずれで変な所に印を入れない）
+    // 漢字・ふりがなの文を、言葉のまとまり（ひらがなの文で空白をあけた所・、。の後ろ）に分け、
+    // まとまりの間でだけ改行する（「お客様が選んだ / 商品を押します」のように切れる）。
+    // まとまりは途中で改行しない（.sm-w）。iPhone の Safari は、ふりがなの付いた字の前後なら
+    // どこでも改行してしまい、「全部選んだら「 / お会計へ」」や「受け / 取った」のようになるため。
+    // 長いまとまり（10字以上。「ありがとうございました」など）は、入りきらない時に折れるよう、そのままにする。
+    // ひらがなの文と読みが合わない時は、まとまりに分けずにそのまま出す（読みのずれで変な所で切らない）
     function smPhrase(ja, kana, ruby) {
         const toks = [];
         String(ja).replace(/\{([^|{}]+)\|([^{}]+)\}|([\s\S])/g, (m, a, r, c) => { toks.push(a != null ? { a, r } : { c }); return m; });
@@ -23141,13 +23194,17 @@
         let pos = 0;
         for (const ch of kn) { if (/\s/.test(ch)) cuts.add(pos); else if (!skip(ch)) pos++; }
         const ok = read === kn.split('').filter(ch => !skip(ch)).join('');
-        let out = '', at = 0;
+        const units = [];
+        let cur = '', len = 0, at = 0;
+        const flush = () => { if (cur) units.push({ h: cur, n: len }); cur = ''; len = 0; };
         toks.forEach(t => {
-            if (ok && at > 0 && cuts.has(at) && !/(\s|<wbr>)$/.test(out)) out += '<wbr>';
-            if (t.a != null) { out += ruby ? `<ruby>${escHtml(t.a)}<rt>${escHtml(t.r)}</rt></ruby>` : escHtml(t.a); at += t.r.length; }
-            else { out += escHtml(t.c); if (!skip(t.c)) at++; if (t.c === '、' || t.c === '。') out += '<wbr>'; }
+            if (ok && at > 0 && cuts.has(at)) flush();
+            if (t.a != null) { cur += ruby ? `<ruby>${escHtml(t.a)}<rt>${escHtml(t.r)}</rt></ruby>` : escHtml(t.a); len += t.a.length; at += t.r.length; }
+            else { cur += escHtml(t.c); if (!skip(t.c)) { at++; len++; } if (t.c === '、' || t.c === '。') flush(); }
         });
-        return out;
+        flush();
+        if (!ok) return units.map(u => u.h).join('<wbr>');
+        return units.map(u => u.n <= 9 ? `<span class="sm-w">${u.h}</span>` : u.h).join('<wbr>');
     }
     // 声で読む文（漢字・ふりがなの時もひらがなの文を読む。読み間違いをしないように）
     function smV(ja, kana, en) { return smPrefs().lang === 'en' ? en : kana; }
@@ -23239,7 +23296,7 @@
     function smMoneySvg(u) {
         if (u >= 1000) {
             const c = u === 10000 ? ['#D2B897', '#6E5537'] : (u === 5000 ? ['#C6BCDA', '#584A80'] : ['#AFC6DC', '#33587C']);   // 色は少しくすませる（まぶしくないように）
-            return `<svg viewBox="0 0 160 84" class="sm-bill" aria-hidden="true"><rect x="3" y="3" width="154" height="78" rx="9" fill="${c[0]}" stroke="${c[1]}" stroke-width="4"/><rect x="12" y="12" width="136" height="60" rx="5" fill="none" stroke="${c[1]}" stroke-width="2" opacity=".45"/><circle cx="122" cy="42" r="15" fill="#fff" opacity=".5"/><text x="64" y="54" text-anchor="middle" font-size="36" font-weight="900" fill="${c[1]}" font-family="system-ui, sans-serif">${u}</text></svg>`;
+            return `<svg viewBox="0 0 160 84" class="sm-bill" aria-hidden="true"><rect x="3" y="3" width="154" height="78" rx="9" fill="${c[0]}" stroke="${c[1]}" stroke-width="4"/><rect x="12" y="12" width="136" height="60" rx="5" fill="none" stroke="${c[1]}" stroke-width="2" opacity=".45"/><circle cx="122" cy="42" r="15" fill="#fff" opacity=".5"/><text x="${u >= 10000 ? 59 : 62}" y="${u >= 10000 ? 53 : 54}" text-anchor="middle" font-size="${u >= 10000 ? 28 : 34}" font-weight="900" fill="${c[1]}" font-family="system-ui, sans-serif">${u}</text></svg>`;
         }
         const d = { 1: ['#EEF0F2', '#9AA1A9', 30, false], 5: ['#E8C766', '#A57F1C', 33, true], 10: ['#D08A55', '#8A4B22', 35, false], 50: ['#E3E6EA', '#8E959D', 32, true], 100: ['#D9DDE2', '#868D96', 34, false], 500: ['#E4C66E', '#9B7A1F', 40, false] }[u] || ['#ddd', '#888', 34, false];
         return `<svg viewBox="0 0 100 100" class="sm-coin" aria-hidden="true"><circle cx="50" cy="50" r="${d[2] + 6}" fill="${d[0]}" stroke="${d[1]}" stroke-width="4"/><circle cx="50" cy="50" r="${d[2]}" fill="none" stroke="${d[1]}" stroke-width="1.5" opacity=".5"/>${d[3] ? `<circle cx="50" cy="34" r="7" fill="var(--sm-bg)" stroke="${d[1]}" stroke-width="2"/>` : ''}<text x="50" y="${d[3] ? 70 : 61}" text-anchor="middle" font-size="${String(u).length >= 3 ? 26 : 32}" font-weight="900" fill="${d[1]}" font-family="system-ui, sans-serif">${u}</text></svg>`;
@@ -23340,7 +23397,7 @@
     }
     function smLineHtml() {
         const l = smLine();
-        return l ? `<div class="sm-line"><span class="sm-lk">${smT('お{客様|きゃくさま}に{言|い}う', 'おきゃくさまに いう', 'Say to the customer')}</span><span class="sm-lt">「${smT(l[0], l[1], l[2])}」</span></div>` : '';
+        return l ? `<div class="sm-line"><span class="sm-lk">${smT('お{客様|きゃくさま}に{言|い}う', 'おきゃくさまに いう', 'Say to the customer')}</span><span class="sm-lt">${smT(`「${l[0]}」`, `「${l[1]}」`, `“${l[2]}”`)}</span></div>` : '';
     }
     function smOdaiDone() { return !!smOdai && smOdai.items.every(x => smCartCount(x.id) === x.qty) && cart.length === smOdai.items.reduce((a, x) => a + x.qty, 0); }
     function smOdaiHtml() {
@@ -23480,6 +23537,12 @@
         const p = smPrefs();
         if (!currentSession && smStep !== 'pick') smStep = 'pick';
         const keepScroll = (document.getElementById('sm-prods') || {}).scrollTop || 0;
+        // 同じ画面のまま描き直す時は、ほかのスクロールする所（お金の所・選んだ商品・おつり）の位置もそのまま
+        const keepStep = root.dataset.step === smStep;
+        const keepOther = keepStep ? ['.sm-main', '.sm-rows', '.sm-give', '.sm-tray'].map(q => { const el = root.querySelector(q); return [q, el ? el.scrollTop : 0]; }) : [];
+        // 写真は、前の画面の同じ写真をそのまま使う（作り直すと、iPhone で一瞬白くなることがある）
+        const oldImgs = {};
+        root.querySelectorAll('img').forEach(im => { const k = im.getAttribute('src'); if (k) (oldImgs[k] = oldImgs[k] || []).push(im); });
         root.className = `sm-k-${p.size}${p.contrast ? ' sm-hc' : ''}${p.motion ? ' sm-still' : ''}${p.hand === 'left' ? ' sm-left' : ''}${p.lang === 'ruby' ? ' sm-ruby' : ''}${p.font ? ' sm-ud' : ''}`;
         if (p.font) smLoadFont();
         const body = !currentSession ? smClosedHtml() : (smStep === 'pick' ? smPickHtml() : smStep === 'pay' ? smPayHtml() : smStep === 'change' ? smChangeHtml() : smDoneHtml());
@@ -23487,6 +23550,9 @@
         const ae = document.activeElement;
         const focusKey = ae && root.contains(ae) && ae.tagName === 'BUTTON' ? ae.getAttribute('onclick') : null;
         root.innerHTML = smTopHtml() + smGuideHtml() + body + smOverlayHtml();
+        root.dataset.step = smStep;
+        root.querySelectorAll('img').forEach(im => { const l = oldImgs[im.getAttribute('src')]; const o = l && l.shift(); if (o) { o.className = im.className; o.alt = im.alt; im.replaceWith(o); } });
+        keepOther.forEach(([q, y]) => { const el = root.querySelector(q); if (el && y) el.scrollTop = y; });
         if (focusKey) {
             const btns = [...root.querySelectorAll('button')];
             const t = btns.find(b => b.getAttribute('onclick') === focusKey && !b.disabled) || root.querySelector('.sm-ov button, .sm-btn.go:not([disabled]), .sm-prod');
