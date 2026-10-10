@@ -2577,10 +2577,10 @@ QRコードを足す	Add QR code
 例：11:45〜	e.g. 11:45–
 場所	Place
 時間	Time
-例：葵陵会館前（雨の時は一号館一階）	e.g. In front of the hall (1st floor of Bldg. 1 if rainy)
+例：○○会館前（雨の時は一号館一階）	e.g. In front of the hall (1st floor of Bldg. 1 if rainy)
 例：ひとやすみしませんか？	e.g. Take a break?
 いちばん下の文字	Text at the very bottom
-例：主催　尾崎ゼミ　泰山木班	e.g. Organized by ___
+例：主催　○○ゼミ　泰山木班	e.g. Organized by ___
 おすすめ（3つまで。写真か絵と名前を大きく出します）	Featured (up to 3; shown large with photo or picture and name)
 メニューにのせる商品	Items on the menu
 選んだ商品のPOPを、A4の紙に{0}枚ずつならべます（点線で切って使います）。一度直して残してあるPOP（同じ大きさ）は、直した形を使います。	Lays out the chosen items' POPs {0} per A4 sheet (cut along the dotted lines). POPs you edited and saved (same size) are used as edited.
@@ -2595,7 +2595,7 @@ POPを作っています…	Making POPs…
 QRコードにするアドレス（https:// から始まる物）を入れてください。	Please enter an address for the QR code (starting with https://).
 おすすめは3つまでです	Up to 3 featured items
 カフェ	Café
-例：主催 尾崎ゼミ 泰山木班	e.g. Organized by ___
+例：主催 ○○ゼミ 泰山木班	e.g. Organized by ___
 ポスター	Posters
 # ---- POP・ポスター：画像（背景の画像・端末の写真・背景を消す）と重なり ----
 画像	Images
@@ -2684,3 +2684,30 @@ QRコードにするアドレス（https:// から始まる物）を入れてく
 見本のいちばん下	At the very bottom
 飾り	Decorations
 元の形	Original shape
+予約者のお名前を入力してください（名字だけ・呼び名でかまいません。電話番号などは入れません）:	Enter the name for the reservation (a family name or nickname is enough; do not enter phone numbers):
+# ---- POP・ポスター：戻る・やり直す・揃える・値段の確かめ／権利 ----
+やり直す	Redo
+No.1の根拠	No.1 basis
+POPの値段（¥{0}）が、いまの登録の値段（¥{1}）と違います。	The POP price (¥{0}) differs from the current registered price (¥{1}).
+いまの値段にする	Use current price
+いまの値段にしました	Updated to the current price
+ひとことの案を替える	Try another catchphrase
+まわりの白いふち（シール風）	White outline (sticker style)
+写真のふち	Photo border
+印刷で切れやすい所の目安を出す（見本だけ）	Show the print-safe margin (preview only)
+紙に合わせて揃える	Align to page
+上下の中	Middle
+左右の中	Center
+影を付ける	Add shadow
+行の間	Line spacing
+{0}を複製	Duplicate {0}
+複製しました（元のものはそのまま）	Duplicated (the original is unchanged)
+値段の書き方を変えてあるPOPが{0}枚あり、いまの値段と違います。開いて確かめてください	{0} POP(s) with custom price text differ from the current price. Open them to check.
+「期間限定」「焼きたて」「手作り」などは、本当にそうな時だけ使ってください。「No.1」「無添加」は、根拠や中身を書き添える決まりがあるので、スタンプには入れていません。	Use words like "limited time", "freshly baked" or "handmade" only when they are true. "No.1" and "additive-free" are not offered as stamps because they must be stated with their basis or details.
+天気のデータ：	Weather data:
+Open-Meteo の無料の窓口は、営利を目的としない使い方に限られています。お店の営業に使う時は、Open-Meteo の利用条件を確かめてから使ってください（初めはオフです）。	Open-Meteo's free API is limited to non-commercial use. Check Open-Meteo's terms before using it for your shop's business (off by default).
+5万円以上の紙の領収書には、収入印紙が要る場合があります（会社が運営する所など。社会福祉法人・NPO法人などは要りません）。この知らせは印刷されません。	A revenue stamp may be required on paper receipts of ¥50,000 or more (e.g. when run by a company; not for social welfare corporations or NPOs). This notice is not printed.
+権利・ライセンス	Rights & licenses
+このアプリで使っている物と、使う時に気をつけること	What this app uses, and what to watch for
+上	Top
+下	Bottom
