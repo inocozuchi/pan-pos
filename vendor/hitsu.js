@@ -81,7 +81,9 @@
             var mine = m.w === side;
             var who = m.w === 's' ? 'お店' : 'お客様';
             var body = m.x.k === 'd' ? drawSvg(m.x) : '<span class="hs-t">' + esc(m.x.t) + '</span>';
-            return '<div class="hs-msg ' + (mine ? 'mine' : 'theirs') + (m.x.k === 'd' ? ' ink' : '') + '"><small>' + who + '</small><div class="hs-b">' + body + '</div></div>';
+            // 文字は、音の印で読み上げられる（話すことが難しい方が、声で伝えたい時に）
+            var say = m.x.k === 't' && A.speak ? '<button type="button" class="hs-say" data-h="speak" data-v="' + esc(m.x.i) + '" aria-label="声で読む"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg></button>' : '';
+            return '<div class="hs-msg ' + (mine ? 'mine' : 'theirs') + (m.x.k === 'd' ? ' ink' : '') + '"><small>' + who + '</small><div class="hs-row">' + (mine ? say : '') + '<div class="hs-b">' + body + '</div>' + (mine ? '' : say) + '</div></div>';
         }).join('');
     }
     // CDの画面か（レジの画面をお客様に見せている時は、レジの画面のまま）
@@ -221,6 +223,10 @@
         if (!b || !root || !root.contains(b)) return;
         var h = b.dataset.h, v = b.dataset.v;
         if (h === 'say') sendText(v);
+        else if (h === 'speak') {
+            var it = live(D.s).concat(live(D.c)).filter(function (x) { return x.i === v; })[0];
+            if (it && it.t && A.speak) A.speak(it.t);
+        }
         else if (h === 'send') {
             if (mode === 'text') { var ta = root.querySelector('.hs-ta'); if (ta && sendText(ta.value)) { ta.value = ''; ta.focus(); } }
             else sendDraw();
@@ -337,6 +343,11 @@
 .hs-msg.theirs { align-self: flex-start; }\
 .hs-b { padding: 12px 16px; border-radius: 18px; background: var(--hs-sunk); font-size: clamp(22px, 3.2vw, 34px); font-weight: 700; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }\
 .hs-msg.mine .hs-b { background: var(--hs-mine); color: var(--hs-mine-ink); }\
+.hs-row { display: flex; align-items: center; gap: 6px; max-width: 100%; }\
+.hs-row .hs-b { min-width: 0; }\
+.hs-say { flex: none; width: 44px; height: 44px; border: none; border-radius: 50%; background: var(--hs-sunk); color: inherit; display: grid; place-items: center; cursor: pointer; padding: 0; }\
+.hs-say svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }\
+.hs-say svg path:first-child { fill: currentColor; }\
 .hs-msg.ink .hs-b { padding: 6px; background: #fff; color: #1C1D22; box-shadow: inset 0 0 0 2px var(--hs-sunk); }\
 .hs-msg.mine.ink .hs-b { box-shadow: inset 0 0 0 3px var(--hs-mine); }\
 .hs-ink { display: block; max-width: 100%; max-height: 46vh; height: auto; }\

@@ -2717,7 +2717,7 @@ Open-Meteo の無料の窓口は、営利を目的としない使い方に限ら
 モバイルオーダーや「後で会計」の注文があると、ここに並びます。	Mobile orders and "pay later" orders appear here.
 筆談	Written chat
 筆談（文字と手書きでお客様とお話しする）	Written chat (talk with customers by text and handwriting)
-バリアフリー	Accessibility
+アクセシビリティ	Accessibility
 {0}項目がオン	{0} on
 {0}項目がオン・筆談	{0} on · Written chat
 筆談・文字を大きく・読み上げ など（いまは全部オフ）	Written chat, larger text, read-aloud, etc. (all off now)
@@ -2774,7 +2774,6 @@ POPには、読みやすさに配慮した「UDゴシック」の文字も選べ
 文字や絵でお話しできます	You can talk by writing or drawing
 文字や絵で、お店の人とお話しできます	You can talk with the staff by writing or drawing
 下の「はい」「いいえ」を押すか、文字を打つ・指で書いて「送る」を押してください。	Tap "Yes" or "No" below, or type or draw and tap "Send".
-いらっしゃいませ	Welcome
 お会計は{0}です	Your total is {0}
 少々お待ちください	One moment, please
 袋はご入用ですか	Would you like a bag?
@@ -2782,7 +2781,6 @@ POPには、読みやすさに配慮した「UDゴシック」の文字も選べ
 お支払い方法はどうしますか	How would you like to pay?
 もう一度お願いします	Once more, please
 ゆっくりで大丈夫です	Take your time
-ありがとうございました	Thank you very much
 はい	Yes
 いいえ	No
 わかりました	I understand
@@ -2808,4 +2806,27 @@ UDゴシック	UD Gothic
 この写真は小さい物しか無いため、大きく印刷すると粗くなることがあります。写真を選び直すと、きれいに印刷できます（レジのボタンなどの写真も替わります）。	Only a small version of this photo exists, so large prints may look rough. Choose the photo again for a clean print (register buttons and other places update too).
 「{0}」の写真を選び直す	Choose the photo for "{0}" again
 この写真を読み込めませんでした	Couldn't load this photo
-「{0}」の画像を付けました	Added an image to "{0}"
+目の見えにくい方・耳の聞こえにくい方・話すことが難しい方・体を動かしにくい方が、お店でも働く人でも使いやすくするための切り替えです。	Options that make the app easier to use—for customers and staff alike—for people with low vision, hearing loss, difficulty speaking, or limited mobility.
+どれも初めはオフ	All of these start off
+で、オフの時は、ふだんの画面と何も変わりません。	, and when off nothing changes from the usual screens.
+視覚サポート	Vision
+聴覚サポート	Hearing
+発話サポート	Speech
+身体機能と動作サポート	Physical and motor
+設定・記録・集計などの画面を一回り大きくします（レジの商品ボタンは、並びが崩れないようにそのまま）	Makes settings, records, analytics and other screens a size larger (register product buttons stay the same so the layout holds)
+CDの文字を大きく	Larger text on CD
+お会計の合計・「ありがとうございました」・呼び出し番号の読み上げ	Reading the total, "Thank you" and call numbers aloud
+全部の端末	All devices
+筆談の画面を開く	Open written chat
+お客様と、文字・手書きでお話しします	Talk with customers by text and handwriting
+知らせを画面の光でも出す	Flash the screen for alerts
+KDの新しい注文や、お客様から筆談で話しかけられた時に、画面をぱっと光らせます（音が聞こえにくい方・うるさい所で）	Flashes the screen for new KD orders or when a customer starts a written chat (for people who are hard of hearing, or noisy places)
+お店に貼る紙（A4）を印刷します	Prints a sign (A4) to put up in the shop
+販売中の商品を、写真（無い時は絵）・名前・値段で大きく並べた紙を印刷します。話さなくても、指をさして注文できます	Prints a sheet listing items on sale in large print with photo (or illustration), name and price. Customers can order by pointing without speaking
+書いた物を声で読む	Read messages aloud
+筆談の画面で、書いた物の横の音の印を押すと、その端末で読み上げます（話すことが難しい方が、声で伝えたい時に）	In written chat, tap the speaker icon next to a message to read it aloud on that device (for people who have difficulty speaking but want to be heard)
+「なぞって戻る」を使わない	Turn off swipe to go back
+画面の左端から右へなぞった時に、前の画面へ戻らないようにします（手がふるえる方・指が当たりやすい方に。「戻る」のボタンは使えます）	Swiping right from the left edge no longer goes back (for people with tremors or who touch the screen by accident; the Back button still works)
+読みやすいPOP	Readable POP
+読みまちがえにくい「UDゴシック」の文字と、文字と背景の色が近い時の知らせ	The easy-to-read "UD Gothic" font, and a warning when text and background colors are too close
+商品の写真は「商品・在庫の調整」で付けると、指さしメニューにも出ます。端末そのものの読み上げ（iPhone・iPad の VoiceOver、Android の TalkBack）や、文字の大きさの設定も、このアプリで使えます。	Product photos added in "Products & stock" also appear on the point-to-order menu. The device's own screen reader (VoiceOver on iPhone/iPad, TalkBack on Android) and text size settings also work with this app.
