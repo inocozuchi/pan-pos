@@ -2830,3 +2830,93 @@ KDの新しい注文や、お客様から筆談で話しかけられた時に、
 読みやすいPOP	Readable POP
 読みまちがえにくい「UDゴシック」の文字と、文字と背景の色が近い時の知らせ	The easy-to-read "UD Gothic" font, and a warning when text and background colors are too close
 商品の写真は「商品・在庫の調整」で付けると、指さしメニューにも出ます。端末そのものの読み上げ（iPhone・iPad の VoiceOver、Android の TalkBack）や、文字の大きさの設定も、このアプリで使えます。	Product photos added in "Products & stock" also appear on the point-to-order menu. The device's own screen reader (VoiceOver on iPhone/iPad, TalkBack on Android) and text size settings also work with this app.
+この端末：{0}（オーナー・会計記録の記号 {1}）	This device: {0} (owner, record mark {1})
+このコードを入れて、この端末で「許可」	enter this code, then tap “Allow” on this device
+このコードを入れて、オーナーの許可で合流	enter this code and join with the owner’s approval
+すぐ合流できるQRコードを出す（30分）	Show a QR code for instant joining (30 min)
+QRコードか合言葉を使うと、許可を待たずに、上で選んだ使い方で合流できます。知らない人に見せないでください。使い終わったら「取り消す」を押すと安心です。	With the QR code or passphrase, a device joins in the role chosen above without waiting for approval. Don’t show it to strangers. Tap “Cancel” when you’re done, to be safe.
+もう1台のカメラで読み取るか、「合流する」に合言葉を入れると、上で選んだ使い方ですぐに合流します（許可は要りません）。ホーム画面に追加したアプリで使う端末は、合言葉を入れてください。	Scan it with the other device’s camera, or enter the passphrase in “Join”, to join right away in the role chosen above (no approval needed). For devices using the app added to the home screen, enter the passphrase.
+使える時刻：{0}:{1} まで	Valid until {0}:{1}
+合流の合言葉	Join passphrase
+この合言葉を取り消す	Cancel this passphrase
+この販売会のメンバー（オーナーの端末だけに出ます）	Members of this sale (shown only on owner devices)
+ここにある端末だけが、売上・注文を見たり会計したりできます。知らない端末があったら「外す」を押してください。	Only the devices listed here can see sales and orders or check out. If you see a device you don’t know, tap “Remove”.
+オーナー	Owner
+オーナーにする	Make owner
+・許可して合流	 · joined with approval
+・合言葉で合流	 · joined with passphrase
+・いつもの端末	 · regular device
+合流のお願い	Join requests
+断る	Decline
+許可	Allow
+合流のお願いを受け付けない	Don’t accept join requests
+共有コードを入れた端末から、お願いが来ないようにします（知らない人からのお願いが続く時に。QRコード・合言葉では入れます）	Stops join requests from devices that enter the share code (use when requests from strangers keep coming; the QR code and passphrase still work)
+次の開店でも、同じ端末を呼ぶ	Call the same devices next time
+この販売会に入った端末を、この端末が覚えておきます。次にこの端末で開店すると、その端末に「合流しますか」が届き、許可なしで入れます	This device remembers the devices that joined this sale. Next time you open on this device, they get a “Join?” notice and can join without approval.
+いつもの端末（{0}台）	Regular devices ({0})
+忘れる	Forget
+合流のお願い（レジとして）	Join request (as register)
+合流のお願い（KDとして）	Join request (as KD)
+合流のお願い（ハンディとして）	Join request (as handheld)
+合流のお願い（CDとして）	Join request (as CD)
+合流のお願い（CD（金額）として）	Join request (as CD – amount)
+合流のお願い（CD（呼び出し番号）として）	Join request (as CD – call numbers)
+ほかに{0}件のお願いがあります。	{0} more request{s0}.
+全部断る	Decline all
+合流のお願いを送りました	Join request sent
+オーナーの端末（開店した端末）に出る「許可」を押してもらってください。許可されると、自動で合流します。	Ask someone to tap “Allow” on the owner device (the one that opened the sale). This device joins automatically once allowed.
+この端末：{0}（{1}として）	This device: {0} (as {1})
+ほかの端末は「合流する」でこの共有コードを入れると、オーナーの端末（開店した端末）に合流のお願いが届きます。すぐに入れるQRコードは、オーナーの端末で出せます。	When another device enters this share code in “Join”, a join request goes to the owner device (the one that opened the sale). A QR code for instant joining can be shown on the owner device.
+お店から知らせが来たら、自動で合流する	Join automatically when the shop sends a notice
+オーナーの端末が「次の開店でも、同じ端末を呼ぶ」にしている時、開店の知らせが届いたら、押さなくても合流します（KD・CDの置きっぱなしの端末に）	When the owner device has “Call the same devices next time” on, this device joins automatically when the opening notice arrives (for KD and CD devices that stay in place)
+お店からの合流の知らせ	Join notices from the shop
+確かめ直す	Check again
+確かめています…	Checking…
+お店からの合流の知らせはありません。	No join notices from the shop.
+開店した端末の「設定 → 複数端末で使う」に出ている共有コード（6けた）を下に入れると、その端末に「合流のお願い」が届きます。	Enter the 6-digit share code shown in “Settings → Use on multiple devices” on the device that opened the sale, and a join request goes to that device.
+その端末のQRコードを読んでも、すぐに入れます。	You can also scan that device’s QR code to join right away.
+いま知らせを読めませんでした（通信を確かめてください）。	Couldn’t read notices just now (check your connection).
+下の「コードで合流する」から入れます。	You can join with “Join with a code” below.
+共有コード（6けた）は、開店した端末の「設定 → 複数端末で使う」に大きく出ています。コードを入れると、その端末に合流のお願いが届き、「許可」されると合流します。すぐに入りたい時は、その端末で「すぐ合流できるQRコード」を出してもらい、読み取るか合言葉を入れてください。	The 6-digit share code is shown large in “Settings → Use on multiple devices” on the device that opened the sale. Entering it sends a join request to that device; you join once it’s allowed. To join right away, have that device show the “QR code for instant joining”, then scan it or enter the passphrase.
+合流の合言葉で、すぐに合流します。	Joins right away with the passphrase.
+合言葉で合流する	Join with passphrase
+この端末はまだ、このコードの販売会のメンバーではありません。	This device isn’t a member of this code’s sale yet.
+押すと、開店した端末（オーナー）に	Tapping sends a
+が届きます。オーナーが「許可」を押すと合流します。	to the device that opened the sale (the owner). You join when the owner taps “Allow”.
+合流のお願いを送る	Send join request
+お店からの知らせ・{0}として・コード {1}・{2}:{3} 開店・{4}	Notice from the shop · as {0} · code {1} · opened {2}:{3} · {4}
+例: 482913（合言葉なら 482913-K7PQ4XA2）	e.g. 482913 (passphrase: 482913-K7PQ4XA2)
+「{0}」の合流を許可しました	Allowed “{0}” to join
+合流のお願いを断りました	Declined the join request
+外しました	Removed
+オーナーにしました	Made owner
+許可されました。合流します	Allowed. Joining now
+合流のお願いを受け付けないようにしました（合言葉では入れます）	Join requests turned off (the passphrase still works)
+合流のお願いを受け付けるようにしました	Join requests turned on
+次の開店でも、いまの端末を呼ぶようにしました	The current devices will be called next time
+いつもの端末を呼ぶのをやめました	Stopped calling regular devices
+いつもの端末{0}台に、合流の知らせを送りました	Sent join notices to {0} regular device{s0}
+お店から知らせが来たら、自動で合流するようにしました	This device will join automatically on a notice from the shop
+自動で合流するのをやめました	Stopped joining automatically
+お店のQRコードが新しくなりました。モバイルオーダーのQRコードを印刷し直してください	The shop QR code has changed. Please reprint the mobile ordering QR codes.
+許可できませんでした。通信を確かめてください。	Couldn’t allow. Check your connection.
+合言葉を作れませんでした。通信を確かめてください。	Couldn’t create a passphrase. Check your connection.
+通信できないため、合流できませんでした。\n電波の良い場所で、もう一度お試しください。	Couldn’t join because there’s no connection.\nTry again where the signal is good.
+合流の合言葉が違うか、期限が切れています。\nオーナーの端末で、新しいQRコード・合言葉を出してもらってください。	The join passphrase is wrong or has expired.\nAsk for a new QR code or passphrase on the owner device.
+通信できないため、合流できませんでした。	Couldn’t join because there’s no connection.
+合流のお願いは、オーナーの端末で断られました。	The join request was declined on the owner device.
+10分たっても許可されなかったため、合流のお願いを取り下げました。\nもう一度お願いを出すか、オーナーの端末で出す「合流の合言葉」を使ってください。	The join request was withdrawn because it wasn’t allowed within 10 minutes.\nSend another request, or use the join passphrase shown on the owner device.
+共有コード「{0}」で、いま開いている販売会はありません。\nコードを確かめてください。\n（オーナーが「合流のお願いを受け付けない」にしている時も、合流できません）	There’s no sale open now with share code “{0}”.\nPlease check the code.\n(You also can’t join when the owner has turned off join requests.)
+通信できないため、合流のお願いを出せませんでした。\n電波の良い場所で、もう一度お試しください。	Couldn’t send the join request because there’s no connection.\nTry again where the signal is good.
+この端末は、オーナーの端末で販売会から外されました。\n\nここまでの会計はこの端末に残っています。この先は、この端末だけで営業します。\nもう一度合流する時は「設定 → 複数端末で使う」から合流のお願いを出してください。	This device was removed from the sale on the owner device.\n\nSales so far remain on this device. From now on it runs on its own.\nTo join again, send a join request from “Settings → Use on multiple devices”.
+この端末は、販売会から外されました（左上の×で、ふだんの画面に戻せます）	This device was removed from the sale (tap × at the top left to return to the normal screen)
+この端末は、この販売会のCDとして許可されていません。左上の×でふだんの画面に戻し、もう一度合流してください	This device isn’t allowed as a CD for this sale. Tap × at the top left to return to the normal screen, then join again.
+「{0}」を、この販売会から外しますか？\nその端末は、すぐに売上・注文が見られなくなります（その端末の中の記録は残ります）。\nもう一度入る時は、合流のお願いが要ります。	Remove “{0}” from this sale?\nThat device will immediately lose access to sales and orders (records on the device remain).\nIt will need a new join request to come back.
+開店した端末（はじめのオーナー）は外せません。	The device that opened the sale (the first owner) can’t be removed.
+外せませんでした。通信を確かめてください。	Couldn’t remove. Check your connection.
+「{0}」もオーナーにしますか？\nオーナーは、合流の許可・端末を外す・合言葉を出すことができます。\n（オーナーの端末が電池切れになった時の控えに、もう1台オーナーにしておくと安心です）	Make “{0}” an owner too?\nOwners can allow joins, remove devices and show passphrases.\n(It’s safer to have a second owner in case the owner device’s battery dies.)
+QRコードを作れませんでした。下の合言葉を使ってください。	Couldn’t create the QR code. Use the passphrase below.
+お店のQRコードから開いてください。（このページだけを開いても、お店は分かりません）	Please open this from the shop’s QR code. (Opening this page by itself doesn’t tell us which shop.)
+許可して合流	joined with approval
+合言葉で合流	joined with passphrase
+いつもの端末	regular device
