@@ -412,6 +412,8 @@
     const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const yen = n => '¥' + Number(n || 0).toLocaleString('ja-JP');
     let code = (new URLSearchParams(location.search).get('e') || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 32);
+    // お店の印（印刷したQRコードに入っている、変わらない印）。ここから、いま開いている販売会を探す
+    const shopId = (new URLSearchParams(location.search).get('s') || '').replace(/[^0-9A-Za-z]/g, '').slice(0, 40);
     // レストラン：テーブルに置いたQRには、テーブルの番号（t）が入っている
     const tableNo = (() => { const v = String(new URLSearchParams(location.search).get('t') || '').trim(); return /^[0-9]{1,3}$/.test(v) && Number(v) > 0 ? String(parseInt(v, 10)) : ''; })();
     function restMode() { return !!(evData && evData.storeMode === 'restaurant'); }
@@ -488,6 +490,8 @@
             if (!window.firebase || !window.firebase.firestore) await loadSdk();
             const app = firebase.apps && firebase.apps.length ? firebase.app() : firebase.initializeApp(window.FIREBASE_CONFIG);
             db = firebase.firestore(app);
+            // 試験のときだけ：手元のエミュレーターにつなぐ
+            if (window.__FB_EMU) { db.useEmulator(window.__FB_EMU.host, window.__FB_EMU.fs); firebase.auth(app).useEmulator('http://' + window.__FB_EMU.host + ':' + window.__FB_EMU.auth, { disableWarnings: true }); }
             try { db.settings({ experimentalAutoDetectLongPolling: true, merge: true }); } catch (e) {}
             const cred = await firebase.auth(app).signInAnonymously();
             uid = (cred && cred.user && cred.user.uid) || (firebase.auth(app).currentUser || {}).uid || '';
@@ -495,52 +499,31 @@
             say('つながりませんでした。電波の良い所で、ページを読み込み直してください。', true);
             return;
         }
-        if (!code) { listShops(db); return; }
+        if (!code) { openShop(db); return; }
         attach(db);
     }
 
-    // ---- お店を選ぶ（いま受付中のお店だけを並べる）----
-    async function listShops(database, userId) {
+    // ---- お店の印から、いま開いている販売会を開く ----
+    // 一般公開のため、置き場の販売会を一覧にして選ぶ形はやめた（ほかのお店の販売会まで見えてしまうため）。
+    // QRコードの「お店の印」（s=）の文書に、オーナーの端末が「いま開いている販売会」を書いている。
+    async function openShop(database, userId) {
         db = database; if (userId) uid = userId;
+        if (!shopId) { say('お店のQRコードから開いてください。（このページだけを開いても、お店は分かりません）', true); return; }
         say('お店を探しています…');
-        let rows = [];
-        try {
-            const snap = await db.collection(COL).where('status', '==', 'open').get();
-            const now = Date.now();
-            const cand = [];
-            snap.forEach(d => cand.push(d));
-            // お店の端末が動いている印（無い時は、開いた時刻で見る）
-            const alive = {};
-            await Promise.all(cand.map(d => d.ref.collection('live').doc('alive').get().then(a => { alive[d.id] = a.exists ? (Number((a.data() || {}).at) || 0) : 0; }).catch(() => { alive[d.id] = 0; })));
-            cand.forEach(d => {
-                const v = d.data() || {};
-                if (!v.mobile || v.mobile.on !== true || !Array.isArray(v.products)) return;
-                // テーブルのQR（t）から来た時はレストランだけ、それ以外はレストラン以外だけ
-                if (tableNo ? v.storeMode !== 'restaurant' : v.storeMode === 'restaurant') return;
-                if (alive[d.id] > 0 ? now - alive[d.id] > ALIVE_MAX : (Number(v.openedAt) || 0) < now - 24 * 3600000) return;     // 止まったまま・前の日から開いたままのものは出さない
-                rows.push({ code: d.id, test: !!v.test, name: String(v.mobile.shop || v.name || 'お店'), icon: typeof v.mobile.icon === 'string' && v.mobile.icon.startsWith('data:image/') ? v.mobile.icon : '', wait: Number(v.mobile.wait) || 0 });
-            });
-        } catch (e) { say('お店の一覧を読めませんでした。電波の良い所で、ページを読み込み直してください。', true); return; }
-        rows.sort((a, b) => a.name.localeCompare(b.name, 'ja'));
-        const box = $('shops');
-        // 受付中のお店が1つだけなら、選ばずにそのまま開く（印刷したQRコードは、このページを開く）
-        if (rows.length === 1) { chooseShop(rows[0].code, true); return; }
-        if (!rows.length) { say(tableNo ? 'ただいま、スマホからの注文を受け付けていません。お店の人にお声がけください。' : 'ただいま、スマホから注文できるお店はありません。店頭でご注文ください。', true); box.classList.add('hide'); return; }
-        say('');
-        $('title').textContent = 'お店を選んでください';
-        box.classList.remove('hide');
-        box.innerHTML = `<div class="shops">${rows.map(r => `<button type="button" class="shop" data-c="${esc(r.code)}">
-                <span class="ico">${r.icon ? `<img src="${r.icon}" alt="">` : esc(r.name.slice(0, 1))}</span>
-                <span class="nm">${r.test ? '【テスト】' : ''}${esc(r.name)}${r.wait ? `<small>待ち時間 約${r.wait}分</small>` : ''}</span>
-                <span class="go">注文する</span></button>`).join('')}</div>`;
-        box.querySelectorAll('.shop').forEach(b => b.onclick = () => chooseShop(b.dataset.c));
+        let s = null;
+        try { const d = await db.collection('shops').doc(shopId).get(); s = d.exists ? (d.data() || {}) : null; }
+        catch (e) { say('お店を読めませんでした。電波の良い所で、ページを読み込み直してください。', true); return; }
+        if (!s) { say('このQRコードのお店は見つかりませんでした。お店の人にお声がけください。', true); return; }
+        if (s.name) $('title').textContent = String(s.name);
+        if (!s.open || !s.event) { say(tableNo ? 'ただいま、スマホからの注文を受け付けていません。お店の人にお声がけください。' : 'ただいま、このお店はスマホからの注文を受け付けていません。店頭でご注文ください。', true); return; }
+        chooseShop(String(s.event), true);
     }
-    window.__attachOrderList = listShops;
+    window.__attachShop = openShop;
     function chooseShop(c, auto) {
         code = String(c || '').replace(/[^0-9A-Za-z_-]/g, '').slice(0, 32);
         if (!code) return;
         // ひとりでに開いた時は、履歴を置きかえる（戻るで、また同じお店が開いてしまわないように）
-        const q = '?e=' + encodeURIComponent(code) + (tableNo ? '&t=' + encodeURIComponent(tableNo) : '');
+        const q = '?e=' + encodeURIComponent(code) + (shopId ? '&s=' + encodeURIComponent(shopId) : '') + (tableNo ? '&t=' + encodeURIComponent(tableNo) : '');
         try { if (auto) history.replaceState(null, '', location.pathname + q); else history.pushState(null, '', location.pathname + q); } catch (e) {}
         $('shops').classList.add('hide');
         mine = loadMine();
@@ -549,19 +532,34 @@
     }
     // 戻る操作で、お店を選ぶ画面に戻る
     window.addEventListener('popstate', () => { if (!new URLSearchParams(location.search).get('e')) location.reload(); });
+    let queueStarts = null;    // 作り始めた（作っている）注文の、作り始める時刻の並び（お店の端末が live/queue に書く）
 
     // テストや、ほかの入口からも使えるように、つなぐ部分を分けておく
     function attach(database, userId) {
         db = database; if (userId) uid = userId;
         ev = db.collection(COL).doc(code);
-        ev.onSnapshot(doc => { evData = doc.exists ? (doc.data() || {}) : null; render(); }, () => say('つながりが切れました。電波を確かめてください。', true));
+        // お客様が読めるのは、公開用の設定（live/pub）だけ。前の版のお店（公開用の設定が無い）は、販売会の文書を読む
+        let fallback = null;
+        ev.collection('live').doc('pub').onSnapshot(doc => {
+            if (doc.exists) { if (fallback) { fallback(); fallback = null; } evData = doc.data() || {}; render(); return; }
+            if (fallback) return;
+            fallback = ev.onSnapshot(d2 => { evData = d2.exists ? (d2.data() || {}) : null; render(); }, () => { evData = null; render(); });
+        }, () => say('つながりが切れました。電波を確かめてください。', true));
         ev.collection('live').doc('menu').onSnapshot(doc => { menu = doc.exists ? (doc.data() || null) : null; render(); }, () => {});
         // お店の端末が動いている印（しばらく届いていなければ、注文を受けない）
         ev.collection('live').doc('alive').onSnapshot(doc => { aliveAt = doc.exists ? (Number((doc.data() || {}).at) || 0) : 0; staleWas = stale(); render(); }, () => {});
-        ev.collection('orders').onSnapshot(snap => {
+        // 読めるのは、この端末（このログイン）で作った注文だけ
+        ev.collection('orders').where('uid', '==', uid).onSnapshot(snap => {
             const rows = [];
             snap.forEach(d => { const v = d.data() || {}; if (v && v.id) rows.push(v); });
             orders = rows;
+            renderMine();
+            renderWait();
+        }, () => {});
+        // 待っている組（作り始める時刻だけ。ほかの人の注文の中身は届かない）
+        ev.collection('live').doc('queue').onSnapshot(doc => {
+            const v = doc.exists ? (doc.data() || {}) : null;
+            queueStarts = v && Array.isArray(v.s) ? v.s.map(Number).filter(n => n > 0) : null;
             renderMine();
             renderWait();
         }, () => {});
@@ -680,7 +678,10 @@
     }
     function shopName() { return (evData && ((evData.mobile && evData.mobile.shop) || evData.name)) || ''; }
     // いま作っている（待っている）組の数
-    function waitingGroups() { const now = Date.now(); return orders.filter(o => o.st === 'cook' && !heldNow(o, now)).length; }
+    function waitingGroups() {
+        if (queueStarts) return queueStarts.length;
+        const now = Date.now(); return orders.filter(o => o.st === 'cook' && !heldNow(o, now)).length;
+    }
     function render() {
         const shop = $('shop');
         if (evData) {
@@ -1123,7 +1124,7 @@
         const h = couponHash($('c-coupon').value);
         const c = h ? codeCoupons().find(x => x.codeHash === h) : null;
         if (!c) { coupon = null; $('c-coupon-sub').textContent = 'そのコードのクーポンはありません。'; renderConfirm(); return; }
-        coupon = { id: String(c.id), name: String(c.name || 'クーポン'), kind: c.kind === 'pct' ? 'pct' : 'yen', amount: Number(c.amount) || 0, note: String(c.note || ''), solo: c.solo === true };
+        coupon = { id: String(c.id), name: String(c.name || 'クーポン'), kind: c.kind === 'pct' ? 'pct' : 'yen', amount: Number(c.amount) || 0, note: String(c.note || ''), solo: c.solo === true, code: String($('c-coupon').value || '').slice(0, 30) };
         renderConfirm();
     };
     function renderConfirm() {
@@ -1258,7 +1259,8 @@
             if (discount > 0) doc.discount = discount;
             if (pickupAt) doc.pickupAt = pickupAt;
             if (dine === 'eat' && cfg().seat && seat) doc.seat = seat;
-            if (coupon) doc.coupon = { id: coupon.id, name: coupon.name };
+            // クーポン：入れたコードも送る（お店のレジで、もう一度コードを確かめてから引く）
+            if (coupon) doc.coupon = { id: coupon.id, name: coupon.name, code: String(coupon.code || '') };
             const memo = memoText();
             if (memo) doc.memo = memo;
             await ev.collection('orders').doc(id).set(doc);
@@ -1361,7 +1363,7 @@
         box.innerHTML = list.slice().reverse().map(o => {
             // 「あと何組」は、いま作っている注文のうち、先に作り始めた注文の数（予約で待っている注文は数えない）
             const myStart = startOf(o);
-            const ahead = orders.filter(x => x.st === 'cook' && !heldNow(x, now) && startOf(x) < myStart).length;
+            const ahead = queueStarts ? queueStarts.filter(t => t < myStart).length : orders.filter(x => x.st === 'cook' && !heldNow(x, now) && startOf(x) < myStart).length;
             const pk = pickupOf(o);
             let cls = '', st = '', sub = '';
             if (o.billId) {

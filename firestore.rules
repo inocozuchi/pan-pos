@@ -1,0 +1,231 @@
+rules_version = '2';
+// 泰山木POS の置き場（Cloud Firestore）の決まり。
+// 一般に公開しても、ほかのお店の販売会を見たり、勝手に会計したりできないようにする。
+// 考え方と、決まりを公開する手順は docs/一般公開の準備.md を見てください。
+//
+// ・だれでも匿名でログインする（名前・メールは聞かない）。ログインした「印」（uid）で見分ける。
+// ・販売会（events/{コード}）の中身を読み書きできるのは、その販売会の「メンバー」の端末だけ。
+//     owner   … オーナー（開店した端末。メンバーを足す・外す・招待を作る）
+//     staff   … レジ・KD・ハンディ（会計・注文・在庫）
+//     display … CD・呼び出し番号（映すだけ。会計はしない）
+// ・メンバーになる道は3つだけ：
+//     1) 開店した端末が、自分をオーナーにする
+//     2) オーナーが足す（合流のお願いを「許可」した時・いつもの端末を呼んだ時）
+//     3) オーナーが作った「合流の合言葉」（期限つき）を知っている
+//   共有コード（6けた）を知っているだけでは、合流のお願いを出せるだけで、中身は何も読めない。
+// ・お客様（モバイルオーダー）は、メニューなど公開用の文書だけを読み、
+//   自分の注文を作って、自分の注文だけを読める。ほかのお客様の注文は読めない。
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function me() { return request.auth.uid; }
+    function evPath(code) { return /databases/$(database)/documents/events/$(code); }
+    function memPath(code, uid) { return /databases/$(database)/documents/events/$(code)/members/$(uid); }
+    function isMember(code) { return signedIn() && exists(memPath(code, me())); }
+    function roleOf(code) { return get(memPath(code, me())).data.role; }
+    function isStaff(code) { return isMember(code) && roleOf(code) in ['owner', 'staff']; }
+    function isOwner(code) { return isMember(code) && roleOf(code) == 'owner'; }
+    function evExists(code) { return exists(evPath(code)); }
+    function ev(code) { return get(evPath(code)).data; }
+    function evOpen(code) { return evExists(code) && ev(code).get('status', '') == 'open'; }
+    function evClosed(code) { return evExists(code) && ev(code).get('status', '') == 'closed'; }
+    function str(v, n) { return v is string && v.size() <= n; }
+    function nowMs() { return request.time.toMillis(); }
+    // 数を1つずつ数える文書（番号札・伝票番号）。1つ増やすことだけができる
+    function countUp() {
+      return request.resource.data.keys().hasOnly(['n'])
+        && request.resource.data.n is int
+        && request.resource.data.n == (resource == null ? 0 : resource.data.n) + 1;
+    }
+
+    // ---- お店（印刷したQRコードが指す先。オーナーの端末が「いま開いている販売会」を書く）----
+    // QRコードには、このお店の印だけを入れる。印を知らないお店は探せない（一覧は出さない）。
+    match /shops/{shopId} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && shopId.size() >= 16
+        && request.resource.data.owners == [me()]
+        && shopShape();
+      allow update: if signedIn() && me() in resource.data.owners
+        && request.resource.data.owners.size() <= 10
+        && resource.data.owners[0] in request.resource.data.owners
+        && shopShape();
+      allow delete: if signedIn() && resource.data.owners[0] == me();
+      function shopShape() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['owners', 'event', 'name', 'at', 'open'])
+          && d.owners is list && (d.get('event', '') == null || str(d.get('event', ''), 40))
+          && str(d.get('name', ''), 60);
+      }
+    }
+
+    // ---- 合流の知らせ（いつもの端末へ。オーナーが開店した時に「合流しますか」を届ける）----
+    match /users/{uid}/inbox/{code} {
+      allow read, delete: if signedIn() && uid == me();
+      allow create, update: if signedIn()
+        && exists(memPath(code, me())) && get(memPath(code, me())).data.role == 'owner'
+        && existsAfter(memPath(code, uid))
+        && request.resource.data.keys().hasOnly(['code', 'name', 'at', 'from', 'role', 'kind'])
+        && request.resource.data.code == code && request.resource.data.from == me()
+        && str(request.resource.data.get('name', ''), 60);
+    }
+
+    // ---- 販売会 ----
+    match /events/{code} {
+      allow get: if isMember(code);
+      allow list: if false;           // 販売会の一覧は、だれにも見せない
+      // 新しく作る：作った端末がオーナー（作る時に owner に自分を書く）
+      allow create: if signedIn() && code.size() >= 6
+        && request.resource.data.owner == me();
+      // 中身を変える：レジ・KD など（オーナーと、お店の印は変えられない）
+      allow update: if isStaff(code)
+        && request.resource.data.get('owner', '') == resource.data.get('owner', '')
+        && (request.resource.data.get('shop', '') == resource.data.get('shop', '') || isOwner(code));
+      // 消す：オーナーか、閉店した後の片づけ
+      allow delete: if isOwner(code) || (isStaff(code) && resource.data.get('status', '') == 'closed');
+
+      // メンバー
+      match /members/{uid} {
+        allow get: if signedIn() && (uid == me() || isMember(code));
+        allow list: if isMember(code);
+        allow create: if signedIn() && memberShape() && (
+            // 1) 開店した端末が、自分をオーナーにする（販売会の文書と同時に作ってもよい）
+            (uid == me() && request.resource.data.role == 'owner'
+              && getAfter(evPath(code)).data.get('owner', '') == me())
+            // 2) オーナーが足す
+            || isOwner(code)
+            // 3) 期限内の合流の合言葉を知っている（合言葉と同じ役割でだけ入れる）
+            || (uid == me() && request.resource.data.role in ['staff', 'display']
+              && str(request.resource.data.get('inv', null), 40)
+              && exists(/databases/$(database)/documents/events/$(code)/invites/$(request.resource.data.inv))
+              && get(/databases/$(database)/documents/events/$(code)/invites/$(request.resource.data.inv)).data.exp > nowMs()
+              && get(/databases/$(database)/documents/events/$(code)/invites/$(request.resource.data.inv)).data.role == request.resource.data.role)
+          );
+        // 自分の名前を直すのは自分でもよい（役割は変えられない）。役割を変えるのはオーナーだけ
+        allow update: if memberShape() && (isOwner(code)
+          || (uid == me() && isMember(code) && request.resource.data.role == resource.data.role));
+        // 外す：オーナー（開店した端末は外せない）・自分で抜ける・閉店した後の片づけ
+        allow delete: if signedIn() && (uid == me()
+          || (isOwner(code) && (!evExists(code) || uid != ev(code).get('owner', '')))
+          || (isStaff(code) && (!evExists(code) || evClosed(code))));
+        function memberShape() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['role', 'name', 'at', 'by', 'via', 'inv', 'kind'])
+            && d.role in ['owner', 'staff', 'display'] && str(d.get('name', ''), 40);
+        }
+      }
+
+      // 合流の合言葉（オーナーが作る。期限つき。読めるのはオーナーだけ）
+      match /invites/{token} {
+        allow read: if isOwner(code);
+        allow create: if isOwner(code) && token.size() >= 8
+          && request.resource.data.keys().hasOnly(['role', 'exp', 'by', 'at'])
+          && request.resource.data.role in ['staff', 'display']
+          && request.resource.data.exp is int && request.resource.data.exp <= nowMs() + 86400000;
+        allow update: if false;
+        allow delete: if isOwner(code) || (isStaff(code) && evClosed(code));
+      }
+
+      // 合流のお願い（共有コードを知っている端末が出す。オーナーが「許可」するとメンバーになる）
+      match /requests/{uid} {
+        allow get: if signedIn() && (uid == me() || isMember(code));
+        allow list: if isMember(code);
+        allow create, update: if signedIn() && uid == me() && evOpen(code)
+          && ev(code).get('reqOff', false) != true
+          && request.resource.data.keys().hasOnly(['name', 'role', 'at', 'kind'])
+          && str(request.resource.data.get('name', ''), 30)
+          && request.resource.data.role in ['staff', 'display']
+          && str(request.resource.data.get('kind', ''), 12)
+          && request.resource.data.at is int;
+        allow delete: if signedIn() && (uid == me() || isOwner(code) || (isStaff(code) && evClosed(code)));
+      }
+
+      // その時々の表示（お客様用の文書と、お店の中だけの文書がある）
+      match /live/{doc} {
+        // お客様も読める：メニュー・写真・いちばん上の絵・動いている印・公開用のお店の設定・待っている組
+        allow get: if (signedIn() && doc in ['menu', 'menuimg', 'mhero', 'alive', 'pub', 'queue', 'mseq', 'bseq']) || isMember(code);
+        allow list: if isMember(code);
+        allow write: if isStaff(code);
+        // CD（映すだけの端末）も筆談には書ける
+        allow write: if doc == 'hitsu' && isMember(code);
+        // お客様：番号札・伝票番号を1つずつ数える（受付中の時だけ）
+        allow create, update: if signedIn() && doc in ['mseq', 'bseq'] && evOpen(code) && countUp();
+      }
+
+      // 注文（キッチン）
+      match /orders/{id} {
+        allow get, list: if isMember(code) || (signedIn() && resource.data.uid == me());
+        allow create: if isStaff(code) || customerOrder();
+        allow update, delete: if isStaff(code);
+        function customerOrder() {
+          let d = request.resource.data;
+          return signedIn() && evOpen(code)
+            && ev(code).get('mobile', {}).get('on', false) == true
+            && d.keys().hasOnly(['id', 'no', 'at', 'dine', 'items', 'st', 'channel', 'paid', 'total', 'uid', 'roundId',
+                                 'upd', 'chk', 't', 'dev', 'discount', 'pickupAt', 'seat', 'coupon', 'memo', 'table', 'billId'])
+            && d.id == id && d.uid == me() && d.channel == 'mobile' && d.paid == false && d.st == 'cook'
+            && d.items is list && d.items.size() >= 1 && d.items.size() <= 40
+            && str(d.no, 8) && d.dine in ['take', 'eat']
+            && d.chk is list && d.chk.size() == 0 && d.t is map && d.t.size() == 0
+            && (d.get('memo', '') == '' || str(d.get('memo', ''), 300))
+            && (d.get('seat', '') == '' || str(d.get('seat', ''), 20))
+            && d.get('roundId', '') == ev(code).get('roundId', '')
+            // テーブルの伝票に足す時は、そのテーブルの伝票だけ
+            && (d.get('billId', '') == '' || get(/databases/$(database)/documents/events/$(code)/bills/$(d.billId)).data.table == d.get('table', ''));
+        }
+      }
+
+      // テーブルの印（レストラン）。どの伝票が開いているかだけ
+      match /tables/{t} {
+        allow get: if signedIn();
+        allow list: if isMember(code);
+        allow write: if isStaff(code);
+        // お客様：新しく開いた伝票を、このテーブルの印にする（開いている伝票を横取りできない）
+        allow create, update: if signedIn() && evOpen(code)
+          && request.resource.data.keys().hasOnly(['bill', 'roundId'])
+          && str(request.resource.data.bill, 60)
+          && !exists(/databases/$(database)/documents/events/$(code)/bills/$(request.resource.data.bill))
+          && getAfter(/databases/$(database)/documents/events/$(code)/bills/$(request.resource.data.bill)).data.table == t
+          && (resource == null || !exists(/databases/$(database)/documents/events/$(code)/bills/$(resource.data.bill))
+              || get(/databases/$(database)/documents/events/$(code)/bills/$(resource.data.bill)).data.st != 'open'
+              || resource.data.get('roundId', '') != ev(code).get('roundId', ''));
+      }
+
+      // 伝票（レストラン）
+      match /bills/{b} {
+        allow get: if signedIn();
+        allow list: if isMember(code);
+        allow create: if isStaff(code) || (signedIn() && evOpen(code)
+          && request.resource.data.keys().hasOnly(['id', 'no', 'table', 'st', 'at', 'by', 'roundId', 'paid', 'pays'])
+          && request.resource.data.id == b && request.resource.data.st == 'open' && request.resource.data.by == 'mobile'
+          && request.resource.data.paid is map && request.resource.data.paid.size() == 0
+          && request.resource.data.pays is list && request.resource.data.pays.size() == 0
+          && getAfter(/databases/$(database)/documents/events/$(code)/tables/$(request.resource.data.table)).data.bill == b);
+        allow update, delete: if isStaff(code);
+      }
+
+      // 会計の記録：レジ・KD など。消すのは閉店した後の片づけだけ
+      match /sales/{id} {
+        allow read: if isStaff(code);
+        allow create, update: if isStaff(code);
+        allow delete: if isStaff(code) && evClosed(code);
+      }
+      match /reservations/{id} {
+        allow read, write: if isStaff(code);
+      }
+      // 端末の一覧（在席）。CD も自分の在席を書く
+      match /devices/{id} {
+        allow read, write: if isMember(code);
+      }
+      // 商品の写真（小さい物・印刷用の大きい控え）
+      match /img/{id} {
+        allow read: if isMember(code);
+        allow write: if isStaff(code);
+      }
+      match /imgh/{id} {
+        allow read, write: if isStaff(code);
+      }
+    }
+  }
+}

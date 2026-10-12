@@ -31,20 +31,21 @@ Firebaseコンソール側（プロジェクト作成／Firestore作成／匿名
 > Web用APIキーは公開前提の識別子なので、貼り付けても問題ありません。
 > データ保護は下の「セキュリティルール（匿名認証必須）」で行います。
 
-## 3. セキュリティルール（Firestore →「ルール」に貼る）
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // 販売会(events)配下は「ログイン(匿名認証)済み」のみ読み書き可
-    match /events/{eventCode}/{document=**} {
-      allow read, write: if request.auth != null;
-    }
-  }
-}
-```
-- これで「未認証の直アクセス」は弾けます。
-- さらに厳密にするなら、共有コードを**推測されにくい文字列**にする／後日 **App Check** を追加、を推奨します（完全会員制ではない点はご理解ください）。
+## 3. セキュリティルール（置き場の決まり）
+- 決まりは、リポジトリの **`firestore.rules`** です。Firebase コンソール →「Firestore Database」→「ルール」に中身をそのまま貼って「公開」するか、`firebase deploy --only firestore:rules` で公開します。
+- 考え方・公開の順番・コンソールの設定は **`docs/一般公開の準備.md`** にまとめました。**公開の前に、開いている販売会を全部閉店してください**（前の版で開いた販売会は、新しい決まりでは読めなくなります）。
+- 決まりを書きかえたら、必ず `tests/rules` の試験（エミュレーターで83項目）を通してから公開してください。
+
+### 置き場の中身（一般公開の守りで増えたもの）
+- `events/{コード}` の `owner`（開店した端末のログインの印）・`shop`（お店の印）・`reqOff`（合流のお願いを受け付けない）
+- `events/{コード}/members/{ログインの印}` … メンバー `{ role: owner|staff|display, name, kind, via, at }`。メンバーだけが販売会を読み書きできる
+- `events/{コード}/requests/{ログインの印}` … 合流のお願い `{ name, role, kind, at }`。オーナーが許可するとメンバーになり、お願いは消える
+- `events/{コード}/invites/{合言葉}` … 合流の合言葉 `{ role, exp, by, at }`（30分。オーナーだけが読める）
+- `events/{コード}/live/pub` … お客様に見せてよいお店の設定（名前・受付中か・モバイルオーダーの設定・消費税・セット割・コードで使うクーポンの印）。注文ページは販売会の文書ではなく、これを読む
+- `events/{コード}/live/queue` … 待っている組 `{ s: [作り始める時刻…], at }`（品目・メモは入れない）
+- `shops/{お店の印}` … 印刷したQRコードの行き先 `{ owners, event, name, open, at }`。だれでも1件ずつ読めるが、一覧は出ない
+- `users/{ログインの印}/inbox/{コード}` … いつもの端末への「合流しますか」の知らせ（本人だけが読める）
+- 共有コードは **6けた**。閉店すると、`members`・`invites`・`requests` も含めて片づける
 
 ### モバイルオーダーを使う時（ファストフードのモード）
 - お客様のスマホ（`order.html`）も匿名ログインして、同じ `events/{コード}` の下に書き込みます。
@@ -55,70 +56,18 @@ service cloud.firestore {
   - `live/mhero` … モバイルオーダー（標準の形）のいちばん上の絵（レジの端末が書き、お客様のページが読む）
   - `live/alive` … お店の端末が動いている印 `{ at: 時刻, roundId }`。共有中の端末が5分ごとに書く。お客様の注文ページは、この印が1時間より古い時は注文を受けない
     （閉店をしないまま端末が止まった販売会に、注文が入り続けないように）。印が無い販売会（前の版で開いた所）は、開いてから24時間で同じ扱い。
-- 印刷・掲示するQRコード（モバイルオーダー・レシート・POP・ポスター・テーブル）は、共有コードを入れない `order.html`（テーブルは `order.html?t=番号`）。
-  注文ページが、いま受付中の販売会を探して開く（1つならそのまま、いくつかなら選んでもらう。テーブルの時はレストランの販売会だけ）。
+- 印刷・掲示するQRコード（モバイルオーダー・レシート・POP・ポスター・テーブル）は、**お店の印**だけを入れた `order.html?s=お店の印`（テーブルは `&t=番号` も）。
+  注文ページは `shops/{お店の印}` から、いま開いている販売会を開く。ほかのお店は出てこない（受付中のお店を全部探して並べる形はやめた）。
   共有コードは開店のたびに変わるので、コードを入れたQRを印刷すると次の開店から使えなくなるため。前のQR（`?e=コード`）も、その販売会の間は使える。
-- 上のルールのままでも動きます。ただし、このルールでは**お客様のスマホからも売上などを読み書きできてしまう**ので、
-  モバイルオーダーを本番で使う前に、次のようにお客様の書き込みを注文だけに絞ることをすすめます（レジの動きには影響しません）。
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /events/{eventCode} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && isStaff(eventCode);
-      // お客様：メニューを読む・番号を数える
-      match /live/{doc} {
-        allow read: if request.auth != null;
-        allow write: if request.auth != null && (isStaff(eventCode) || doc == 'mseq');
-      }
-      // お客様：自分の注文を「調理中・未払い」で作るだけ。読めるのは注文の一覧（あと何組を数えるため）
-      match /orders/{orderId} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null && (isStaff(eventCode) ||
-          (request.resource.data.channel == 'mobile' && request.resource.data.paid == false
-           && request.resource.data.st == 'cook' && request.resource.data.uid == request.auth.uid));
-        allow update, delete: if request.auth != null && isStaff(eventCode);
-      }
-      // 売上・予約・端末の一覧は、スタッフの端末だけ
-      match /{sub}/{doc=**} {
-        allow read, write: if request.auth != null && isStaff(eventCode);
-      }
-    }
-    // スタッフの端末 … その販売会に合流した端末（devices に自分の文書がある）
-    function isStaff(eventCode) {
-      return exists(/databases/$(database)/documents/events/$(eventCode)/devices/$(request.auth.uid));
-    }
-  }
-}
-```
+- お客様の注文ページが読めるのは、`live/menu`・`live/menuimg`・`live/mhero`・`live/alive`・`live/pub`・`live/queue` と、**自分の注文だけ**（`orders` を `uid` でしぼって読む）。
 ### レストラン（テーブルと伝票）の時
 - 置き場に次のものが増えます（閉店の片づけで、ほかといっしょに消します）。
   - `bills/{伝票}` … テーブルごとの伝票（伝票番号・テーブル・払った数・開いている／会計済み）
   - `tables/{テーブル}` … いまそのテーブルで開いている伝票の印
   - `live/bseq` … 伝票番号（0001、0002 …）を数える文書
 - 伝票は **トランザクション**（まとめて読み書き）で開きます。ハンディ2台やお客様のスマホが同じテーブルに同じ瞬間に注文しても、伝票は1枚にまとまり、番号も重なりません。
-- 上の「いまのルール」（ログイン済みなら読み書き可）のままで動きます。
-- お客様の書き込みを絞る厳しいルールにする時は、テーブルのQRから注文するお客様が伝票を開けるように、次を足します。
-
-```
-      // お客様（レストラン）：テーブルの伝票を開く・伝票番号を数える
-      match /tables/{t} {
-        allow read: if request.auth != null;
-        allow write: if request.auth != null;
-      }
-      match /bills/{b} {
-        allow read: if request.auth != null;
-        allow create: if request.auth != null && (isStaff(eventCode) || request.resource.data.st == 'open');
-        allow update, delete: if request.auth != null && isStaff(eventCode);
-      }
-      // live/{doc} の条件に doc == 'bseq' も足す
-```
-
-- ※上の `isStaff` は、端末の一覧（`devices`）の文書の名前が匿名ログインの uid になっている前提の書き方です。
-  いまのアプリは端末の一覧に自分で決めた端末の印を使っているので、この厳しいルールに切り替える時は、
-  アプリの側も合わせて直す必要があります（切り替える時に一緒に作業します）。
+- お客様（テーブルのQR）は、空いているテーブルの伝票を開くことと、そのテーブルの伝票に注文を足すことだけができます（開いている伝票の横取り・ほかのテーブルの伝票への注文は、`firestore.rules` が断ります）。
+- 伝票の金額は、レジの商品の値段で数え直します（お客様のスマホが送った値段は使いません）。
 
 ### 商品の画像・消費税・委託商品・会計のメモ（今回ふえたもの）
 - `img/{印}` … 商品の画像（レジのボタンの背景）。1品1文書で、`{ name: 商品名, d: 画像（JPEG・10KB前後）, at: 付けた時刻 }`。
@@ -131,7 +80,7 @@ service cloud.firestore {
   `{ open: 話している最中か, s: [お店が書いた物], c: [お客様が書いた物], clr: 消した時刻, req: お客様が始めた時刻, at, by }`。
   1つの書いた物は `{ i: 印, k: 't'（文字）|'d'（手書き）, at, t: 文字 | p: 手書きの線, r: 縦÷横 }`（それぞれ30件まで）。
   レジは `s`、CDは `c` だけを書きかえます（`set` の merge）。お店の「全部消す」「終わる」だけが両方を空にし、`clr` より前の物はどちらの画面にも出しません。
-  オフの時は読みも書きもしません。`live` の中なので、閉店の片づけで消えます。厳しいルールでも、CDはスタッフの端末（`devices` にいる）なので書けます。
+  オフの時は読みも書きもしません。`live` の中なので、閉店の片づけで消えます。`firestore.rules` では、CD（映すだけのメンバー）も筆談の文書にだけは書けます。
 - 販売会の文書の `tax` / `taxBy` … 消費税の設定（使うか・分類ごとの税率・店内は10%・登録番号）。全端末でそろえます。
 - 販売会の文書の `consign` / `consignBy` … 委託商品を使うか・手数料。委託先は商品ごとの `consign`（商品名の一覧の中）に入ります。
 - `sales/{会計}` に増えた項目
@@ -140,7 +89,7 @@ service cloud.firestore {
   - `memo` … 会計記録のメモ（あとから書き足す。`update` で書きます）。
 - 販売会の文書の `setRule` … セット割。`by: 'item'` の時は `needs` が商品名の並び（「商品で決める」）。
   置き場へは `by`・`needs`・`amount`・`kind` を毎回そろえて書きます（`merge` で書くと、前の `kind` などが残ってしまうため）。
-- どれも上の「いまのルール」（ログイン済みなら読み書き可）のままで動きます。厳しいルールにする時は `img` もスタッフだけが書けるようにしてください。
+- `firestore.rules` では、`img`・`imgh` を書けるのはレジ・KD などのメンバーだけです。
 
 ## 4. 当日の使い方
 
