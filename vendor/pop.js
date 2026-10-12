@@ -25,7 +25,9 @@
         { id: 'hachi', fam: 'Hachi Maru Pop', label: 'まる文字', w: [400] },
         { id: 'klee', fam: 'Klee One', label: 'えんぴつ', w: [400, 600] },
         { id: 'yomogi', fam: 'Yomogi', label: '手書き', w: [400] },
-        { id: 'mincho', fam: 'Shippori Mincho', label: '明朝', w: [500, 800] }
+        { id: 'mincho', fam: 'Shippori Mincho', label: '明朝', w: [500, 800] },
+        // 読みまちがえにくい形の文字（ユニバーサルデザイン。SIL Open Font License 1.1）
+        { id: 'udg', fam: 'BIZ UDPGothic', label: 'UDゴシック', w: [400, 700] }
     ];
     var FONT_BY = {};
     FONTS.forEach(function (f) { FONT_BY[f.id] = f; });
@@ -486,8 +488,19 @@
         if (src.indexOf('user:') === 0) { var uu = USERURL[src.slice(5)]; if (!uu) loadUser(src.slice(5)); return uu || ''; }
         if (src.indexOf('deco:') === 0) { var s = decoSvg(src.slice(5)); return s ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s) : ''; }
         if (src.indexOf('art:') === 0) { var a = window.MENU_ART && MENU_ART.has(src.slice(4)) ? MENU_ART.svg(src.slice(4)).replace('<svg ', '<svg width="200" height="200" ') : ''; return a ? 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(a) : ''; }
-        if (src.indexOf('photo:') === 0) return A ? A.photo(src.slice(6)) : '';
+        if (src.indexOf('photo:') === 0) return A ? photoUrl(src.slice(6)) : '';
         return '';
+    }
+    // 商品の写真：印刷用の大きい控えがあればそれを、まだ無ければ小さい写真を使い、控えを取りに行く（届いたら描き直す）
+    var HQASK = {};
+    function photoUrl(name) {
+        var hq = A.photoHQNow ? A.photoHQNow(name) : '';
+        if (hq) return hq;
+        if (A.photoHQ && !HQASK[name]) {
+            HQASK[name] = 1;
+            A.photoHQ(name).then(function (u) { if (u) { drawSoon(); drawTplThumbsSoon(); } else setTimeout(function () { delete HQASK[name]; }, 60000); }, function () { delete HQASK[name]; });
+        }
+        return A.photo(name);
     }
     function getImg(src) {
         var url = imgSrcUrl(src);
@@ -507,7 +520,8 @@
         var srcs = (d.els || []).filter(function (e) { return e.t === 'img'; }).map(function (e) { return e.src; });
         if (d.bg && d.bg.src) srcs.push(d.bg.src);
         var ps = srcs.map(function (src) {
-            var pre = src.indexOf('user:') === 0 ? loadUser(src.slice(5)) : Promise.resolve();
+            var pre = src.indexOf('user:') === 0 ? loadUser(src.slice(5))
+                : (src.indexOf('photo:') === 0 && A.photoHQ) ? A.photoHQ(src.slice(6)).catch(function () {}) : Promise.resolve();
             return pre.then(function () { getImg(src); var c = IMG[src]; return c && c.p; });
         });
         return Promise.race([Promise.all(ps), new Promise(function (r) { setTimeout(r, 6000); })]);
@@ -1340,6 +1354,7 @@
             + (ps.length ? '<div class="pp-plist">' + ps.map(function (p) {
                 return '<button type="button" class="pp-prod" data-act="pop" data-id="' + esc(p.id) + '"><span class="pp-pt" style="--ink:' + A.catInk(p.type) + '">' + thumbHtml(p) + '</span><span class="pp-pn">' + esc(p.name) + '</span><span class="pp-pp">' + esc(A.priceInfo(p).main) + '</span></button>';
             }).join('') + '</div>' : '<p class="settings-hint">販売する商品がまだありません。「商品と仕入れ数」か「商品・在庫の調整」で入れてください。</p>')
+            + noPhotoHtml(ps)
             + (saved.length ? '<label class="field-label sec">作ったもの（この端末）</label><div class="pp-saved">' + saved.map(function (x) {
                 return '<div class="pp-sv"><button type="button" class="pp-svb" data-act="open" data-id="' + esc(x.id) + '"><canvas class="pp-th" data-thumb="' + esc(x.id) + '" aria-hidden="true"></canvas><span>' + esc(x.name) + '</span><small>' + esc(FMTS[x.d.fmt] ? FMTS[x.d.fmt].label : '') + '</small></button>'
                     + '<button type="button" class="pp-del" data-act="delsaved" data-id="' + esc(x.id) + '" aria-label="' + esc(x.name) + 'を消す"><svg class="ic"><use href="#ic-trash"/></svg></button>'
@@ -1347,6 +1362,15 @@
             }).join('') + '</div>' : '')
             + '<p class="settings-hint pp-lic">素材について：テンプレート・イラスト・飾りは、このアプリのために作った物です。文字は Google Fonts の日本語フォント（SIL Open Font License 1.1）を使っていて、作った画像・印刷物は自由に使えます。AIで作った画像は使っていません。</p>'
             + '</div>';
+    }
+    // 写真の無い商品に、ここから写真を付ける（付けた写真は、レジ・在庫・モバイルオーダーにも出る）
+    function noPhotoHtml(ps) {
+        if (!A.pickProductPhoto) return '';
+        var no = ps.filter(function (p) { return !A.photo(p.name); });
+        if (!no.length) return '';
+        return '<details class="pp-more pp-nophoto"><summary>写真の無い商品に写真を付ける（' + no.length + '）</summary>'
+            + '<p class="settings-hint" style="margin-top:4px;">写真を付けると、POPの下書きはイラストの代わりに写真で作ります。レジのボタン・在庫の画面・モバイルオーダーにも同じ写真が出ます。</p>'
+            + '<div class="pp-row pp-wrap">' + no.map(function (p) { return '<button type="button" class="pp-chip" data-act="prodphoto" data-v="' + esc(p.name) + '"><svg class="ic"><use href="#ic-image"/></svg>' + esc(p.name) + '</button>'; }).join('') + '</div></details>';
     }
     function fmtChips() {
         return '<div class="pp-fmt" role="group" aria-label="大きさ">' + FMT_ORDER.map(function (k) {
@@ -1432,9 +1456,18 @@
         else out += '<div class="pp-lib">' + lib.map(function (x) {
             var u = USERURL[x.id];
             return '<div class="pp-li"><button type="button" class="pp-art pp-lib-b' + (x.kind === 'cut' ? ' pp-cutbg' : '') + '" data-act="useradd" data-id="' + x.id + '" aria-label="' + (x.kind === 'cut' ? '切り抜いた画像' : '写真') + 'を足す">' + (u ? '<img src="' + u + '" alt="">' : '') + '</button>'
-                + '<div class="pp-li-acts"><button type="button" class="pp-mini" data-act="userbg" data-id="' + x.id + '">背景に</button>' + (x.kind !== 'cut' ? '<button type="button" class="pp-mini" data-act="usercut" data-id="' + x.id + '">切り抜く</button>' : '') + '<button type="button" class="pp-mini pp-danger" data-act="userdel" data-id="' + x.id + '" aria-label="この素材を消す">消す</button></div></div>';
-        }).join('') + '</div>';
+                + '<div class="pp-li-acts"><button type="button" class="pp-mini" data-act="userbg" data-id="' + x.id + '">背景に</button>' + (x.kind !== 'cut' ? '<button type="button" class="pp-mini" data-act="usercut" data-id="' + x.id + '">切り抜く</button>' : '') + (x.kind === 'photo' && A.setProductPhoto ? '<button type="button" class="pp-mini' + (S.prodFor === x.id ? ' on' : '') + '" data-act="userprod" data-id="' + x.id + '" aria-expanded="' + (S.prodFor === x.id) + '">商品の写真に</button>' : '') + '<button type="button" class="pp-mini pp-danger" data-act="userdel" data-id="' + x.id + '" aria-label="この素材を消す">消す</button></div>'
+                + '</div>';
+        }).join('') + '</div>' + (S.prodFor && libRec(S.prodFor) ? prodForHtml(S.prodFor) : '');
         return out;
+    }
+    // わたしの素材の写真を、商品の写真にする：どの商品かを選ぶ
+    function prodForHtml(id) {
+        var ps = A.products();
+        if (!ps.length) return '<p class="settings-hint pp-pf">商品がまだありません。</p>';
+        return '<div class="pp-pf"><label class="field-label">どの商品の写真にしますか</label><select class="pp-in" data-act="userprodsel" data-id="' + id + '"><option value="">商品を選ぶ</option>'
+            + ps.map(function (p) { return '<option value="' + esc(p.name) + '">' + esc(p.name) + (A.photo(p.name) ? '（写真を替える）' : '') + '</option>'; }).join('') + '</select>'
+            + '<p class="settings-hint" style="margin-top:4px;">レジのボタン・在庫の画面・モバイルオーダー・POP に、この写真が出ます（共有している時は、ほかの端末にも）。</p></div>';
     }
     function libLoad() {
         if (S.libLoading) return;
@@ -1522,6 +1555,7 @@
             + (e.vert ? '' : '<label class="field-label">行の間</label><input type="range" min="0.9" max="2.2" step="0.02" value="' + (e.lh || 1.28) + '" data-act="lh" aria-label="行の間">')
             + '<label class="field-label">揃え</label><div class="seg-pick" role="group" aria-label="揃え">' + [['left', '左'], ['center', '中'], ['right', '右']].map(function (a) { var on = (e.align || 'center') === a[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="align" data-v="' + a[0] + '">' + a[1] + '</button>'; }).join('') + '</div>'
             + '<label class="field-label">文字の色</label>' + swatches('color', e.ck || e.color, S.d)
+            + '<p class="pp-contrast hide" id="pp-contrast" role="status"></p>'
             + '<label class="field-label">文字の下の飾り</label><div class="seg-pick pp-wrapseg" role="group" aria-label="文字の下の飾り">' + [['', 'なし'], ['band', '帯'], ['round', 'まるい帯'], ['circle', 'まる'], ['bubble', '吹き出し'], ['tape', 'テープ'], ['line', '下線']].map(function (a) { var on = (e.box || '') === a[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="box" data-v="' + a[0] + '">' + a[1] + '</button>'; }).join('') + '</div>'
             + (e.box ? '<label class="field-label">飾りの色</label>' + swatches('boxcolor', e.bk || e.boxColor, S.d) : '')
             + '<label class="field-label">ふち取り</label><div class="seg-pick" role="group" aria-label="ふち取り">' + [['', 'なし'], ['#FFFFFF', '白'], ['#222222', '黒'], ['acc', '色']].map(function (a) { var cur = e.sk || e.stroke || ''; var on = cur === a[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="stroke" data-v="' + a[0] + '">' + a[1] + '</button>'; }).join('') + '</div>'
@@ -1540,6 +1574,10 @@
         if (e.t === 'img' && /^(photo|user):/.test(e.src) && !e.cut) {
             var shp = e.shape || 'round';
             out += '<label class="field-label">写真の形</label>' + seg('shape', shp, [['round', '角まる'], ['circle', 'まる'], ['plain', '元の形']], '写真の形');
+            // 商品の写真で、印刷用の大きい控えが無い時（前のしくみで付けた写真など）
+            var pn = e.src.indexOf('photo:') === 0 ? e.src.slice(6) : '';
+            if (pn && A.photoHQNow && A.pickProductPhoto && !A.photoHQNow(pn)) out += '<p class="settings-hint" style="margin-top:4px;">この写真は小さい物しか無いため、大きく印刷すると粗くなることがあります。写真を選び直すと、きれいに印刷できます（レジのボタンなどの写真も替わります）。</p>'
+                + '<button type="button" class="pp-chip" data-act="prodphoto" data-v="' + esc(pn) + '">「' + esc(pn) + '」の写真を選び直す</button>';
             if (shp !== 'plain') out += range('zoom', 1, 3, .01, e.zoom || 1, '枠の中の写真の大きさ') + range('px', -1, 1, .01, e.px || 0, '枠の中の横の位置') + range('py', -1, 1, .01, e.py || 0, '枠の中の縦の位置')
                 + (shp === 'round' ? range('far', .4, 1.6, .01, e.far || .78, '枠の縦の長さ') : '');
         }
@@ -1669,6 +1707,7 @@
         host.querySelectorAll('.pp-tab').forEach(function (b) { var on = b.dataset.v === S.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
         histBtns();
         drawTplThumbs();
+        if (S.tab === 'text') contrastSoon();
     }
     function drawSavedThumbs() {
         var saved = store();
@@ -1732,6 +1771,47 @@
         loadFontsFor(S.d);
         S.boxes = [];
         renderDesign(cvs.getContext('2d'), S.d, cvs.width, cvs.height, { rec: S.boxes, sel: S.sel, hs: handleSize(), guides: S.guides, safe: S.safe });
+        if (S.tab === 'text') contrastSoon();
+    }
+    // ---- 文字と後ろの色が近すぎないか（読みにくい方がいるので知らせる。直すかどうかは作る人が決める） ----
+    // 選んでいる文字だけを透明にして小さく描き、文字の四角の中の色を集めて、文字の色との明るさの比（コントラスト）を出す。
+    // 大きな文字の目安 3：1 より低い時に知らせる。ふち取りを付けている時は、読みやすいので知らせない。
+    var CT = 0;
+    function contrastSoon() { clearTimeout(CT); CT = setTimeout(contrastCheck, 400); }
+    function rgbOf(c) {
+        var x = document.createElement('canvas').getContext('2d');
+        x.fillStyle = '#000'; x.fillStyle = String(c || '#000');
+        var v = x.fillStyle;
+        if (v.charAt(0) === '#') { var n = parseInt(v.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+        var m = v.match(/[\d.]+/g) || [0, 0, 0];
+        return [Number(m[0]), Number(m[1]), Number(m[2])];
+    }
+    function relLum(r) {
+        var f = function (v) { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+        return .2126 * f(r[0]) + .7152 * f(r[1]) + .0722 * f(r[2]);
+    }
+    function contrastOf(a, b) { var x = relLum(a), y = relLum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+    function contrastCheck() {
+        var el = host && host.querySelector('#pp-contrast');
+        if (!el || !S.d || !cvs) return;
+        var e = selEl(), b = e && (S.boxes || []).filter(function (x) { return x.id === e.id; })[0];
+        if (!e || e.t !== 'text' || !String(e.text || '').trim() || !b || col(S.d, e, 'sk', 'stroke')) { el.classList.add('hide'); return; }
+        var k = Math.min(1, 360 / cvs.width), W = Math.round(cvs.width * k), H = Math.round(cvs.height * k);
+        var c = document.createElement('canvas'); c.width = W; c.height = H;
+        var g = c.getContext('2d');
+        var dd = Object.assign({}, S.d, { els: S.d.els.map(function (x) { return x.id === e.id ? Object.assign({}, x, { ck: '', color: 'rgba(0,0,0,0)', sk: '', stroke: '', shadow: false }) : x; }) });
+        g.save(); g.scale(k, k); renderDesign(g, dd, cvs.width, cvs.height, {}); g.restore();
+        var x0 = Math.max(0, Math.floor((b.cx + b.x0) * k)), y0 = Math.max(0, Math.floor((b.cy + b.y0) * k));
+        var x1 = Math.min(W, Math.ceil((b.cx + b.x1) * k)), y1 = Math.min(H, Math.ceil((b.cy + b.y1) * k));
+        if (x1 - x0 < 2 || y1 - y0 < 2) { el.classList.add('hide'); return; }
+        var px = g.getImageData(x0, y0, x1 - x0, y1 - y0).data, tc = rgbOf(col(S.d, e, 'ck', 'color') || '#222'), rs = [];
+        for (var i = 0; i < px.length; i += 4 * 3) if (px[i + 3] > 200) rs.push(contrastOf(tc, [px[i], px[i + 1], px[i + 2]]));
+        if (!rs.length) { el.classList.add('hide'); return; }
+        rs.sort(function (a, z) { return a - z; });
+        var r = rs[Math.floor(rs.length * .25)];   // 文字の後ろの、薄い方から4分の1の所で見る（模様・写真の上でも、読みにくい所を見落とさない）
+        var low = r < 3;
+        el.classList.toggle('hide', !low);
+        if (low) el.innerHTML = '<svg class="ic"><use href="#ic-alert"/></svg><span>文字と後ろの色が近く、読みにくい方がいます（明るさの比 ' + r.toFixed(1) + '：1。3：1 以上が目安）。文字の色を変えるか、「ふち取り」「文字の下の飾り」を付けると読みやすくなります。</span>';
     }
     // 画面の点（CSS）→ キャンバスの点
     function canvasPt(clientX, clientY) {
@@ -2196,6 +2276,8 @@
             case 'userbg': setBg(b.dataset.id); break;
             case 'usercut': { var cu = USERURL[b.dataset.id]; if (cu) { var ci = new Image(); ci.onload = function () { openCutout(ci); }; ci.onerror = function () { A.error(); }; ci.src = cu; } break; }
             case 'userdel': delUserImg(b.dataset.id); break;
+            case 'userprod': S.prodFor = S.prodFor === b.dataset.id ? null : b.dataset.id; renderPanel(); break;
+            case 'prodphoto': A.pickProductPhoto(v).then(function (ok) { if (!ok || !host) return; if (S.view === 'list') render(); else if (S.view === 'edit') { drawSoon(); renderPanel(); } }); break;
             // 重なり
             case 'lhide': { var lh = elById(b.dataset.id); if (lh) change(function () { lh.hide = !lh.hide; if (lh.hide && S.sel === lh.id) S.sel = null; }, false); break; }
             case 'llock': { var ll = elById(b.dataset.id); if (ll) change(function () { ll.lock = !ll.lock; }, false); break; }
@@ -2260,6 +2342,17 @@
                 if (b.checked) { if (mids.indexOf(mid) < 0) mids.push(mid); } else mids = mids.filter(function (x) { return x !== mid; });
                 mids = all.map(function (p) { return p.id; }).filter(function (x) { return mids.indexOf(x) >= 0; });
                 setMenuIds(mids); break;
+            }
+            case 'userprodsel': {
+                var pn = b.value, pid = b.dataset.id;
+                if (!pn) break;
+                userGet(pid).then(function (r) {
+                    if (!r || !r.blob) throw new Error('none');
+                    return A.setProductPhoto(pn, r.blob);
+                }).then(function (ok) {
+                    if (ok) { S.prodFor = null; if (S.view === 'edit' && S.tab === 'img') renderPanel(); }
+                }).catch(function () { A.error(); A.toast('この写真を読み込めませんでした'); });
+                break;
             }
             case 'bitem': {
                 var bid = num(b.dataset.id), bi = S.batch.ids;
@@ -2705,6 +2798,13 @@
 .pp-lib-b img { object-fit: contain; }\
 .pp-cutbg, .pp-ercut i { background-color: #fff; background-image: conic-gradient(#E3E5EA 25%, transparent 0 50%, #E3E5EA 0 75%, transparent 0); background-size: 12px 12px; }\
 .pp-li-acts { display: flex; gap: 4px; flex-wrap: wrap; }\
+.pp-contrast { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--warn-bg); color: var(--warn-ink); font-size: 13.5px; font-weight: 700; line-height: 1.55; }\
+.pp-contrast .ic { flex: none; width: 18px; height: 18px; margin-top: 2px; }\
+.pp-contrast.hide { display: none; }\
+.pp-pf { margin-top: 10px; padding: 12px; border-radius: 14px; background: var(--sunken); }\
+.pp-pf .pp-in { width: 100%; }\
+.pp-wrap { flex-wrap: wrap; }\
+.pp-nophoto .pp-chip .ic { width: 16px; height: 16px; margin-right: 4px; vertical-align: -3px; }\
 .pp-mini { flex: 1 1 auto; min-height: 36px; padding: 0 8px; border: none; border-radius: 10px; background: var(--sunken); color: var(--text-main); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; white-space: nowrap; }\
 .pp-mini.on { background: var(--accent); color: #fff; }\
 .pp-mini.pp-danger { color: var(--danger); }\

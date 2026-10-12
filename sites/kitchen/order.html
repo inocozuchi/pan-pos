@@ -164,6 +164,11 @@
         .hist-btn { appearance: none; -webkit-appearance: none; border: none; font-family: inherit; flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px;
             border-radius: 999px; background: var(--surface); color: var(--text); font-size: 14px; font-weight: 800; box-shadow: var(--shadow); cursor: pointer; }
         .hist-btn svg { width: 17px; height: 17px; }
+        .big-btn > span:first-child { font-size: 19px; font-weight: 900; line-height: 1; }
+        .big-btn[aria-pressed="true"] { background: var(--accent); color: #fff; }
+        @media (max-width: 380px) { .big-btn .bb-l { display: none; } }
+        /* 文字を大きく：ページ全体を一回り大きくする */
+        html.big body { zoom: 1.2; }
         .hist-btn .hb-n { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 12px; display: inline-grid; place-items: center; }
         .toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 12px); opacity: 0; z-index: 80; max-width: calc(100% - 32px); width: max-content;
             background: rgba(28, 29, 34, .94); color: #fff; font-size: 14px; font-weight: 700; padding: 12px 18px; border-radius: 16px; text-align: center; pointer-events: none;
@@ -288,6 +293,8 @@
         <img id="brand-icon" class="hide" alt="">
         <div class="bx"><div class="sub" id="shop"></div><h1 id="title">モバイルオーダー</h1></div>
         <!-- この端末で注文した履歴（受け取った後も、番号と中身をここから見られる） -->
+        <!-- 文字を大きく（お店が「アクセシビリティ」でオンにした時だけ出す。押すとこのスマホの中で覚えておく） -->
+        <button type="button" class="hist-btn big-btn hide" id="big-btn" onclick="toggleBig()" aria-pressed="false"><span aria-hidden="true">あ</span><span class="bb-l">文字を大きく</span></button>
         <button type="button" class="hist-btn hide" id="hist-btn" onclick="openHist()" aria-label="注文の履歴"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>履歴<span class="hb-n hide" id="hist-n"></span></button>
     </header>
     <!-- 標準の形：いちばん上の絵（お店が設定した時だけ） -->
@@ -690,6 +697,7 @@
         document.body.classList.toggle('std', stdUi());
         renderHero();
         renderHistBtn();
+        renderBigBtn();
         const note = $('note');
         const noteText = evData && evData.mobile && evData.mobile.note;
         note.classList.toggle('hide', !noteText || !accepting());
@@ -1008,6 +1016,21 @@
         if (h.st === 'ready') return ['できあがり', 'rdy'];
         return ['お作りしています', 'act'];
     }
+    // 文字を大きく（お店がオンにした時だけボタンを出す。選んだ大きさは、このスマホに覚えておく）
+    const BIG_KEY = 'taizanboku_order_big';
+    function bigOn() { try { return localStorage.getItem(BIG_KEY) === '1'; } catch (e) { return false; } }
+    function renderBigBtn() {
+        const allow = !!(evData && evData.mobile && evData.mobile.a11y === true);
+        const b = $('big-btn');
+        b.classList.toggle('hide', !allow);
+        const on = allow && bigOn();
+        document.documentElement.classList.toggle('big', on);
+        b.setAttribute('aria-pressed', String(on));
+    }
+    window.toggleBig = function () {
+        try { localStorage.setItem(BIG_KEY, bigOn() ? '0' : '1'); } catch (e) {}
+        renderBigBtn();
+    };
     function renderHistBtn() {
         const b = $('hist-btn');
         b.classList.toggle('hide', !hist.length);
