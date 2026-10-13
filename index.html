@@ -1831,14 +1831,15 @@
         .mp-card .mp-acts .action-btn { margin: 0; }
 
         /* 通信が切れている時の帯。危険の紅で、押すと共有の画面へ行ける */
-        #sync-health-bar {
+        #sync-health-bar, #save-fail-bar {
             display: none; align-items: center; justify-content: center; gap: 7px;
             background: var(--danger-bg); color: var(--danger-ink); font-weight: 700;
             font-size: 12.5px; text-align: center; padding: 8px 12px; cursor: pointer;
             flex-shrink: 0; font-family: inherit; width: 100%; box-sizing: border-box; line-height: 1.4;
             animation: riseIn .3s cubic-bezier(.32,.72,0,1) both;
         }
-        #sync-health-bar.show { display: flex; }
+        #sync-health-bar.show, #save-fail-bar.show { display: flex; }
+        #save-fail-bar .ic { width: 16px; height: 16px; flex-shrink: 0; stroke-width: 2.2; }
         #sync-health-bar .ic { width: 16px; height: 16px; flex-shrink: 0; stroke-width: 2.2; }
 
         /* カートの開閉ボタン：スマホ縦画面でだけ使う（タブレットでは常に一覧を出す） */
@@ -4574,6 +4575,8 @@
         <aside id="sidebar">
             <!-- 共有中にサーバーとつながっていない時だけ出る帯。会計は続けられることも書く -->
             <div id="sync-health-bar" onclick="openPanel('settings','sync')"></div>
+            <!-- この端末に保存できていない時（空き容量が無い等）。保存できるまで出し続ける -->
+            <div id="save-fail-bar" onclick="openPanel('settings','data')"><svg class="ic"><use href="#ic-alert"/></svg><span>この端末に保存できていません（空き容量を確かめてください）。押すと控えを書き出せます</span></div>
             <div id="pending-reminder" onclick="navTo('records')" style="display:none;"></div>
             <!-- ファストフードの時：まだ払っていないモバイルの注文（受け取りの時にレジで会計する） -->
             <button type="button" id="mobile-pay-bar" onclick="navTo('unpaid')"></button>
@@ -7022,7 +7025,7 @@
     function promptReservation() {
         if (cart.length === 0) return;
         if (!requirePerm('reserve', promptReservation)) return;
-        const name = prompt('予約者のお名前を入力してください（名字だけ・呼び名でかまいません。電話番号などは入れません）:');
+        const name = String(prompt('予約者のお名前を入力してください（名字だけ・呼び名でかまいません。電話番号などは入れません）:') || '').trim().slice(0, 30);
         if (name) {
             // 予約した時のセット割を覚えておき、受け取りの会計でも同じ金額にする
             const rule = currentSetRule();
@@ -7034,7 +7037,7 @@
             saveData();
             init();
             renderReservations();
-            alert(`${name} 様の予約を登録しました。設定の予約管理から清算できます。`);
+            alert(`${name} 様の予約を登録しました。受け取りの時は、下の「予約」から会計します。`);
         }
     }
 
@@ -7058,7 +7061,7 @@
             div.innerHTML = `
                 <div class="res-header">
                     <span><svg class="ic"><use href="#ic-users"/></svg>${escHtml(res.name)} 様</span>
-                    <span style="font-weight:bold;">合計: ¥${res.total}</span>
+                    <span style="font-weight:bold;">合計: ¥${(Number(res.total) || 0).toLocaleString('ja-JP')}</span>
                 </div>
                 ${res.web ? `<div class="res-web"><span class="res-web-tag">スマホの予約 No.${Number(res.web.no) || ''}</span>${res.web.pickup ? `<span>受け取り ${escHtml(res.web.pickup)}</span>` : ''}${res.web.tel ? `<span>電話 ${escHtml(res.web.tel)}</span>` : ''}${res.web.memo ? `<span>ひとこと：${escHtml(res.web.memo)}</span>` : ''}</div>` : ''}
                 <div style="font-size:13px; color:var(--text-light);">
@@ -9389,7 +9392,9 @@
             // 入り直しても印が残ったままで、一覧にずっと出てこなかった。
             // 同じコードで試しに入り直すだけで起きるので、ここで必ず消す。
             left: false,
-            uid: myUid(), at: Date.now(), ua: (navigator.userAgent || '').slice(0, 120)
+            uid: myUid(), at: Date.now(), ua: (navigator.userAgent || '').slice(0, 120),
+            // まだ置き場に届いていない、この端末の会計の数（閉店する端末が、閉店の前に気づけるように）
+            unsent: saleOutbox.filter(e => e.code === code).length
         }, { merge: true })
             .catch(e => console.warn('在席の送信に失敗しました', e));
     }
@@ -11584,7 +11589,22 @@
         return (s || '').toString().trim().replace(/[\/\.\#\$\[\]\s]+/g, '-').slice(0, 60);
     }
 
+    // 受け取りに来なかった予約を全部取り消す（閉店の直前）
+    function cancelNoShowReservations() {
+        if (!reservations.length) return;
+        const n = reservations.length;
+        reservations.slice().forEach(r => {
+            webResvSettled(r, 'cancel');
+            if (!syncMode) r.items.forEach(item => restockOne(products.find(p => p.id === item.id)));
+            syncRemoveReservation(r.id);
+        });
+        logEdit(`閉店の前に、受け取りに来なかった予約を${n}件取り消した`);
+        reservations = [];
+        saveData();
+        renderReservations();
+    }
     function endSession() {
+        let dropNoShows = false;
         // KDの端末から閉店すると、レジも含めて全部の端末が閉店になる。押し間違えやすいので、もう一度確かめる
         if (deviceRole() === 'kitchen' && syncMode
             && !confirm('この端末はKDです。\n閉店すると、レジも含めて共有している全部の端末が閉店になります。\nふつうはレジの端末で閉店します。\n\nそれでもここで閉店しますか？')) return;
@@ -11607,9 +11627,14 @@
             closeSessionLocally();
             return;
         }
-        if(reservations.length > 0) {
-            alert('【！】未精算の予約が残っています。予約管理を確認してください');
-            return;
+        if (reservations.length > 0) {
+            // 受け取りに来なかった予約は、取り消してから閉店できる（1件ずつ取り消さなくてよい）
+            const names = reservations.slice(0, 6).map(r => `${r.name} 様`).join('、') + (reservations.length > 6 ? ' ほか' : '');
+            if (!confirm(`【！】まだ受け取っていない予約が${reservations.length}件あります（${names}）。\n\n［OK］受け取りに来なかった予約として、全部取り消して閉店へ進む\n［キャンセル］閉店しないで、下の「予約」で確かめる`)) {
+                navTo('reservations');
+                return;
+            }
+            dropNoShows = true;   // 閉店すると決めた時（いちばん後の確認でOKを押した時）に取り消す
         }
         // 釣り銭とレジ締めを使っている時：この30分の間に数えていなければ、先に数えるかを聞く
         if (featOn('cash') && !cashLog.some(e => e.k === 'count' && Date.now() - e.t < 30 * 60000)
@@ -11629,6 +11654,17 @@
                 + '電波の良い場所で「設定 → 複数端末で使う」の表示が緑になってから閉店することをおすすめします。\n\n'
                 + confirmMsg;
         }
+        // ほかのレジ：まだ届いていない会計がある端末・しばらく連絡の無い端末（電池切れ・電波なし）
+        if (syncMode) {
+            const mine = saleOutbox.filter(e => e.code === syncEventCode).length;
+            const others = presenceRows.filter(r => r.__id !== getDeviceId() && !r.left && r.role !== 'display' && inCurrentRound(r.roundId));
+            const unsent = others.filter(r => Number(r.unsent) > 0);
+            const lost = others.filter(r => Date.now() - (Number(r.at) || 0) > 90000 && !(Number(r.unsent) > 0));
+            const nm = r => r.name || r.label || '名前のない端末';
+            if (mine > 0) confirmMsg = `【！】この端末に、まだ置き場に届いていない会計が${mine}件あります。電波の良い所で、数秒待ってから閉店してください。\n\n` + confirmMsg;
+            if (unsent.length) confirmMsg = `【！】ほかの端末に、まだ届いていない会計があります（${unsent.map(r => `${nm(r)}：${r.unsent}件`).join('、')}）。\nその端末を電波の良い所に置いて、届いてから閉店してください。\n\n` + confirmMsg;
+            if (lost.length) confirmMsg = `【！】しばらく連絡の無い端末があります（${lost.map(nm).join('、')}）。電池切れ・電波なしの時は、その端末の会計がまだ届いていないかもしれません。\n\n` + confirmMsg;
+        }
         if (cart.length > 0) confirmMsg = `【！】カートに${cart.length}点の打ちかけが残っています。このまま閉店すると破棄されます。\n\n` + confirmMsg;
         // まだ払っていない注文（モバイル・後で会計）は、閉店すると売上に入らないまま終わる。
         // 来なかった注文もあるので止めはしないが、必ず件数と番号を見せて確かめる。
@@ -11642,7 +11678,9 @@
             confirmMsg = `【！】まだ払っていない注文が${unpaid.length}件あります（${unpaid.slice(0, 8).map(orderNoText).join('、')}${unpaid.length > 8 ? ' ほか' : ''}）。\n`
                 + 'このまま閉店すると、その分は売上に入りません。受け取りに来なかった注文なら、そのまま閉店してかまいません。\n\n' + confirmMsg;
         }
+        if (dropNoShows) confirmMsg = `受け取りに来なかった予約（${reservations.length}件）は、取り消してから閉店します。\n\n` + confirmMsg;
         if (!confirm(confirmMsg)) return;
+        if (dropNoShows) cancelNoShowReservations();
 
         // 同期中：共有販売会そのものを「閉店済み」にする（同じコードの使い回し事故を防ぐ）。
         // これを見た他の端末も、同じ手順で自分の画面を閉店にする。
@@ -16978,6 +17016,7 @@
         try {
             localStorage.setItem(sk('taizanboku_pos_data'), json);
             lastSavedSnapshot = json;
+            setSaveFailBar(false);
         } catch (e) {
             // 容量超過やプライベートモード等で保存できない場合：
             // まず「過去の販売会」の明細（容量を食う部分）を減らして、もう一度だけ試す。
@@ -17021,6 +17060,7 @@
             try {
                 if (lastSavedSnapshot) localStorage.setItem(sk('taizanboku_pos_data'), lastSavedSnapshot);
             } catch (_) { /* 復旧も失敗：これ以上はできることがない */ }
+            setSaveFailBar(true);   // 保存できるようになるまで、画面の上に出し続ける
             if (!saveData._warned) {
                 saveData._warned = true;
                 alert('【！】データの保存に失敗しました。端末の空き容量やブラウザ設定をご確認ください。\n念のため「設定 → データの書き出し」で控えを取ることをおすすめします。');
@@ -17028,6 +17068,10 @@
         }
     }
 
+    function setSaveFailBar(on) {
+        const b = document.getElementById('save-fail-bar');
+        if (b && b.classList.contains('show') !== !!on) b.classList.toggle('show', !!on);
+    }
     function loadData() {
         let saved;
         try {
@@ -20795,23 +20839,29 @@
         // includeMetadataChanges を付けると、「まだサーバーに届いていない書き込みがあるか」
         // 「いま手元の控えだけで表示しているか」が分かる。これを使って通信の状態を出す。
         fbSalesUnsub = col.onSnapshot({ includeMetadataChanges: true }, snap => {
-            const docs = [];
-            snap.forEach(d => { const v = d.data() || {}; v.__id = d.id; docs.push(v); });
+            const docs = [], pend = new Set();
+            snap.forEach(d => { const v = d.data() || {}; v.__id = d.id; docs.push(v); if (d.metadata && d.metadata.hasPendingWrites) pend.add(d.id); });
             const m = snap.metadata || {};
             noteSyncHealth({ fromCache: !!m.fromCache, pending: !!m.hasPendingWrites, docs: docs.length });
             // 会計は取り消しても消さずに印を付けるだけなので、置き場から会計が消えるのは
             // 「閉店して片づけられた」時だけ。その時は手元の会計を消さずに、閉店を確かめる。
             // （電波が切れていて閉店を受け取れなかった端末でも、自分の集計を欠けずに残せるように）
+            const ids = new Set(docs.map(d => d.__id));
+            lastSalesDocs = { code, docs };
+            // この端末がした会計で、まだ置き場に届いていない物（送り終わるまでの控えにある物）。
+            // 読み込み直した時などに、送っている途中の会計がここに残る。
+            const outIds = new Set(saleOutbox.filter(e => e.code === code).map(e => e.id));
             if (!m.fromCache && syncMode && syncEventCode === code) {
-                const ids = new Set(docs.map(d => d.__id));
-                if (salesHistory.some(h => h.remoteId && h.remoteCode === code && !ids.has(h.remoteId))) {
-                    checkSharedEventGone(code, docs);
+                // 送り終わるまでの控えと、サーバーの一覧を突き合わせる（届いていない会計は送り直す）
+                reconcileOutbox(code, docs, pend);
+                // 自分の控えにある会計は「片づけられた」とは見なさない（まだ届いていないだけ）
+                if (salesHistory.some(h => h.remoteId && h.remoteCode === code && !ids.has(h.remoteId) && !outIds.has(h.remoteId))) {
+                    checkSharedEventGone(code, withOutbox(code, docs, ids));
                     return;
                 }
-                // 送り終わるまでの控えと、サーバーの一覧を突き合わせる（まだ手元にだけある会計は数えない）
-                if (!m.hasPendingWrites) reconcileOutbox(code, docs);
             }
-            applyRemoteSales(docs);
+            // まだ届いていない自分の会計も、この端末の一覧には残しておく（売上・残数が一時的に減って見えないように）
+            applyRemoteSales(withOutbox(code, docs, ids));
         }, err => {
             console.warn('同期の購読でエラー。ローカル表示を継続します。', err);
             noteSyncHealth({ error: true });
@@ -25497,6 +25547,7 @@
     const OUTBOX_KEY = sk('taizanboku_pos_outbox');
     let saleOutbox = (() => { try { const a = JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; } })();
     const outboxBusy = new Set();
+    const OUTBOX_WAIT = 5000;
     function saveOutbox() {
         try { if (saleOutbox.length) localStorage.setItem(OUTBOX_KEY, JSON.stringify(saleOutbox)); else localStorage.removeItem(OUTBOX_KEY); } catch (e) {}
     }
@@ -25508,9 +25559,11 @@
     function saleDocId(localId) { return 's_' + String(localId || '').replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 200); }
     // サーバーの会計の一覧（手元の控えではないもの）を受け取った時に呼ぶ。
     // 届いている会計は控えから消し、しばらく経っても届いていない会計は送り直す。
-    function reconcileOutbox(code, docs) {
+    function reconcileOutbox(code, docs, pend) {
         if (!saleOutbox.length || !fbDb) return;
-        const have = new Set(docs.map(d => d.__id));
+        // 届いた（サーバーが受け取った）会計だけを控えから消す。手元で送っている途中の会計（pend）は、まだ消さない
+        const seen = new Set(docs.map(d => d.__id));
+        const have = new Set(docs.map(d => d.__id).filter(id => !(pend && pend.has(id))));
         let changed = false;
         saleOutbox = saleOutbox.filter(e => {
             if (e.code === code && have.has(e.id)) return (changed = true, false);
@@ -25520,8 +25573,8 @@
         });
         if (changed) saveOutbox();
         saleOutbox.forEach(e => {
-            if (e.code !== code || e.round !== syncRoundId || have.has(e.id) || outboxBusy.has(e.id)) return;
-            if (Date.now() - e.at < 15000) return;   // 送っている最中かもしれないので、少し待つ
+            if (e.code !== code || e.round !== syncRoundId || seen.has(e.id) || outboxBusy.has(e.id)) return;
+            if (Date.now() - e.at < OUTBOX_WAIT) return;   // 送っている最中かもしれないので、少し待つ（置き場に無い時だけ書くので、2重にはならない）
             outboxBusy.add(e.id);
             const ref = fbDb.collection(EVENTS_COL).doc(code).collection('sales').doc(e.id);
             const doc = Object.assign({}, e.doc, { time: firebase.firestore.FieldValue.serverTimestamp() });
@@ -25533,6 +25586,23 @@
         });
     }
 
+    // 置き場の会計の一覧に、まだ届いていない自分の会計（控え）を足した一覧
+    let lastSalesDocs = null;   // いちばん新しい置き場の会計の一覧（控えを直した時に、この端末の一覧を作り直すため）
+    function withOutbox(code, docs, ids) {
+        const add = saleOutbox.filter(e => e.code === code && e.round === syncRoundId && !ids.has(e.id));
+        if (!add.length) return docs;
+        return docs.concat(add.map(e => Object.assign({}, e.doc, { __id: e.id })));
+    }
+    // 控えが残っている時は、置き場の様子が変わらなくても、ときどき確かめて送り直す
+    // （静かな時間に読み込み直すと、次の会計が来るまで送り直されないため）
+    setInterval(() => {
+        if (!saleOutbox.length || !syncMode || !syncReady || !fbDb || !syncEventCode || !navigator.onLine) return;
+        const code = syncEventCode;
+        if (!saleOutbox.some(e => e.code === code && Date.now() - e.at > OUTBOX_WAIT)) return;
+        fbDb.collection(EVENTS_COL).doc(code).collection('sales').get({ source: 'server' })
+            .then(snap => { const docs = []; snap.forEach(d => docs.push({ __id: d.id })); if (syncEventCode === code) reconcileOutbox(code, docs); })
+            .catch(() => {});
+    }, 20000);
     function syncPushSale(record) {
         const code = syncEventCode;
         const doc = {
@@ -25605,6 +25675,17 @@
     function syncUpdateSale(remoteId, changes, code) {
         const c = code || syncEventCode;
         if (!remoteId || !c || !fbDb) return;
+        // まだ置き場に届いていない会計（送り終わるまでの控えにある物）は、控えの中身も直しておく。
+        // （控えから送り直した時に、取り消し・直しの前の内容で戻ってしまわないように）
+        const ob = saleOutbox.find(e => e.id === remoteId && e.code === c);
+        if (ob) {
+            Object.assign(ob.doc, JSON.parse(JSON.stringify(changes))); saveOutbox();
+            // 置き場の一覧は変わらないので、この端末の一覧をその場で作り直す
+            if (lastSalesDocs && lastSalesDocs.code === c && syncEventCode === c) {
+                const ids = new Set(lastSalesDocs.docs.map(d => d.__id));
+                applyRemoteSales(withOutbox(c, lastSalesDocs.docs, ids));
+            }
+        }
         fbDb.collection(EVENTS_COL).doc(c).collection('sales').doc(remoteId).update(changes)
             .catch(e => { console.warn('売上の更新同期に失敗', e); });
     }
