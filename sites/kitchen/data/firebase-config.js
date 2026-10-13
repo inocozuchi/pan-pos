@@ -27,3 +27,9 @@
  *   あわせて、APIキーの制限・承認済みドメイン・App Check を設定してください（docs/一般公開の準備.md）。
  */
 window.FIREBASE_CONFIG = null;
+
+// App Check（任意・強くおすすめ）：Google の reCAPTCHA v3 の「サイトキー」を入れると、
+// このアプリ以外（いたずらの機械など）からの置き場への通信を断れるようになる。
+// 空のままなら使わない（いまと同じ）。入れ方は docs/一般公開の準備.md の「App Check」。
+// ※ サイトキーは公開してよい値です（秘密のキーではありません）。
+window.APP_CHECK_SITE_KEY = '';

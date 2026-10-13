@@ -114,7 +114,7 @@ PDFで保存・印刷	Save as PDF / Print
 閉店は、赤い帯が消えて全部の端末がつながってからにしてください。	Please close the shop only after the red bar disappears and all devices are connected.
 Bluetooth で端末どうしを直接つなぐ方法は、iPhone・iPad のブラウザでは使えないため、ありません（このアプリはブラウザで動くため）。	Connecting devices directly by Bluetooth is not available, because iPhone/iPad browsers do not support it (this app runs in the browser).
 ほかの端末で開いている販売会に、	Join a sale open on another device,
-この端末の会計ごと	including this device's sales
+この端末の会計ごと	bringing this device’s sales
 合流します。	.
 押すだけで合流します（コードを入れなくてもかまいません）。	Just tap to join (no code needed).
 コードで合流する	Join with a code
@@ -1255,8 +1255,8 @@ CD（お客様用の画面）	CD (customer display)
 「{0}」に合流しました	Joined "{0}"
 コードを入れてください	Please enter a code
 このコードの販売会を探しています…	Looking for the sale with this code…
-が開いています（{0}）。	 is open ({0}).
-この端末の会計もその販売会に合わせ、売上・在庫・商品がひとつになります。	This device's sales will merge into that sale; sales, stock and items become one.
+が開いています（{0}）。	is open ({0}).
+この端末の会計もその販売会に合わせ、売上・在庫・商品がひとつになります。	This device’s sales are merged into that sale, combining sales, stock and items.
 この端末に、その販売会の金額を大きく映します。	This device will show that sale's amounts in large text.
 この端末に、その販売会の呼び出し番号を映します。	This device will show that sale's order numbers.
 この端末に、その販売会の注文を出します（この端末では会計しません）。	This device will show that sale's orders (no payments on this device).
@@ -2916,3 +2916,115 @@ QRコードを作れませんでした。下の合言葉を使ってください
 この鍵は使えません。 作り直されて使えなくなっているかもしれません。	This key can’t be used.\nIt may have been remade and no longer work.
 この端末を、お店のオーナーにしました。 「{0}」がいま開いています。オーナーとして合流しますか？	This device is now a shop owner.\n\n“{0}” is open now. Join as an owner?
 「{0}」を、この販売会から外しますか？ その端末は、すぐに売上・注文が見られなくなります（その端末の中の記録は残ります）。 もう一度入る時は、合流のお願いが要ります。 この端末はオーナーなので、お店のオーナーからも外します（なくした・盗まれた端末なら、外してください）。	Remove “{0}” from this sale?\nThat device will immediately lose access to sales and orders (records on the device remain).\nIt will need a new join request to come back.\n\nThis device is an owner, so it will also be removed from the shop owners (remove it if it was lost or stolen).
+このお店で開いている販売会	Sales open in this shop
+この端末は、まだお店に入っていません。	This device hasn’t joined a shop yet.
+下の「お店に入る」に、オーナーの端末に出ている合言葉を入れてください。	Enter the passphrase shown on the owner device in “Join the shop” below.
+お店に入る（はじめての端末）	Join the shop (first-time devices)
+お店に入れてもらう	Ask to join the shop
+合言葉は、オーナーの端末で「設定 → 複数端末で使う → 端末を入れる」を押すと、10分だけ出ます（QRコードを読み取っても入れます）。お店に入るのは1回だけで、次からは、お店のどれかが開店すると上に「合流する」が出ます。	The passphrase appears for 10 minutes when the owner device taps “Settings → Use with multiple devices → Add a device” (you can also scan the QR code). A device joins the shop only once; after that, “Join” appears above whenever any device in the shop opens a sale.
+共有中（押すと複数端末の画面）	Sharing (tap for multi-device settings)
+合言葉（例: K7PQ-4XA2）	Passphrase (e.g. K7PQ-4XA2)
+押すと、オーナーの端末に「この端末を入れますか」が届きます。オーナーが	Tapping sends “Add this device?” to the owner device. When the owner taps
+「入れる」	“Add”
+を押すと、お店の端末になります（1回だけ）。	, this becomes a shop device (only once).
+このお店で開いている販売会はありません。	No sale is open in this shop.
+どれか1台で開店すると、ここに出ます（押すだけで合流できます）。	When any device opens a sale, it appears here (just tap to join).
+このお店で開いています・{0}:{1} 開店・{2}	Open in this shop · opened {0}:{1} · {2}
+レジ{0}台・表示{1}台で使用中	{0} register{s0} and {1} display{s1} in use
+レジ{0}台で使用中	{0} register{s0} in use
+表示{0}台で使用中	{0} display{s0} in use
+このお店・{0}:{1}〜・レジ{2}台	This shop · from {0}:{1} · {2} register{s2}
+このお店・{0}:{1}〜・端末なし	This shop · from {0}:{1} · no devices
+お店に入れてほしいお願いを送りました	Request to join the shop sent
+オーナーの端末に出る「入れる」を押してもらってください。入れてもらうと、自動で進みます。	Ask someone to tap “Add” on the owner device. Once added, this device continues automatically.
+オーナーの端末にも同じ番号が出ます。番号が同じか、見比べてから入れてもらってください。	The same number appears on the owner device. Ask them to compare the numbers before adding.
+共有中	Sharing
+このお店の端末（{0}台）	Devices in this shop ({0})
+ここにある端末だけが、お店の売上・注文を見たり会計したりできます。知らない端末・なくした端末は「外す」を押してください。	Only the devices listed here can see the shop’s sales and orders or check out. Tap “Remove” for unknown or lost devices.
+ここにある端末だけが、お店の売上・注文を見たり会計したりできます。端末を入れる・外すのは、オーナーの端末でします。	Only the devices listed here can see the shop’s sales and orders or check out. Devices are added and removed on the owner device.
+{0}・最後に使った日 {1}/{2}	{0} · last used {1}/{2}
+端末を入れる	Add a device
+押すと、QRコードと合言葉が10分だけ出ます。入れたい端末で読み取ってもらい、この端末で「入れる」を押します。1台ごとに1回だけでよく、次からはその端末も、開店すると合流できます。	Shows a QR code and passphrase for 10 minutes. Have the new device scan it, then tap “Add” on this device. Each device only needs this once; after that it can join whenever a sale opens.
+お店に入れてほしいお願い	Requests to join the shop
+お店の記録（だれが、いつ、端末を入れた・外したか）	Shop log (who added or removed devices, and when)
+お店を作った：	Created the shop: 
+（いまはお店にいない端末）	(device no longer in the shop)
+（この端末）	(this device)
+端末を入れた：	Added a device: 
+端末を外した：	Removed a device: 
+お店から抜けた：	Left the shop: 
+オーナーにした：	Made owner: 
+レジに戻した：	Changed back to register: 
+お店の鍵を使った：	Used the shop key: 
+お店の鍵を作った：	Made the shop key: 
+なくした端末を締め出した：	Locked out lost devices: 
+前の版のお店から引きついだ：	Taken over from the previous version: 
+お店の鍵を使った	Used the shop key
+お店で開店したら、自動で合流する	Join automatically when the shop opens
+この端末が閉店している時に、お店のほかの端末が開店すると、押さなくても合流します（KD・CDの置きっぱなしの端末に）	When this device is closed and another device in the shop opens a sale, it joins without tapping (for KD/CD devices left in place)
+ほかの端末はまだ合流していません。お店の端末が「合流する」を押すと、ここに出ます。	No other devices have joined yet. They appear here when shop devices tap “Join”.
+開店しました（お店の端末に「合流する」が出ます）	Opened (shop devices will see “Join”)
+お店に入れてほしい（{0}として）・番号	Wants to join the shop (as {0}) · number
+合言葉	Passphrase
+入れたい端末のカメラで読み取るか、その端末の「開店・合流 → 合流する」に合言葉を入れてもらいます。そのあと、この端末に出る	Have the new device scan this with its camera, or enter the passphrase in “Open / Join → Join” on that device. Then tap
+を押します（番号が同じか見比べてください）。	on this device (check that the numbers match).
+使える時刻：{0}:{1} まで。知らない人に見せないでください。	Valid until {0}:{1}. Don’t show it to strangers.
+閉じる（この合言葉を使えなくする）	Close (disable this passphrase)
+ほかの端末と使う時は、オーナーの端末で「端末を入れる」を押してもらい、出た合言葉を「開店・合流 → 合流する」に入れてください。1台目の端末なら、開店すると、この端末がお店のオーナーになります。	To use with other devices, ask the owner device to tap “Add a device” and enter the passphrase in “Open / Join → Join”. If this is the first device, opening a sale makes it the shop owner.
+お店を確かめています…	Checking the shop…
+共有サーバーにつながると、お店の端末の一覧が出ます。	The list of shop devices appears once connected to the sharing server.
+お店の販売会に合流する	Join the shop’s sale
+お店の販売会に合流する（この端末の会計ごと）	Join the shop’s sale (bringing this device’s sales)
+お店で開いている販売会に、	Join the sale open in the shop
+押すだけで合流します。	Just tap to join.
+この端末は、まだお店に入っていません。オーナーの端末で「端末を入れる」を押してもらい、出た合言葉を上に入れてください。	This device hasn’t joined a shop yet. Ask the owner device to tap “Add a device” and enter the passphrase above.
+お店で	In the shop,
+押すと、オーナーの端末に「この端末を入れますか」が届きます。入れてもらうと、お店で開いている販売会に、この端末の会計ごと合流します。	Tapping sends “Add this device?” to the owner device. Once added, this device joins the shop’s open sale, bringing its sales along.
+お店に入れてもらって合流する	Ask to join the shop and join the sale
+共有中／この端末 {0}	Sharing / this device {0}
+お店に入りました	Joined the shop
+お店に入りました。お店のどれか1台が開店すると、「合流する」が出ます	Joined the shop. “Join” appears when any device in the shop opens a sale.
+この端末は、オーナーの端末でお店から外されました	This device was removed from the shop on the owner device.
+この端末は前のお店に入っていないため、新しいお店にしました。前のお店で使う時は、そのお店のオーナーの端末で「端末を入れる」を押してもらってください	This device isn’t in its previous shop anymore, so a new shop was made. To use the previous shop, ask its owner device to tap “Add a device”.
+お店で開店したら、自動で合流するようにしました	This device will now join automatically when the shop opens.
+「{0}」をお店に入れました	Added “{0}” to the shop
+お願いを断りました	Request declined
+お店の記録：{0}（{1}）。心当たりが無い時は「なくした端末を締め出す」を押してください	Shop log: {0} ({1}). If you don’t recognize this, tap “Lock out a lost device”.
+お店の記録：{0}。心当たりが無い時は「なくした端末を締め出す」を押してください	Shop log: {0}. If you don’t recognize this, tap “Lock out a lost device”.
+お店に入る合言葉です。「お店に入れてもらって合流する」を押してください	This is a passphrase to join the shop. Tap “Ask to join the shop and join the sale”.
+お店に入る合言葉です。この端末の使い方を選んで「お店に入れてもらう」を押してください	This is a passphrase to join the shop. Choose how to use this device, then tap “Ask to join the shop”.
+前の版のQRコードです。オーナーの端末で「端末を入れる」を押して、新しいQRコードを読み取ってください	This QR code is from an older version. Tap “Add a device” on the owner device and scan the new QR code.
+共有を始めました	Sharing started
+すでに共有しています	Already sharing
+先にお店の販売会に合流してください	Join the shop’s sale first
+この端末は、オーナーの端末でお店から外されました。 ここまでの会計はこの端末に残っています。この先は、この端末だけで営業します。 もう一度お店で使う時は、オーナーの端末で「端末を入れる」を押してもらってください。	This device was removed from the shop on the owner device.\n\nSales so far remain on this device. From now on, it works on its own.\nTo use it in the shop again, ask the owner device to tap “Add a device”.
+このお店で開いている販売会はありません。 どれか1台で開店すると、ほかの端末に「合流する」が出ます。	No sale is open in this shop.\nWhen any device opens a sale, the other devices see “Join”.
+合言葉の形ではありません。 オーナーの端末で「端末を入れる」を押すと出る、8文字の合言葉を入れてください。	That isn’t a passphrase.\nEnter the 8-character passphrase shown when the owner device taps “Add a device”.
+共有サーバーにつながっていないため、お店に入れません。 電波の良い場所で、もう一度お試しください。	Can’t join the shop because there’s no connection to the sharing server.\nTry again where the signal is good.
+通信できないため、お店に入れませんでした。	Couldn’t join the shop because there’s no connection.
+合言葉が違うか、期限が切れています。 オーナーの端末で、もう一度「端末を入れる」を押してもらってください。	The passphrase is wrong or has expired.\nAsk the owner device to tap “Add a device” again.
+この端末は、いま別のお店に入っています。 そのお店を抜けて、合言葉のお店に入りますか？	This device is in another shop now.\nLeave that shop and join the shop for this passphrase?
+この端末は、いま別のお店に入っています。 そのお店を抜けて、合言葉のお店に入りますか？ （この端末は前のお店のオーナーです。前のお店にほかのオーナーがいない時は、先にほかの端末をオーナーにしてください）	This device is in another shop now.\nLeave that shop and join the shop for this passphrase?\n(This device is an owner of the previous shop. If it has no other owner, make another device an owner first.)
+お店に入れてほしいお願いは、オーナーの端末で断られました。	The request to join the shop was declined on the owner device.
+10分たっても入れてもらえなかったため、お願いを取り下げました。 オーナーの端末で、もう一度「端末を入れる」を押してもらってください。	The request was withdrawn because it wasn’t accepted within 10 minutes.\nAsk the owner device to tap “Add a device” again.
+入れられませんでした。通信を確かめてください。	Couldn’t add the device. Check your connection.
+「{0}」を、お店から外しますか？ その端末は、すぐに売上・注文が見られなくなります（その端末の中の記録は残ります）。 もう一度使う時は、「端末を入れる」から入れ直します。	Remove “{0}” from the shop?\nThat device will immediately lose access to sales and orders (records on the device remain).\nTo use it again, add it again with “Add a device”.
+「{0}」もオーナーにしますか？ オーナーは、端末を入れる・外す・お店の鍵を作ることができます。 （オーナーの端末の電池が切れた時の控えになります。信頼できる人の端末だけにしてください）	Make “{0}” an owner too?\nOwners can add and remove devices and make the shop key.\n(It serves as a backup if the owner device’s battery runs out. Only do this for devices of people you trust.)
+「{0}」をオーナーからはずして、レジに戻しますか？	Remove “{0}” as owner and change it back to a register?
+なくした・盗まれた端末を締め出しますか？ ・この端末のほかのオーナーを、お店から全部外します（必要な端末は、あとで「端末を入れる」から入れ直してください）。 ・お店の鍵を作っていれば、作り直します（前に印刷した鍵は使えなくなります）。 ・レジ・CDの端末になくした物があれば、下の一覧で「外す」も押してください。	Lock out a lost or stolen device?\n\n・All owners other than this device will be removed from the shop (add needed devices again later with “Add a device”).\n・If a shop key exists, it will be remade (the previously printed key stops working).\n・If a lost device is a register or CD, also tap “Remove” for it in the list below.
+このお店では「{0}」がもう開いています。 そこに合流しますか？ （商品と売上は、開いている販売会のものを使います。この画面で決めた商品は使いません）	“{0}” is already open in this shop.\nJoin it?\n(The open sale’s items and sales are used. The items set on this screen are not used.)
+このお店では「{0}」がもう開いています。 そこに、この端末の会計ごと合流しますか？	“{0}” is already open in this shop.\nJoin it, bringing this device’s sales along?
+この端末は、この販売会のお店に入っていないため、合流できません。	This device can’t join because it isn’t in this sale’s shop.
+この端末は、この販売会のお店に入っていません。 オーナーの端末で「端末を入れる」を押してもらい、出た合言葉を「合流する」に入れてください。	This device isn’t in this sale’s shop.\nAsk the owner device to tap “Add a device”, then enter the passphrase in “Join”.
+この端末は、まだお店に入っていません。 オーナーの端末で「端末を入れる」を押してもらい、出た合言葉を入れてください。	This device hasn’t joined a shop yet.\nAsk the owner device to tap “Add a device”, then enter the passphrase.
+お店で開いている「{0}」に合流します。 ・この端末の会計{1}件を、その販売会に合流させます。 ・商品と仕入れ数は共有側の内容にそろいます。 よろしいですか？	Join “{0}”, open in the shop.\n\n・This device’s {1} sale{s1} will be merged into that sale.\n・Items and stock will match the shared sale.\n\nAre you sure?
+販売会「{0}」を、ほかの端末と共有します。 ・お店に入っている端末には「合流する」が出ます（はじめての端末は、オーナーの端末の「端末を入れる」から入れます）。 ・この端末の会計{1}件と商品が、共有の元になります。 よろしいですか？	Share sale “{0}” with other devices.\n\n・Devices in the shop will see “Join” (first-time devices are added from “Add a device” on the owner device).\n・This device’s {1} sale{s1} and items become the shared base.\n\nAre you sure?
+映す販売会がありません。 お店のレジで開店してから、もう一度お試しください。	There’s no sale to display.\nOpen a sale on a register in the shop, then try again.
+その販売会は閉店しています。 お店のレジで開店してから、もう一度お試しください。	That sale is closed.\nOpen a sale on a register in the shop, then try again.
+販売会「{0}」は閉店しています。 合流できるのは、いま開いている販売会だけです。	Sale “{0}” is closed.\nYou can only join a sale that is open now.
+販売会は閉店しています。 合流できるのは、いま開いている販売会だけです。	The sale is closed.\nYou can only join a sale that is open now.
+通信が不安定で共有を始められなかったため、この端末だけで開店しました。 電波の良い場所で「設定 → 複数端末で使う → ほかの端末と共有を始める」を押すと、あとから共有できます。	Sharing couldn’t start because the connection is unstable, so this device opened on its own.\nWhere the signal is good, tap “Settings → Use with multiple devices → Start sharing with other devices” to share later.
+映す販売会がありません。	There’s no sale to display.
+お店から外された	Removed from the shop
+この端末は、お店から外されました（左上の×で、ふだんの画面に戻せます）	This device was removed from the shop (tap × at the top left to return to the normal screen)
+この端末は、お店のオーナーにしました	This device is now a shop owner

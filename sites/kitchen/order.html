@@ -3,6 +3,10 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <!-- 守り：埋め込み（object）・基準のアドレス（base）を、ほかの所から差しこませない -->
+    <meta http-equiv="Content-Security-Policy" content="object-src 'none'; base-uri 'self'">
+    <!-- 守り：ほかのページの中（見えない枠）に入れて、押させるいたずらをさせない。枠の中では表示しない -->
+    <script>if (window.top !== window.self) { document.documentElement.style.display = 'none'; try { window.top.location.replace(window.self.location.href); } catch (e) {} }</script>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <title>モバイルオーダー</title>
     <meta name="theme-color" content="#F2F3F7" media="(prefers-color-scheme: light)">
@@ -480,9 +484,22 @@
     function loadSdk() {
         const base = 'https://www.gstatic.com/firebasejs/10.12.5/';
         const files = ['firebase-app-compat.js', 'firebase-auth-compat.js', 'firebase-firestore-compat.js'];
+        // App Check を使う時だけ、その部品も読む（読めなくても、なしで続ける）
+        if (String(window.APP_CHECK_SITE_KEY || '').trim()) files.push('firebase-app-check-compat.js?optional');
         return files.reduce((p, f) => p.then(() => new Promise((ok, ng) => {
-            const s = document.createElement('script'); s.src = base + f; s.onload = ok; s.onerror = () => ng(new Error(f)); document.head.appendChild(s);
+            const optional = /\?optional$/.test(f);
+            const s = document.createElement('script'); s.src = base + f.replace(/\?optional$/, ''); s.onload = ok; s.onerror = () => optional ? ok() : ng(new Error(f)); document.head.appendChild(s);
         })), Promise.resolve());
+    }
+    // App Check：サイトキーが設定されている時だけ、このアプリからの通信である印を付ける（読み込めなくても、ふだんどおり動く）
+    function activateAppCheck(app) {
+        const key = String(window.APP_CHECK_SITE_KEY || '').trim();
+        if (!key || !window.firebase || !firebase.appCheck) return;
+        try {
+            const ac = firebase.appCheck(app);
+            const prov = firebase.appCheck.ReCaptchaV3Provider ? new firebase.appCheck.ReCaptchaV3Provider(key) : key;
+            ac.activate(prov, true);
+        } catch (e) { console.warn('App Check を始められませんでした（なしで続けます）', e); }
     }
 
     async function start() {
@@ -490,6 +507,7 @@
         try {
             if (!window.firebase || !window.firebase.firestore) await loadSdk();
             const app = firebase.apps && firebase.apps.length ? firebase.app() : firebase.initializeApp(window.FIREBASE_CONFIG);
+            activateAppCheck(app);
             db = firebase.firestore(app);
             // 試験のときだけ：手元のエミュレーターにつなぐ
             if (window.__FB_EMU) { db.useEmulator(window.__FB_EMU.host, window.__FB_EMU.fs); firebase.auth(app).useEmulator('http://' + window.__FB_EMU.host + ':' + window.__FB_EMU.auth, { disableWarnings: true }); }
@@ -1215,6 +1233,24 @@
         } catch (e) {}
     }
 
+    // 注文と同時に、このスマホの注文の数を1つ数える（お店の決まりで、1回の販売会で30件まで。
+    // いたずらで注文を大量に送れないようにするため。数えずに注文だけを送ることは、置き場が断る）
+    const ORDER_CAP = 30;
+    async function putOrder(id, doc) {
+        const cref = ev.collection('cust').doc(uid);
+        await db.runTransaction(async tx => {
+            const s = await tx.get(cref);
+            const n = (s.exists ? (Number((s.data() || {}).n) || 0) : 0) + 1;
+            if (n > ORDER_CAP) throw { code: 'too-many' };
+            tx.set(cref, { n });
+            tx.set(ev.collection('orders').doc(id), doc);
+        });
+    }
+    function sendFailText(e) {
+        return e && e.code === 'too-many'
+            ? `この販売会では、1台のスマホから注文できるのは${ORDER_CAP}件までです。お店の人にお声がけください。`
+            : '注文を送れませんでした。電波を確かめて、もう一度お試しください。';
+    }
     window.sendOrder = async function () {
         if (sending) return;
         const lines = cartLines();
@@ -1225,7 +1261,7 @@
         sending = true; renderConfirm();
         if (restMode()) {
             try { await sendTableOrder(lines); }
-            catch (e) { alert('送れませんでした。電波の良い所で、もう一度お試しください。'); }
+            catch (e) { alert(e && e.code === 'too-many' ? sendFailText(e) : '送れませんでした。電波の良い所で、もう一度お試しください。'); }
             finally { sending = false; render(); }
             return;
         }
@@ -1264,7 +1300,7 @@
             if (coupon) doc.coupon = { id: coupon.id, name: coupon.name, code: String(coupon.code || '') };
             const memo = memoText();
             if (memo) doc.memo = memo;
-            await ev.collection('orders').doc(id).set(doc);
+            await putOrder(id, doc);
             mine.push(id); saveMine(mine); addHist(doc);
             Object.keys(qty).forEach(k => delete qty[k]);
             dine = ''; pickAt = 0; optOpen = ''; coupon = null;
@@ -1275,7 +1311,7 @@
             $('confirm').classList.add('hide');
             window.scrollTo(0, 0);
         } catch (e) {
-            alert('注文を送れませんでした。電波を確かめて、もう一度お試しください。');
+            alert(sendFailText(e));
         } finally {
             sending = false;
             render();
@@ -1343,7 +1379,7 @@
         const memo = memoText();
         if (memo) doc.memo = memo;
         if ($('c-memo')) $('c-memo').value = '';
-        await ev.collection('orders').doc(id).set(doc);
+        await putOrder(id, doc);
         mine.push(id); saveMine(mine); addHist(doc);
         Object.keys(qty).forEach(k => delete qty[k]);
         Object.keys(optSel).forEach(k => delete optSel[k]);
