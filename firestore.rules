@@ -5,13 +5,16 @@ rules_version = '2';
 //
 // ・だれでも匿名でログインする（名前・メールは聞かない）。ログインした「印」（uid）で見分ける。
 // ・販売会（events/{コード}）の中身を読み書きできるのは、その販売会の「メンバー」の端末だけ。
-//     owner   … オーナー（開店した端末。メンバーを足す・外す・招待を作る）
+//     owner   … オーナー（メンバーを足す・外す・招待を作る）。開店した端末と、
+//                「お店のオーナー」（shops/{印}.owners）にした端末
 //     staff   … レジ・KD・ハンディ（会計・注文・在庫）
 //     display … CD・呼び出し番号（映すだけ。会計はしない）
-// ・メンバーになる道は3つだけ：
-//     1) 開店した端末が、自分をオーナーにする
+// ・メンバーになる道は4つだけ：
+//     1) 開店した端末が、販売会を作るのと同時に、自分をオーナーにする
 //     2) オーナーが足す（合流のお願いを「許可」した時・いつもの端末を呼んだ時）
-//     3) オーナーが作った「合流の合言葉」（期限つき）を知っている
+//     3) オーナーが作った「合流の合言葉」（30分・1回だけ）を使う
+//     4) お店のオーナーの端末が、そのお店の販売会のオーナーになる（開店した端末の電池が切れた時の控え）
+//   お店のオーナーには、ほかのオーナーが足すか、「お店の鍵」（印刷して保管する）を使ってなる。
 //   共有コード（6けた）を知っているだけでは、合流のお願いを出せるだけで、中身は何も読めない。
 // ・お客様（モバイルオーダー）は、メニューなど公開用の文書だけを読み、
 //   自分の注文を作って、自分の注文だけを読める。ほかのお客様の注文は読めない。
@@ -32,6 +35,7 @@ service cloud.firestore {
     function evClosed(code) { return evExists(code) && ev(code).get('status', '') == 'closed'; }
     function str(v, n) { return v is string && v.size() <= n; }
     function nowMs() { return request.time.toMillis(); }
+    function invPath(code, t) { return /databases/$(database)/documents/events/$(code)/invites/$(t); }
     // 数を1つずつ数える文書（番号札・伝票番号）。1つ増やすことだけができる
     function countUp() {
       return request.resource.data.keys().hasOnly(['n'])
@@ -47,17 +51,62 @@ service cloud.firestore {
       allow create: if signedIn() && shopId.size() >= 16
         && request.resource.data.owners == [me()]
         && shopShape();
-      allow update: if signedIn() && me() in resource.data.owners
+      // 書きかえる：お店のオーナー（ほかのオーナーを足す・外すこともできる。端末をなくした時に外すため）。
+      // お店の鍵を使った端末は、自分をオーナーに足せる。自分を外すことはできない（だれもいないお店にしない）
+      allow update: if signedIn() && (me() in resource.data.owners || keyClaimOk(shopId))
+        && me() in request.resource.data.owners
         && request.resource.data.owners.size() <= 10
-        && resource.data.owners[0] in request.resource.data.owners
         && shopShape();
-      allow delete: if signedIn() && resource.data.owners[0] == me();
+      allow delete: if false;
       function shopShape() {
         let d = request.resource.data;
         return d.keys().hasOnly(['owners', 'event', 'name', 'at', 'open'])
           && d.owners is list && (d.get('event', '') == null || str(d.get('event', ''), 40))
           && str(d.get('name', ''), 60);
       }
+      // お店の鍵（印刷して保管する、長い合言葉）。鍵そのものは文書の名前にだけ置き、読めるのはオーナーだけ
+      match /keys/{k} {
+        allow get, list: if signedIn() && me() in get(shopPath(shopId)).data.owners;
+        allow create: if signedIn() && me() in get(shopPath(shopId)).data.owners && k.size() >= 20
+          && request.resource.data.keys().hasOnly(['at', 'by']) && request.resource.data.by == me();
+        allow update: if false;
+        allow delete: if signedIn() && me() in get(shopPath(shopId)).data.owners;
+      }
+      // 鍵を使う：自分の名前で「この鍵を持っています」を書く（時刻は置き場の時刻。10分だけ有効）
+      match /claims/{uid} {
+        allow get: if signedIn() && (uid == me() || me() in get(shopPath(shopId)).data.owners);
+        allow create, update: if signedIn() && uid == me()
+          && request.resource.data.keys().hasOnly(['k', 'at'])
+          && str(request.resource.data.k, 64) && request.resource.data.k.size() >= 20
+          && request.resource.data.at == request.time
+          && exists(/databases/$(database)/documents/shops/$(shopId)/keys/$(request.resource.data.k));
+        allow delete: if signedIn() && (uid == me() || me() in get(shopPath(shopId)).data.owners);
+      }
+    }
+    // お店の鍵から、どのお店かを引く（鍵を知っている人だけが引ける。一覧は出さない）
+    match /shopkeys/{k} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && k.size() >= 20
+        && request.resource.data.keys().hasOnly(['shop', 'at'])
+        && request.resource.data.shop is string && request.resource.data.shop.size() >= 16
+        && me() in get(shopPath(request.resource.data.shop)).data.owners
+        && existsAfter(/databases/$(database)/documents/shops/$(request.resource.data.shop)/keys/$(k));
+      allow update: if false;
+      allow delete: if signedIn() && me() in get(shopPath(resource.data.shop)).data.owners;
+    }
+    function shopPath(shopId) { return /databases/$(database)/documents/shops/$(shopId); }
+    function claimPath(shopId) { return /databases/$(database)/documents/shops/$(shopId)/claims/$(request.auth.uid); }
+    function keyClaimOk(shopId) {
+      return exists(claimPath(shopId))
+        && get(claimPath(shopId)).data.at > request.time - duration.value(10, 'm')
+        && exists(/databases/$(database)/documents/shops/$(shopId)/keys/$(get(claimPath(shopId)).data.k));
+    }
+    // この販売会のお店のオーナーか（開店した端末の控えのオーナー）
+    function shopOwnerOf(code) {
+      return evExists(code) && ev(code).get('shop', '') is string && ev(code).get('shop', '').size() >= 16
+        && exists(shopPath(ev(code).shop))
+        && me() in get(shopPath(ev(code).shop)).data.owners;
     }
 
     // ---- 合流の知らせ（いつもの端末へ。オーナーが開店した時に「合流しますか」を届ける）----
@@ -66,7 +115,7 @@ service cloud.firestore {
       allow create, update: if signedIn()
         && exists(memPath(code, me())) && get(memPath(code, me())).data.role == 'owner'
         && existsAfter(memPath(code, uid))
-        && request.resource.data.keys().hasOnly(['code', 'name', 'at', 'from', 'role', 'kind'])
+        && request.resource.data.keys().hasOnly(['code', 'name', 'at', 'from', 'role', 'kind', 'shop'])
         && request.resource.data.code == code && request.resource.data.from == me()
         && str(request.resource.data.get('name', ''), 60);
     }
@@ -90,24 +139,29 @@ service cloud.firestore {
         allow get: if signedIn() && (uid == me() || isMember(code));
         allow list: if isMember(code);
         allow create: if signedIn() && memberShape() && (
-            // 1) 開店した端末が、自分をオーナーにする（販売会の文書と同時に作ってもよい）
-            (uid == me() && request.resource.data.role == 'owner'
+            // 1) 開店した端末が、販売会を作るのと同時に、自分をオーナーにする
+            //    （作った後はこの道を使えない。外された開店した端末が、自分をオーナーに戻せないように）
+            (uid == me() && request.resource.data.role == 'owner' && !evExists(code)
               && getAfter(evPath(code)).data.get('owner', '') == me())
             // 2) オーナーが足す
             || isOwner(code)
-            // 3) 期限内の合流の合言葉を知っている（合言葉と同じ役割でだけ入れる）
+            // 3) 合流の合言葉（30分・1回だけ）。合言葉と同じ役割でだけ入れる。使った合言葉は同時に消す
             || (uid == me() && request.resource.data.role in ['staff', 'display']
               && str(request.resource.data.get('inv', null), 40)
-              && exists(/databases/$(database)/documents/events/$(code)/invites/$(request.resource.data.inv))
-              && get(/databases/$(database)/documents/events/$(code)/invites/$(request.resource.data.inv)).data.exp > nowMs()
-              && get(/databases/$(database)/documents/events/$(code)/invites/$(request.resource.data.inv)).data.role == request.resource.data.role)
+              && exists(invPath(code, request.resource.data.inv))
+              && get(invPath(code, request.resource.data.inv)).data.at + duration.value(get(invPath(code, request.resource.data.inv)).data.min, 'm') > request.time
+              && get(invPath(code, request.resource.data.inv)).data.role == request.resource.data.role
+              && !existsAfter(invPath(code, request.resource.data.inv)))
+            // 4) お店のオーナーの端末は、そのお店の販売会のオーナーになれる
+            || (uid == me() && request.resource.data.role == 'owner' && shopOwnerOf(code))
           );
         // 自分の名前を直すのは自分でもよい（役割は変えられない）。役割を変えるのはオーナーだけ
         allow update: if memberShape() && (isOwner(code)
-          || (uid == me() && isMember(code) && request.resource.data.role == resource.data.role));
-        // 外す：オーナー（開店した端末は外せない）・自分で抜ける・閉店した後の片づけ
+          || (uid == me() && isMember(code) && request.resource.data.role == resource.data.role)
+          || (uid == me() && request.resource.data.role == 'owner' && shopOwnerOf(code)));
+        // 外す：オーナー（開店した端末も外せる。なくした・盗まれた時のため）・自分で抜ける・閉店した後の片づけ
         allow delete: if signedIn() && (uid == me()
-          || (isOwner(code) && (!evExists(code) || uid != ev(code).get('owner', '')))
+          || isOwner(code)
           || (isStaff(code) && (!evExists(code) || evClosed(code))));
         function memberShape() {
           let d = request.resource.data;
@@ -116,15 +170,21 @@ service cloud.firestore {
         }
       }
 
-      // 合流の合言葉（オーナーが作る。期限つき。読めるのはオーナーだけ）
+      // 合流の合言葉（オーナーが作る。読めるのはオーナーだけ）。
+      // 作った時刻は置き場の時刻（端末の時計がずれていても、期限がずれない）。使えるのは min 分だけ・1回だけ
       match /invites/{token} {
         allow read: if isOwner(code);
         allow create: if isOwner(code) && token.size() >= 8
-          && request.resource.data.keys().hasOnly(['role', 'exp', 'by', 'at'])
+          && request.resource.data.keys().hasOnly(['role', 'min', 'by', 'at'])
           && request.resource.data.role in ['staff', 'display']
-          && request.resource.data.exp is int && request.resource.data.exp <= nowMs() + 86400000;
+          && request.resource.data.by == me()
+          && request.resource.data.at == request.time
+          && request.resource.data.min is int && request.resource.data.min >= 1 && request.resource.data.min <= 60;
         allow update: if false;
-        allow delete: if isOwner(code) || (isStaff(code) && evClosed(code));
+        // 消す：オーナー・閉店した後の片づけ・この合言葉で入る端末（入るのと同時に消す＝1回だけ）
+        allow delete: if isOwner(code) || (isStaff(code) && evClosed(code))
+          || (signedIn() && !exists(memPath(code, me())) && existsAfter(memPath(code, me()))
+              && getAfter(memPath(code, me())).data.get('inv', '') == token);
       }
 
       // 合流のお願い（共有コードを知っている端末が出す。オーナーが「許可」するとメンバーになる）

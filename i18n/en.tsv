@@ -844,7 +844,7 @@ QRコードの販売会です。「合流する」を押すと、{0}になりま
 すでに共有しています（共有コード {0}）	Already sharing (share code {0})
 この端末では共有機能の準備ができていません。 （準備した方に「複数端末の設定」を確認してもらってください）	Sharing is not set up on this device.\n(Ask the person who set it up to check the multi-device settings.)
 同期サーバーに接続できていません。通信状況をご確認のうえ、少し待ってからもう一度お試しください。	Cannot connect to the sync server. Check the connection, wait a moment and try again.
-販売会「{0}」を、ほかの端末と共有します。 ・共有コードは自動で決まります。 ・ほかの端末は「開店・合流 → 開いている販売会に合流する」で、この販売会を選ぶだけで入れます。 ・この端末の会計{1}件と商品が、共有の元になります。 よろしいですか？	Share sale "{0}" with other devices.\n・The share code is chosen automatically.\n・Other devices just choose this sale from "Open / Join → Join an open sale".\n・This device's {1} sale{s1} and items become the shared base.\nAre you sure?
+販売会「{0}」を、ほかの端末と共有します。 ・共有コードは自動で決まります。 ・ほかの端末は「開店・合流 → 開いている販売会に合流する」で共有コードを入れると、この端末に合流のお願いが届きます（「許可」を押すと入れます）。 ・この端末の会計{1}件と商品が、共有の元になります。 よろしいですか？	Share sale “{0}” with other devices.\n\n・The share code is chosen automatically.\n・When another device enters the share code in “Open / Join → Join an open sale”, a join request reaches this device (tap “Allow” to let it in).\n・This device’s {1} sale{s1} and items become the shared base.\n\nAre you sure?
 通信が不安定で、共有を始められませんでした。 電波の良い場所で、もう一度お試しください。	The connection was unstable and sharing could not start.\nPlease try again where the signal is good.
 共有を始められませんでした。通信状況をご確認ください。	Could not start sharing. Please check the connection.
 共有を始めました（共有コード {0}）	Started sharing (share code {0})
@@ -2314,23 +2314,13 @@ KD・伝票・レシートに、商品名の下に出ます（値段は変わり
 日	Sun
 月	Mon
 火	Tue
-水	Wed
 木	Thu
 金	Fri
 土	Sat
 {0}月{1}日	{0}/{1}
 {0}年{1}月{2}日	{1}/{2}/{0}
 {0}時{1}分	{0}:{1}
-{0}件	{0}
-{0}個	{0}
-{0}点	{0} item{s0}
-{0}人	{0}
 {0}枚	{0}
-{0}円	¥{0}
-{0}品	{0} item{s0}
-{0}回	{0} time{s0}
-{0}分	{0} min
-{0}秒	{0} s
 # ---- シンプルモードの設定（スタッフ用）----
 {0}{1}・文字{2}{3}	{0}{1} · text {2}{3}
 いまシンプルモード・	Simple mode now · 
@@ -2405,10 +2395,6 @@ KD・伝票・レシートに、商品名の下に出ます（値段は変わり
 文字大きい	text large
 文字とても大きい	text very large
 文字いちばん大きい	text largest
-楽天ペイ	Rakuten Pay
-d払い	d Payment
-未	To do
-まだ	Not yet
 # ---- POP・ポスター（vendor/pop.js の画面。POP・ポスターの中の文字は日本語のまま）----
 POP・ポスター	POP / Posters
 テンプレート・スタンプ・フォントで、POPとポスターを作る	Make POPs and posters with templates, stamps and fonts
@@ -2441,7 +2427,6 @@ POP 縦（はがき）	POP portrait (postcard)
 葉っぱ	Leaf
 もみじ	Maple leaf
 いちょう	Ginkgo
-かぼちゃ	Pumpkin
 おばけ	Ghost
 雪の結晶	Snowflake
 ひいらぎ	Holly
@@ -2467,7 +2452,6 @@ POP 縦（はがき）	POP portrait (postcard)
 春・桜	Spring
 秋・ハロウィン	Autumn / Halloween
 冬・クリスマス	Winter / Christmas
-シンプル	Simple
 この端末にしまう場所が足りません。古い作ったものを消してください	Not enough space on this device. Please delete old designs
 この作ったものを消しますか？	Delete this design?
 画像を作っています…	Making the image…
@@ -2490,16 +2474,12 @@ A4の紙に印刷します	Prints on A4 paper
 メニューの見出し	Menu heading
 メニュー	Menu
 文字	Text
-商品名	Item name
-日付	Date
-販売会の名前	Sale name
 商品を押すと、POPの下書きを自動で作ります。文字・飾り・テンプレートを直して、画像で保存・印刷できます。	Tap an item to auto-create a POP draft. Edit text, decorations and template, then save as an image or print.
 販売会のポスターを作る	Make a sale poster
 まとめて作る（A4にならべる）	Make several (on one A4 sheet)
 商品のPOPを作る	Make an item POP
 販売する商品がまだありません。「商品と仕入れ数」か「商品・在庫の調整」で入れてください。	No items to sell yet. Add them in "Items and stock".
 作ったもの（この端末）	Your designs (this device)
-{0}を消す	Delete {0}
 素材について：テンプレート・イラスト・飾りは、このアプリのために作った物です。文字は Google Fonts の日本語フォント（SIL Open Font License 1.1）を使っていて、作った画像・印刷物は自由に使えます。AIで作った画像は使っていません。	About the materials: templates, illustrations and decorations were made for this app. Text uses Japanese fonts from Google Fonts (SIL Open Font License 1.1), and the images and prints you make can be used freely. No AI-generated images are used.
 大きさ	Size
 テンプレート	Template
@@ -2510,7 +2490,6 @@ A4の紙に印刷します	Prints on A4 paper
 POPの見本。押すと文字や飾りを選び、指でずらせます	POP preview. Tap to select text or decorations, and drag to move them
 文字や飾りを押すと選べます。そのまま指でずらせます。	Tap text or decorations to select them, then drag to move.
 画像で保存	Save as image
-共有	Share
 印刷の時に、A4に{0}枚ならべる	Print {0} on one A4 sheet
 配色	Colors
 配色 {0}	Colors {0}
@@ -2519,29 +2498,19 @@ POPの見本。押すと文字や飾りを選び、指でずらせます	POP pre
 ほかの色	Other color
 スタンプ	Stamp
 イラスト	Illustration
-写真	Photo
-QRコード	QR code
 向き	Angle
-前へ	To front
-後ろへ	To back
-消す	Delete
 ＋ 文字を足す	+ Add text
 直したい文字を、上か見本の中から選んでください。	Choose the text to edit, above or in the preview.
 文字（改行もできます）	Text (line breaks allowed)
 フォント	Font
 太く	Bold
 縦書き	Vertical
-文字の大きさ	Text size
 列の長さ	Column length
 幅（折り返す長さ）	Width (wrap length)
 幅	Width
 揃え	Align
-左	Left
-中	Center
-右	Right
 文字の色	Text color
 文字の下の飾り	Background decoration
-なし	None
 帯	Band
 まるい帯	Rounded band
 テープ	Tape
@@ -2555,7 +2524,6 @@ QRコード	QR code
 形	Shape
 写真の形	Photo shape
 角まる	Rounded
-そのまま	As is
 QRコードの中身（アドレス）	QR code content (address)
 1列	1 column
 2列	2 columns
@@ -2570,13 +2538,11 @@ QRコードの中身（アドレス）	QR code content (address)
 {0}の写真	Photo of {0}
 https://…（予約フォーム・注文ページなど）	https://… (reservation form, order page, etc.)
 QRコードを足す	Add QR code
-足す	Add
 例：泰山木	e.g. Taizanboku
 例：10月販売会	e.g. October sale
 例：10/17（金）	e.g. 10/17 (Fri)
 例：11:45〜	e.g. 11:45–
 場所	Place
-時間	Time
 例：○○会館前（雨の時は一号館一階）	e.g. In front of the hall (1st floor of Bldg. 1 if rainy)
 例：ひとやすみしませんか？	e.g. Take a break?
 いちばん下の文字	Text at the very bottom
@@ -2586,15 +2552,11 @@ QRコードを足す	Add QR code
 選んだ商品のPOPを、A4の紙に{0}枚ずつならべます（点線で切って使います）。一度直して残してあるPOP（同じ大きさ）は、直した形を使います。	Lays out the chosen items' POPs {0} per A4 sheet (cut along the dotted lines). POPs you edited and saved (same size) are used as edited.
 {0}（{1}枚）	{0} ({1} per sheet)
 A4にならべて作る（{0}枚）	Make on A4 ({0} sheet{s0})
-{0}枚目	Sheet {0}
-全部選ぶ	Select all
-選ぶのをやめる	Clear selection
 POPを作っています…	Making POPs…
 文字の形（フォント）を読み込めませんでした。インターネットにつながる所で開き直すと、選んだフォントで描きます（いまは端末の文字で描いています）。	Could not load the fonts. Open again where you have an internet connection to draw with the chosen fonts (the device font is used for now).
 文字の形（フォント）を読み込んでいます…	Loading fonts…
 QRコードにするアドレス（https:// から始まる物）を入れてください。	Please enter an address for the QR code (starting with https://).
 おすすめは3つまでです	Up to 3 featured items
-カフェ	Café
 例：主催 ○○ゼミ 泰山木班	e.g. Organized by ___
 ポスター	Posters
 # ---- POP・ポスター：画像（背景の画像・端末の写真・背景を消す）と重なり ----
@@ -2713,7 +2675,6 @@ Open-Meteo の無料の窓口は、営利を目的としない使い方に限ら
 下	Bottom
 読み上げの声を自然にするには：iPhone・iPad の「設定 → アクセシビリティ → 読み上げコンテンツ → 声 → 日本語」で、「拡張」「プレミアム」と付いた声（Kyoko・O-ren など）をダウンロードしてください。このアプリは、端末に入っている声の中から、いちばん自然な声を選んで使います。	For a more natural voice: on iPhone/iPad, go to Settings → Accessibility → Spoken Content → Voices → Japanese and download a voice marked "Enhanced" or "Premium" (e.g. Kyoko, O-ren). This app automatically uses the most natural voice installed on the device.
 次にすること・押した商品・金額を声で読みます（音を消している時も、画面には必ず出ます）。声は、端末に入っている声の中から、いちばん自然な声を使います（「設定 → 音と読み上げ」に、声をよくする方法があります）	Reads the next action, tapped items and amounts aloud (always shown on screen even when sound is off). Uses the most natural voice installed on the device (see "Settings → Sounds & speech" for how to improve it).
-未会計の注文はありません	No unpaid orders
 モバイルオーダーや「後で会計」の注文があると、ここに並びます。	Mobile orders and "pay later" orders appear here.
 筆談	Written chat
 筆談（文字と手書きでお客様とお話しする）	Written chat (talk with customers by text and handwriting)
@@ -2833,9 +2794,9 @@ KDの新しい注文や、お客様から筆談で話しかけられた時に、
 この端末：{0}（オーナー・会計記録の記号 {1}）	This device: {0} (owner, record mark {1})
 このコードを入れて、この端末で「許可」	enter this code, then tap “Allow” on this device
 このコードを入れて、オーナーの許可で合流	enter this code and join with the owner’s approval
-すぐ合流できるQRコードを出す（30分）	Show a QR code for instant joining (30 min)
-QRコードか合言葉を使うと、許可を待たずに、上で選んだ使い方で合流できます。知らない人に見せないでください。使い終わったら「取り消す」を押すと安心です。	With the QR code or passphrase, a device joins in the role chosen above without waiting for approval. Don’t show it to strangers. Tap “Cancel” when you’re done, to be safe.
-もう1台のカメラで読み取るか、「合流する」に合言葉を入れると、上で選んだ使い方ですぐに合流します（許可は要りません）。ホーム画面に追加したアプリで使う端末は、合言葉を入れてください。	Scan it with the other device’s camera, or enter the passphrase in “Join”, to join right away in the role chosen above (no approval needed). For devices using the app added to the home screen, enter the passphrase.
+すぐ合流できるQRコードを出す（30分・1台ずつ）	Show a quick-join QR code (30 min, one device each)
+QRコードか合言葉を使うと、許可を待たずに、上で選んだ使い方で合流できます。1回使うと使えなくなり、次の端末のための新しいQRコードが出ます。知らない人に見せないでください。	With the QR code or passphrase, a device joins right away in the role chosen above, without approval. Each one works only once; after it’s used, a new QR code for the next device appears. Don’t show it to strangers.
+もう1台のカメラで読み取るか、「合流する」に合言葉を入れると、上で選んだ使い方ですぐに合流します（許可は要りません）。使えるのは1台だけで、使われると次の合言葉に変わります。ホーム画面に追加したアプリで使う端末は、合言葉を入れてください。	Scan it with the other device’s camera, or enter the passphrase in “Join”, to join right away in the role chosen above (no approval needed). It works for one device only, then changes to the next passphrase. For devices using the home-screen app, enter the passphrase.
 使える時刻：{0}:{1} まで	Valid until {0}:{1}
 合流の合言葉	Join passphrase
 この合言葉を取り消す	Cancel this passphrase
@@ -2864,9 +2825,9 @@ QRコードか合言葉を使うと、許可を待たずに、上で選んだ使
 ほかに{0}件のお願いがあります。	{0} more request{s0}.
 全部断る	Decline all
 合流のお願いを送りました	Join request sent
-オーナーの端末（開店した端末）に出る「許可」を押してもらってください。許可されると、自動で合流します。	Ask someone to tap “Allow” on the owner device (the one that opened the sale). This device joins automatically once allowed.
+オーナーの端末に出る「許可」を押してもらってください。許可されると、自動で合流します。	Ask someone to tap “Allow” on the owner device. Once allowed, this device joins automatically.
 この端末：{0}（{1}として）	This device: {0} (as {1})
-ほかの端末は「合流する」でこの共有コードを入れると、オーナーの端末（開店した端末）に合流のお願いが届きます。すぐに入れるQRコードは、オーナーの端末で出せます。	When another device enters this share code in “Join”, a join request goes to the owner device (the one that opened the sale). A QR code for instant joining can be shown on the owner device.
+ほかの端末は「合流する」でこの共有コードを入れると、オーナーの端末に合流のお願いが届きます。すぐに入れるQRコードは、オーナーの端末で出せます。	When another device enters this share code in “Join”, a join request reaches the owner device. A QR code for joining right away can be shown on the owner device.
 お店から知らせが来たら、自動で合流する	Join automatically when the shop sends a notice
 オーナーの端末が「次の開店でも、同じ端末を呼ぶ」にしている時、開店の知らせが届いたら、押さなくても合流します（KD・CDの置きっぱなしの端末に）	When the owner device has “Call the same devices next time” on, this device joins automatically when the opening notice arrives (for KD and CD devices that stay in place)
 お店からの合流の知らせ	Join notices from the shop
@@ -2877,11 +2838,11 @@ QRコードか合言葉を使うと、許可を待たずに、上で選んだ使
 その端末のQRコードを読んでも、すぐに入れます。	You can also scan that device’s QR code to join right away.
 いま知らせを読めませんでした（通信を確かめてください）。	Couldn’t read notices just now (check your connection).
 下の「コードで合流する」から入れます。	You can join with “Join with a code” below.
-共有コード（6けた）は、開店した端末の「設定 → 複数端末で使う」に大きく出ています。コードを入れると、その端末に合流のお願いが届き、「許可」されると合流します。すぐに入りたい時は、その端末で「すぐ合流できるQRコード」を出してもらい、読み取るか合言葉を入れてください。	The 6-digit share code is shown large in “Settings → Use on multiple devices” on the device that opened the sale. Entering it sends a join request to that device; you join once it’s allowed. To join right away, have that device show the “QR code for instant joining”, then scan it or enter the passphrase.
+共有コード（6けた）は、開店した端末の「設定 → 複数端末で使う」に大きく出ています。コードを入れると、オーナーの端末に合流のお願いが届き、「許可」されると合流します。すぐに入りたい時は、オーナーの端末で「すぐ合流できるQRコード」を出してもらい、読み取るか合言葉を入れてください。	The 6-digit share code is shown large in “Settings → Use with multiple devices” on the device that opened the sale. Entering it sends a join request to the owner device, and you join once it’s allowed. To join right away, ask the owner device to show the “quick-join QR code”, then scan it or enter the passphrase.
 合流の合言葉で、すぐに合流します。	Joins right away with the passphrase.
 合言葉で合流する	Join with passphrase
 この端末はまだ、このコードの販売会のメンバーではありません。	This device isn’t a member of this code’s sale yet.
-押すと、開店した端末（オーナー）に	Tapping sends a
+押すと、オーナーの端末に	Tapping sends a
 が届きます。オーナーが「許可」を押すと合流します。	to the device that opened the sale (the owner). You join when the owner taps “Allow”.
 合流のお願いを送る	Send join request
 お店からの知らせ・{0}として・コード {1}・{2}:{3} 開店・{4}	Notice from the shop · as {0} · code {1} · opened {2}:{3} · {4}
@@ -2889,7 +2850,7 @@ QRコードか合言葉を使うと、許可を待たずに、上で選んだ使
 「{0}」の合流を許可しました	Allowed “{0}” to join
 合流のお願いを断りました	Declined the join request
 外しました	Removed
-オーナーにしました	Made owner
+オーナーにしました	Made owner.
 許可されました。合流します	Allowed. Joining now
 合流のお願いを受け付けないようにしました（合言葉では入れます）	Join requests turned off (the passphrase still works)
 合流のお願いを受け付けるようにしました	Join requests turned on
@@ -2901,22 +2862,57 @@ QRコードか合言葉を使うと、許可を待たずに、上で選んだ使
 お店のQRコードが新しくなりました。モバイルオーダーのQRコードを印刷し直してください	The shop QR code has changed. Please reprint the mobile ordering QR codes.
 許可できませんでした。通信を確かめてください。	Couldn’t allow. Check your connection.
 合言葉を作れませんでした。通信を確かめてください。	Couldn’t create a passphrase. Check your connection.
-通信できないため、合流できませんでした。\n電波の良い場所で、もう一度お試しください。	Couldn’t join because there’s no connection.\nTry again where the signal is good.
-合流の合言葉が違うか、期限が切れています。\nオーナーの端末で、新しいQRコード・合言葉を出してもらってください。	The join passphrase is wrong or has expired.\nAsk for a new QR code or passphrase on the owner device.
+通信できないため、合流できませんでした。 電波の良い場所で、もう一度お試しください。	Couldn’t join because there’s no connection.\nTry again where the signal is good.
+合流の合言葉が違うか、期限が切れているか、もう使われています（合言葉は1回だけ使えます）。 オーナーの端末で、新しいQRコード・合言葉を出してもらってください。	The join passphrase is wrong, has expired, or has already been used (each passphrase works only once).\nAsk for a new QR code or passphrase on the owner device.
 通信できないため、合流できませんでした。	Couldn’t join because there’s no connection.
 合流のお願いは、オーナーの端末で断られました。	The join request was declined on the owner device.
-10分たっても許可されなかったため、合流のお願いを取り下げました。\nもう一度お願いを出すか、オーナーの端末で出す「合流の合言葉」を使ってください。	The join request was withdrawn because it wasn’t allowed within 10 minutes.\nSend another request, or use the join passphrase shown on the owner device.
-共有コード「{0}」で、いま開いている販売会はありません。\nコードを確かめてください。\n（オーナーが「合流のお願いを受け付けない」にしている時も、合流できません）	There’s no sale open now with share code “{0}”.\nPlease check the code.\n(You also can’t join when the owner has turned off join requests.)
-通信できないため、合流のお願いを出せませんでした。\n電波の良い場所で、もう一度お試しください。	Couldn’t send the join request because there’s no connection.\nTry again where the signal is good.
-この端末は、オーナーの端末で販売会から外されました。\n\nここまでの会計はこの端末に残っています。この先は、この端末だけで営業します。\nもう一度合流する時は「設定 → 複数端末で使う」から合流のお願いを出してください。	This device was removed from the sale on the owner device.\n\nSales so far remain on this device. From now on it runs on its own.\nTo join again, send a join request from “Settings → Use on multiple devices”.
+10分たっても許可されなかったため、合流のお願いを取り下げました。 もう一度お願いを出すか、オーナーの端末で出す「合流の合言葉」を使ってください。	The join request was withdrawn because it wasn’t allowed within 10 minutes.\nSend another request, or use the join passphrase shown on the owner device.
+共有コード「{0}」で、いま開いている販売会はありません。 コードを確かめてください。 （オーナーが「合流のお願いを受け付けない」にしている時も、合流できません）	There’s no sale open now with share code “{0}”.\nPlease check the code.\n(You also can’t join when the owner has turned off join requests.)
+通信できないため、合流のお願いを出せませんでした。 電波の良い場所で、もう一度お試しください。	Couldn’t send the join request because there’s no connection.\nTry again where the signal is good.
+この端末は、オーナーの端末で販売会から外されました。 ここまでの会計はこの端末に残っています。この先は、この端末だけで営業します。 もう一度合流する時は「設定 → 複数端末で使う」から合流のお願いを出してください。	This device was removed from the sale on the owner device.\n\nSales so far remain on this device. From now on it runs on its own.\nTo join again, send a join request from “Settings → Use on multiple devices”.
 この端末は、販売会から外されました（左上の×で、ふだんの画面に戻せます）	This device was removed from the sale (tap × at the top left to return to the normal screen)
 この端末は、この販売会のCDとして許可されていません。左上の×でふだんの画面に戻し、もう一度合流してください	This device isn’t allowed as a CD for this sale. Tap × at the top left to return to the normal screen, then join again.
-「{0}」を、この販売会から外しますか？\nその端末は、すぐに売上・注文が見られなくなります（その端末の中の記録は残ります）。\nもう一度入る時は、合流のお願いが要ります。	Remove “{0}” from this sale?\nThat device will immediately lose access to sales and orders (records on the device remain).\nIt will need a new join request to come back.
-開店した端末（はじめのオーナー）は外せません。	The device that opened the sale (the first owner) can’t be removed.
+「{0}」を、この販売会から外しますか？ その端末は、すぐに売上・注文が見られなくなります（その端末の中の記録は残ります）。 もう一度入る時は、合流のお願いが要ります。	Remove “{0}” from this sale?\nThat device will immediately lose access to sales and orders (records on the device remain).\nIt will need a new join request to come back.
+この端末はオーナーなので、お店のオーナーからも外します（なくした・盗まれた端末なら、外してください）。	This device is an owner, so it will also be removed from the shop owners (remove it if it was lost or stolen).
 外せませんでした。通信を確かめてください。	Couldn’t remove. Check your connection.
-「{0}」もオーナーにしますか？\nオーナーは、合流の許可・端末を外す・合言葉を出すことができます。\n（オーナーの端末が電池切れになった時の控えに、もう1台オーナーにしておくと安心です）	Make “{0}” an owner too?\nOwners can allow joins, remove devices and show passphrases.\n(It’s safer to have a second owner in case the owner device’s battery dies.)
+「{0}」もオーナーにしますか？ オーナーは、合流の許可・端末を外す・合言葉を出すことができます。 お店のオーナーになるので、次からの販売会でも、この端末は自動でオーナーになります。 （オーナーの端末の電池が切れた時の控えになります。信頼できる人の端末だけにしてください）	Make “{0}” an owner too?\nOwners can allow joins, remove devices and show passphrases.\nIt becomes a shop owner, so it will automatically be an owner in future sales too.\n(It serves as a backup if the owner device’s battery runs out. Only do this for devices of people you trust.)
 QRコードを作れませんでした。下の合言葉を使ってください。	Couldn’t create the QR code. Use the passphrase below.
 お店のQRコードから開いてください。（このページだけを開いても、お店は分かりません）	Please open this from the shop’s QR code. (Opening this page by itself doesn’t tell us which shop.)
 許可して合流	joined with approval
 合言葉で合流	joined with passphrase
 いつもの端末	regular device
+
+オーナーの端末が1台だけです。この端末の電池が切れると、新しい端末を入れられなくなります（会計はほかの端末で続けられます）。信頼できる人のレジを1台「オーナーにする」と安心です。	There is only one owner device. If its battery runs out, no new devices can be let in (other devices can keep checking out). Making one trusted register an owner too is safer.
+端末をなくした時のために	In case a device is lost
+お店の鍵を作って印刷しておくと、オーナーの端末をなくした・記録が消えた時に、別の端末がお店のオーナーになれます（印刷したモバイルオーダーのQRコードもそのまま使えます）。	If you create and print a shop key, another device can become the shop owner when the owner device is lost or its data is erased (printed mobile-order QR codes keep working).
+お店の鍵を作って印刷する	Create and print the shop key
+なくした端末を締め出す	Lock out a lost device
+お店の鍵：作ってあります（{0}月{1}日）。	Shop key: created ({0}/{1}).
+お店の鍵を作り直す	Remake the shop key
+鍵をもう一度印刷する	Print the key again
+確かめる番号	Check number
+オーナーの端末にも同じ番号が出ます。番号が同じか、見比べてから許可してもらってください。	The same number appears on the owner device. Ask them to compare the numbers before allowing.
+共有コード {0}	Share code {0}
+お店の鍵を使う（オーナーの端末をなくした時）	Use the shop key (if the owner device is lost)
+合言葉で1台が合流しました。次の端末のために、新しい合言葉を出しました	A device joined with the passphrase. A new passphrase is shown for the next device.
+合言葉で1台が合流しました（合言葉は1回だけ使えます）	A device joined with the passphrase (each passphrase works only once).
+この端末は、お店のオーナーなので、この販売会でもオーナーになりました	This device is a shop owner, so it is now an owner of this sale too.
+この端末を、お店のオーナーにしました。次にこの端末で開店すると、印刷したQRコードがそのまま使えます	This device is now a shop owner. When you open a sale on this device, printed QR codes keep working.
+ほかのオーナーを外し、お店の鍵を作り直しました。新しい鍵を印刷してください	Other owners were removed and the shop key was remade. Please print the new key.
+ほかのオーナーを外しました	Other owners were removed.
+お店のQRコードが新しくなりました。モバイルオーダーのQRコードを印刷し直してください（「お店の鍵」があれば、鍵を使うと前のQRコードのまま使えます）	The shop QR code has changed. Please reprint the mobile-order QR codes (if you have a shop key, using it keeps the old QR codes working).
+「{0}」をオーナーからはずして、レジに戻しますか？ （お店のオーナーからも外します）	Remove “{0}” as owner and change it back to a register?\n(It will also be removed from the shop owners.)
+お店の鍵を作り直しますか？ 前に印刷した鍵は、使えなくなります（なくした・人に見られた時に）。	Remake the shop key?\nThe previously printed key will stop working (use this if it was lost or seen by others).
+お店の鍵を作って、印刷しますか？ オーナーの端末をなくした時・端末の記録が消えた時に、この鍵を使うと、別の端末がお店のオーナーになれます（印刷したモバイルオーダーのQRコードも、そのまま使えます）。 鍵を持っている人は、だれでもお店のオーナーになれます。事務所の金庫など、お客様の目に触れない所にしまってください。	Create and print a shop key?\n\nIf the owner device is lost or its data is erased, using this key lets another device become the shop owner (printed mobile-order QR codes keep working).\n\nAnyone who has the key can become the shop owner. Keep it where customers can’t see it, such as an office safe.
+お店の鍵を作れませんでした。通信を確かめてください。	Couldn’t create the shop key. Check your connection.
+なくした・盗まれた端末を締め出しますか？ ・この端末のほかは、お店のオーナーから全部外します（必要な端末は、あとで「オーナーにする」でもう一度足してください）。 ・お店の鍵を作っていれば、作り直します（前に印刷した鍵は使えなくなります）。 ・この端末が覚えている「いつもの端末」も忘れます（次の開店では、もう一度許可してください）。 ・いまこの販売会に入っている端末に、なくした物があれば、下のメンバーの一覧で「外す」も押してください。	Lock out a lost or stolen device?\n\n・All shop owners except this device will be removed (add needed devices again later with “Make owner”).\n・If a shop key exists, it will be remade (the previously printed key stops working).\n・The “regular devices” this device remembers will be forgotten (allow them again at the next opening).\n・If a lost device is in this sale now, also tap “Remove” for it in the member list below.
+締め出せませんでした。通信を確かめてください。	Couldn’t lock out. Check your connection.
+お店の鍵（4文字ずつ、5つの組）を入れてください。 オーナーの端末をなくした時・記録が消えた時に使います。	Enter the shop key (5 groups of 4 characters).\nUse it when the owner device is lost or its data is erased.
+お店の鍵の形ではありません。 （紙に印刷した、4文字ずつ5つの組の鍵を入れてください）	That isn’t a shop key.\n(Enter the printed key: 5 groups of 4 characters.)
+共有サーバーにつながっていないため、お店の鍵を使えません。 電波の良い場所で、もう一度お試しください。	The shop key can’t be used because there’s no connection to the sharing server.\nTry again where the signal is good.
+通信できないため、お店の鍵を使えませんでした。	Couldn’t use the shop key because there’s no connection.
+この鍵は使えません。 鍵がまちがっているか、作り直されて使えなくなっています。	This key can’t be used.\nIt is wrong, or it was remade and no longer works.
+お店の鍵で、この端末を「{0}」のオーナーにしますか？ （オーナーの端末をなくした時・端末の記録が消えた時に使います）	Use the shop key to make this device an owner of “{0}”?\n(Use this when the owner device is lost or its data is erased.)
+この鍵は使えません。 作り直されて使えなくなっているかもしれません。	This key can’t be used.\nIt may have been remade and no longer work.
+この端末を、お店のオーナーにしました。 「{0}」がいま開いています。オーナーとして合流しますか？	This device is now a shop owner.\n\n“{0}” is open now. Join as an owner?
+「{0}」を、この販売会から外しますか？ その端末は、すぐに売上・注文が見られなくなります（その端末の中の記録は残ります）。 もう一度入る時は、合流のお願いが要ります。 この端末はオーナーなので、お店のオーナーからも外します（なくした・盗まれた端末なら、外してください）。	Remove “{0}” from this sale?\nThat device will immediately lose access to sales and orders (records on the device remain).\nIt will need a new join request to come back.\n\nThis device is an owner, so it will also be removed from the shop owners (remove it if it was lost or stolen).

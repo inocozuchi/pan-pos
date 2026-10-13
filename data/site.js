@@ -17,8 +17,9 @@
  *                   label … レジや商品の編集で出る名前（products の category にもこの名前を書く）
  *                   total … 集計の表に出る名前
  *   setDiscount   … セット割を最初からオンにするか（あとから設定で変えられる）
- *   eventsCollection … 共有に使う Firebase の置き場の名前。
- *                   施設ごとに別の Firebase プロジェクトを使うなら 'events' のままでよい。
+ *   eventsCollection … 共有に使う Firebase の置き場の名前。'events' のままにしてください。
+ *                   置き場の決まり（firestore.rules）は 'events' だけを守っています（ほかの名前にすると、共有できません）。
+ *                   同じ Firebase プロジェクトをほかの施設と使っても、販売会はメンバーの端末だけが読めるので混ざりません。
  */
 window.SITE = {
   id: "",
