@@ -2916,3 +2916,107 @@ QRコードを作れませんでした。下の合言葉を使ってください
 この鍵は使えません。 作り直されて使えなくなっているかもしれません。	This key can’t be used.\nIt may have been remade and no longer work.
 この端末を、お店のオーナーにしました。 「{0}」がいま開いています。オーナーとして合流しますか？	This device is now a shop owner.\n\n“{0}” is open now. Join as an owner?
 「{0}」を、この販売会から外しますか？ その端末は、すぐに売上・注文が見られなくなります（その端末の中の記録は残ります）。 もう一度入る時は、合流のお願いが要ります。 この端末はオーナーなので、お店のオーナーからも外します（なくした・盗まれた端末なら、外してください）。	Remove “{0}” from this sale?\nThat device will immediately lose access to sales and orders (records on the device remain).\nIt will need a new join request to come back.\n\nThis device is an owner, so it will also be removed from the shop owners (remove it if it was lost or stolen).
+販売会の予定	Planned sales
+予約フォーム	Reservation form
+在庫の数え直し	Stock recount
+スマホの予約	Phone reservations
+予定を作る・直す	Create / edit plan
+新しい予定を作る	Create a new plan
+この予定で開店の準備	Prepare to open with this plan
+直す	Edit
+予約を見る	View reservations
+ポスター	Poster
+おすすめのポスター	Recommendation poster
+写して作る	Duplicate
+終わった予定	Finished plans
+臨時・不定期	Irregular
+いつもの	Regular
+今日	Today
+営業中	Open
+終わりました	Finished
+予定はまだありません	No plans yet
+販売会の名前（必ず入れる）	Sale name (required)
+種類	Type
+開催日	Date
+始まり	Start
+終わり	End
+開催場所	Venue
+実施団体	Organizer
+コラボ団体（あれば）	Collaborator (if any)
+一言コメント（ポスター・予約のページに出ます）	Comment (shown on posters and the reservation page)
+メニューと仕入れ数	Menu and stock
+1品足す	Add an item
+いまの商品を入れる	Use current items
+集計	Reports
+売上目標（円・空欄なら決めない）	Sales goal (yen, blank for none)
+前回比で比べる相手	Compare with
+時間の区切り（短い販売会は細かくすると流れが見えます）	Time interval (finer intervals help short sales)
+スマホから予約を受ける	Accept phone reservations
+受付の始め	Reservations open
+受付の終わり（締め切り）	Reservations close (deadline)
+受け取り時間（お客様が選ぶ。何も選ばなければ聞きません）	Pickup times (customers choose; none selected = not asked)
+この予定を保存する	Save this plan
+リンクをコピー	Copy link
+QRコードを印刷	Print QR code
+分類	Category
+値段（円）	Price (yen)
+仕入れ数	Stock
+予約の上限	Reservation limit
+取り置く数（合計）	Items to set aside (total)
+予約の一覧を印刷する（取り置きの準備に）	Print reservation list (for setting items aside)
+この予約を取り消す	Cancel this reservation
+受け取り済み	Picked up
+取り消し	Cancelled
+時間の指定なし	No time specified
+予定から開店する	Open from a plan
+やめる	Cancel
+聞く項目	Fields to ask
+お名前	Name
+電話番号	Phone number
+聞かない	Don't ask
+任意	Optional
+必須	Required
+ひとこと欄	Note field
+1人が予約できる数（合計）	Max items per reservation
+予約のページに出すお知らせ	Notice on the reservation page
+お知らせを保存する	Save notice
+販売会の予定を開く	Open planned sales
+在庫を数え直す	Recount stock
+この数で仕入れ数を直す	Update stock with these counts
+商品	Item
+売れた数	Sold
+残り	Left
+仕入れ数（概算）	Stock (estimate)
+在庫は数え直した概算	Stock is a recount estimate
+おすすめ商品のポスターを作る	Make a recommendation poster
+おすすめ商品	Recommended items
+つめ方	Density
+ぎっしり（文字と写真を大きく）	Dense (larger text and photos)
+ゆったり	Spacious
+販売会名	Sale name
+開催時間	Time
+コラボ団体	Collaborator
+コラボ団体はなし	No collaborator
+一言コメント	Comment
+いちばん上の小さな文字（お店の名前など）	Small text at the top (shop name, etc.)
+販売会の予定から入れる	Fill in from a plan
+見出し	Heading
+見出しの下	Subheading
+いちばん下の文字	Bottom text
+名前	Name
+吹き出しの一語	Speech-bubble word
+コメント	Comment
+一語の案を替える	Try another word
+コメントの案を替える	Try another comment
+端末の写真にする	Use a photo from this device
+商品の写真にする	Use the item photo
+小さく	Smaller
+大きく	Larger
+左へ回す	Rotate left
+右へ回す	Rotate right
+写真を替える	Change photo
+左右の中へ	Center horizontally
+見本の中の文字や写真を押すと、ここですぐ直せます。	Tap text or a photo in the preview to edit it here.
+必ず入れる	Required
+販売会の予定・予約フォーム	Planned sales and reservation form
+臨時・不定期の販売会を前もって作り、スマホの予約を受ける	Create irregular sales in advance and take phone reservations

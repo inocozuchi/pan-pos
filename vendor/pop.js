@@ -581,6 +581,7 @@
         else if (e.t === 'stamp') box = drawStamp(ctx, d, e, W, H, U);
         else if (e.t === 'menu') box = drawMenu(ctx, d, e, W, H, U);
         else if (e.t === 'qr') box = drawQr(ctx, d, e, W, H, U);
+        else if (e.t === 'box') box = drawCard(ctx, d, e, W, H, U);
         ctx.restore();
         if (box && rec) rec.push({ id: e.id, lock: !!e.lock, cx: cx, cy: cy, rot: e.rot || 0, x0: box[0], y0: box[1], x1: box[2], y1: box[3] });
     }
@@ -793,19 +794,26 @@
     // メニューの一覧（名前 …… 値段）。入りきらない時は文字を小さくする
     function drawMenu(ctx, d, e, W, H, U) {
         var w = (e.w || .84) * W, h = (e.h || .2) * H, items = e.items || [];
-        var cols = e.cols || (items.length > 8 ? 2 : 1), rows = Math.max(1, Math.ceil(items.length / cols));
         var fid = resolveFont(d, e), bold = resolveBold(d, e), color = col(d, e, 'ck', 'color') || '#333', sub = col(d, e, 'pk', 'subColor') || color;
-        var gap = w * .05, cw = (w - gap * (cols - 1)) / cols;
-        var px = (e.size || .03) * U, lh = 1.5;
-        for (var g = 0; g < 40; g++) {
-            ctx.font = fontStr(fid, bold, px);
-            var fits = rows * px * lh <= h && items.every(function (x) { return ctx.measureText(x.n).width + ctx.measureText(priceShort(x.p)).width + px * 1.2 <= cw; });
-            if (fits || px < U * .008) break;
-            px *= .94;
-        }
+        var gap = w * .05, lh = 1.5;
+        var fitPx = function (cols) {
+            var rows = Math.max(1, Math.ceil(items.length / cols)), cw = (w - gap * (cols - 1)) / cols, px = (e.size || .03) * U;
+            for (var g = 0; g < 40; g++) {
+                ctx.font = fontStr(fid, bold, px);
+                var fits = rows * px * lh <= h && items.every(function (x) { return ctx.measureText(x.n).width + ctx.measureText(priceShort(x.p)).width + px * 1.2 <= cw; });
+                if (fits || px < U * .008) break;
+                px *= .94;
+            }
+            return px;
+        };
+        // 列の数：決めてある時はその数。autoCols の時は、文字がいちばん大きくなる列の数を選ぶ
+        var cols = e.cols || (items.length > 8 ? 2 : 1);
+        if (e.autoCols && !e.colsSet) { var best = 0; [1, 2, 3].forEach(function (c) { var q = fitPx(c); if (q > best * 1.02) { best = q; cols = c; } }); }
+        var rows = Math.max(1, Math.ceil(items.length / cols)), cw = (w - gap * (cols - 1)) / cols;
+        var px = fitPx(cols);
         ctx.font = fontStr(fid, bold, px);
         ctx.textBaseline = 'middle';
-        var top = -h / 2 + Math.max(0, (h - rows * px * lh) / 2);
+        var top = -h / 2 + Math.max(0, (h - rows * px * lh) / (e.autoCols ? 6 : 2));
         items.forEach(function (x, i) {
             var c = Math.floor(i / rows), r = i % rows;
             var lx = -w / 2 + c * (cw + gap), y = top + px * lh * (r + .5);
@@ -816,6 +824,19 @@
             var a = lx + nw + px * .4, b = lx + cw - pw - px * .4;
             if (b - a > px) { ctx.globalAlpha = .45; ctx.fillStyle = sub; for (var dx = a; dx < b; dx += px * .45) { ctx.beginPath(); ctx.arc(dx, y + px * .12, px * .06, 0, Math.PI * 2); ctx.fill(); } ctx.globalAlpha = 1; }
         });
+        return [-w / 2, -h / 2, w / 2, h / 2];
+    }
+    // 商品ごとの台紙（おすすめ商品のポスター）。テンプレートの紙の色を、少しすかして敷く
+    function drawCard(ctx, d, e, W, H, U) {
+        var w = (e.w || .4) * W, h = (e.h || .3) * H, p = palOf(d);
+        var darkTpl = relLum(rgbOf(p.ink || '#222')) > .45;
+        ctx.save();
+        ctx.fillStyle = e.color || (darkTpl ? 'rgba(255,255,255,.09)' : (p.paper || '#FFFFFF'));
+        ctx.globalAlpha *= darkTpl ? 1 : .88;
+        rr(ctx, -w / 2, -h / 2, w, h, U * .022); ctx.fill();
+        ctx.globalAlpha = .55; ctx.strokeStyle = p.acc3 || p.acc || '#999'; ctx.lineWidth = U * .003;
+        rr(ctx, -w / 2 + U * .006, -h / 2 + U * .006, w - U * .012, h - U * .012, U * .018); ctx.stroke();
+        ctx.restore();
         return [-w / 2, -h / 2, w / 2, h / 2];
     }
     // QRコード（vendor/qrcode-generator.js を使う。白いふちを付けて、読み取りやすくする）
@@ -845,7 +866,7 @@
         }
         if (e.t === 'img') return (e.w || .3) * W * (e.shape === 'circle' ? 1 : (e.ar || 1)) / H;
         if (e.t === 'stamp') return (e.w || .16) * W / H;
-        return (e.h || .1);
+        return (e.h || .1);   // メニュー・台紙
     }
     // 組（d.groups）の要素を、上から順に、間をあけて並べる。全体は組の y を中心にする
     function layoutGroups(ctx, d, W, H, U) {
@@ -1026,8 +1047,27 @@
         if (p.rec) return 'おすすめ';
         return '';
     }
+    // おすすめ商品のポスターの吹き出しの一語（味・食感の言葉だけ。事実かどうか分からない言葉は使わない）
+    var WORDS = [
+        [/スノーボール/, 'ほろほろ！'], [/クッキー|サブレ|ビスケット|スティック|クロワッサン|デニッシュ/, 'さくさく！'], [/メロン/, 'さっくり！'],
+        [/塩/, 'じゅわっ！'], [/チーズ/, 'こくうま！'], [/あん|アン|つぶ|こし/, 'ほっこり'], [/パウンド|ケーキ|フィナンシェ|マドレーヌ/, 'しっとり'],
+        [/コーヒー|珈琲|ブレンド|カフェ|ラテ/, 'ほっと一息'], [/チョコ|ココア/, 'ほろにが'], [/ミルク|牛乳|練乳/, 'ふんわり'], [/ウィンナー|ソーセージ/, 'ジューシー！'],
+        [/レモン/, 'さわやか！'], [/さつま|いも|芋|かぼちゃ|カボチャ/, 'ほくほく'], [/りんご|アップル/, 'あまずっぱい'], [/紅茶|アールグレイ/, 'ふんわり香る'],
+        [/抹茶/, 'ほろにが'], [/アーモンド|ナッツ|ココナッツ/, 'こうばしい！'], [/全粒粉/, 'ざくざく'], [/つめ合わせ|詰め合わせ|セット/, 'おみやげに！'],
+        [/はちみつ|ハニー/, 'やさしい甘さ'], [/ベーグル|もち/, 'もちもち'], [/ジュース|ソーダ|ティー|茶/, 'ごくごく'], [/パン/, 'ふわふわ']
+    ];
+    function wordFor(p) {
+        for (var i = 0; i < WORDS.length; i++) if (WORDS[i][0].test(p.name)) return WORDS[i][1];
+        return 'おすすめ！';
+    }
+    // おすすめ商品のポスターの1品（名前・写真・値段・コメント・吹き出しの一語。どれも後から直せる）
+    function recItemFor(p, v) { return { pid: p.id, name: p.name, price: A.priceInfo(p).main, comment: copyFor(p, v || 0).desc, word: wordFor(p), pic: picOf(p) }; }
+    // この下書きの商品（予定から作ったポスターは、その予定のメニュー。ふだんは販売中の商品）
+    function prods(d) { return d && Array.isArray(d.plist) && d.plist.length ? d.plist : A.products(); }
     // 商品1つのPOP
-    function genPop(p, fmt, tplId, v) {
+    function genPop(p, fmt, tplId, v, dense) {
+        // ぎっしり：写真と文字を大きくして、すき間を詰める
+        var K = dense ? 1.13 : 1, KI = dense ? 1.16 : 1;
         var t = TPL_BY[tplId] || TPLS[0], pr = A.priceInfo(p), cp = copyFor(p, v), pic = picOf(p), sw = stampWord(p);
         var flip = v % 2 === 1, f = FMTS[fmt], land = f.w > f.h * 1.15, sq = !land && f.w > f.h * .9;
         var els = [];
@@ -1043,29 +1083,29 @@
         var bottom = t.footBand ? .91 : .95;
         if (land) {
             var ix = flip ? .76 : .24, tx = flip ? .33 : .67;
-            groups.m = { y: .5, y0: .08, y1: bottom, gap: .03 };
-            if (pic) els.push(IMGEL(pic, Object.assign({ x: ix, y: .52, w: .32 }, imgO)));
-            els.push(T('catch', cp.catch, G(Object.assign({ x: tx, y: .2, w: .54, size: .062 }, catchO))));
-            els.push(T('title', p.name, G(Object.assign({ x: tx, y: .42, w: .55, size: .14 }, titleO))));
-            els.push(T('desc', cp.desc, G({ x: tx, y: .62, w: .54, size: .048, ck: 'sub', max: 3, fit: true })));
-            els.push(T('price', pr.main, G(Object.assign({ x: tx + .1, y: .8, w: .34, size: priceBox === 'circle' ? .085 : .11 }, priceO))));
+            groups.m = { y: .5, y0: dense ? .05 : .08, y1: bottom, gap: dense ? .016 : .03 };
+            if (pic) els.push(IMGEL(pic, Object.assign({ x: ix, y: .52, w: .32 * KI }, imgO)));
+            els.push(T('catch', cp.catch, G(Object.assign({ x: tx, y: .2, w: .54, size: .062 * K }, catchO))));
+            els.push(T('title', p.name, G(Object.assign({ x: tx, y: .42, w: .55, size: .14 * K }, titleO))));
+            els.push(T('desc', cp.desc, G({ x: tx, y: .62, w: .54, size: .048 * K, ck: 'sub', max: 3, fit: true })));
+            els.push(T('price', pr.main, G(Object.assign({ x: tx + .1, y: .8, w: .34, size: (priceBox === 'circle' ? .085 : .11) * K }, priceO))));
             if (pr.sub) els.push(T('pricesub', pr.sub, G({ x: tx + .1, y: .925, w: .4, size: .034, ck: 'sub' })));
             if (sw) els.push({ id: nid(), t: 'stamp', role: 'stamp', text: sw, style: t.stamp, x: flip ? .88 : .12, y: .17, w: .17, rot: flip ? 12 : -12, ck: 'acc', ik: 'onAcc', fk: 'accent', bold: true });
         } else if (sq) {
-            groups.m = { y: .76, y0: .56, y1: bottom, gap: .025 };
-            if (pic) els.push(IMGEL(pic, Object.assign({ x: .5, y: .335, w: .4 }, imgO)));
-            els.push(T('catch', cp.catch, Object.assign({ x: .5, y: .09, w: .8, size: .058 }, catchO)));
-            els.push(T('title', p.name, G(Object.assign({ x: .5, y: .72, w: .84, size: .1 }, titleO))));
-            els.push(T('price', pr.main, G(Object.assign({ x: .5, y: .88, w: .4, size: priceBox === 'circle' ? .07 : .085 }, priceO))));
+            groups.m = { y: .76, y0: dense ? .6 : .56, y1: bottom, gap: dense ? .014 : .025 };
+            if (pic) els.push(IMGEL(pic, Object.assign({ x: .5, y: dense ? .33 : .335, w: .4 * KI }, imgO)));
+            els.push(T('catch', cp.catch, Object.assign({ x: .5, y: .09, w: .8, size: .058 * K }, catchO)));
+            els.push(T('title', p.name, G(Object.assign({ x: .5, y: .72, w: .84, size: .1 * K }, titleO))));
+            els.push(T('price', pr.main, G(Object.assign({ x: .5, y: .88, w: .4, size: (priceBox === 'circle' ? .07 : .085) * K }, priceO))));
             if (pr.sub) els.push(T('pricesub', pr.sub, G({ x: .5, y: .94, w: .6, size: .03, ck: 'sub' })));
             if (sw) els.push({ id: nid(), t: 'stamp', role: 'stamp', text: sw, style: t.stamp, x: .16, y: .22, w: .2, rot: -12, ck: 'acc', ik: 'onAcc', fk: 'accent', bold: true });
         } else {
-            groups.m = { y: .72, y0: .48, y1: bottom, gap: .02 };
-            if (pic) els.push(IMGEL(pic, Object.assign({ x: .5, y: .27, w: .52 }, imgO)));
-            els.push(T('catch', cp.catch, G(Object.assign({ x: .5, y: .6, w: .84, size: .07 }, catchO))));
-            els.push(T('title', p.name, G(Object.assign({ x: .5, y: .7, w: .86, size: .13 }, titleO))));
-            els.push(T('desc', cp.desc, G({ x: .5, y: .8, w: .82, size: .048, ck: 'sub', max: 2, fit: true })));
-            els.push(T('price', pr.main, G(Object.assign({ x: .5, y: .9, w: .6, size: priceBox === 'circle' ? .085 : .1 }, priceO))));
+            groups.m = { y: .72, y0: dense ? .52 : .48, y1: bottom, gap: dense ? .01 : .02 };
+            if (pic) els.push(IMGEL(pic, Object.assign({ x: .5, y: dense ? .27 : .27, w: .52 * KI }, imgO)));
+            els.push(T('catch', cp.catch, G(Object.assign({ x: .5, y: .6, w: .84, size: .07 * K }, catchO))));
+            els.push(T('title', p.name, G(Object.assign({ x: .5, y: .7, w: .86, size: .13 * K }, titleO))));
+            els.push(T('desc', cp.desc, G({ x: .5, y: .8, w: .82, size: .048 * K, ck: 'sub', max: dense ? 3 : 2, fit: true })));
+            els.push(T('price', pr.main, G(Object.assign({ x: .5, y: .9, w: .6, size: (priceBox === 'circle' ? .085 : .1) * K }, priceO))));
             if (pr.sub) els.push(T('pricesub', pr.sub, G({ x: .5, y: .95, w: .6, size: .032, ck: 'sub' })));
             if (sw) els.push({ id: nid(), t: 'stamp', role: 'stamp', text: sw, style: t.stamp, x: .17, y: .12, w: .24, rot: -12, ck: 'acc', ik: 'onAcc', fk: 'accent', bold: true });
         }
@@ -1075,62 +1115,165 @@
         // 飾り（すみに置く。じゃまなら消せる）
         var spots = land ? [[flip ? .1 : .93, flip ? .86 : .14, .1, 14], [flip ? .95 : .06, .9, .09, -10]] : sq ? [[.92, .1, .1, 14], [.07, .93, .08, -10]] : [[.88, .08, .12, 14], [.1, .93, .09, -10]];
         decosFor(t).slice(0, 2).forEach(function (id, i) { var s = spots[i]; if (s) els.push(IMGEL('deco:' + id, { x: s[0], y: s[1], w: s[2], rot: s[3], role: 'deco' })); });
-        return { v: 1, kind: 'pop', fmt: fmt, tpl: t.id, pal: Math.floor(v / 2) % t.pals.length, seed: 7 + v, pid: p.id, els: els, groups: groups };
+        return { v: 1, kind: 'pop', fmt: fmt, tpl: t.id, pal: Math.floor(v / 2) % t.pals.length, seed: 7 + v, pid: p.id, els: els, groups: groups, dense: !!dense };
     }
-    // 販売会のポスター（日時・場所・おすすめ・メニュー）
-    function genPoster(list, fmt, tplId, v, ev, fids) {
+    // 販売会のポスター（販売会名・開催日時・開催場所・実施団体・コラボ団体・一言コメント・おすすめ・メニュー）
+    // 実施団体・コラボ団体は1行にまとめる（「実施　◯◯　×　コラボ　◯◯」）
+    function orgsText(ev) {
+        var a = [];
+        if (ev.org) a.push('実施　' + ev.org);
+        if (ev.collab && !ev.noCollab) a.push('コラボ　' + ev.collab);
+        return a.join('　×　');
+    }
+    function genPoster(list, fmt, tplId, v, ev, fids, opt) {
+        opt = opt || {};
+        var dense = !!opt.dense, allP = opt.all || A.products();
         var t = TPL_BY[tplId] || TPLS[0], els = [], feat;
+        var f = FMTS[fmt], tall = f.h > f.w * 1.15;
+        var maxF = dense && tall ? 6 : 3;
         if (fids) {
-            var allP = A.products();
             feat = fids.map(function (id) { return allP.filter(function (p) { return p.id === id; })[0]; }).filter(Boolean);
         } else {
             feat = list.filter(function (p) { return p.rec; });
             if (!feat.length) feat = list.filter(function (p) { return A.topSeller(p); });
             if (!feat.length) feat = list.slice(0, 3);
         }
-        feat = feat.slice(0, 3);
-        var f = FMTS[fmt], tall = f.h > f.w * 1.15;
+        feat = feat.slice(0, maxF);
         var titleO = { fk: 'title', ck: 'ink', fit: true, max: 2 };
         if (t.titleStroke) { titleO.sk = 'onAcc'; titleO.sw = .2; }
+        var orgs = orgsText(ev);
+        var menuItems = list.map(function (p) { return { id: p.id, n: p.name, p: A.priceInfo(p).value }; });
+        var groups;
+        if (dense && tall) {
+            // ぎっしり（縦長）：見出しを詰め、おすすめを2段（6つまで）、メニューの文字を大きく
+            groups = { h: { y: .15, y0: .022, y1: .285, gap: .006 } };
+            els.push(T('brand', ev.shop, { x: .5, y: .05, w: .86, size: .05, fk: 'accent', ck: 'acc', grp: 'h' }));
+            els.push(T('event', ev.name, Object.assign({ x: .5, y: .11, w: .92, size: .125, grp: 'h' }, titleO)));
+            els.push(T('date', ev.date, { x: .5, y: .19, w: .9, size: .074, fk: 'title', ck: 'acc', grp: 'h' }));
+            els.push(T('place', [ev.time, ev.place].filter(Boolean).join('　'), { x: .5, y: .23, w: .9, size: .045, ck: 'ink', fit: true, max: 2, grp: 'h' }));
+            if (orgs) els.push(T('orgs', orgs, { x: .5, y: .255, w: .9, size: .033, ck: 'sub', fk: 'title', fit: true, max: 2, grp: 'h' }));
+            if (ev.catch) els.push(T('catch', ev.catch, { x: .5, y: .27, w: .86, size: .038, fk: 'accent', ck: 'sub', box: t.catchBox === 'band' ? 'band' : '', bk: 'acc3', max: 2, fit: true, grp: 'h' }));
+            // メニューが長い時は、おすすめの所を少し低くして、メニューの文字を読める大きさに保つ
+            var mCols = menuItems.length > 16 ? 3 : menuItems.length > 7 ? 2 : 1, mRows = Math.ceil(menuItems.length / mCols);
+            var fA = .325, fB = Math.max(.6, Math.min(.715, .9 - mRows * .03));
+            if (feat.length) {
+                els.push(T('fhead', '〜 おすすめ 〜', { x: .5, y: .305, w: .6, size: .036, fk: 'accent', ck: 'onAcc', box: 'band', bk: 'acc' }));
+                var rows = feat.length > 3 ? 2 : 1, rowH = (fB - fA) / rows;
+                feat.forEach(function (p, i) {
+                    var r = i < 3 ? 0 : 1, inRow = r === 0 ? Math.min(3, feat.length) : feat.length - 3, c = r === 0 ? i : i - 3;
+                    var xs = inRow === 1 ? [.5] : inRow === 2 ? [.3, .7] : [.18, .5, .82], cw = inRow === 1 ? .6 : inRow === 2 ? .4 : .3;
+                    var ph = rowH * (rows === 1 ? .55 : .5), iw = Math.min(cw * .9, ph * f.h / f.w), top = fA + rowH * r;
+                    var pic = picOf(p), isPhoto = pic.indexOf('photo:') === 0, g = 'f' + i;
+                    groups[g] = { y: top + ph + (rowH - ph) / 2, y0: top + ph + .006, y1: top + rowH - .004, gap: .003 };
+                    if (pic) els.push(IMGEL(pic, { x: xs[c], y: top + ph / 2 + .004, w: iw, shape: isPhoto ? t.img : 'plain', ek: isPhoto ? 'acc' : '', role: 'fpic', pid: p.id }));
+                    els.push(T('fname', p.name, { x: xs[c], y: top + ph + .02, w: cw * .96, size: .036, fk: 'title', ck: 'ink', fit: true, max: 2, pid: p.id, grp: g }));
+                    els.push(T('fprice', A.priceInfo(p).main, { x: xs[c], y: top + ph + .04, w: cw * .8, size: .032, fk: 'title', ck: 'acc', pid: p.id, grp: g }));
+                    els.push(T('fdesc', copyFor(p, v).desc, { x: xs[c], y: top + ph + .06, w: cw * .96, size: .024, ck: 'sub', max: 2, fit: true, pid: p.id, grp: g }));
+                });
+            }
+            var my0 = feat.length ? fB + .02 : .315;
+            els.push(T('mhead', 'メニュー', { x: .5, y: my0, w: .5, size: .04, fk: 'accent', ck: 'acc', box: 'line', bk: 'acc3' }));
+            var mh = .94 - (my0 + .025);
+            els.push({ id: nid(), t: 'menu', role: 'menu', x: .5, y: my0 + .02 + mh / 2, w: .9, h: mh, size: feat.length ? .042 : .05, cols: mCols, autoCols: true, fk: 'body', ck: 'ink', pk: 'sub', items: menuItems });
+            if (ev.note) els.push(T('note', ev.note, { x: .5, y: t.footBand ? .967 : .962, w: .9, size: .024, ck: t.footBand ? 'onAcc' : 'sub' }));
+            [[.08, .045, .085, -12], [.92, .05, .09, 12]].forEach(function (sp, i) { var id = decosFor(t)[i]; if (id) els.push(IMGEL('deco:' + id, { x: sp[0], y: sp[1], w: sp[2], rot: sp[3], role: 'deco' })); });
+            return { v: 1, kind: 'poster', fmt: fmt, tpl: t.id, pal: Math.floor(v / 2) % t.pals.length, seed: 11 + v, ev: ev, els: els, groups: groups, dense: true };
+        }
+        var K = dense ? 1.12 : 1;
         var y = tall ? 1 : .72;   // 横長・正方形の時は、全体を詰める
         var Y = function (a) { return tall ? a : .06 + (a - .05) * .95; };
-        var groups = { h: { y: Y(.2), y0: Y(.03), y1: Y(.395), gap: .012 } };
-        els.push(T('brand', ev.shop, { x: .5, y: Y(.065), w: .8, size: .055 * y, fk: 'accent', ck: 'acc', grp: 'h' }));
-        els.push(T('event', ev.name, Object.assign({ x: .5, y: Y(.145), w: .88, size: .12 * y, grp: 'h' }, titleO)));
-        els.push(T('date', ev.date, { x: .5, y: Y(.245), w: .86, size: .075 * y, fk: 'title', ck: 'acc', grp: 'h' }));
-        els.push(T('place', [ev.time, ev.place].filter(Boolean).join('　'), { x: .5, y: Y(.305), w: .86, size: .042 * y, ck: 'ink', fit: true, max: 2, grp: 'h' }));
-        if (ev.catch) els.push(T('catch', ev.catch, { x: .5, y: Y(.36), w: .8, size: .04 * y, fk: 'accent', ck: 'sub', box: t.catchBox === 'band' ? 'band' : '', bk: 'acc3', max: 2, fit: true, grp: 'h' }));
+        groups = { h: { y: Y(.2), y0: Y(.03), y1: Y(.395), gap: dense ? .006 : .012 } };
+        els.push(T('brand', ev.shop, { x: .5, y: Y(.065), w: .8, size: .055 * y * K, fk: 'accent', ck: 'acc', grp: 'h' }));
+        els.push(T('event', ev.name, Object.assign({ x: .5, y: Y(.145), w: .88, size: .12 * y * K, grp: 'h' }, titleO)));
+        els.push(T('date', ev.date, { x: .5, y: Y(.245), w: .86, size: .075 * y * K, fk: 'title', ck: 'acc', grp: 'h' }));
+        els.push(T('place', [ev.time, ev.place].filter(Boolean).join('　'), { x: .5, y: Y(.305), w: .86, size: .042 * y * K, ck: 'ink', fit: true, max: 2, grp: 'h' }));
+        if (orgs) els.push(T('orgs', orgs, { x: .5, y: Y(.33), w: .86, size: .032 * y * K, ck: 'sub', fk: 'title', fit: true, max: 2, grp: 'h' }));
+        if (ev.catch) els.push(T('catch', ev.catch, { x: .5, y: Y(.36), w: .8, size: .04 * y * K, fk: 'accent', ck: 'sub', box: t.catchBox === 'band' ? 'band' : '', bk: 'acc3', max: 2, fit: true, grp: 'h' }));
         var fy = Y(.425);
         if (feat.length) {
             els.push(T('fhead', '〜 おすすめ 〜', { x: .5, y: fy, w: .6, size: .038 * y, fk: 'accent', ck: 'onAcc', box: 'band', bk: 'acc' }));
             var xs = feat.length === 1 ? [.5] : feat.length === 2 ? [.3, .7] : [.19, .5, .81];
             // 写真・絵は、見出しの下から決まった高さに収める（数が少なくても、下の文字と重ならない）
-            var picTop = Y(.45), picH = tall ? .14 : .2;
-            var iw = Math.min(feat.length === 1 ? .34 : .24, picH * f.h / f.w);
+            var picTop = Y(.45), picH = (tall ? .14 : .2) * (dense ? 1.12 : 1);
+            var iw = Math.min(feat.length === 1 ? .34 : .24, picH * f.h / f.w) * (dense ? 1.1 : 1);
             var picY = picTop + picH / 2;
             feat.forEach(function (p, i) {
                 var pic = picOf(p), isPhoto = pic.indexOf('photo:') === 0, g = 'f' + i;
                 groups[g] = { y: (picTop + picH + Y(.7)) / 2, y0: picTop + picH + .008, y1: Y(.7), gap: .006 };
                 if (pic) els.push(IMGEL(pic, { x: xs[i], y: picY, w: iw, shape: isPhoto ? t.img : 'plain', ek: isPhoto ? 'acc' : '', role: 'fpic', pid: p.id }));
-                els.push(T('fname', p.name, { x: xs[i], y: Y(.6), w: feat.length === 1 ? .6 : .29, size: .034 * y, fk: 'title', ck: 'ink', fit: true, max: 2, pid: p.id, grp: g }));
-                els.push(T('fdesc', copyFor(p, v).desc, { x: xs[i], y: Y(.655), w: feat.length === 1 ? .6 : .28, size: .022 * y, ck: 'sub', max: 3, fit: true, pid: p.id, grp: g }));
+                els.push(T('fname', p.name, { x: xs[i], y: Y(.6), w: feat.length === 1 ? .6 : .29, size: .034 * y * K, fk: 'title', ck: 'ink', fit: true, max: 2, pid: p.id, grp: g }));
+                if (dense) els.push(T('fprice', A.priceInfo(p).main, { x: xs[i], y: Y(.63), w: .25, size: .03 * y * K, fk: 'title', ck: 'acc', pid: p.id, grp: g }));
+                els.push(T('fdesc', copyFor(p, v).desc, { x: xs[i], y: Y(.655), w: feat.length === 1 ? .6 : .28, size: .022 * y * K, ck: 'sub', max: 3, fit: true, pid: p.id, grp: g }));
             });
         }
         var my0 = feat.length ? Y(.71) : Y(.42);
         els.push(T('mhead', 'メニュー', { x: .5, y: my0, w: .5, size: .04 * y, fk: 'accent', ck: 'acc', box: 'line', bk: 'acc3' }));
         var mh = (tall ? .9 : .93) - (my0 + .04);
-        els.push({ id: nid(), t: 'menu', role: 'menu', x: .5, y: my0 + .03 + mh / 2, w: .84, h: mh, size: .03, fk: 'body', ck: 'ink', pk: 'sub', items: list.map(function (p) { return { id: p.id, n: p.name, p: A.priceInfo(p).value }; }) });
+        els.push({ id: nid(), t: 'menu', role: 'menu', x: .5, y: my0 + .03 + mh / 2, w: dense ? .9 : .84, h: mh, size: .03 * K, fk: 'body', ck: 'ink', pk: 'sub', items: menuItems });
         if (ev.note) els.push(T('note', ev.note, { x: .5, y: t.footBand ? .965 : .955, w: .86, size: .022, ck: t.footBand ? 'onAcc' : 'sub' }));
         var spots = tall ? [[.09, .05, .1, -12], [.91, .06, .11, 12], [.07, .4, .08, -8], [.93, .38, .08, 10]] : [[.06, .08, .08, -12], [.94, .08, .08, 12]];
         decosFor(t).slice(0, spots.length).forEach(function (id, i) { var s = spots[i]; els.push(IMGEL('deco:' + id, { x: s[0], y: s[1], w: s[2], rot: s[3], role: 'deco' })); });
-        return { v: 1, kind: 'poster', fmt: fmt, tpl: t.id, pal: Math.floor(v / 2) % t.pals.length, seed: 11 + v, ev: ev, els: els, groups: groups };
+        return { v: 1, kind: 'poster', fmt: fmt, tpl: t.id, pal: Math.floor(v / 2) % t.pals.length, seed: 11 + v, ev: ev, els: els, groups: groups, dense: dense };
+    }
+    // おすすめ商品のポスター：チェックした商品を、写真・名前・値段・コメント・吹き出しの一語で、すき間なくならべる
+    function genRec(items, head, fmt, tplId, v, dense) {
+        var t = TPL_BY[tplId] || TPLS[0], els = [], groups = {};
+        var f = FMTS[fmt], tall = f.h > f.w * 1.15;
+        var list = (items || []).slice(0, 6), n = Math.max(1, list.length);
+        var pal0 = palOf({ tpl: t.id, pal: 0 }), priceK = pal0.priceBg ? 'priceBg' : 'price';
+        var titleO = { fk: 'title', ck: 'ink', fit: true, max: 1 };
+        if (t.titleStroke) { titleO.sk = 'onAcc'; titleO.sw = .2; }
+        // 見出し・台紙は、テンプレートの枠（紙のふちから少し内側）の内側に置く
+        var hy1 = tall ? .13 : .19;
+        groups.h = { y: hy1 / 2 + .02, y0: tall ? .045 : .06, y1: hy1, gap: .006 };
+        els.push(T('rtitle', head.title || 'おすすめ商品', Object.assign({ x: .5, y: .06, w: .9, size: tall ? .1 : .085, grp: 'h' }, titleO)));
+        if (head.sub) els.push(T('rsub', head.sub, { x: .5, y: .1, w: .9, size: tall ? .038 : .032, fk: 'accent', ck: 'acc', fit: true, max: 2, grp: 'h' }));
+        var cols = tall ? (n <= 3 ? 1 : 2) : Math.min(3, n), rows = Math.ceil(n / cols);
+        var top = hy1 + .012, bot = head.note ? (tall ? .93 : .91) : (tall ? .955 : .94), gx = dense === false ? .035 : .02, gy = dense === false ? .025 : .012, side = tall ? .07 : .06;
+        var cw = (1 - side * 2 - gx * (cols - 1)) / cols, ch = (bot - top - gy * (rows - 1)) / rows;
+        list.forEach(function (it, i) {
+            var r = Math.floor(i / cols), c = i % cols, inRow = Math.min(cols, list.length - r * cols);
+            var x0 = side + (cols - inRow) * (cw + gx) / 2 + c * (cw + gx), y0 = top + r * (ch + gy);
+            var cx = x0 + cw / 2, cy = y0 + ch / 2, pid = it.pid, g = 'r' + i;
+            var horiz = cw * f.w > ch * f.h * 1.25;
+            var pic = it.pic || '', isPhoto = /^(photo|user):/.test(pic);
+            var imgO = { shape: isPhoto ? (t.img === 'plain' ? 'round' : t.img) : 'plain', ek: isPhoto ? 'acc' : '', role: 'rpic', pid: pid };
+            els.push({ id: nid(), t: 'box', role: 'rcard', pid: pid, x: cx, y: cy, w: cw, h: ch, lock: true });
+            var nameO = { fk: 'title', ck: 'ink', fit: true, max: 2, pid: pid };
+            if (horiz) {
+                var iw = Math.min(cw * .44, ch * .84 * f.h / f.w), ix = x0 + .014 + iw / 2;
+                if (pic) els.push(IMGEL(pic, Object.assign({ x: ix, y: cy + ch * .03, w: iw }, imgO)));
+                var tx0 = x0 + .03 + iw, tw = x0 + cw - tx0 - .016, tcx = tx0 + tw / 2;
+                groups[g] = { y: cy, y0: y0 + ch * .07, y1: y0 + ch * .95, gap: .006 };
+                els.push(T('rname', it.name, Object.assign({ x: tcx, y: cy - .03, w: tw, size: tall ? .064 : .056 }, nameO, { grp: g })));
+                els.push(T('rprice', it.price, { x: tcx, y: cy, w: tw, size: tall ? .056 : .05, fk: 'title', ck: priceK, pid: pid, grp: g }));
+                els.push(T('rcomm', it.comment, { x: tcx, y: cy + .03, w: tw, size: tall ? .032 : .028, ck: 'sub', max: 3, fit: true, pid: pid, grp: g }));
+                els.push(T('rword', it.word, { x: x0 + Math.min(iw * .62, cw * .3), y: y0 + ch * .13, w: cw * .36, size: tall ? .04 : .034, fk: 'accent', ck: 'onAcc', box: 'bubble', bk: 'acc', rot: -6, max: 1, fit: true, pid: pid }));
+            } else {
+                var ph = ch * (dense === false ? .5 : .56), iw2 = Math.min(cw * .84, ph * f.h / f.w), ih2 = iw2 * f.w / f.h * (isPhoto ? .78 : 1);
+                if (pic) els.push(IMGEL(pic, Object.assign({ x: cx, y: y0 + ch * .05 + ph / 2, w: iw2 }, imgO)));
+                // 文字は写真のすぐ下から詰めて並べる（写真が低い時も、間をあけない）
+                var gy0 = y0 + ch * .05 + ph / 2 + ih2 / 2 + .008;
+                groups[g] = { y: gy0, y0: gy0, y1: y0 + ch * .96, gap: .003 };
+                els.push(T('rname', it.name, Object.assign({ x: cx, y: y0 + ch * .66, w: cw * .9, size: .05 }, nameO, { grp: g })));
+                els.push(T('rprice', it.price, { x: cx, y: y0 + ch * .76, w: cw * .8, size: .046, fk: 'title', ck: priceK, pid: pid, grp: g }));
+                els.push(T('rcomm', it.comment, { x: cx, y: y0 + ch * .86, w: cw * .9, size: .027, ck: 'sub', max: 3, fit: true, pid: pid, grp: g }));
+                els.push(T('rword', it.word, { x: x0 + cw * .3, y: y0 + ch * .1, w: cw * .5, size: .036, fk: 'accent', ck: 'onAcc', box: 'bubble', bk: 'acc', rot: -6, max: 1, fit: true, pid: pid }));
+            }
+        });
+        if (head.note) els.push(T('rnote', head.note, { x: .5, y: t.footBand ? .967 : (tall ? .952 : .935), w: .86, size: .026, ck: t.footBand ? 'onAcc' : 'sub' }));
+        return { v: 1, kind: 'rec', fmt: fmt, tpl: t.id, pal: Math.floor(v / 2) % t.pals.length, seed: 13 + v, els: els, groups: groups, rec: list, rhead: head, dense: dense !== false };
     }
     function defaultEvent() {
         var d = new Date(), wd = '日月火水木金土'[d.getDay()];
         var m = d.getMonth() + 1;
         var name = A.eventName() || (m + '月販売会');
         var c = m === 12 ? '冬のおいしいパンとお菓子' : m === 10 ? 'ひとやすみしませんか？' : (m === 3 || m === 4) ? '春のパンとお菓子をどうぞ' : 'ひとつひとつ手づくりのパンとお菓子';
-        return { shop: A.shopName(), name: name, date: m + '/' + d.getDate() + '（' + wd + '）', time: '11:45〜', place: '', catch: c, note: '' };
+        var ev = { shop: A.shopName(), name: name, date: m + '/' + d.getDate() + '（' + wd + '）', time: '11:45〜', place: '', org: A.shopName(), collab: '', catch: c, note: '' };
+        // 予定から開店した販売会：予定の中身（日時・場所・実施団体・コラボ団体・一言コメント）を使う
+        var pe = A.planEvent ? A.planEvent() : null;
+        if (pe) Object.keys(pe).forEach(function (k) { if (pe[k] != null && pe[k] !== '') ev[k] = pe[k]; });
+        return ev;
     }
 
     // ---------------- 直す（元に戻せるように、直す前の形を覚えておく） ----------------
@@ -1177,7 +1320,7 @@
             ['color', 'boxColor', 'stroke', 'ink', 'border'].forEach(function (k, i) { var kk = ['ck', 'bk', 'sk', 'ik', 'ek'][i]; if (o[k] && !o[kk]) { e[k] = o[k]; delete e[kk]; } });
             if (o.box !== undefined && o.boxSet) { e.box = o.box; e.boxSet = true; }
             if (o.items) e.items = o.items;
-            if (o.cols) e.cols = o.cols;
+            if (o.cols && o.colsSet) { e.cols = o.cols; e.colsSet = true; } else if (o.cols && !o.autoCols) e.cols = o.cols;
             if (o.url) e.url = o.url;
             if (o.src && o.srcSet) { e.src = o.src; e.srcSet = true; }
             if (o.shape && o.shapeSet) { e.shape = o.shape; e.shapeSet = true; }
@@ -1190,16 +1333,21 @@
         nd.id = oldD.id; nd.removed = oldD.removed || []; nd.var = oldD.var || 0;
         if (oldD.bg) nd.bg = clone(oldD.bg);
         if (oldD.fids) nd.fids = oldD.fids;
+        if (oldD.mids) nd.mids = oldD.mids;
+        if (oldD.plist) nd.plist = oldD.plist;
+        if (oldD.ev && !nd.ev) nd.ev = oldD.ev;
+        if (oldD.kind === 'rec') { nd.rec = oldD.rec; nd.rhead = oldD.rhead; }
         return nd;
     }
     function productOf(d) { return A.products().filter(function (p) { return p.id === d.pid; })[0] || A.allProduct(d.pid); }
     function genFor(d, tpl, fmt, v) {
-        if (d.kind === 'poster') return genPoster(posterList(d), fmt, tpl, v, d.ev || defaultEvent(), d.fids);
+        if (d.kind === 'poster') return genPoster(posterList(d), fmt, tpl, v, d.ev || defaultEvent(), d.fids, { dense: !!d.dense, all: prods(d) });
+        if (d.kind === 'rec') return genRec(d.rec || [], d.rhead || {}, fmt, tpl, v, d.dense !== false);
         var p = productOf(d);
-        return p ? genPop(p, fmt, tpl, v) : null;
+        return p ? genPop(p, fmt, tpl, v, !!d.dense) : null;
     }
     function posterList(d) {
-        var all = A.products();
+        var all = prods(d);
         if (d && d.mids) { var set = {}; d.mids.forEach(function (id) { set[id] = 1; }); return all.filter(function (p) { return set[p.id]; }); }
         return all;
     }
@@ -1218,7 +1366,7 @@
     }
     function regen() {
         if (!S.d) return;
-        var v = (S.d.var || 0) + 1, ch = S.d.kind === 'poster' ? tplChoices(null, 'poster') : tplChoices(productOf(S.d) || {}, 'pop');
+        var v = (S.d.var || 0) + 1, ch = S.d.kind === 'poster' || S.d.kind === 'rec' ? tplChoices(null, 'poster') : tplChoices(productOf(S.d) || {}, 'pop');
         var tpl = ch[v % ch.length];
         var nd = genFor(S.d, tpl, S.d.fmt, v);
         if (!nd) { A.error(); return; }
@@ -1235,8 +1383,8 @@
     var saveT = 0;
     function saveSoon() { clearTimeout(saveT); saveT = setTimeout(saveNow, 500); }
     function designName(d) {
-        var t = (d.els || []).filter(function (e) { return e.role === (d.kind === 'poster' ? 'event' : 'title'); })[0];
-        return (t && t.text ? t.text.replace(/\s+/g, ' ') : (d.kind === 'poster' ? 'ポスター' : 'POP')).slice(0, 30);
+        var t = (d.els || []).filter(function (e) { return e.role === (d.kind === 'poster' ? 'event' : d.kind === 'rec' ? 'rtitle' : 'title'); })[0];
+        return (t && t.text ? t.text.replace(/\s+/g, ' ') : (d.kind === 'poster' ? 'ポスター' : d.kind === 'rec' ? 'おすすめ商品' : 'POP')).slice(0, 30);
     }
     function saveNow() {
         clearTimeout(saveT);
@@ -1267,7 +1415,7 @@
         var t = new Date(), z = function (n) { return String(n).padStart(2, '0'); };
         return t.getFullYear() + z(t.getMonth() + 1) + z(t.getDate()) + '-' + z(t.getHours()) + z(t.getMinutes()) + z(t.getSeconds());
     }
-    function fileName(d) { return (d.kind === 'poster' ? 'poster-' : 'pop-') + stamp() + '.png'; }
+    function fileName(d) { return (d.kind === 'poster' ? 'poster-' : d.kind === 'rec' ? 'osusume-' : 'pop-') + stamp() + '.png'; }
     function busy(on, msg) {
         S.busy = on;
         var b = host && host.querySelector('.pp-busy');
@@ -1335,7 +1483,7 @@
 
     // ---------------- 画面 ----------------
     function esc(s) { return A.esc(String(s == null ? '' : s)); }
-    var ROLE_LABEL = { title: '商品名', basis: 'No.1の根拠', catch: 'ひとこと', desc: '説明', price: '値段', pricesub: '値段の注記', note: '下の小さな文字', brand: 'お店の名前', event: '販売会の名前', date: '日付', place: '時間・場所', fhead: 'おすすめの見出し', fname: 'おすすめの名前', fdesc: 'おすすめの説明', mhead: 'メニューの見出し', free: '文字' };
+    var ROLE_LABEL = { title: '商品名', basis: 'No.1の根拠', catch: 'ひとこと', desc: '説明', price: '値段', pricesub: '値段の注記', note: '下の小さな文字', brand: 'お店の名前', event: '販売会の名前', date: '日付', place: '時間・場所', fhead: 'おすすめの見出し', fname: 'おすすめの名前', fdesc: 'おすすめの説明', mhead: 'メニューの見出し', free: '文字', orgs: '実施団体・コラボ団体', fprice: 'おすすめの値段', rtitle: '見出し', rsub: '見出しの下', rname: '商品名', rprice: '値段', rcomm: 'コメント', rword: '吹き出しの一語', rnote: '下の小さな文字' };
     function thumbHtml(p) {
         var ph = A.photo(p.name);
         if (ph) return '<img src="' + ph + '" alt="">';
@@ -1348,6 +1496,7 @@
             + '<p class="settings-hint" style="margin-top:0;">商品を押すと、POPの下書きを自動で作ります。文字・飾り・テンプレートを直して、画像で保存・印刷できます。</p>'
             + '<div class="pp-top">'
             + '<button type="button" class="action-btn btn-checkout" data-act="poster"' + (ps.length ? '' : ' disabled') + '><svg class="ic"><use href="#ic-image"/></svg>販売会のポスターを作る</button>'
+            + '<button type="button" class="action-btn btn-checkout" data-act="recposter"' + (ps.length ? '' : ' disabled') + '><svg class="ic"><use href="#ic-star"/></svg>おすすめ商品のポスターを作る</button>'
             + '<button type="button" class="action-btn btn-secondary" data-act="batch"' + (ps.length ? '' : ' disabled') + '><svg class="ic"><use href="#ic-printer"/></svg>まとめて作る（A4にならべる）</button>'
             + '</div>'
             + '<label class="field-label sec">商品のPOPを作る</label>'
@@ -1378,8 +1527,8 @@
         }).join('') + '</div>';
     }
     function editHtml() {
-        var poster = S.d.kind === 'poster';
-        var tabs = [['tpl', 'テンプレート'], ['text', '文字'], ['deco', '飾り'], ['img', '画像'], ['layer', '重なり']].concat(poster ? [['event', '販売会・メニュー']] : []);
+        var poster = S.d.kind === 'poster', recP = S.d.kind === 'rec';
+        var tabs = (recP ? [['rec', 'おすすめ商品']] : poster ? [['event', '販売会・メニュー']] : []).concat([['tpl', 'テンプレート'], ['text', '文字'], ['deco', '飾り'], ['img', '画像'], ['layer', '重なり']]);
         var t = tileOf(S.d.fmt), n = t.cols * t.rows;
         return '<div class="pp-edit">'
             + '<div class="pp-stage">'
@@ -1391,6 +1540,7 @@
             + '</div>'
             + (function () { var g = priceGap(S.d); return g ? '<div class="pp-warn" role="status"><span>POPの値段（' + esc(g.el.text || '') + '）が、いまの登録の値段（' + esc(g.now.main) + '）と違います。</span><button type="button" class="pp-chip" data-act="fixprice">いまの値段にする</button></div>' : ''; })()
             + '<div class="pp-cv"><canvas id="pp-canvas" tabindex="0" aria-label="POPの見本。押すと文字や飾りを選び、指でずらせます"></canvas></div>'
+            + '<div class="pp-quick" id="pp-quick">' + quickHtml() + '</div>'
             + '<p class="pp-tip">押すと選べます。指でずらす・四すみの丸で大きさ・上の丸で向きを変えます（2本の指で広げる・ひねるでも）。</p>'
             + fmtChips()
             + '<div class="pp-out">'
@@ -1409,7 +1559,26 @@
             + '</div>'
             + '</div>';
     }
+    // 見本の下の「すぐ直す」：選んだ物の文字・大きさ・向きを、下までスクロールせずに直す
+    function quickHtml() {
+        var e = selEl();
+        if (!e) return '<p class="pp-qhint">見本の中の文字や写真を押すと、ここですぐ直せます。</p>';
+        var btn = function (act, v, label, ic) { return '<button type="button" class="pp-qb" data-act="' + act + '"' + (v != null ? ' data-v="' + v + '"' : '') + ' aria-label="' + esc(label) + '" title="' + esc(label) + '">' + (ic ? '<svg class="ic"><use href="#ic-' + ic + '"/></svg>' : '') + '<span>' + esc(label) + '</span></button>'; };
+        var out = '';
+        if (e.t === 'text') out += '<textarea class="pp-qt" rows="' + Math.min(3, Math.max(1, (e.text || '').split('\n').length)) + '" data-act="text" maxlength="200" aria-label="文字">' + esc(e.text || '') + '</textarea>';
+        if (e.t === 'stamp') out += '<input type="text" class="pp-qt" maxlength="16" data-act="stext" value="' + esc(e.text || '') + '" aria-label="スタンプの文字">';
+        out += '<div class="pp-qrow">'
+            + btn('qsz', '0.9', '小さく', 'minus') + btn('qsz', '1.1', '大きく', 'plus')
+            + btn('qrot', '-10', '左へ回す', '') + btn('qrot', '10', '右へ回す', '')
+            + (e.t === 'img' && /^(photo|user|art):/.test(e.src || '') ? btn('qswap', null, '写真を替える', 'image') : '')
+            + btn('alignel', 'c', '左右の中へ', '')
+            + btn('del', null, '消す', 'trash')
+            + '</div>';
+        return out;
+    }
+    function updateQuick() { var q = host && host.querySelector('#pp-quick'); if (q) q.innerHTML = quickHtml(); }
     function panelHtml() {
+        if (S.tab === 'rec') return recPanel();
         if (S.tab === 'tpl') return tplPanel();
         if (S.tab === 'text') return textPanel();
         if (S.tab === 'deco') return decoPanel();
@@ -1493,8 +1662,9 @@
         return out + '</div>';
     }
     function tplPanel() {
-        var t = tplOf(S.d);
-        return '<div class="pp-tpls">' + TPLS.map(function (x) {
+        var t = tplOf(S.d), dn = S.d.kind === 'rec' ? S.d.dense !== false : !!S.d.dense;
+        return '<label class="field-label" style="margin-top:0;">つめ方</label>' + seg('dense', dn ? '1' : '0', [['1', 'ぎっしり（文字と写真を大きく）'], ['0', 'ゆったり']], 'つめ方')
+            + '<div class="pp-tpls">' + TPLS.map(function (x) {
             return '<button type="button" class="pp-tpl' + (x.id === S.d.tpl ? ' on' : '') + '" aria-pressed="' + (x.id === S.d.tpl) + '" data-act="tpl" data-v="' + x.id + '"><canvas data-tplthumb="' + x.id + '" aria-hidden="true"></canvas><span>' + x.label + '</span></button>';
         }).join('') + '</div>'
             + '<label class="field-label sec">配色</label><div class="pp-pals">' + t.pals.map(function (p, i) {
@@ -1509,7 +1679,7 @@
         return '<div class="pp-sws">' + out + '<label class="pp-sw pp-swc" aria-label="ほかの色"><input type="color" data-act="' + act + '" value="#888888"></label></div>';
     }
     function elRow(e) {
-        var label = e.t === 'text' ? (ROLE_LABEL[e.role] || '文字') : e.t === 'stamp' ? 'スタンプ' : e.t === 'menu' ? 'メニュー' : e.t === 'qr' ? 'QRコード' : (e.cut ? '切り抜き' : e.src && /^(photo|user):/.test(e.src) ? '写真' : 'イラスト');
+        var label = e.t === 'text' ? (ROLE_LABEL[e.role] || '文字') : e.t === 'stamp' ? 'スタンプ' : e.t === 'menu' ? 'メニュー' : e.t === 'qr' ? 'QRコード' : e.t === 'box' ? '台紙' : (e.cut ? '切り抜き' : e.src && /^(photo|user):/.test(e.src) ? '写真' : 'イラスト');
         var txt = e.t === 'text' || e.t === 'stamp' ? (e.text || '') : '';
         var ic = '';
         if (e.t === 'img') {
@@ -1588,6 +1758,7 @@
             var bcur = e.ek ? 'acc' : (e.border || '');
             out += '<label class="field-label">写真のふち</label>' + seg('pborder', bcur, [['', 'なし'], ['#FFFFFF', '白'], ['acc', '色']], '写真のふち');
         }
+        if (e.t === 'box') out += '<label class="field-label">高さ</label><input type="range" min="0.05" max="1" step="0.005" value="' + (e.h || .3) + '" data-act="h">';
         if (e.t === 'qr') out += '<label class="field-label">QRコードの中身（アドレス）</label><input type="url" class="pp-in" data-act="qrurl" value="' + esc(e.url || '') + '" placeholder="https://…">';
         if (e.t === 'menu') {
             out += '<label class="field-label">列</label><div class="seg-pick" role="group" aria-label="列">' + [[1, '1列'], [2, '2列'], [3, '3列']].map(function (s) { var on = (e.cols || (e.items.length > 8 ? 2 : 1)) === s[0]; return '<button type="button" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '" data-act="mcols" data-v="' + s[0] + '">' + s[1] + '</button>'; }).join('') + '</div>'
@@ -1616,16 +1787,58 @@
         out += '<label class="field-label sec">QRコードを足す</label><div class="pp-row"><input type="url" class="pp-in" id="pp-qrnew" placeholder="https://…（予約フォーム・注文ページなど）" value="' + esc(A.qrUrl()) + '"><button type="button" class="pp-chip" data-act="addqr">足す</button></div>';
         return out;
     }
+    // ポスターに必ず入れる項目（販売会名・開催日時・開催場所・実施団体・コラボ団体・メニュー・一言コメント）
+    function posterNeeds(d) {
+        var ev = d.ev || {}, miss = [];
+        if (!ev.name) miss.push('販売会名');
+        if (!ev.date || !ev.time) miss.push('開催日時');
+        if (!ev.place) miss.push('開催場所');
+        if (!ev.org) miss.push('実施団体');
+        if (!ev.collab && !ev.noCollab) miss.push('コラボ団体');
+        if (!posterList(d).length) miss.push('メニュー');
+        if (!ev.catch) miss.push('一言コメント');
+        return miss;
+    }
     function eventPanel() {
         var d = S.d, ev = d.ev || {};
-        var f = function (k, label, ph) { return '<label class="field-label">' + label + '</label><input type="text" class="pp-in" data-act="ev" data-k="' + k + '" value="' + esc(ev[k] || '') + '" placeholder="' + esc(ph || '') + '" maxlength="60">'; };
-        var all = A.products(), mids = d.mids || all.map(function (p) { return p.id; }), fids = d.fids || [];
-        return '<div class="pp-edbox">'
-            + f('shop', 'お店の名前', '例：泰山木') + f('name', '販売会の名前', '例：10月販売会') + f('date', '日付', '例：10/17（金）') + f('time', '時間', '例：11:45〜')
-            + f('place', '場所', '例：○○会館前（雨の時は一号館一階）') + f('catch', 'ひとこと', '例：ひとやすみしませんか？') + f('note', 'いちばん下の文字', '例：主催　○○ゼミ　泰山木班')
+        var f = function (k, label, ph, req) { return '<label class="field-label">' + label + (req && !ev[k] ? '<span class="pp-req">必ず入れる</span>' : '') + '</label><input type="text" class="pp-in" data-act="ev" data-k="' + k + '" value="' + esc(ev[k] || '') + '" placeholder="' + esc(ph || '') + '" maxlength="60">'; };
+        var all = prods(d), mids = d.mids || all.map(function (p) { return p.id; }), fids = d.fids || [];
+        var miss = posterNeeds(d), maxF = d.dense && FMTS[d.fmt].h > FMTS[d.fmt].w * 1.15 ? 6 : 3;
+        return '<div class="pp-need' + (miss.length ? '' : ' ok') + '" role="status">' + (miss.length ? 'まだ入っていない項目：<b>' + miss.map(esc).join('・') + '</b>' : '必ず入れる項目（販売会名・開催日時・開催場所・実施団体・コラボ団体・メニュー・一言コメント）は、全部入っています。') + '</div>'
+            + (A.plans && A.plans().length ? '<label class="field-label">販売会の予定から入れる</label><div class="pp-row pp-wrap">' + A.plans().map(function (p) { return '<button type="button" class="pp-chip" data-act="evplan" data-v="' + esc(p.id) + '">' + esc(p.label) + '</button>'; }).join('') + '</div>' : '')
+            + '<div class="pp-edbox">'
+            + f('name', '販売会名', '例：10月の臨時販売会', true) + f('date', '開催日', '例：10/17（金）', true) + f('time', '開催時間', '例：10:00〜12:00', true)
+            + f('place', '開催場所', '例：○○会館前（雨の時は一号館一階）', true)
+            + f('org', '実施団体', '例：泰山木', true)
+            + (ev.noCollab ? '' : f('collab', 'コラボ団体', '例：カフェ ひだまり', true))
+            + '<label class="pp-check"><input type="checkbox" data-act="nocollab"' + (ev.noCollab ? ' checked' : '') + '>コラボ団体はなし</label>'
+            + f('catch', '一言コメント', '例：焼きたてのパンをご用意してお待ちしています', true)
+            + f('shop', 'いちばん上の小さな文字（お店の名前など）', '例：泰山木') + f('note', 'いちばん下の文字', '例：雨天決行・売り切れの時はご容赦ください')
             + '</div>'
-            + '<label class="field-label sec">おすすめ（3つまで。写真か絵と名前を大きく出します）</label><div class="pp-checks">' + all.map(function (p) { var on = fids.indexOf(p.id) >= 0; return '<label class="pp-check"><input type="checkbox" data-act="feat" data-id="' + esc(p.id) + '"' + (on ? ' checked' : '') + '>' + esc(p.name) + '</label>'; }).join('') + '</div>'
+            + '<label class="field-label sec">おすすめ（' + maxF + 'つまで。写真か絵と名前を大きく出します）</label><div class="pp-checks">' + all.map(function (p) { var on = fids.indexOf(p.id) >= 0; return '<label class="pp-check"><input type="checkbox" data-act="feat" data-id="' + esc(p.id) + '"' + (on ? ' checked' : '') + '>' + esc(p.name) + '</label>'; }).join('') + '</div>'
             + '<label class="field-label sec">メニューにのせる商品</label><div class="pp-checks">' + all.map(function (p) { var on = mids.indexOf(p.id) >= 0; return '<label class="pp-check"><input type="checkbox" data-act="mitem" data-id="' + esc(p.id) + '"' + (on ? ' checked' : '') + '>' + esc(p.name) + '　' + esc(A.priceInfo(p).main) + '</label>'; }).join('') + '</div>';
+    }
+    // おすすめ商品のポスター：商品にチェックを入れて選び、1品ずつ名前・値段・コメント・吹き出しの一語・写真を直す
+    function recPanel() {
+        var d = S.d, head = d.rhead || {}, items = d.rec || [], all = prods(d);
+        var hf = function (k, label, ph) { return '<label class="field-label">' + label + '</label><input type="text" class="pp-in" data-act="rh" data-k="' + k + '" value="' + esc(head[k] || '') + '" placeholder="' + esc(ph || '') + '" maxlength="60">'; };
+        var on = {}; items.forEach(function (it) { on[it.pid] = 1; });
+        var out = '<div class="pp-edbox">' + hf('title', '見出し', '例：今日のおすすめ') + hf('sub', '見出しの下', '例：10月の臨時販売会') + hf('note', 'いちばん下の文字', '例：泰山木') + '</div>'
+            + '<label class="field-label sec">おすすめにする商品（販売中の商品から、6つまで）</label><div class="pp-checks">' + all.map(function (p) { return '<label class="pp-check"><input type="checkbox" data-act="ritem" data-id="' + esc(p.id) + '"' + (on[p.id] ? ' checked' : '') + '>' + esc(p.name) + '</label>'; }).join('') + '</div>';
+        if (!items.length) return out + '<p class="settings-hint">商品にチェックを入れると、名前・写真・値段・コメント・吹き出しの一語を自動で入れます。</p>';
+        out += '<label class="field-label sec">1品ずつ直す（自動で入れた文を、自由に直せます）</label>';
+        items.forEach(function (it, i) {
+            var u = it.pic && it.pic.indexOf('photo:') === 0 ? A.photo(it.pic.slice(6)) : it.pic && it.pic.indexOf('user:') === 0 ? USERURL[it.pic.slice(5)] : '';
+            var art = it.pic && it.pic.indexOf('art:') === 0 && window.MENU_ART ? MENU_ART.svg(it.pic.slice(4)) : '';
+            var f2 = function (k, label, max, ta) { return '<label class="field-label">' + label + '</label>' + (ta ? '<textarea class="pp-in pp-ta" rows="2" data-act="ri" data-i="' + i + '" data-k="' + k + '" maxlength="' + max + '">' + esc(it[k] || '') + '</textarea>' : '<input type="text" class="pp-in" data-act="ri" data-i="' + i + '" data-k="' + k + '" value="' + esc(it[k] || '') + '" maxlength="' + max + '">'); };
+            out += '<div class="pp-ritem"><div class="pp-rtop"><span class="pp-rpic">' + (u ? '<img src="' + u + '" alt="">' : art) + '</span><b>' + (i + 1) + '. ' + esc(it.name) + '</b>'
+                + '<button type="button" class="pp-mini" data-act="rup" data-v="' + i + '"' + (i ? '' : ' disabled') + ' aria-label="前へ">▲</button><button type="button" class="pp-mini" data-act="rdown" data-v="' + i + '"' + (i < items.length - 1 ? '' : ' disabled') + ' aria-label="後へ">▼</button></div>'
+                + f2('name', '名前', 30) + '<div class="pp-r2">' + f2('price', '値段', 20) + f2('word', '吹き出しの一語', 12) + '</div>' + f2('comment', 'コメント', 80, true)
+                + '<div class="pp-row pp-wrap"><button type="button" class="pp-chip" data-act="rword" data-v="' + i + '">一語の案を替える</button><button type="button" class="pp-chip" data-act="rcomm" data-v="' + i + '">コメントの案を替える</button><button type="button" class="pp-chip" data-act="rphoto" data-v="' + i + '"><svg class="ic"><use href="#ic-image"/></svg>端末の写真にする</button>'
+                + (A.photo(it.name) && it.pic !== 'photo:' + it.name ? '<button type="button" class="pp-chip" data-act="rprodpic" data-v="' + i + '">商品の写真にする</button>' : '') + '</div>'
+                + '</div>';
+        });
+        return out;
     }
     // まとめて作る：選んだ商品のPOPを、A4にならべる
     function batchHtml() {
@@ -1707,6 +1920,7 @@
         host.querySelectorAll('.pp-tab').forEach(function (b) { var on = b.dataset.v === S.tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
         histBtns();
         drawTplThumbs();
+        updateQuick();
         if (S.tab === 'text') contrastSoon();
     }
     function drawSavedThumbs() {
@@ -2001,17 +2215,87 @@
         S.hist = []; S.fut = []; S.sel = null; S.tab = 'tpl'; S.view = 'edit'; S.thumbs = {};
         A.sound(880, .05); saveNow(); render(); scrollTop();
     }
-    function openPoster() {
-        var list = A.products();
+    // 販売会のポスター。opt.ev（販売会の中身）・opt.plist（予定のメニュー）を渡すと、それで作る
+    function openPoster(opt) {
+        opt = opt || {};
+        var plist = Array.isArray(opt.plist) && opt.plist.length ? opt.plist : null;
+        var list = plist || A.products();
         if (!list.length) { A.error(); return; }
-        var ev = defaultEvent();
+        var ev = Object.assign(defaultEvent(), opt.ev || {});
         var fids = list.filter(function (p) { return p.rec; }).map(function (p) { return p.id; }).slice(0, 3);
         if (!fids.length) fids = list.filter(function (p) { return A.topSeller(p); }).map(function (p) { return p.id; }).slice(0, 3);
         if (!fids.length) fids = list.slice(0, 3).map(function (p) { return p.id; });
-        S.d = genPoster(list, 'a4', tplChoices(null, 'poster')[0], 0, ev, fids);
-        S.d.id = newId(); S.d.var = 0; S.d.fids = fids;
+        // はじめから「ぎっしり」（空いた所を少なく）。「テンプレート」の「つめ方」で「ゆったり」にもできる
+        S.d = genPoster(list, 'a4', tplChoices(null, 'poster')[0], 0, ev, fids, { dense: true, all: list });
+        S.d.id = newId(); S.d.var = 0; S.d.fids = fids; S.d.dense = true;
+        if (plist) S.d.plist = plist;
         S.hist = []; S.fut = []; S.sel = null; S.tab = 'event'; S.view = 'edit'; S.thumbs = {};
         A.sound(880, .05); saveNow(); render(); scrollTop();
+    }
+    // おすすめ商品のポスター：はじめは、おすすめ・よく売れた品から3つ（チェックで選び直す）
+    function openRec(opt) {
+        opt = opt || {};
+        var list = Array.isArray(opt.plist) && opt.plist.length ? opt.plist : A.products();
+        if (!list.length) { A.error(); return; }
+        var pick = list.filter(function (p) { return p.rec; });
+        if (!pick.length) pick = list.filter(function (p) { return A.topSeller(p); });
+        if (!pick.length) pick = list.slice(0, 3);
+        var ev = defaultEvent();
+        var head = { title: '今日のおすすめ', sub: [ev.name, ev.date].filter(Boolean).join('　'), note: ev.org || A.shopName() || '' };
+        var items = pick.slice(0, 3).map(function (p) { return recItemFor(p, 0); });
+        S.d = genRec(items, head, 'a4', tplChoices(null, 'poster')[0], 0, true);
+        S.d.id = newId(); S.d.var = 0;
+        if (opt.plist) S.d.plist = opt.plist;
+        S.hist = []; S.fut = []; S.sel = null; S.tab = 'rec'; S.view = 'edit'; S.thumbs = {};
+        A.sound(880, .05); saveNow(); render(); scrollTop();
+    }
+    // おすすめ商品の並び・中身を変えた時：並べ直す（直した文字は引きつぐ）
+    function setRecItems(items) {
+        var d = S.d;
+        var nd = genRec(items, d.rhead || {}, d.fmt, d.tpl, d.var || 0, d.dense !== false);
+        change(function () { var pal = S.d.pal; S.d = carry(S.d, nd, false); S.d.rec = items; S.d.pal = pal; S.sel = null; });
+    }
+    function setRecField(i, k, v) {
+        var d = S.d, it = (d.rec || [])[i];
+        if (!it) return;
+        if (!typing) { pushHist(); typing = true; }
+        it[k] = v;
+        var role = { name: 'rname', price: 'rprice', comment: 'rcomm', word: 'rword' }[k];
+        var e = (d.els || []).filter(function (x) { return x.role === role && x.pid === it.pid; })[0];
+        if (e) e.text = v;
+        drawSoon(); saveSoon();
+    }
+    function setRecHead(k, v) {
+        var d = S.d;
+        d.rhead = d.rhead || {};
+        if (!typing) { pushHist(); typing = true; }
+        d.rhead[k] = v;
+        var role = { title: 'rtitle', sub: 'rsub', note: 'rnote' }[k];
+        var e = (d.els || []).filter(function (x) { return x.role === role; })[0];
+        if (e) { e.text = v; drawSoon(); saveSoon(); return; }
+        if (v) { var nd = genFor(d, d.tpl, d.fmt, d.var || 0); var add = nd && nd.els.filter(function (x) { return x.role === role; })[0]; if (add) d.els.push(add); drawSoon(); saveSoon(); }
+    }
+    // 選んだ物を大きく・小さく・回す（見本の下の「すぐ直す」）
+    function quickSize(k) {
+        var e = selEl();
+        if (!e || e.lock) return;
+        change(function () {
+            if (e.t === 'text') e.size = clamp((e.size || .06) * k, .012, .3);
+            else e.w = clamp((e.w || .3) * k, .03, e.t === 'img' ? 1.5 : 1);
+            if (e.grp) { e.y = e._y != null ? e._y : e.y; delete e.grp; }
+        }, true);
+        syncSliders();
+    }
+    function quickRot(dg) { var e = selEl(); if (!e || e.lock) return; change(function () { e.rot = ((e.rot || 0) + dg + 540) % 360 - 180; }, true); syncSliders(); }
+    // 選んだ写真・絵を、端末の写真に替える（位置と大きさはそのまま）
+    function swapPhoto(e) {
+        pickFile(function (f) {
+            importImage(f, 1600, 'photo', function (r) {
+                change(function () { e.src = 'user:' + r.id; e.srcSet = true; if (!e.shape || e.shape === 'plain') { e.shape = 'round'; e.shapeSet = true; } });
+                var it = S.d.kind === 'rec' && (S.d.rec || []).filter(function (x) { return x.pid === e.pid; })[0];
+                if (it) it.pic = e.src;
+            });
+        });
     }
     function openSaved(id) {
         var x = store().filter(function (s) { return s.id === id; })[0];
@@ -2151,7 +2435,7 @@
     }
     // ポスターのメニュー：名前と値段を、いまの商品に合わせる
     function refreshMenu(d) {
-        var all = A.products();
+        var all = prods(d);
         (d.els || []).forEach(function (e) {
             if (e.t !== 'menu' || !e.items) return;
             e.items.forEach(function (it) { var p = all.filter(function (x) { return x.id === it.id; })[0]; if (p) { it.n = p.name; it.p = A.priceInfo(p).value; } });
@@ -2179,13 +2463,15 @@
         change(function () { S.d.els.splice(S.d.els.indexOf(e) + 1, 0, c); S.sel = c.id; });
     }
     // 販売会の情報を直した時：その文字の所だけ直す
-    var EV_ROLE = { shop: 'brand', name: 'event', date: 'date', catch: 'catch', note: 'note' };
+    var EV_ROLE = { shop: 'brand', name: 'event', date: 'date', catch: 'catch', note: 'note', org: 'orgs', collab: 'orgs', noCollab: 'orgs' };
     function setEv(k, v) {
         var d = S.d;
         d.ev = d.ev || {};
         d.ev[k] = v;
         var role = k === 'time' || k === 'place' ? 'place' : EV_ROLE[k];
-        var text = role === 'place' ? [d.ev.time, d.ev.place].filter(Boolean).join('　') : v;
+        var text = role === 'place' ? [d.ev.time, d.ev.place].filter(Boolean).join('　') : role === 'orgs' ? orgsText(d.ev) : v;
+        var nb = host && host.querySelector('.pp-need');
+        if (nb) { var miss = posterNeeds(d); nb.classList.toggle('ok', !miss.length); nb.innerHTML = miss.length ? 'まだ入っていない項目：<b>' + miss.map(esc).join('・') + '</b>' : '必ず入れる項目（販売会名・開催日時・開催場所・実施団体・コラボ団体・メニュー・一言コメント）は、全部入っています。'; }
         var e = d.els.filter(function (x) { return x.role === role; })[0];
         if (e) { e.text = text; drawSoon(); saveSoon(); return; }
         // まだ無い（はじめは空だった）物は、作り直して足す
@@ -2199,10 +2485,12 @@
         var keep = S.d;
         change(function () {
             // おすすめが変わると並びが変わるので、おすすめの所だけ作り直す（ほかの直した所はそのまま）
-            var others = keep.els.filter(function (e) { return ['fpic', 'fname', 'fdesc', 'fhead'].indexOf(e.role) < 0; });
-            var feats = nd.els.filter(function (e) { return ['fpic', 'fname', 'fdesc', 'fhead'].indexOf(e.role) >= 0; });
+            var FR = ['fpic', 'fname', 'fprice', 'fdesc', 'fhead'];
+            var others = keep.els.filter(function (e) { return FR.indexOf(e.role) < 0; });
+            var feats = nd.els.filter(function (e) { return FR.indexOf(e.role) >= 0; });
             var i = others.findIndex(function (e) { return e.role === 'mhead'; });
             S.d.els = i >= 0 ? others.slice(0, i).concat(feats, others.slice(i)) : others.concat(feats);
+            S.d.groups = nd.groups;   // おすすめの数で、組（並べる場所）も変わる
         });
     }
     function setMenuIds(ids) {
@@ -2221,6 +2509,28 @@
         switch (act) {
             case 'pop': openPop(b.dataset.id); break;
             case 'poster': openPoster(); break;
+            case 'recposter': openRec(); break;
+            case 'dense': {
+                var dv = v === '1', nd0;
+                S.d.dense = dv;
+                nd0 = genFor(S.d, S.d.tpl, S.d.fmt, S.d.var || 0);
+                if (nd0) change(function () { var pal = S.d.pal; S.d = carry(S.d, nd0, false); S.d.dense = dv; S.d.pal = pal; S.sel = null; });
+                break;
+            }
+            case 'qsz': quickSize(Number(v) || 1); break;
+            case 'qrot': quickRot(Number(v) || 0); break;
+            case 'qswap': if (e && e.t === 'img') swapPhoto(e); break;
+            case 'evplan': { var pe = A.planEventOf && A.planEventOf(v); if (pe) { pushHist(); Object.keys(pe.ev).forEach(function (k) { setEv(k, pe.ev[k]); }); if (pe.plist && pe.plist.length) { S.d.plist = pe.plist; delete S.d.mids; var nd1 = genFor(S.d, S.d.tpl, S.d.fmt, S.d.var || 0); if (nd1) { S.d = carry(S.d, nd1, false); S.d.plist = pe.plist; } } render(); A.toast('予定の中身を入れました'); } break; }
+            case 'rup': case 'rdown': { var ri = Number(v), arr = (S.d.rec || []).slice(), rj = act === 'rup' ? ri - 1 : ri + 1; if (rj < 0 || rj >= arr.length) break; var tmp = arr[ri]; arr[ri] = arr[rj]; arr[rj] = tmp; setRecItems(arr); break; }
+            case 'rword': case 'rcomm': {
+                var it0 = (S.d.rec || [])[Number(v)], p0 = it0 && prods(S.d).filter(function (x) { return x.id === it0.pid; })[0];
+                if (!it0 || !p0) break;
+                if (act === 'rword') { var ws = WORDS.filter(function (w) { return w[0].test(p0.name); }).map(function (w) { return w[1]; }).concat(['おすすめ！', 'ぜひどうぞ', 'できたて！', 'おやつに！']); var wi = (ws.indexOf(it0.word) + 1) % ws.length; setRecField(Number(v), 'word', ws[wi]); }
+                else { var cs = []; for (var cv = 0; cv < 4; cv++) { var c0 = copyFor(p0, cv); [c0.desc, c0.catch].forEach(function (x) { if (cs.indexOf(x) < 0) cs.push(x); }); } var ci2 = (cs.indexOf(it0.comment) + 1) % cs.length; setRecField(Number(v), 'comment', cs[ci2]); }
+                typing = false; renderPanel(); break;
+            }
+            case 'rphoto': { var it1 = (S.d.rec || [])[Number(v)]; if (!it1) break; var pe1 = (S.d.els || []).filter(function (x) { return x.role === 'rpic' && x.pid === it1.pid; })[0]; if (pe1) swapPhoto(pe1); else pickFile(function (f) { importImage(f, 1600, 'photo', function (r) { it1.pic = 'user:' + r.id; setRecItems(S.d.rec.slice()); }); }); break; }
+            case 'rprodpic': { var it2 = (S.d.rec || [])[Number(v)]; if (!it2) break; it2.pic = 'photo:' + it2.name; setRecItems(S.d.rec.slice()); break; }
             case 'open': openSaved(b.dataset.id); break;
             case 'delsaved': delSaved(b.dataset.id); break;
             case 'batch': S.batch = { fmt: 'card', tpl: tplChoices(null, 'pop')[0], ids: A.products().map(function (p) { return p.id; }), pages: null }; S.view = 'batch'; render(); scrollTop(); break;
@@ -2257,7 +2567,7 @@
                 break;
             case 'sstyle': if (e) change(function () { e.style = v; }); break;
             case 'shape': if (e) change(function () { e.shape = v; e.shapeSet = true; }); break;
-            case 'mcols': if (e) change(function () { e.cols = Number(v); }); break;
+            case 'mcols': if (e) change(function () { e.cols = Number(v); e.colsSet = true; }); break;
             case 'bfmt': S.batch.fmt = v; S.batch.pages = null; render(); break;
             case 'btpl': S.batch.tpl = v; S.batch.pages = null; render(); break;
             case 'ball': S.batch.ids = A.products().map(function (p) { return p.id; }); S.batch.pages = null; render(); break;
@@ -2300,7 +2610,7 @@
         var act = b.dataset.act, e = selEl(), val = b.value;
         var slide = function (k, num) { if (!e) return; if (!typing) { pushHist(); typing = true; } e[k] = num; drawSoon(); saveSoon(); };
         switch (act) {
-            case 'text': if (e) { if (!typing) { pushHist(); typing = true; } e.text = val; drawSoon(); saveSoon(); var r = host.querySelector('.pp-er.on span'); if (r) r.textContent = val.replace(/\n/g, ' ').slice(0, 24); } break;
+            case 'text': if (e) { if (!typing) { pushHist(); typing = true; } e.text = val; drawSoon(); saveSoon(); var r = host.querySelector('.pp-er.on span'); if (r) r.textContent = val.replace(/\n/g, ' ').slice(0, 24); host.querySelectorAll('[data-act="text"]').forEach(function (x) { if (x !== b) x.value = val; }); } break;
             case 'stext': if (e) { if (!typing) { pushHist(); typing = true; } e.text = val; drawSoon(); saveSoon(); } break;
             case 'qrurl': if (e) { if (!typing) { pushHist(); typing = true; } e.url = val.trim(); drawSoon(); saveSoon(); } break;
             case 'size': slide('size', Number(val)); break;
@@ -2315,6 +2625,8 @@
                 if (S.d && S.d.bg) { if (!typing) { pushHist(); typing = true; } S.d.bg[act.slice(2)] = Number(val); drawSoon(); saveSoon(); }
                 break;
             case 'ev': setEv(b.dataset.k, val); break;
+            case 'rh': setRecHead(b.dataset.k, val); break;
+            case 'ri': setRecField(Number(b.dataset.i), b.dataset.k, val); break;
             case 'color': case 'boxcolor': case 'scolor':
                 if (e && b.type === 'color') { if (!typing) { pushHist(); typing = true; } var kk = act === 'boxcolor' ? 'bk' : 'ck', vv = act === 'boxcolor' ? 'boxColor' : 'color'; e[vv] = val; delete e[kk]; drawSoon(); saveSoon(); }
                 break;
@@ -2333,12 +2645,23 @@
             case 'safe': S.safe = b.checked; drawNow(); break;
             case 'feat': {
                 var ids = (S.d.fids || []).slice(), id = num(b.dataset.id);
-                if (b.checked) { if (ids.length >= 3) { b.checked = false; A.error(); A.toast('おすすめは3つまでです'); return; } ids.push(id); }
+                var maxF = S.d.dense && FMTS[S.d.fmt].h > FMTS[S.d.fmt].w * 1.15 ? 6 : 3;
+                if (b.checked) { if (ids.length >= maxF) { b.checked = false; A.error(); A.toast('おすすめは' + maxF + 'つまでです'); return; } ids.push(id); }
                 else ids = ids.filter(function (x) { return x !== id; });
                 setFeatIds(ids); break;
             }
+            case 'nocollab': pushHist(); setEv('noCollab', b.checked); renderPanel(); break;
+            case 'ritem': {
+                var rid = num(b.dataset.id), cur = (S.d.rec || []).slice();
+                if (b.checked) {
+                    if (cur.length >= 6) { b.checked = false; A.error(); A.toast('おすすめ商品は6つまでです'); return; }
+                    var rp = prods(S.d).filter(function (x) { return x.id === rid; })[0];
+                    if (rp) cur.push(recItemFor(rp, cur.length));
+                } else cur = cur.filter(function (x) { return x.pid !== rid; });
+                setRecItems(cur); break;
+            }
             case 'mitem': {
-                var all = A.products(), mids = S.d.mids ? S.d.mids.slice() : all.map(function (p) { return p.id; }), mid = num(b.dataset.id);
+                var all = prods(S.d), mids = S.d.mids ? S.d.mids.slice() : all.map(function (p) { return p.id; }), mid = num(b.dataset.id);
                 if (b.checked) { if (mids.indexOf(mid) < 0) mids.push(mid); } else mids = mids.filter(function (x) { return x !== mid; });
                 mids = all.map(function (p) { return p.id; }).filter(function (x) { return mids.indexOf(x) >= 0; });
                 setMenuIds(mids); break;
@@ -2830,6 +3153,24 @@
 .pp-cut-msg { margin: 0; font-size: 13px; color: var(--text-light); min-height: 1.4em; }\
 .pp-cut-rng[hidden] { display: none; }\
 @media (min-width: 900px) { .pp-cut { flex-direction: row; flex-wrap: wrap; } .pp-cut-top { width: 100%; } .pp-cut-stage { flex: 1 1 0; height: calc(100% - 60px); } .pp-cut-tools { width: 340px; max-height: none; } }\
+.pp-quick { margin: 8px 0 4px; display: flex; flex-direction: column; gap: 6px; }\
+.pp-qhint { margin: 0; font-size: 12.5px; color: var(--text-light); text-align: center; }\
+.pp-qt { width: 100%; box-sizing: border-box; min-height: 44px; padding: 8px 12px; font: inherit; font-size: 16px; border: none; border-radius: var(--r-md); background: var(--sunken); color: var(--text-main); box-shadow: inset 0 0 0 1px var(--hairline); resize: vertical; }\
+.pp-qt:focus { outline: none; box-shadow: inset 0 0 0 2px var(--accent); }\
+.pp-qrow { display: flex; flex-wrap: wrap; gap: 6px; }\
+.pp-qb { flex: 1 1 auto; min-height: 42px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: none; border-radius: 12px; background: var(--surface); color: var(--text-main); box-shadow: var(--shadow-card); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }\
+.pp-qb .ic { width: 16px; height: 16px; }\
+.pp-qb[data-act=del] { color: var(--danger); }\
+.pp-need { padding: 10px 12px; border-radius: var(--r-md); background: var(--danger-bg, #FCEAEE); color: var(--danger-ink, #B3263C); font-size: 13.5px; font-weight: 700; margin-bottom: 8px; }\
+.pp-need.ok { background: var(--ok-bg, #E0F2E5); color: var(--ok-ink, #1F7A3D); }\
+.pp-req { margin-left: 8px; font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: var(--danger-bg, #FCEAEE); color: var(--danger-ink, #B3263C); }\
+.pp-ritem { background: var(--surface); border-radius: var(--r-md); box-shadow: var(--shadow-card); padding: 10px 12px; margin-top: 8px; }\
+.pp-rtop { display: flex; align-items: center; gap: 8px; }\
+.pp-rtop b { flex: 1; min-width: 0; font-size: 14px; overflow-wrap: anywhere; }\
+.pp-rtop .pp-mini { flex: 0 0 auto; min-width: 38px; }\
+.pp-rpic { width: 44px; height: 44px; border-radius: 10px; overflow: hidden; background: var(--sunken); flex-shrink: 0; display: grid; place-items: center; }\
+.pp-rpic img, .pp-rpic svg { width: 100%; height: 100%; object-fit: cover; }\
+.pp-r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }\
 ';
     function injectCss() {
         if (document.getElementById('pop-css')) return;
@@ -2869,7 +3210,10 @@
         return false;
     }
     window.POPMAKER = {
-        mount: mount, leave: leave, back: back, render: renderDesign, genPop: function (p, f, t, v) { return genPop(p, f, t, v || 0); }, genPoster: function (l, f, t, v, ev, fids) { return genPoster(l, f, t, v || 0, ev || defaultEvent(), fids); },
+        mount: mount, leave: leave, back: back, render: renderDesign,
+        // 予定から：販売会のポスター・おすすめ商品のポスターを作る（{ ev, plist }）
+        openPoster: function (o) { if (host) openPoster(o); }, openRec: function (o) { if (host) openRec(o); },
+        genRec: function (items, head, f, t, v, dense) { return genRec(items, head || {}, f, t, v || 0, dense); }, genPop: function (p, f, t, v) { return genPop(p, f, t, v || 0); }, genPoster: function (l, f, t, v, ev, fids) { return genPoster(l, f, t, v || 0, ev || defaultEvent(), fids); },
         fonts: FONTS, templates: TPLS, formats: FMTS, decos: DECO, state: S, exportCanvas: exportCanvas, wrap: wrap, tileOf: tileOf,
         cutState: function () { return CUT; }
     };
