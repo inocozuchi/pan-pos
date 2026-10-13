@@ -75,29 +75,45 @@
         if (!all.length) {
             return '<div class="hs-empty">' + (side === 'c'
                 ? '<b>文字や絵で、お店の人とお話しできます</b><span>下の「はい」「いいえ」を押すか、文字を打つ・指で書いて「送る」を押してください。</span>'
-                : '<b>文字や手書きで、お客様とお話しします</b><span>よく使う言葉は、下のボタンで送れます。キーボードのマイクで話すと、文字にもできます。</span>') + '</div>';
+                : (peer()
+                    ? '<b>お客様の画面（CD）にも、この筆談が出ています</b><span>お店とお客様が、それぞれの画面からチャットのように書き合えます。よく使う言葉は、下のボタンで送れます。</span>'
+                    : '<b>文字や手書きで、お客様とお話しします</b><span>よく使う言葉は、下のボタンで送れます。キーボードのマイクで話すと、文字にもできます。</span>')) + '</div>';
         }
+        var prev = null;
         return all.map(function (m) {
             var mine = m.w === side;
             var who = m.w === 's' ? 'お店' : 'お客様';
+            // 同じ人が続けて書いた物は、名前と顔の印を1回だけにする（チャットと同じ）
+            var cont = prev && prev.w === m.w && (Number(m.x.at) || 0) - (Number(prev.x.at) || 0) < 120000;
+            prev = m;
             var body = m.x.k === 'd' ? drawSvg(m.x) : '<span class="hs-t">' + esc(m.x.t) + '</span>';
             // 文字は、音の印で読み上げられる（話すことが難しい方が、声で伝えたい時に）
             var say = m.x.k === 't' && A.speak ? '<button type="button" class="hs-say" data-h="speak" data-v="' + esc(m.x.i) + '" aria-label="声で読む"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg></button>' : '';
-            return '<div class="hs-msg ' + (mine ? 'mine' : 'theirs') + (m.x.k === 'd' ? ' ink' : '') + '"><small>' + who + '</small><div class="hs-row">' + (mine ? say : '') + '<div class="hs-b">' + body + '</div>' + (mine ? '' : say) + '</div></div>';
+            var av = mine ? '' : '<span class="hs-av' + (cont ? ' gap' : '') + '" aria-hidden="true">' + (cont ? '' : (m.w === 's' ? AV_SHOP : AV_CUST)) + '</span>';
+            return '<div class="hs-msg ' + (mine ? 'mine' : 'theirs') + (m.x.k === 'd' ? ' ink' : '') + (cont ? ' cont' : '') + '">' + av
+                + '<div class="hs-col">' + (cont ? '' : '<small>' + who + '<time>' + hm(m.x.at) + '</time></small>')
+                + '<div class="hs-row">' + (mine ? say : '') + '<div class="hs-b">' + body + '</div>' + (mine ? '' : say) + '</div></div></div>';
         }).join('');
     }
     // CDの画面か（レジの画面をお客様に見せている時は、レジの画面のまま）
     function isCd() { return A.side === 'c' && !A.local; }
+    // レジの画面で、お客様の画面（CD）がつながっているか（その時は、お客様の分はCDで書いてもらう）
+    function peer() { return !isCd() && !A.local && !!(A.peer && A.peer()); }
+    function hm(at) { var d = new Date(Number(at) || 0); return isNaN(d) ? '' : d.getHours() + ':' + ('0' + d.getMinutes()).slice(-2); }
+    // 顔の印（自分で描いた形だけ）：お店＝屋根のあるお店、お客様＝人
+    var AV_SHOP = '<svg viewBox="0 0 24 24"><path d="M4 10l1.5-5h13L20 10"/><path d="M4 10a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0"/><path d="M5.5 12.5V19h13v-6.5"/><path d="M10 19v-4h4v4"/></svg>';
+    var AV_CUST = '<svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 19.5c.8-3.7 3.6-5.6 7-5.6s6.2 1.9 7 5.6"/></svg>';
     function html() {
-        var cust = side === 'c', cd = isCd();
+        var cust = side === 'c', cd = isCd(), pe = peer();
         var phrases = (cust ? CUST_PHRASES : STAFF_PHRASES).map(phraseText).filter(Boolean);
         var info = A.info ? A.info() : '';
         return '<div class="hs-top">'
             + '<span class="hs-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H10l-4.5 3.5V17H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><path d="M8.5 13.5l.7-2.3 4.6-4.6 1.6 1.6-4.6 4.6z"/></svg></span>'
-            + '<b class="hs-ttl">筆談' + (cust ? '<small>文字や絵でお話しできます</small>' : '') + '</b>'
+            + '<b class="hs-ttl">筆談' + (cust ? '<small>文字や絵で、お店の人とお話しできます</small>' : (pe ? '<small>お客様の画面（CD）とお話ししています</small>' : '')) + '</b>'
             + (info ? '<span class="hs-info">' + esc(info) + '</span>' : '')
             + '<span class="hs-sp"></span>'
-            + (!cd ? '<div class="hs-seg" role="group" aria-label="書く人"><button type="button" data-h="who" data-v="s" class="' + (side === 's' ? 'on' : '') + '" aria-pressed="' + (side === 's') + '">お店</button><button type="button" data-h="who" data-v="c" class="' + (side === 'c' ? 'on' : '') + '" aria-pressed="' + (side === 'c') + '">お客様</button></div>'
+            + (pe ? '<span class="hs-peer"><i></i>CDにも出ています</span>' : '')
+            + (!cd && !pe ? '<div class="hs-seg" role="group" aria-label="書く人"><button type="button" data-h="who" data-v="s" class="' + (side === 's' ? 'on' : '') + '" aria-pressed="' + (side === 's') + '">お店</button><button type="button" data-h="who" data-v="c" class="' + (side === 'c' ? 'on' : '') + '" aria-pressed="' + (side === 'c') + '">お客様</button></div>'
                 + '<button type="button" class="hs-btn" data-h="flip" aria-pressed="' + flip + '">逆さにする</button>' : '')
             + (cd ? '' : '<button type="button" class="hs-btn" data-h="clear">全部消す</button>')
             + '<button type="button" class="hs-btn hs-end" data-h="end">' + (cd ? 'とじる' : '終わる') + '</button>'
@@ -119,6 +135,8 @@
     function render(keepInput) {
         if (!root) return;
         var ta = root.querySelector('.hs-ta'), typed = ta ? ta.value : '';
+        // CDがつながっている時、お客様の分はCDで書いてもらう（レジは、お店の人の側だけ）
+        if (peer()) { side = 's'; flip = false; }
         var focused = ta && document.activeElement === ta;
         root.className = 'hs-board' + (A.dark && A.dark() ? ' hs-dark' : '') + (flip ? ' hs-flip' : '') + (side === 'c' ? ' hs-cust' : '');
         root.innerHTML = html();
@@ -337,15 +355,26 @@
 .hs-empty { margin: auto; text-align: center; display: flex; flex-direction: column; gap: 8px; max-width: 30em; padding: 10px; }\
 .hs-empty b { font-size: 24px; }\
 .hs-empty span { font-size: 17px; color: var(--hs-mute); line-height: 1.6; }\
-.hs-msg { display: flex; flex-direction: column; max-width: 88%; gap: 3px; }\
-.hs-msg small { font-size: 13px; font-weight: 800; color: var(--hs-mute); }\
-.hs-msg.mine { align-self: flex-end; align-items: flex-end; }\
+.hs-msg { display: flex; align-items: flex-end; gap: 8px; max-width: 88%; }\
+.hs-msg.cont { margin-top: -6px; }\
+.hs-col { display: flex; flex-direction: column; gap: 3px; min-width: 0; }\
+.hs-msg small { display: flex; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 800; color: var(--hs-mute); padding: 0 6px; }\
+.hs-msg small time { font-weight: 700; font-size: 12px; opacity: .8; font-variant-numeric: tabular-nums; }\
+.hs-msg.mine { align-self: flex-end; }\
+.hs-msg.mine .hs-col { align-items: flex-end; }\
 .hs-msg.theirs { align-self: flex-start; }\
-.hs-b { padding: 12px 16px; border-radius: 18px; background: var(--hs-sunk); font-size: clamp(22px, 3.2vw, 34px); font-weight: 700; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }\
+.hs-av { flex: none; width: 38px; height: 38px; border-radius: 50%; background: var(--hs-sunk); display: grid; place-items: center; margin-bottom: 2px; }\
+.hs-av.gap { background: none; }\
+.hs-av svg { width: 22px; height: 22px; fill: none; stroke: var(--hs-mute); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }\
+.hs-b { padding: 12px 16px; border-radius: 20px; background: var(--hs-sunk); font-size: clamp(22px, 3.2vw, 34px); font-weight: 700; line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; }\
+.hs-msg.theirs:not(.cont) .hs-b { border-bottom-left-radius: 6px; }\
+.hs-msg.mine:not(.cont) .hs-b { border-bottom-right-radius: 6px; }\
 .hs-msg.mine .hs-b { background: var(--hs-mine); color: var(--hs-mine-ink); }\
+.hs-peer { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 14px; border-radius: 999px; background: var(--hs-surf); font-size: 15px; font-weight: 800; }\
+.hs-peer i { width: 9px; height: 9px; border-radius: 50%; background: #2DBE73; box-shadow: 0 0 0 3px rgba(45,190,115,.18); }\
 .hs-row { display: flex; align-items: center; gap: 6px; max-width: 100%; }\
 .hs-row .hs-b { min-width: 0; }\
-.hs-say { flex: none; width: 44px; height: 44px; border: none; border-radius: 50%; background: var(--hs-sunk); color: inherit; display: grid; place-items: center; cursor: pointer; padding: 0; }\
+.hs-say { flex: none; width: 40px; height: 40px; border: none; border-radius: 50%; background: transparent; color: var(--hs-mute); display: grid; place-items: center; cursor: pointer; padding: 0; box-shadow: inset 0 0 0 1.5px var(--hs-sunk); }\
 .hs-say svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }\
 .hs-say svg path:first-child { fill: currentColor; }\
 .hs-msg.ink .hs-b { padding: 6px; background: #fff; color: #1C1D22; box-shadow: inset 0 0 0 2px var(--hs-sunk); }\
@@ -377,6 +406,11 @@
   .hs-pad { min-height: 140px; flex: none; height: 22vh; }\
   .hs-ttl { font-size: 19px; }\
   .hs-btn { padding: 0 12px; font-size: 15px; }\
+  .hs-top { flex-wrap: nowrap; }\
+  .hs-ttl small { display: none; }\
+  .hs-b { font-size: 21px; padding: 10px 14px; }\
+  .hs-av { width: 32px; height: 32px; }\
+  .hs-msg { max-width: 94%; gap: 6px; }\
 }\
 @media (prefers-reduced-motion: reduce) { .hs-board { animation: none; } }\
 ';

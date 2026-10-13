@@ -3054,3 +3054,59 @@ QRコードを印刷	Print QR code
 こちらで使う	Use it here
 もう一方のタブは止まります	The other tab will be paused
 「別のタブで開いています」と出た	"Open in another tab" appears
+訴求メッセージ	Promo messages
+画像・PDFを選んで足す（{0}／{1}枚）	Add images or PDFs ({0}/{1})
+メッセージを作る（{0}／{1}）	Create a message ({0}/{1})
+縦長	Portrait
+横長	Landscape
+正方形	Square
+・PDF	 · PDF
+横の画面：縦長の広告は左に、右に「いらっしゃいませ」。横長は大きく	Landscape screen: portrait ads on the left with "Welcome" on the right; landscape ads shown large
+縦の画面：縦長の広告は画面いっぱいに、下に小さく「いらっしゃいませ」	Portrait screen: portrait ads fill the screen, with a small "Welcome" scrolling below
+CDの待っている間に、広告の1枚として流す一言です。文字の形・大きさ・デザインを選べます。	A short message shown as one of the ads while the CD is idle. Choose the font, size and design.
+横の画面	Landscape
+縦の画面	Portrait
+伝えたいこと（4行まで）	Message (up to 4 lines)
+小さな添え書き（なくてもよい）	Small note (optional)
+文字の形	Font
+大きさ	Size
+デザイン	Design
+色	Color
+CDに流す	Show on CD
+オフにすると、残したまま流しません	When off, it is kept but not shown
+このメッセージを足す	Add this message
+直した内容で保存する	Save changes
+このメッセージを消す	Delete this message
+伝えたいことを書くと、ここに見本が出ます	Type a message to see a preview here
+メッセージを足しました	Message added
+メッセージを保存しました	Message saved
+伝えたいことを書いてください。	Please type a message.
+このメッセージを消しますか？	Delete this message?
+すっきり	Simple
+額ぶち	Frame
+帯	Band
+ふきだし	Speech bubble
+黒板	Chalkboard
+ポップ	Pop
+クリーム	Cream
+さくら	Pink
+ミント	Mint
+そら	Sky
+よる	Night
+モノクロ	Mono
+小	S
+中	M
+大	L
+特大	XL
+まるゴシック	Rounded
+UDゴシック	UD Gothic
+極太	Extra bold
+太まる	Bold rounded
+えんぴつ	Pencil
+手書き	Handwritten
+明朝	Mincho
+CDにも出ています	Also on the CD
+お客様の画面（CD）とお話ししています	Talking with the customer screen (CD)
+お客様の画面（CD）にも、この筆談が出ています	This chat is also shown on the customer screen (CD)
+お店とお客様が、それぞれの画面からチャットのように書き合えます。よく使う言葉は、下のボタンで送れます。	The shop and the customer can write to each other from their own screens, like a chat. Common phrases can be sent with the buttons below.
+文字や絵で、お店の人とお話しできます	You can talk with staff using text or drawings
