@@ -1807,7 +1807,7 @@
         return '<div class="pp-need' + (miss.length ? '' : ' ok') + '" role="status">' + (miss.length ? 'まだ入っていない項目：<b>' + miss.map(esc).join('・') + '</b>' : '必ず入れる項目（販売会名・開催日時・開催場所・実施団体・コラボ団体・メニュー・一言コメント）は、全部入っています。') + '</div>'
             + (A.plans && A.plans().length ? '<label class="field-label">販売会の予定から入れる</label><div class="pp-row pp-wrap">' + A.plans().map(function (p) { return '<button type="button" class="pp-chip" data-act="evplan" data-v="' + esc(p.id) + '">' + esc(p.label) + '</button>'; }).join('') + '</div>' : '')
             + '<div class="pp-edbox">'
-            + f('name', '販売会名', '例：10月の臨時販売会', true) + f('date', '開催日', '例：10/17（金）', true) + f('time', '開催時間', '例：10:00〜12:00', true)
+            + f('name', '販売会名', '例：10月のデモ販売会', true) + f('date', '開催日', '例：10/17（金）', true) + f('time', '開催時間', '例：10:00〜12:00', true)
             + f('place', '開催場所', '例：○○会館前（雨の時は一号館一階）', true)
             + f('org', '実施団体', '例：泰山木', true)
             + (ev.noCollab ? '' : f('collab', 'コラボ団体', '例：カフェ ひだまり', true))
@@ -1823,7 +1823,7 @@
         var d = S.d, head = d.rhead || {}, items = d.rec || [], all = prods(d);
         var hf = function (k, label, ph) { return '<label class="field-label">' + label + '</label><input type="text" class="pp-in" data-act="rh" data-k="' + k + '" value="' + esc(head[k] || '') + '" placeholder="' + esc(ph || '') + '" maxlength="60">'; };
         var on = {}; items.forEach(function (it) { on[it.pid] = 1; });
-        var out = '<div class="pp-edbox">' + hf('title', '見出し', '例：今日のおすすめ') + hf('sub', '見出しの下', '例：10月の臨時販売会') + hf('note', 'いちばん下の文字', '例：泰山木') + '</div>'
+        var out = '<div class="pp-edbox">' + hf('title', '見出し', '例：今日のおすすめ') + hf('sub', '見出しの下', '例：10月のデモ販売会') + hf('note', 'いちばん下の文字', '例：泰山木') + '</div>'
             + '<label class="field-label sec">おすすめにする商品（販売中の商品から、6つまで）</label><div class="pp-checks">' + all.map(function (p) { return '<label class="pp-check"><input type="checkbox" data-act="ritem" data-id="' + esc(p.id) + '"' + (on[p.id] ? ' checked' : '') + '>' + esc(p.name) + '</label>'; }).join('') + '</div>';
         if (!items.length) return out + '<p class="settings-hint">商品にチェックを入れると、名前・写真・値段・コメント・吹き出しの一語を自動で入れます。</p>';
         out += '<label class="field-label sec">1品ずつ直す（自動で入れた文を、自由に直せます）</label>';
