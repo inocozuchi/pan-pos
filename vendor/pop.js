@@ -2530,7 +2530,15 @@
                 typing = false; renderPanel(); break;
             }
             case 'rphoto': { var it1 = (S.d.rec || [])[Number(v)]; if (!it1) break; var pe1 = (S.d.els || []).filter(function (x) { return x.role === 'rpic' && x.pid === it1.pid; })[0]; if (pe1) swapPhoto(pe1); else pickFile(function (f) { importImage(f, 1600, 'photo', function (r) { it1.pic = 'user:' + r.id; setRecItems(S.d.rec.slice()); }); }); break; }
-            case 'rprodpic': { var it2 = (S.d.rec || [])[Number(v)]; if (!it2) break; it2.pic = 'photo:' + it2.name; setRecItems(S.d.rec.slice()); break; }
+            case 'rprodpic': {
+                var it2 = (S.d.rec || [])[Number(v)]; if (!it2) break;
+                it2.pic = 'photo:' + it2.name;
+                // 見本の写真も替える（前に端末の写真に替えていても、商品の写真になるように）
+                var pe2 = (S.d.els || []).filter(function (x) { return x.role === 'rpic' && x.pid === it2.pid; })[0];
+                if (pe2) { change(function () { pe2.src = it2.pic; pe2.srcSet = true; if (!pe2.shape || pe2.shape === 'plain') { pe2.shape = 'round'; pe2.shapeSet = true; } }); }
+                else setRecItems(S.d.rec.slice());
+                break;
+            }
             case 'open': openSaved(b.dataset.id); break;
             case 'delsaved': delSaved(b.dataset.id); break;
             case 'batch': S.batch = { fmt: 'card', tpl: tplChoices(null, 'pop')[0], ids: A.products().map(function (p) { return p.id; }), pages: null }; S.view = 'batch'; render(); scrollTop(); break;

@@ -217,6 +217,7 @@
         if (st === 'after') { main.innerHTML = `<div class="notice">予約の受付は締め切りました（${esc(dt(plan.to))}まで）。当日、売り場でお待ちしています。</div>`; return; }
         if (step === 'form') { renderForm(); return; }
         const items = plan.items || [];
+        if (!items.length) { main.innerHTML = '<div class="notice">いま、予約できる品はありません。当日、売り場でお待ちしています。</div>'; return; }
         const cats = [];
         items.forEach(it => { const c = it.cat || ''; if (!cats.includes(c)) cats.push(c); });
         main.innerHTML = `<div class="notice accent">予約の締め切り：${esc(dt(plan.to))}<br>1回の予約で${maxQty()}個まで</div>
