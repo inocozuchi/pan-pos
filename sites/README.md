@@ -40,11 +40,7 @@ node tools/sites.mjs new 施設の印     （例：node tools/sites.mjs new scho
 1. **別の Firebase プロジェクトを作る（おすすめ）**
    `docs/firebase-sync.md` の手順でプロジェクトを作り、`sites/kitchen/data/firebase-config.js` に貼ります。
 2. **泰山木と同じプロジェクトを使う**
-   `sites/kitchen/data/firebase-config.js` に泰山木と同じ設定を貼り、Firestore のルールに次の3行を足します
-   （置き場の名前が `kitchen_events` なので、泰山木の `events` とは混ざりません）。
-
-```
-    match /kitchen_events/{eventCode}/{document=**} {
-      allow read, write: if request.auth != null;
-    }
-```
+   `sites/kitchen/data/firebase-config.js` に泰山木と同じ設定を貼ります。ルールを足す必要はありません。
+   販売会は、その販売会の**メンバーの端末だけ**が読み書きできる決まり（`firestore.rules`）なので、
+   同じ置き場（`events`）を使っても、泰山木の販売会とキッチンの販売会が混ざることはありません。
+   **「ログインしていればだれでも読み書きできる」ルールを足さないでください**（ほかのお店に入り込めるようになります）。

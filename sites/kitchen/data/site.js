@@ -15,5 +15,5 @@ window.SITE = {
     drink:  { label: "ドリンク", total: "ドリンク" }
   },
   setDiscount: false,
-  eventsCollection: "kitchen_events"
+  eventsCollection: "events"
 };

@@ -11,7 +11,8 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import {
-  doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, writeBatch, runTransaction
+  doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, writeBatch, runTransaction,
+  serverTimestamp, Timestamp, arrayUnion, arrayRemove
 } from 'firebase/firestore';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -19,6 +20,8 @@ const env = await initializeTestEnvironment({
   projectId: 'demo-pos',
   firestore: { rules: readFileSync(path.join(here, '..', '..', 'firestore.rules'), 'utf8'), host: '127.0.0.1', port: 8085 }
 });
+
+await env.clearFirestore();   // 前の試験の残りを消して、まっさらから始める
 
 let pass = 0, fail = 0;
 async function t(name, fn) {
@@ -89,25 +92,29 @@ await t('お店の人が「お願いを受け付けない」にすると、お�
   await updateDoc(ev(ownerDb), { reqOff: false });
 });
 
-// ---- 合流の合言葉 ----
-const TOKEN = 'K7PQ4XA2', exp = Date.now() + 15 * 60000;
-await t('オーナー：合流の合言葉を作れる', () =>
-  assertSucceeds(setDoc(sub(ownerDb, 'invites', TOKEN), { role: 'display', exp, by: 'owner1', at: 1 })));
+// ---- 合流の合言葉（30分・1回だけ。時刻は置き場の時刻）----
+const TOKEN = 'K7PQ4XA2';
+const inv = (role, min = 30) => ({ role, min, by: 'owner1', at: serverTimestamp() });
+// 合言葉で入る：メンバーになるのと同時に、その合言葉を消す（1回だけ）
+const useInvite = (uid, role, token) => { const d = db(uid); const b = writeBatch(d); b.set(sub(d, 'members', uid), { role, name: uid, inv: token, at: 3 }); b.delete(sub(d, 'invites', token)); return b.commit(); };
+await t('オーナー：合流の合言葉を作れる', () => assertSucceeds(setDoc(sub(ownerDb, 'invites', TOKEN), inv('display'))));
+await t('合言葉：作った時刻を端末の時計で書くことはできない（時計のずれで期限がずれない）', () =>
+  assertFails(setDoc(sub(ownerDb, 'invites', 'CLOCK234'), { role: 'staff', min: 30, by: 'owner1', at: Date.now() })));
+await t('合言葉：1時間より長い合言葉は作れない', () => assertFails(setDoc(sub(ownerDb, 'invites', 'LONGLONG'), inv('staff', 600))));
 await t('レジ：合流の合言葉は作れない', () =>
-  assertFails(setDoc(sub(staffDb, 'invites', 'ZZZZZZZZ'), { role: 'staff', exp, by: 'staff1', at: 1 })));
+  assertFails(setDoc(sub(staffDb, 'invites', 'ZZZZZZZZ'), { role: 'staff', min: 30, by: 'staff1', at: serverTimestamp() })));
 await t('合言葉の一覧は、オーナーしか読めない', () => assertFails(getDocs(collection(staffDb, 'events', CODE, 'invites'))));
-await t('合言葉を知っている端末：同じ役割でメンバーになれる', () =>
-  assertSucceeds(setDoc(sub(dispDb, 'members', 'disp1'), { role: 'display', name: 'CD', inv: TOKEN, at: 3 })));
-await t('合言葉：違う役割（レジ）では入れない', () =>
-  assertFails(setDoc(sub(db('d2'), 'members', 'd2'), { role: 'staff', name: 'x', inv: TOKEN })));
-await t('合言葉：まちがった合言葉では入れない', () =>
-  assertFails(setDoc(sub(db('d3'), 'members', 'd3'), { role: 'display', name: 'x', inv: 'WRONG123' })));
+await t('合言葉：違う役割（レジ）では入れない', () => assertFails(useInvite('d2', 'staff', TOKEN)));
+await t('合言葉：使ったことにしない（消さない）と入れない', () =>
+  assertFails(setDoc(sub(db('d6'), 'members', 'd6'), { role: 'display', name: 'x', inv: TOKEN })));
+await t('合言葉：入らずに合言葉だけを消すことはできない', () => assertFails(deleteDoc(sub(db('d7'), 'invites', TOKEN))));
+await t('合言葉を知っている端末：同じ役割でメンバーになれる', () => assertSucceeds(useInvite('disp1', 'display', TOKEN)));
+await t('合言葉：一度使った合言葉は、もう使えない（写真に撮られても入れない）', () => assertFails(useInvite('d5', 'display', TOKEN)));
+await t('合言葉：まちがった合言葉では入れない', () => assertFails(useInvite('d3', 'display', 'WRONG123')));
 await t('合言葉：期限切れでは入れない', async () => {
-  await setDoc(sub(ownerDb, 'invites', 'OLDOLD12'), { role: 'staff', exp: Date.now() - 1000, by: 'owner1', at: 1 });
-  await assertFails(setDoc(sub(db('d4'), 'members', 'd4'), { role: 'staff', name: 'x', inv: 'OLDOLD12' }));
+  await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'events', CODE, 'invites', 'OLDOLD12'), { role: 'staff', min: 30, by: 'owner1', at: Timestamp.fromMillis(Date.now() - 31 * 60000) }));
+  await assertFails(useInvite('d4', 'staff', 'OLDOLD12'));
 });
-await t('合言葉：1日より長い期限は作れない', () =>
-  assertFails(setDoc(sub(ownerDb, 'invites', 'LONGLONG'), { role: 'staff', exp: Date.now() + 3 * 86400000, by: 'owner1', at: 1 })));
 
 // ---- CD（映すだけ）----
 await t('CD：販売会とCDの表示を読める', async () => {
@@ -194,6 +201,67 @@ await t('ほかの人：自分をお店のオーナーに足せない', () =>
   assertFails(updateDoc(doc(strangerDb, 'shops', SHOP), { owners: ['owner1', 'stranger'] })));
 await t('短すぎるお店の印は作れない（当てずっぽうで探されないように）', () =>
   assertFails(setDoc(doc(strangerDb, 'shops', 'abc'), { owners: ['stranger'], event: '', name: '', at: 1 })));
+await t('お店の印は、だれも消せない（印刷したQRコードが使えなくならないように）', () => assertFails(deleteDoc(doc(ownerDb, 'shops', SHOP))));
+
+// ---- 開店した端末の電池が切れた・なくした時の控え ----
+await t('オーナー：ほかの端末を、お店のオーナーに足せる', () =>
+  assertSucceeds(updateDoc(doc(ownerDb, 'shops', SHOP), { owners: arrayUnion('backup1') })));
+await t('お店のオーナーの端末：そのお店の販売会のオーナーになれる（開店した端末がいなくても）', () =>
+  assertSucceeds(setDoc(sub(db('backup1'), 'members', 'backup1'), { role: 'owner', name: '控え', via: 'shop', at: 5 })));
+await t('お店のオーナーでない端末は、販売会のオーナーになれない', () =>
+  assertFails(setDoc(sub(db('x8'), 'members', 'x8'), { role: 'owner', name: 'x', via: 'shop', at: 5 })));
+await t('お店のオーナーでない端末は、ほかのお店の印を付けた販売会でも、オーナーになれない', async () => {
+  // 自分で作った販売会に、ほかのお店の印を付けても、そのお店のオーナーの記録は増えない
+  const d = db('evil1');
+  const b = writeBatch(d);
+  b.set(ev(d, '700001'), { owner: 'evil1', shop: SHOP, status: 'open' });
+  b.set(sub(d, 'members', 'evil1', '700001'), { role: 'owner', name: 'x', at: 1 });
+  await assertSucceeds(b.commit());
+  await assertFails(updateDoc(doc(d, 'shops', SHOP), { event: '700001' }));
+});
+await t('お店の鍵：オーナーは作れる・読める', async () => {
+  await assertSucceeds(setDoc(doc(ownerDb, 'shops', SHOP, 'keys', 'KEYKEYKEYKEYKEYKEY2345'), { at: 1, by: 'owner1' }));
+  await assertSucceeds(getDocs(collection(ownerDb, 'shops', SHOP, 'keys')));
+});
+await t('お店の鍵：鍵からお店を引く印を作れる（鍵を知っている人だけが引ける）', async () => {
+  const b = writeBatch(ownerDb);
+  b.set(doc(ownerDb, 'shops', SHOP, 'keys', 'LOOKUPLOOKUPLOOKUP23'), { at: 1, by: 'owner1' });
+  b.set(doc(ownerDb, 'shopkeys', 'LOOKUPLOOKUPLOOKUP23'), { shop: SHOP, at: 1 });
+  await assertSucceeds(b.commit());
+  await assertSucceeds(getDoc(doc(db('anyone'), 'shopkeys', 'LOOKUPLOOKUPLOOKUP23')));
+  await assertFails(getDocs(collection(db('anyone'), 'shopkeys')));
+});
+await t('お店の鍵：ほかのお店を指す引く印は作れない', () =>
+  assertFails(setDoc(doc(strangerDb, 'shopkeys', 'FAKEFAKEFAKEFAKEFAKE'), { shop: SHOP, at: 1 })));
+await t('お店の鍵：ほかの人は、鍵を読めない・作れない', async () => {
+  await assertFails(getDocs(collection(strangerDb, 'shops', SHOP, 'keys')));
+  await assertFails(getDoc(doc(strangerDb, 'shops', SHOP, 'keys', 'KEYKEYKEYKEYKEYKEY2345')));
+  await assertFails(setDoc(doc(strangerDb, 'shops', SHOP, 'keys', 'MYKEYMYKEYMYKEYMYKEY22'), { at: 1, by: 'stranger' }));
+});
+await t('お店の鍵：まちがった鍵では「持っています」を書けない', () =>
+  assertFails(setDoc(doc(db('newdev'), 'shops', SHOP, 'claims', 'newdev'), { k: 'WRONGWRONGWRONGWRONG22', at: serverTimestamp() })));
+await t('お店の鍵：鍵が無いと、お店のオーナーに自分を足せない', () =>
+  assertFails(updateDoc(doc(db('newdev'), 'shops', SHOP), { owners: arrayUnion('newdev') })));
+await t('お店の鍵：正しい鍵を使うと、お店のオーナーに自分を足せる（なくした端末の代わり）', async () => {
+  const d = db('newdev');
+  await assertSucceeds(setDoc(doc(d, 'shops', SHOP, 'claims', 'newdev'), { k: 'KEYKEYKEYKEYKEYKEY2345', at: serverTimestamp() }));
+  await assertSucceeds(updateDoc(doc(d, 'shops', SHOP), { owners: arrayUnion('newdev') }));
+  await assertSucceeds(setDoc(sub(d, 'members', 'newdev'), { role: 'owner', name: '新しい端末', via: 'shop', at: 6 }));
+});
+await t('お店の鍵：「持っています」の時刻を、端末の時計で書くことはできない', () =>
+  assertFails(setDoc(doc(db('newdev2'), 'shops', SHOP, 'claims', 'newdev2'), { k: 'KEYKEYKEYKEYKEYKEY2345', at: Date.now() })));
+await t('お店の鍵：古い「持っています」（10分より前）では、オーナーに足せない', async () => {
+  await env.withSecurityRulesDisabled(c => setDoc(doc(c.firestore(), 'shops', SHOP, 'claims', 'olddev'), { k: 'KEYKEYKEYKEYKEYKEY2345', at: Timestamp.fromMillis(Date.now() - 11 * 60000) }));
+  await assertFails(updateDoc(doc(db('olddev'), 'shops', SHOP), { owners: arrayUnion('olddev') }));
+});
+await t('お店の鍵：作り直すと、前の鍵は使えない', async () => {
+  await assertSucceeds(deleteDoc(doc(ownerDb, 'shops', SHOP, 'keys', 'KEYKEYKEYKEYKEYKEY2345')));
+  await assertFails(setDoc(doc(db('newdev3'), 'shops', SHOP, 'claims', 'newdev3'), { k: 'KEYKEYKEYKEYKEYKEY2345', at: serverTimestamp() }));
+});
+await t('お店のオーナー：なくした端末を、お店のオーナーから外せる', () =>
+  assertSucceeds(updateDoc(doc(db('newdev'), 'shops', SHOP), { owners: arrayRemove('owner1') })));
+await t('お店のオーナー：自分を外して、だれもいないお店にはできない', () =>
+  assertFails(updateDoc(doc(db('backup1'), 'shops', SHOP), { owners: ['newdev'] })));
 
 // ---- いつもの端末へ「合流しますか」 ----
 await t('オーナー：メンバーにした端末へ、合流の知らせを送れる', () =>
@@ -213,9 +281,13 @@ await t('オーナー：端末を外せる。外された端末は、もう読�
   await assertFails(getDoc(ev(dispDb)));
   await assertFails(getDoc(sub(dispDb, 'live', 'cd')));
 });
-await t('ほかのオーナーでも、開店した端末は外せない', async () => {
+await t('ほかのオーナーは、開店した端末も外せる（なくした・盗まれた時）', async () => {
   await setDoc(sub(ownerDb, 'members', 'owner2'), { role: 'owner', name: 'レジ3' });
-  await assertFails(deleteDoc(sub(db('owner2'), 'members', 'owner1')));
+  await assertSucceeds(deleteDoc(sub(db('owner2'), 'members', 'owner1')));
+});
+await t('外された開店した端末は、自分をオーナーに戻せない', async () => {
+  await assertFails(setDoc(sub(ownerDb, 'members', 'owner1'), { role: 'owner', name: 'レジ1', at: 9 }));
+  await assertFails(getDoc(ev(ownerDb)));
 });
 
 // ---- 閉店と片づけ ----
