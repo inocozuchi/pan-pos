@@ -511,8 +511,13 @@
         if (!shopId) { say('お店のQRコードから開いてください。（このページだけを開いても、お店は分かりません）', true); return; }
         say('お店を探しています…');
         let s = null;
-        try { const d = await db.collection('shops').doc(shopId).get(); s = d.exists ? (d.data() || {}) : null; }
-        catch (e) { say('お店を読めませんでした。電波の良い所で、ページを読み込み直してください。', true); return; }
+        // 開店したばかりの時は、お店の行き先が書かれるまで少しかかることがあるので、見つからない時は少し待って2回まで読み直す
+        for (let tryN = 0; tryN < 3; tryN++) {
+            try { const d = await db.collection('shops').doc(shopId).get(); s = d.exists ? (d.data() || {}) : null; }
+            catch (e) { say('お店を読めませんでした。電波の良い所で、ページを読み込み直してください。', true); return; }
+            if (s && s.open && s.event) break;
+            if (tryN < 2) await new Promise(r => setTimeout(r, 2000));
+        }
         if (!s) { say('このQRコードのお店は見つかりませんでした。お店の人にお声がけください。', true); return; }
         if (s.name) $('title').textContent = String(s.name);
         if (!s.open || !s.event) { say(tableNo ? 'ただいま、スマホからの注文を受け付けていません。お店の人にお声がけください。' : 'ただいま、このお店はスマホからの注文を受け付けていません。店頭でご注文ください。', true); return; }

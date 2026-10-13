@@ -1805,7 +1805,7 @@
         var all = prods(d), mids = d.mids || all.map(function (p) { return p.id; }), fids = d.fids || [];
         var miss = posterNeeds(d), maxF = d.dense && FMTS[d.fmt].h > FMTS[d.fmt].w * 1.15 ? 6 : 3;
         return '<div class="pp-need' + (miss.length ? '' : ' ok') + '" role="status">' + (miss.length ? 'まだ入っていない項目：<b>' + miss.map(esc).join('・') + '</b>' : '必ず入れる項目（販売会名・開催日時・開催場所・実施団体・コラボ団体・メニュー・一言コメント）は、全部入っています。') + '</div>'
-            + (A.plans && A.plans().length ? '<label class="field-label">販売会の予定から入れる</label><div class="pp-row pp-wrap">' + A.plans().map(function (p) { return '<button type="button" class="pp-chip" data-act="evplan" data-v="' + esc(p.id) + '">' + esc(p.label) + '</button>'; }).join('') + '</div>' : '')
+            + (A.plans && A.plans().length ? '<label class="field-label">開店の予定から入れる</label><div class="pp-row pp-wrap">' + A.plans().map(function (p) { return '<button type="button" class="pp-chip" data-act="evplan" data-v="' + esc(p.id) + '">' + esc(p.label) + '</button>'; }).join('') + '</div>' : '')
             + '<div class="pp-edbox">'
             + f('name', '販売会名', '例：10月のデモ販売会', true) + f('date', '開催日', '例：10/17（金）', true) + f('time', '開催時間', '例：10:00〜12:00', true)
             + f('place', '開催場所', '例：○○会館前（雨の時は一号館一階）', true)
