@@ -5625,6 +5625,8 @@
         const sets = window.PRODUCT_SETS || {};
         const urlEvent = new URLSearchParams(location.search).get('event');
         if (urlEvent && sets[urlEvent]) return urlEvent;
+        // 試験の時は、いつも同じ見本（通常販売）を使う（いまのメニューが変わっても、試験が変わらないように）
+        if (window.__POS_TEST_SAMPLE && sets.normal) return 'normal';
         if (window.ACTIVE_EVENT && sets[window.ACTIVE_EVENT]) return window.ACTIVE_EVENT;
         return Object.keys(sets)[0] || null;
     }
@@ -7009,7 +7011,7 @@
                 (latest ? `<button onclick="applyRecommendations()" style="width:100%; margin-bottom:8px; padding:10px; background:var(--accent-soft); border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:var(--accent-ink); display:flex; align-items:center; justify-content:center; gap:6px;"><svg class="ic"><use href="#ic-bulb"/></svg>前回「${escHtml(latest.sessionName)}」の実績を参考に反映</button>` : '')
                 + `<button class="action-btn btn-secondary bulk-open" onclick="openBulk('setup')"><svg class="ic"><use href="#ic-clipboard"/></svg>メモを貼り付けて、まとめて登録</button>`
                 + `<button class="link-btn" style="margin:0 0 8px;" onclick="openPanel('settings','cats')"><svg class="ic"><use href="#ic-tag"/></svg>分類を足す・名前を変える</button>`
-                + (DEFAULT_PRODUCTS.length ? `<button class="link-btn" style="margin:0 0 10px;" onclick="loadSampleLineup()"><svg class="ic"><use href="#ic-undo"/></svg>サンプル（${escHtml(sampleLabel())}）に入れ替える</button>` : '');
+                + (DEFAULT_PRODUCTS.length ? `<button class="link-btn" style="margin:0 0 10px;" onclick="loadSampleLineup()"><svg class="ic"><use href="#ic-undo"/></svg>「${escHtml(ACTIVE_EVENT_SET.label)}」（${DEFAULT_PRODUCTS.length}品）に入れ替える</button>` : '');
         }
 
         const cards = [];
@@ -7139,7 +7141,7 @@
             <span>商品が1つ以上あると、開店できます。</span>
             <button type="button" class="action-btn btn-checkout" onclick="openBulk('setup')"><svg class="ic"><use href="#ic-clipboard"/></svg>メモを貼り付けて、まとめて登録</button>
             <button type="button" class="action-btn btn-secondary" onclick="startManualAdd()"><svg class="ic"><use href="#ic-pencil"/></svg>1品ずつ入れる</button>
-            ${DEFAULT_PRODUCTS.length ? `<button type="button" class="link-btn" onclick="loadSampleLineup()"><svg class="ic"><use href="#ic-bulb"/></svg>サンプル（${escHtml(sampleLabel())}）で試す</button>` : ''}
+            ${DEFAULT_PRODUCTS.length ? `<button type="button" class="link-btn" onclick="loadSampleLineup()"><svg class="ic"><use href="#ic-bulb"/></svg>「${escHtml(ACTIVE_EVENT_SET.label)}」（${DEFAULT_PRODUCTS.length}品）を入れる</button>` : ''}
         </div>`;
     }
     function startManualAdd() {
@@ -7150,10 +7152,10 @@
     // サンプルの商品を入れる（あとから名前・値段・仕入れ数を自由に直せる）
     function loadSampleLineup() {
         if (!DEFAULT_PRODUCTS.length) return;
-        if (tempSetupProducts.length && !confirm(`いまの商品（${tempSetupProducts.length}品）を消して、サンプルの${DEFAULT_PRODUCTS.length}品に入れ替えます。よろしいですか？`)) return;
+        if (tempSetupProducts.length && !confirm(`いまの商品（${tempSetupProducts.length}品）を消して、「${ACTIVE_EVENT_SET.label}」の${DEFAULT_PRODUCTS.length}品に入れ替えます。よろしいですか？`)) return;
         tempSetupProducts = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
         playSuccess();
-        showToast(`サンプルの${DEFAULT_PRODUCTS.length}品を入れました。名前・値段・仕入れ数は自由に直せます`);
+        showToast(`「${ACTIVE_EVENT_SET.label}」の${DEFAULT_PRODUCTS.length}品を入れました。名前・値段・仕入れ数は自由に直せます`);
         if (currentView === 'session' && currentSub === 'open-stock') renderInventorySetup();
         else renderOpenMenu();
     }
@@ -14696,7 +14698,28 @@
     // サブ画面から戻るたびにコピーし直すと入力した仕入れ数が消えてしまうので、
     // 入口（ヘッダーの「開店する」・起動時）でだけ呼ぶ。
     function prepareOpenSetup() {
-        tempSetupProducts = JSON.parse(JSON.stringify(products));
+        // 商品がまだ無い端末には、いまのメニュー（data/active-event.js で決めたもの）を最初から入れておく
+        tempSetupProducts = JSON.parse(JSON.stringify(products.length ? products : DEFAULT_PRODUCTS));
+    }
+    // いまのメニューと、開店の準備の商品が違う時：入れ替えをすすめる（「このままにする」を押したら、そのメニューでは出さない）
+    const MENU_DISMISS_KEY = sk('taizanboku_menu_dismiss');
+    function menuSignature() { return ACTIVE_EVENT_KEY + ':' + DEFAULT_PRODUCTS.map(p => p.name + '/' + p.price).join('|'); }
+    function lineupDiffersFromMenu() {
+        if (!DEFAULT_PRODUCTS.length || !tempSetupProducts.length) return false;
+        try { if (localStorage.getItem(MENU_DISMISS_KEY) === menuSignature()) return false; } catch (e) {}
+        const mine = new Set(tempSetupProducts.filter(p => p.active !== false).map(p => p.name + '/' + p.price));
+        const menu = DEFAULT_PRODUCTS.map(p => p.name + '/' + p.price);
+        return menu.length !== mine.size || menu.some(k => !mine.has(k));
+    }
+    function keepLineup() {
+        try { localStorage.setItem(MENU_DISMISS_KEY, menuSignature()); } catch (e) {}
+        playSound();
+        renderOpenMenu();
+    }
+    function menuNoticeHtml() {
+        if (!lineupDiffersFromMenu()) return '';
+        return `<div class="notice notice-ok menu-new"><svg class="ic"><use href="#ic-bulb"/></svg><span><b>「${escHtml(ACTIVE_EVENT_SET.label)}」（${DEFAULT_PRODUCTS.length}品）</b>が用意されています。いまの商品と違います。<br>
+            <button type="button" class="link-btn" onclick="loadSampleLineup()">このメニューに入れ替える</button>　<button type="button" class="link-btn" onclick="keepLineup()">このままにする</button></span></div>`;
     }
 
     // ▼▼▼ メンバー（この販売会に入れる端末）・一般公開のための守り ▼▼▼
@@ -16073,7 +16096,7 @@
         }
         const stockSub = !tempSetupProducts.length ? '<span class="mr-need">まだありません</span>'
             : (!canOpen ? '<span class="mr-need">名前と値段を入れてください</span>' : `${active.length}品・合計${totalStock}個`);
-        box.innerHTML = (tempSetupProducts.length ? '' : emptyLineupHtml('open')) +
+        box.innerHTML = (tempSetupProducts.length ? menuNoticeHtml() : emptyLineupHtml('open')) +
             menuRow('tag', '販売会の名前', escHtml(nameInput ? nameInput.value : ''), "openPanel('session','open-name')") +
             menuRow(isKitchen() ? 'kitchen' : 'store', '店舗モード', storeModeLabel(), "openPanel('settings','mode')") +
             menuRow('box', '商品と仕入れ数', stockSub, "openPanel('session','open-stock')") +
