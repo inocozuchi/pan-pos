@@ -42,7 +42,16 @@ export function siteOrderHtml(src) {
     }
     return '<!-- このファイルは tools/sites.mjs が作った写しです。直すときは、いちばん上の order.html を直して build してください。 -->\n' + out;
 }
-const PAGES = [['index.html', siteHtml], ['order.html', siteOrderHtml]];
+// お客様の予約ページ（reserve.html）の写し。アイコンだけ2つ上から読む
+export function siteReserveHtml(src) {
+    let out = src;
+    for (const [a, b] of [['<link rel="icon" href="icons/', `<link rel="icon" href="${UP}icons/`], ['<link rel="apple-touch-icon" href="icons/', `<link rel="apple-touch-icon" href="${UP}icons/`]]) {
+        if (!out.includes(a)) throw new Error('reserve.html に、書き換えるはずの所が見つかりません: ' + a);
+        out = out.split(a).join(b);
+    }
+    return '<!-- このファイルは tools/sites.mjs が作った写しです。直すときは、いちばん上の reserve.html を直して build してください。 -->\n' + out;
+}
+const PAGES = [['index.html', siteHtml], ['order.html', siteOrderHtml], ['reserve.html', siteReserveHtml]];
 
 function listSites() {
     if (!fs.existsSync(SITES)) return [];

@@ -303,6 +303,58 @@ await t('閉店した後は、レジが片づけ（会計・メンバーを消�
 await t('閉店した販売会には、お願いを出せない', () =>
   assertFails(setDoc(sub(db('late'), 'requests', 'late'), { name: 'a', role: 'staff', at: 1 })));
 
+// ---- 販売会の予定と予約フォーム（plans）----
+const PID = 'planABCDEFGHJKLMNPQRS';
+const planDoc = (d, p = PID) => doc(d, 'plans', p);
+const plan = (owner, over = {}) => Object.assign({ owners: [owner], name: '臨時販売会', date: '2026-10-20', start: '10:00', end: '12:00', place: '公民館', org: '泰山木', collab: '', comment: '',
+  shop: '泰山木', on: true, from: Date.now() - 60000, to: Date.now() + 3600000, pickups: ['10:00'], items: [{ id: '1', name: 'あんぱん', price: 180, cat: 'パン', cap: 3 }],
+  tel: 'opt', memo: true, maxQty: 10, note: '', at: 1 }, over);
+// お客様の予約：数えを1つ進めるのと、予約を作るのを、1回でいっしょに書く
+const reserve = async (d, uid, n, over = {}) => {
+  const b = writeBatch(d);
+  b.set(doc(d, 'plans', PID, 'tally', 'c'), { n, c: { '1': n } });
+  b.set(doc(d, 'plans', PID, 'resv', 'r' + n), Object.assign({ uid, seq: n, name: '山田', tel: '', memo: '', pickup: '10:00', items: [{ id: '1', name: 'あんぱん', price: 180, n: 1 }], total: 180, st: 'new', at: serverTimestamp() }, over));
+  return b.commit();
+};
+await t('予定：作った端末だけを持ち主にして作れる', () => assertSucceeds(setDoc(planDoc(ownerDb), plan('owner1'))));
+await t('予定：ほかの人を持ち主にして作れない', () => assertFails(setDoc(planDoc(strangerDb, 'planZZZZZZZZZZZZZZZZZZ'), plan('owner1'))));
+await t('予定：決まっていない項目は書けない', () => assertFails(setDoc(planDoc(ownerDb, 'planYYYYYYYYYYYYYYYYYY'), plan('owner1', { secret: 1 }))));
+await t('予定：お客様は読めるが、一覧は出せない', async () => {
+  await assertSucceeds(getDoc(planDoc(custDb)));
+  await assertFails(getDocs(collection(custDb, 'plans')));
+});
+await t('予定：ログインしていない人は読めない', () => assertFails(getDoc(planDoc(anon))));
+await t('予定：お客様は書きかえられない', () => assertFails(updateDoc(planDoc(custDb), { on: false })));
+await t('予約：受付の期間なら、数えを進めて予約できる', () => assertSucceeds(reserve(custDb, 'cust1', 1)));
+await t('予約：数えを進めずに予約だけは書けない', () => assertFails(setDoc(doc(cust2Db, 'plans', PID, 'resv', 'r5'), { uid: 'cust2', seq: 5, name: 'x', tel: '', memo: '', pickup: '', items: [{ id: '1', n: 1 }], total: 1, st: 'new', at: serverTimestamp() })));
+await t('予約：数えを2つ以上進められない', () => assertFails(reserve(cust2Db, 'cust2', 3)));
+await t('予約：ほかの人の名前（uid）では予約できない', () => assertFails(reserve(cust2Db, 'cust1', 2)));
+await t('予約：はじめから「受け取り済み」では作れない', () => assertFails(reserve(cust2Db, 'cust2', 2, { st: 'done' })));
+await t('予約：自分の予約は読める・ほかの人の予約は読めない', async () => {
+  await assertSucceeds(getDoc(doc(custDb, 'plans', PID, 'resv', 'r1')));
+  await assertFails(getDoc(doc(cust2Db, 'plans', PID, 'resv', 'r1')));
+  await assertFails(getDocs(collection(cust2Db, 'plans', PID, 'resv')));
+});
+await t('予約：持ち主は一覧を読めて、受け取り・取り消しを書ける', async () => {
+  await assertSucceeds(getDocs(collection(ownerDb, 'plans', PID, 'resv')));
+  await assertSucceeds(updateDoc(doc(ownerDb, 'plans', PID, 'resv', 'r1'), { st: 'done', stAt: 1 }));
+  await assertFails(updateDoc(doc(ownerDb, 'plans', PID, 'resv', 'r1'), { name: '書きかえ' }));
+});
+await t('予約：お客様は自分の予約の中身を変えられない', () => assertFails(updateDoc(doc(custDb, 'plans', PID, 'resv', 'r1'), { st: 'cancel' })));
+await t('予約：受付を止めると、予約できない', async () => {
+  await updateDoc(planDoc(ownerDb), { on: false });
+  await assertFails(reserve(cust2Db, 'cust2', 2));
+});
+await t('予約：受付の期間が終わると、予約できない', async () => {
+  await updateDoc(planDoc(ownerDb), { on: true, to: Date.now() - 1000 });
+  await assertFails(reserve(cust2Db, 'cust2', 2));
+});
+await t('予約：持ち主は閉店の後に予約を消せる・お客様は消せない', async () => {
+  await assertFails(deleteDoc(doc(custDb, 'plans', PID, 'resv', 'r1')));
+  await assertSucceeds(deleteDoc(doc(ownerDb, 'plans', PID, 'resv', 'r1')));
+  await assertSucceeds(deleteDoc(doc(ownerDb, 'plans', PID, 'tally', 'c')));
+});
+
 await env.cleanup();
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

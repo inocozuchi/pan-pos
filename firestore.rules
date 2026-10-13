@@ -95,6 +95,67 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if signedIn() && me() in get(shopPath(resource.data.shop)).data.owners;
     }
+    // ---- 販売会の予定と予約フォーム（plans/{予定の印}）----
+    // 予定を作った端末（owners）が、お客様の読む文書（名前・日時・場所・予約できる品・受付の期間）を書く。
+    // 予定の印は長い乱数で、知らない予定は探せない（一覧は出さない）。
+    // お客様は、受付の期間の間だけ、自分の予約を1つずつ作れる。読めるのは自分の予約だけ。
+    // 予約の一覧を読めるのは、予定を作った端末だけ。閉店した時に、その端末が予約を消す。
+    function planPath(pid) { return /databases/$(database)/documents/plans/$(pid); }
+    function planOwner(pid) { return signedIn() && exists(planPath(pid)) && me() in get(planPath(pid)).data.owners; }
+    function planResvOpen(pid) {
+      let p = get(planPath(pid)).data;
+      return p.get('on', false) == true && request.time.toMillis() >= p.get('from', 0) && request.time.toMillis() < p.get('to', 0);
+    }
+    match /plans/{pid} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && pid.size() >= 16 && request.resource.data.owners == [me()] && planShape();
+      allow update: if signedIn() && me() in resource.data.owners && me() in request.resource.data.owners
+        && request.resource.data.owners.size() <= 10 && planShape();
+      allow delete: if signedIn() && me() in resource.data.owners;
+      function planShape() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['owners', 'name', 'date', 'start', 'end', 'place', 'org', 'collab', 'comment', 'shop',
+                                 'on', 'from', 'to', 'pickups', 'items', 'tel', 'memo', 'maxQty', 'note', 'at', 'done'])
+          && d.owners is list && d.on is bool && d.from is int && d.to is int
+          && d.items is list && d.items.size() <= 80 && d.pickups is list && d.pickups.size() <= 48
+          && str(d.get('name', ''), 40) && str(d.get('place', ''), 60) && str(d.get('org', ''), 60)
+          && str(d.get('collab', ''), 80) && str(d.get('comment', ''), 200) && str(d.get('note', ''), 300)
+          && d.get('tel', 'off') in ['off', 'opt', 'req'] && d.get('maxQty', 10) is int && d.get('maxQty', 10) <= 30;
+      }
+      // 予約の数え（何件目か・品ごとに何個予約されたか）。お客様は、予約を1つ作る時に、1つだけ数を進める
+      match /tally/{t} {
+        allow get: if signedIn();
+        allow write: if planOwner(pid);
+        allow create, update: if signedIn() && t == 'c' && planResvOpen(pid)
+          && request.resource.data.keys().hasOnly(['n', 'c'])
+          && request.resource.data.n is int && request.resource.data.c is map
+          && request.resource.data.n == (resource == null ? 0 : resource.data.n) + 1
+          && existsAfter(/databases/$(database)/documents/plans/$(pid)/resv/$('r' + string(request.resource.data.n)));
+      }
+      // 予約。お客様は自分の予約を作って読むだけ。状態（受け取り・取り消し）を変えるのは予定を作った端末
+      match /resv/{rid} {
+        allow get: if signedIn() && (resource.data.uid == me() || planOwner(pid));
+        allow list: if planOwner(pid) || (signedIn() && resource.data.uid == me());
+        allow create: if signedIn() && planResvOpen(pid) && resvShape()
+          && rid == 'r' + string(request.resource.data.seq)
+          && getAfter(/databases/$(database)/documents/plans/$(pid)/tally/c).data.n == request.resource.data.seq;
+        allow update: if planOwner(pid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['st', 'stAt'])
+          && request.resource.data.st in ['new', 'done', 'cancel'];
+        allow delete: if planOwner(pid);
+        function resvShape() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['uid', 'seq', 'name', 'tel', 'memo', 'pickup', 'items', 'total', 'st', 'at'])
+            && d.uid == me() && d.st == 'new' && d.at == request.time
+            && d.seq is int && d.seq >= 1
+            && d.name is string && d.name.size() >= 1 && d.name.size() <= 30
+            && str(d.get('tel', ''), 20) && str(d.get('memo', ''), 200) && str(d.get('pickup', ''), 5)
+            && d.items is list && d.items.size() >= 1 && d.items.size() <= 30
+            && d.total is int && d.total >= 0;
+        }
+      }
+    }
     function shopPath(shopId) { return /databases/$(database)/documents/shops/$(shopId); }
     function claimPath(shopId) { return /databases/$(database)/documents/shops/$(shopId)/claims/$(request.auth.uid); }
     function keyClaimOk(shopId) {

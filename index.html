@@ -1779,7 +1779,7 @@
         .mo-state.on { box-shadow: inset 0 0 0 2px var(--dine-eat), var(--shadow-card); }
         .mo-state.off { box-shadow: inset 0 0 0 2px var(--danger), var(--shadow-card); background: var(--danger-bg); }
         .mo-state .sw-row { margin: 0; padding: 0; background: transparent; box-shadow: none; }
-        .mo-state textarea, #sub-mobile textarea, #cp-note {
+        .mo-state textarea, #sub-mobile textarea, #cp-note, #resv-note {
             width: 100%; box-sizing: border-box; min-height: 64px; margin: 6px 0 0; padding: 10px 12px; font-size: 16px; font-family: inherit;
             border: none; border-radius: var(--r-md); background: var(--sunken); color: var(--text-main); box-shadow: inset 0 0 0 1px var(--hairline); resize: vertical;
         }
@@ -2820,6 +2820,86 @@
         }
         .cc-reopen .ic { width: 18px; height: 18px; margin-top: 1px; }
         .closed-card .cc-import { margin-top: -2px; }
+        /* ▼ 販売会の予定・スマホの予約・在庫の数え直し ▼ */
+        .plan-card { border-radius: var(--r-md); padding: 12px 14px; margin-bottom: 10px; background: var(--surface); box-shadow: var(--shadow-card); }
+        .plan-card.is-today { box-shadow: 0 0 0 2px var(--accent), var(--shadow-card); }
+        .plan-top { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+        .plan-kind, .plan-today, .plan-done { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--sunken); color: var(--text-light); }
+        .plan-kind.rinji { background: var(--accent-soft); color: var(--accent-ink); }
+        .plan-today { background: var(--accent); color: #fff; }
+        .plan-name { font-weight: 800; font-size: 16px; overflow-wrap: anywhere; }
+        .plan-when { font-size: 13px; color: var(--text-main); margin-top: 2px; display: flex; flex-wrap: wrap; gap: 0 10px; }
+        .plan-when span { color: var(--text-light); }
+        .plan-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--text-light); margin-top: 4px; }
+        .plan-acts, .plan-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .plan-acts .action-btn, .plan-btns .action-btn { flex: 1 1 auto; margin: 0; padding: 8px 12px; font-size: 13px; min-height: 40px; }
+        .plan-acts .plan-del { flex: 0 0 auto; color: var(--danger-ink); }
+        .plan-when-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+        .plan-time2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; }
+        @media (max-width: 520px) { .plan-when-row { grid-template-columns: 1fr; } }
+        #plan-edit-body input[type=text], #plan-edit-body input[type=number], #plan-edit-body input[type=date], #plan-edit-body input[type=time],
+        #plan-edit-body input[type=datetime-local], #plan-edit-body select, #plan-edit-body textarea {
+            width: 100%; box-sizing: border-box; margin: 0; padding: 10px 12px; font-size: 16px; min-height: 46px;
+            border-radius: var(--r-md); border: none; background: var(--sunken); color: var(--text-main);
+            box-shadow: inset 0 0 0 1px var(--hairline); font-family: inherit; -webkit-appearance: none; appearance: none;
+        }
+        #plan-edit-body textarea { min-height: 76px; resize: vertical; line-height: 1.5; }
+        #plan-edit-body input:focus, #plan-edit-body select:focus, #plan-edit-body textarea:focus { box-shadow: inset 0 0 0 2px var(--accent); outline: none; }
+        .plan-items { display: flex; flex-direction: column; gap: 8px; }
+        .plan-items .pi-row { background: var(--surface); border-radius: var(--r-md); padding: 10px; box-shadow: var(--shadow-card); }
+        .plan-items .pi-row.off { opacity: .5; }
+        .plan-items .pi-top { display: flex; align-items: center; gap: 10px; }
+        .plan-items .pi-on { width: 24px; height: 24px; margin: 0; flex-shrink: 0; accent-color: var(--accent); }
+        #plan-edit-body .plan-items .pi-name { flex: 1; min-width: 0; font-weight: 700; }
+        .plan-items .pi-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 6px; margin-top: 8px; padding-left: 34px; }
+        .plan-items .pi-fields label { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .plan-items .pi-fields span { font-size: 11px; font-weight: 700; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #plan-edit-body .plan-items .pi-fields input, #plan-edit-body .plan-items .pi-fields select { min-height: 38px; padding: 6px 8px; font-size: 15px; }
+        #plan-edit-body .plan-items .pi-fields input { text-align: right; font-variant-numeric: tabular-nums; }
+        #plan-edit-body .plan-items .pi-fields select { font-size: 13px; }
+        .plan-share { display: flex; gap: 12px; align-items: flex-start; margin-top: 10px; background: var(--sunken); border-radius: 12px; padding: 10px; }
+        .plan-qr { flex: 0 0 96px; background: #fff; border-radius: 8px; padding: 4px; }
+        .plan-qr svg { width: 88px; height: 88px; display: block; }
+        .plan-share-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+        .plan-url { font-size: 11px; color: var(--text-light); overflow-wrap: anywhere; }
+        .plan-chosen { display: flex; align-items: center; gap: 10px; background: var(--accent-soft); color: var(--accent-ink); border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 10px; font-size: 13px; }
+        .plan-chosen > .ic { width: 22px; height: 22px; flex-shrink: 0; }
+        .plan-chosen > span { flex: 1; min-width: 0; }
+        .plan-pick { margin-bottom: 10px; }
+        .plan-pick-row { appearance: none; -webkit-appearance: none; border: none; width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; background: var(--surface); color: var(--text-main); border-radius: var(--r-md); padding: 10px 12px; margin-bottom: 6px; box-shadow: var(--shadow-card); font: inherit; cursor: pointer; }
+        .plan-pick-row.is-today { box-shadow: 0 0 0 2px var(--accent), var(--shadow-card); }
+        .plan-pick-row > .ic { width: 22px; height: 22px; color: var(--accent); flex-shrink: 0; }
+        .plan-pick-row > span { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .plan-pick-row > span span { font-size: 12px; color: var(--text-light); }
+        .closed-card .cc-plan { width: 100%; max-width: 320px; }
+        .wr-row { background: var(--surface); border-radius: 12px; padding: 10px 12px; margin-bottom: 6px; box-shadow: var(--shadow-card); font-size: 13px; }
+        .wr-row.is-cancel { opacity: .5; }
+        .wr-row.is-done .wr-st { color: var(--ok-ink); }
+        .wr-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+        .wr-top b { font-size: 15px; }
+        .wr-no { font-size: 12px; font-weight: 800; color: var(--accent-ink); }
+        .wr-time { font-size: 12px; font-weight: 700; background: var(--accent-soft); color: var(--accent-ink); padding: 1px 8px; border-radius: 999px; }
+        .wr-st { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--text-light); }
+        .wr-items { margin-top: 4px; display: flex; gap: 8px; justify-content: space-between; }
+        .wr-sum { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .wr-sub { font-size: 12px; color: var(--text-light); margin-top: 2px; overflow-wrap: anywhere; }
+        .wr-tot { display: flex; flex-wrap: wrap; gap: 6px; }
+        .wr-tot span { background: var(--surface); border-radius: 10px; padding: 6px 10px; font-size: 13px; box-shadow: var(--shadow-card); display: flex; gap: 8px; align-items: baseline; }
+        .wr-tot b { font-size: 16px; color: var(--accent-ink); font-variant-numeric: tabular-nums; }
+        .res-web { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--text-main); margin: 2px 0 4px; overflow-wrap: anywhere; }
+        .res-web-tag { font-weight: 800; color: var(--accent-ink); }
+        .arc-card .arc-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: -2px 0 8px; }
+        .arc-card .arc-tags span { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--sunken); color: var(--text-light); }
+        .rc-list { display: flex; flex-direction: column; gap: 6px; }
+        .rc-head, .rc-row { display: grid; grid-template-columns: minmax(0, 1fr) 56px 76px 76px; gap: 8px; align-items: center; }
+        .rc-head { font-size: 11px; font-weight: 700; color: var(--text-light); padding: 0 10px; }
+        .rc-head span:not(:first-child) { text-align: right; }
+        .rc-row { background: var(--surface); border-radius: 12px; padding: 8px 10px; box-shadow: var(--shadow-card); }
+        .rc-nm { font-weight: 700; font-size: 14px; display: flex; flex-direction: column; overflow-wrap: anywhere; }
+        .rc-nm small { font-weight: 400; font-size: 11px; color: var(--text-light); }
+        .rc-n { text-align: right; font-variant-numeric: tabular-nums; font-size: 15px; }
+        .rc-est { font-weight: 800; color: var(--accent-ink); }
+        .rc-row input { margin: 0; padding: 6px 8px; min-height: 38px; text-align: right; font-size: 15px; }
         @media (max-height: 740px) {
             .closed-card { padding: 20px 18px; gap: 9px; }
             .closed-card .cc-icon { width: 34px; height: 34px; }
@@ -4467,6 +4547,8 @@
                         <svg class="ic"><use href="#ic-link"/></svg>開いている販売会に合流する
                     </button>
                 </div>
+                <!-- 今日の予定（機能：販売会の予定）。押すと開店の準備へ -->
+                <div class="cc-plan" id="cta-plan" style="display:none;"></div>
                 <!-- いま開いている販売会。押せばその場でレジとして合流する -->
                 <div class="cc-live" id="cta-live" style="display:none;">
                     <div class="cc-live-h">お店からの合流の知らせ<span>押すと合流します</span></div>
@@ -4828,6 +4910,12 @@
             <div class="sub-view" id="sub-cash" style="display:none;"><div id="cash-body"></div></div>
             <!-- レジの機能：使う物だけオンにする（はじめは全部オフ） -->
             <div class="sub-view" id="sub-feat" style="display:none;"><div id="feat-body"></div></div>
+            <!-- 販売会の予定（機能：plan）・予約フォーム（機能：resv）・在庫の数え直し（機能：recount） -->
+            <div class="sub-view" id="sub-plans" style="display:none;"><div id="plans-body"></div></div>
+            <div class="sub-view" id="sub-plan-edit" style="display:none;"><div id="plan-edit-body"></div></div>
+            <div class="sub-view" id="sub-plan-resv" style="display:none;"><div id="plan-resv-body"></div></div>
+            <div class="sub-view" id="sub-resv" style="display:none;"><div id="resv-body"></div></div>
+            <div class="sub-view" id="sub-recount" style="display:none;"><div id="recount-body"></div></div>
             <!-- 委託商品（ほかの人から預かって売る商品）と、預かった売上 -->
             <div class="sub-view" id="sub-consign" style="display:none;"><div id="consign-body"></div></div>
             <!-- メモのコピペで、商品をまとめて登録する -->
@@ -5663,6 +5751,9 @@
     let comparisonBaseline = null; // 今回の販売会と比較する「前回の実績」（開店時に確定）
     let lastCustomerType = null;   // 直前に選ばれた客属性（保存データの互換のため保持）
     let salesGoal = 0;             // その回の売上目標（円）。0 なら決めていない
+    let currentPlanId = '';        // いまの販売会のもとになった予定（機能：販売会の予定）
+    let openPlanId = '';           // 開店の準備で選んだ予定（開店すると currentPlanId になる）
+    let reportSlotMin = 15;        // 集計の時間の区切り（分）。予定で決める（はじめは15分）
     // ▼ セット割 ▼
     // 決めた「種類の組み合わせ」を同じ会計で買うと、決めた額だけ引く（初期設定：クッキー＋ドリンクで10円引き）。
     // 【上限】1会計につき1回だけ。2セット買っても引くのは1回ぶん。
@@ -6792,6 +6883,7 @@
         if (processingReservationId !== null) {
             const resIndex = reservations.findIndex(r => r.id === processingReservationId);
             itemsRecorded = reservations[resIndex].items;
+            webResvSettled(reservations[resIndex], 'done');   // スマホの予約なら、置き場の予約も「受け取り済み」に
             reservations.splice(resIndex, 1);
             syncRemoveReservation(processingReservationId);   // 他の端末の一覧からも消す
             processingReservationId = null;
@@ -6956,6 +7048,7 @@
                     <span><svg class="ic"><use href="#ic-users"/></svg>${escHtml(res.name)} 様</span>
                     <span style="font-weight:bold;">合計: ¥${res.total}</span>
                 </div>
+                ${res.web ? `<div class="res-web"><span class="res-web-tag">スマホの予約 No.${Number(res.web.no) || ''}</span>${res.web.pickup ? `<span>受け取り ${escHtml(res.web.pickup)}</span>` : ''}${res.web.tel ? `<span>電話 ${escHtml(res.web.tel)}</span>` : ''}${res.web.memo ? `<span>ひとこと：${escHtml(res.web.memo)}</span>` : ''}</div>` : ''}
                 <div style="font-size:13px; color:var(--text-light);">
                     ${res.items.map(i => escHtml(i.name)).join('、')}
                 </div>
@@ -6972,6 +7065,8 @@
         if (!confirm('この予約を取り消して在庫に戻します。よろしいですか？')) return;
         const resIndex = reservations.findIndex(r => r.id === id);
         const res = reservations[resIndex];
+        if (!res) return;
+        webResvSettled(res, 'cancel');   // スマホの予約なら、置き場の予約も「取り消し」に（予約できる残りも戻す）
         // 同期中は予約作成時（カート追加時）に在庫を減らしていないため、ここでも戻さない。
         if (!syncMode) {
             res.items.forEach(item => {
@@ -7751,6 +7846,37 @@
                     <div class="man-box-h">終わる時（スタッフ）</div>
                     <p>画面の右上の<b>「スタッフ」を1.5秒長く押します</b>。「この端末の設定」で<b>パスコード</b>を決めておくと、終わる時にパスコードを聞きます（利用者の方がうっかり終わらないように）。読み込み直しても、シンプルモードのままです。</p>
                 </div>`
+        },
+        {
+            id: 'plan', icon: 'calendar', title: '販売会の予定・予約フォーム', sub: '臨時・不定期の販売会を前もって作り、スマホの予約を受ける',
+            body: `
+                <p>臨時・不定期の販売会を<b>前もって作っておき</b>、当日は<b>予定から開店</b>します。直前にあわてて商品や仕入れ数を入れなくてすみます。<b>「設定 → レジの機能」</b>で<b>「販売会の予定」</b>をオンにすると使えます（はじめはオフ）。</p>
+                <ol class="man-steps">
+                    <li><b>予定を作る</b>：「設定 → 販売会の予定 → 新しい予定を作る」。販売会の名前・種類（臨時・不定期／いつもの）・日時・場所・実施団体・コラボ団体・一言コメント・メニューと仕入れ数・売上目標を入れて保存します。</li>
+                    <li><b>当日に開店する</b>：その日になると、レジの「まだ開店していません」に<b>「今日の予定」</b>が出ます。押すと、開店の準備に名前・メニュー・仕入れ数・目標が入ります。確かめて「この内容で開店する」を押します。</li>
+                    <li><b>閉店する</b>：いつもと同じです。過去の販売会に「臨時・不定期」の印が付きます。</li>
+                </ol>
+                <h4>前回比と時間の区切り</h4>
+                <ul class="man-list">
+                    <li>予定ごとに<b>「前回比で比べる相手」</b>を選べます。臨時の販売会は、いつもの販売会と比べても参考にならないので、はじめは<b>「前回の臨時・不定期の販売会」</b>と比べます。「比べない」や、過去の販売会を1つ選ぶこともできます。</li>
+                    <li>短い販売会は、<b>時間の区切りを5分・10分</b>にすると、流れが細かく見えます（売上集計の「時間帯別の客数」でも選び直せます）。</li>
+                </ul>
+                <h4>予約フォーム（スマホの予約）</h4>
+                <p><b>「レジの機能」</b>で<b>「予約フォーム」</b>もオンにすると、予定ごとに、お客様がスマホから予約できるページ（QRコード・リンク）を作れます。</p>
+                <ol class="man-steps">
+                    <li>予定の「予約フォーム」で<b>「スマホから予約を受ける」</b>をオンにし、<b>受付の期間</b>・<b>受け取り時間</b>・品ごとの<b>予約の上限</b>（空欄は上限なし、0 は予約では受けない）を決めて保存します。</li>
+                    <li>出てきた<b>QRコードを印刷</b>するか、<b>リンクをコピー</b>してお知らせします。</li>
+                    <li>予約は「販売会の予定 → 予約を見る」で見られます。<b>取り置く数の合計</b>と、予約の一覧の印刷もできます。</li>
+                    <li>予定で開店すると、予約は<b>レジの「予約」に自動で入ります</b>（営業中の予約も、その場で入ります）。お客様が来たら「受取・清算」で会計します。</li>
+                </ol>
+                <ul class="man-list">
+                    <li>聞く項目（電話番号を聞くか・ひとこと欄）と、1人が予約できる数は<b>「設定 → 予約フォーム」</b>で決めます。</li>
+                    <li>お支払いは受け取りの時にレジで行います（予約のページでは払いません）。</li>
+                    <li>予定と予約は、<b>予定を作った端末</b>だけが読めます。その端末で開店してください。</li>
+                    <li>閉店すると、置き場の予約（お名前・電話番号）は消えます。</li>
+                </ul>
+                <h4>閉店した後に在庫を数え直す</h4>
+                <p>販売会の前に仕入れ数を数えられなかった時は、<b>「レジの機能」</b>で<b>「在庫の数え直し」</b>をオンにし、「設定 → 過去の販売会 → 在庫を数え直す」で<b>売れ残った数</b>を入れます。<b>売れた数＋残りの数</b>を、その回の仕入れ数（概算）にして、売上集計の消化率・売れ残り・次の仕入れの目安に使います。売上の金額は変わりません。</p>`
         },
         {
             id: 'pop', icon: 'image', title: 'POP・ポスター', sub: '商品の札や販売会のポスターを作る',
@@ -11057,6 +11183,7 @@
     }
 
     function updateReopenRow() {
+        renderPlanCta();
         const row = document.getElementById('reopen-row');
         if (!row) return;
         const a = reopenableArchive();
@@ -11401,6 +11528,7 @@
             syncEventCode = null;
         }
 
+        applyPlanOnOpen(isJoining);   // 予定から開店した時：比べる相手・時間の区切り・スマホの予約
         document.getElementById('session-display').innerText = `営業中: ${sharedName}`;
         document.getElementById('session-display').style.background = 'var(--white)';
         showRegister();
@@ -11525,6 +11653,16 @@
             if (sessionArchive.length > 20) sessionArchive = sessionArchive.slice(-20);
             pruneArchiveSnapshots();
         }
+        // 予定から開店した販売会：記録に予定の中身を残し、置き場の予約を消す
+        // （売上の無いまま閉じた時は、予定を「これから」に戻す。もう一度その予定で開店できる）
+        if (hadSales) planOnClose(sessionArchive[sessionArchive.length - 1]);
+        else {
+            const pl = planById(currentPlanId);
+            if (pl) { pl.status = 'plan'; pl.imported = []; savePlans(); }
+            currentPlanId = '';
+            stopPlanResvWatch();
+        }
+        reportSlotMin = 15;
         // ▲▲▲ ここまで ▲▲▲
 
         stopSalesSubscription();      // この中で在席の取り消しと syncMode の解除まで行う
@@ -11698,11 +11836,13 @@
                 ? `<div class="arc-actions">
                        <button class="action-btn btn-accent-outline" onclick="openArchiveReport(${idx})"><svg class="ic"><use href="#ic-chart"/></svg>集計を見る</button>
                        <button class="action-btn btn-secondary" onclick="exportArchiveBackup(${idx})"><svg class="ic"><use href="#ic-download"/></svg>バックアップ保存</button>
+                       ${featOn('recount') ? `<button class="action-btn btn-secondary" onclick="openRecount(${idx})"><svg class="ic"><use href="#ic-box"/></svg>在庫を数え直す</button>` : ''}
                    </div>`
                 : `<p class="settings-hint" style="margin:0;">※ 古い記録のため、集計の要約のみ残しています（明細は保存期間を過ぎました）。</p>`;
             return `<div class="arc-card">
                 <div class="arc-head"><span class="arc-name">${escHtml(a.name)}</span><span class="arc-date">${dstr}</span></div>
                 <div class="arc-stats">売上 <b>¥${(a.totalRev || 0).toLocaleString()}</b> ／ ${a.customerCount || 0}件 ／ 平均 ¥${(a.avgSpend || 0).toLocaleString()}</div>
+                ${(a.plan && a.plan.kind === 'rinji') || (a.snapshot && a.snapshot.stockRecount) ? `<div class="arc-tags">${a.plan && a.plan.kind === 'rinji' ? '<span>臨時・不定期</span>' : ''}${a.plan && a.plan.place ? `<span>${escHtml(a.plan.place)}</span>` : ''}${a.snapshot && a.snapshot.stockRecount ? '<span>在庫は数え直した概算</span>' : ''}</div>` : ''}
                 ${actions}
             </div>`;
         }).join('');
@@ -12762,7 +12902,7 @@
         if (!R) return '<div class="a-empty">まだ売上データがありません。</div>';
         const peakRev = Math.max(...R.slots.map(s => s.rev));
         // よく出た商品は列を増やさず、時間帯の下に小さく添える（横幅が狭い端末でも表がつぶれない）
-        return `<div class="a-head">15分ごとの売上・客数・客単価</div>
+        return `<div class="a-head">${reportSlot()}分ごとの売上・客数・客単価</div>${reportSlotPicker()}
         <table class="a-table">
             <thead><tr><th>時間帯</th><th class="num">売上</th><th class="num">客数</th><th class="num">客単価</th></tr></thead>
             <tbody>` + R.slots.map(s => `
@@ -13426,7 +13566,7 @@
         const bits = [];
         const top = R.abc[0];
         if (top) bits.push(`いちばん売れたのは「${escHtml(top.name)}」（${top.sold}点・${'¥' + Number(top.rev).toLocaleString('ja-JP')}）`);
-        if (s.peak) bits.push(`売上のピークは${escHtml(s.peak.label)}〜の15分間`);
+        if (s.peak) bits.push(`売上のピークは${escHtml(s.peak.label)}〜の${reportSlot()}分間`);
         if (R.soldOut.length) bits.push(`${R.soldOut.length}品が完売`);
         let note = bits.length ? `<div class="dg-note">${bits.join('　／　')}。</div>` : '';
 
@@ -14208,6 +14348,11 @@
         'receipt': '領収書',
         'rcpt': 'レシート',
         'archive': '過去の販売会',
+        'plans': '販売会の予定',
+        'plan-edit': '予定を作る・直す',
+        'plan-resv': 'スマホの予約',
+        'resv': '予約フォーム',
+        'recount': '在庫の数え直し',
         'pdf-import': '前回の記録を取り込む',
         'data': 'データの書き出し',
         'display': 'この端末の設定',
@@ -14376,6 +14521,7 @@
         document.querySelector('.panel-head').classList.toggle('no-back', !canBack);
         setActiveNav(currentView === 'session' ? null : (currentView === 'kitchen' ? 'register' : currentView));
         if (!onRegister) refreshView(currentView, currentSub);
+        syncPlanWatch();   // スマホの予約を見続けるか（営業中の予定・予約の一覧を開いている間だけ）
         if (backTo) {
             // 中身があとから描かれて高さが足りない時もあるので、少し間を置いて何度か合わせ直す
             // （その間に指でスクロールしたら、そこでやめる）
@@ -14535,6 +14681,11 @@
             else if (sub === 'receipt') renderReceiptSettings();
             else if (sub === 'rcpt') renderRcptView();
             else if (sub === 'archive') renderArchiveList();
+            else if (sub === 'plans') renderPlansView();
+            else if (sub === 'plan-edit') renderPlanEdit();
+            else if (sub === 'plan-resv') renderPlanResv();
+            else if (sub === 'resv') renderResvSettings();
+            else if (sub === 'recount') renderRecountView();
             else if (sub === 'mode') renderStoreModeView();
             else if (sub === 'cats') renderCategoriesView();
             else if (sub === 'pay') renderPayView();
@@ -14662,6 +14813,8 @@
             head('販売の準備') +
             menuRow(isKitchen() ? 'kitchen' : 'store', '店舗モード', storeModeLabel(), "openPanel('settings','mode')") +
             menuRow('sliders', '商品・在庫の調整', stockSub, "openPanel('settings','stock')", { disabled: !currentSession }) +
+            (featOn('plan') ? menuRow('calendar', '販売会の予定', planSub(), "openPanel('settings','plans')") : '') +
+            (featOn('resv') && window.FIREBASE_CONFIG ? menuRow('qr', '予約フォーム', resvSub(), "openPanel('settings','resv')") : '') +
             menuRow('tag', '商品の分類', categories.map(c => escHtml(c.label)).join('・'), "openPanel('settings','cats')") +
             menuRow('ticket', 'セット割・クーポン', discountSub(), "openPanel('settings','coupon')") +
             menuRow('yen', '支払い方法', paySub(), "openPanel('settings','pay')") +
@@ -16096,7 +16249,7 @@
         }
         const stockSub = !tempSetupProducts.length ? '<span class="mr-need">まだありません</span>'
             : (!canOpen ? '<span class="mr-need">名前と値段を入れてください</span>' : `${active.length}品・合計${totalStock}個`);
-        box.innerHTML = (tempSetupProducts.length ? menuNoticeHtml() : emptyLineupHtml('open')) +
+        box.innerHTML = openPlanHtml() + (tempSetupProducts.length ? (openPlanId ? '' : menuNoticeHtml()) : emptyLineupHtml('open')) +
             menuRow('tag', '販売会の名前', escHtml(nameInput ? nameInput.value : ''), "openPanel('session','open-name')") +
             menuRow(isKitchen() ? 'kitchen' : 'store', '店舗モード', storeModeLabel(), "openPanel('settings','mode')") +
             menuRow('box', '商品と仕入れ数', stockSub, "openPanel('session','open-stock')") +
@@ -16257,7 +16410,8 @@
         // 時間帯は「何時何分か」ではなく絶対時刻で区切る。
         // 時刻の文字列で区切ると、日をまたいで営業した時に前日と翌日の同じ時刻が
         // ひとつに混ざり、並び順も逆転してしまうため。
-        const SLOT_MS = 15 * 60000;
+        // 区切りは15分。販売会の予定で、短い販売会のために細かくできる（5分・10分）
+        const SLOT_MS = reportSlot() * 60000;
         sorted.forEach(h => {
             const d = new Date(h.time);
             const label = Math.floor(d.getTime() / SLOT_MS) * SLOT_MS;
@@ -16912,7 +17066,7 @@
 
     // 保存/バックアップ/引き継ぎで扱うデータを1か所にまとめる（saveDataと項目がずれない）
     function collectData() {
-        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, cdCfg, cdCfgBy, mobileKeep, coupons, couponsBy, couponCodes, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, bills, billSeqLocal, restCfg, taxCfg, taxCfgBy, consignCfg, consignBy, featCfg, featBy, tileCfg, tileCfgBy, cashLog, currentSession, testMode, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule };
+        return { siteId: SITE_CFG.id, storeMode, payCfg, payCfgBy, cdCfg, cdCfgBy, mobileKeep, coupons, couponsBy, couponCodes, categories, categoriesBy, kitchenLetter, kitchenLetterCode, products, cart, salesHistory, reservations, orders: kitchenOrders, bills, billSeqLocal, restCfg, taxCfg, taxCfgBy, consignCfg, consignBy, featCfg, featBy, tileCfg, tileCfgBy, cashLog, currentSession, testMode, sessionArchive, receiptCounter, voidCount, operationLog, comparisonBaseline, lastCustomerType, syncEventCode, syncRoundId, syncRounds: [...syncRounds], salesGoal, setDiscountOn, setRule, planId: currentPlanId, reportSlotMin };
     }
 
     // 受け取ったデータをアプリの状態へ反映する（loadData/importBackup/引き継ぎで共用）
@@ -16968,6 +17122,8 @@
         syncRoundId = data.syncRoundId || '';
         syncRounds = new Set(Array.isArray(data.syncRounds) ? data.syncRounds : (syncEventCode ? [syncRoundId] : []));
         salesGoal = Number(data.salesGoal) > 0 ? Number(data.salesGoal) : 0;
+        currentPlanId = typeof data.planId === 'string' ? data.planId : '';
+        reportSlotMin = [5, 10, 15, 30].includes(Number(data.reportSlotMin)) ? Number(data.reportSlotMin) : 15;
         // セット割は店の決まりなので、販売会をまたいで持ち越す（前の版のデータには無いのでオン）
         setDiscountOn = (typeof data.setDiscountOn === 'boolean') ? data.setDiscountOn : SITE_CFG.setDiscount;
         // 組み合わせと額（前の版のデータには無いので、初期設定のクッキー＋ドリンクで10円引き）
@@ -16979,7 +17135,7 @@
     // 別の端末へ移した時に領収書の名前だけ初期値に戻ってしまうのを防ぐ。
     // ※ collectData() 自体には入れない（保存や過去の販売会の閲覧にも使われるため純粋に保つ）
     function collectPortableData() {
-        return Object.assign({}, collectData(), { shopInfo: shopInfo() });
+        return Object.assign({}, collectData(), { shopInfo: shopInfo(), salePlans, resvCfg });
     }
 
     // 取り込んだデータに領収書の設定が入っていれば書き戻す
@@ -16987,6 +17143,13 @@
         if (data && data.shopInfo && data.shopInfo.name) {
             try { localStorage.setItem(SHOP_INFO_KEY, JSON.stringify(data.shopInfo)); } catch (e) {}
         }
+        // 販売会の予定：この端末に無い予定だけ足す（同じ予定は、この端末の方を残す）
+        if (data && Array.isArray(data.salePlans)) {
+            const have = new Set(salePlans.map(p => p.id));
+            data.salePlans.map(normPlan).forEach(p => { if (!have.has(p.id)) salePlans.push(p); });
+            savePlans();
+        }
+        if (data && data.resvCfg) { resvCfg = normResvCfg(data.resvCfg); saveResvCfg(); }
     }
 
     function exportBackup() {
@@ -18230,7 +18393,10 @@
     //   limit … 個数制限（商品ごとに、1会計で買える数の上限を決める。モバイルオーダーにも効く）
     //   memo  … 申し送り（ファストフード：レジとモバイルオーダーで書いて、KDに出す）
     //   hitsu … 筆談（レジとCDで、文字と手書きでお話しする。オンにするまで、CDには何も出ない）
-    const FEAT_KEYS = ['cash', 'disc', 'cost', 'open', 'code', 'staff', 'limit', 'memo', 'pre', 'tile', 'pop', 'hitsu'];
+    //   plan  … 販売会の予定（前もって販売会を作っておき、当日は予定から開店する）
+    //   resv  … 予約フォーム（お客様がスマホから予約。予定で開店したレジの予約に入る）
+    //   recount … 閉店した後に在庫を数え直す（売れた数＋残りの数を、仕入れ数の概算にする）
+    const FEAT_KEYS = ['cash', 'disc', 'cost', 'open', 'code', 'staff', 'limit', 'memo', 'pre', 'tile', 'pop', 'hitsu', 'plan', 'resv', 'recount'];
     function normStaffName(v) { return String(v == null ? '' : v).normalize('NFKC').replace(/\s+/g, ' ').trim().slice(0, 12); }
     function normFeatCfg(f) {
         f = (f && typeof f === 'object') ? f : {};
@@ -18264,12 +18430,16 @@
             else if (currentSub === 'tiles') renderTileEditor();
             else if (currentSub === 'pop') renderPopView();
             else if (currentSub === 'bf') renderBfView();
+            else if (currentSub === 'plans') renderPlansView();
+            else if (currentSub === 'archive') renderArchiveList();
         }
         hitsuWatch();
+        syncPlanWatch();
+        renderPlanCta();
         if (currentView === 'session' && currentSub === 'open-stock') renderInventorySetup();
         if (currentView === 'session' && (!currentSub || currentSub === 'open-new')) renderOpenMenu();
     }
-    const FEAT_LABELS = { cash: '釣り銭とレジ締め', disc: '手入力の値引き', cost: '原価と粗利', open: '手打ち', code: 'バーコード', staff: '担当者', limit: '個数制限', memo: '申し送り', pop: 'POP・ポスター', hitsu: '筆談' };
+    const FEAT_LABELS = { cash: '釣り銭とレジ締め', disc: '手入力の値引き', cost: '原価と粗利', open: '手打ち', code: 'バーコード', staff: '担当者', limit: '個数制限', memo: '申し送り', pop: 'POP・ポスター', hitsu: '筆談', plan: '販売会の予定', resv: '予約フォーム', recount: '在庫の数え直し' };
     // 機能の一覧（消費税・委託商品も、ここでまとめてオン・オフできる）
     function featList() {
         return [
@@ -18283,6 +18453,9 @@
             { k: 'tile', ic: 'tiles', t: 'タイル配置', s: 'タブレットの横向き・パソコンで、商品を分類ごとのページにタイルで並べる（スクロールしない・空きのマスも作れる・自由に並べ替え）', detail: 'tiles' },
             { k: 'pop', ic: 'image', t: 'POP・ポスター', s: '販売中の商品を押すと、POP・ポスターの下書きを自動で作る。直して画像で保存・印刷する（テンプレート・スタンプ・イラスト・フォント）', detail: 'pop' },
             { k: 'hitsu', ic: 'hitsu', t: '筆談', s: 'レジの上の「筆談」を押すと、レジとCDで、文字と手書きでお客様とお話しできる（オフの時は、CDに何も出ない）', detail: 'bf' },
+            { k: 'plan', ic: 'calendar', t: '販売会の予定', s: '臨時・不定期の販売会を前もって作っておき、当日は予定から開店する（日時・場所・実施団体・メニュー・仕入れ数・目標・比べる相手）。集計の時間の区切りも細かくできる', detail: 'plans' },
+            ...(window.FIREBASE_CONFIG ? [{ k: 'resv', ic: 'qr', t: '予約フォーム', s: 'お客様がスマホから予約できるページを作る。予約は、その予定で開店したレジの「予約」に自動で入る（「販売会の予定」と一緒に使う）', detail: 'resv' }] : []),
+            { k: 'recount', ic: 'box', t: '在庫の数え直し', s: '閉店した後に残りの数を入れて、「売れた数＋残りの数」を仕入れ数（概算）として集計に使う（前もって数えられなかった時）', detail: 'archive' },
             { k: 'pre', ic: 'printer', t: '会計前レシート', s: 'お会計の窓から、払う前の明細（小計・割引・消費税・合計）を印刷する（お客様に金額を見せる時など）' },
             { k: 'limit', ic: 'box', t: '個数制限', s: '商品ごとに「1会計で◯個まで」を決める（「商品・在庫の調整」で入れる。モバイルオーダーにも効く）' },
             ...(isKitchen() ? [{ k: 'memo', ic: 'pencil', t: '申し送り', s: 'お会計・後で会計・モバイルオーダーで申し送り（アレルギー・袋は不要 など）を書いて、KDと伝票に出す' }] : []),
@@ -20140,7 +20313,7 @@
     // 15分ごとに会計件数（＝客数）を集計する。売上のない時間帯も0として連続表示する。
     function buildCustomerTimeline() {
         if (salesHistory.length === 0) return null;
-        const slotMs = 15 * 60000;
+        const slotMs = reportSlot() * 60000;
         const floorSlot = t => Math.floor(t / slotMs) * slotMs;
         const times = salesHistory.map(h => new Date(h.time).getTime());
         const first = floorSlot(Math.min(...times));
@@ -20215,7 +20388,7 @@
             }
         });
         svg += `</svg>`;
-        box.innerHTML = chartCaption('客数（人）', '時刻（15分ごと）') + svg;
+        box.innerHTML = chartCaption('客数（人）', `時刻（${reportSlot()}分ごと）`) + svg;
     }
     // ▲▲▲ ここまで ▲▲▲
 
@@ -20523,6 +20696,7 @@
             try { await fbDb.enablePersistence({ synchronizeTabs: true }); } catch (e) { /* 複数タブ等で無効でも続行 */ }
             await fbAuth.signInAnonymously();
             syncReady = true;
+            setTimeout(planAfterSyncReady, 0);   // 予定：営業中のスマホの予約を見続ける・消しそびれた予約を消す
             updateSyncUi();
             startInboxWatch();        // いつもの端末への「合流しますか」の知らせ
             // この端末がお客様用なら、レジ役が出している内容の購読だけを始める
@@ -21000,6 +21174,7 @@
             id: res.id, name: res.name || '', items: items, total: Number(res.total) || 0,
             ...(typeof res.setDisc === 'boolean' ? { setDisc: res.setDisc } : {}),
             ...(res.setRule !== undefined ? { setRule: normSetRule(res.setRule) } : {}),
+            ...(normWebInfo(res.web) ? { web: normWebInfo(res.web) } : {}),
             roundId: syncRoundId,
             at: Date.now(), by: getDeviceId()
         }).catch(e => console.warn('予約の共有に失敗しました', e));
@@ -21025,7 +21200,8 @@
                 if (!inCurrentRound(d.roundId)) return;   // 前の回に残っている予約は見ない
                 rows.push({ id: d.id, name: d.name || '', items: Array.isArray(d.items) ? d.items : [], total: Number(d.total) || 0,
                             setDisc: typeof d.setDisc === 'boolean' ? d.setDisc : undefined,
-                            setRule: d.setRule !== undefined ? normSetRule(d.setRule) : undefined });
+                            setRule: d.setRule !== undefined ? normSetRule(d.setRule) : undefined,
+                            ...(normWebInfo(d.web) ? { web: normWebInfo(d.web) } : {}) });
             });
             if (firstSnapshot) {
                 // 合流したとき、この端末がすでに持っていた予約を消してしまわない。
@@ -21067,6 +21243,1003 @@
         if (fbResUnsub) { try { fbResUnsub(); } catch (e) {} fbResUnsub = null; }
         stopOrdersSubscription();
     }
+
+    // ▼▼▼ 販売会の予定（機能：plan）・予約フォーム（機能：resv）▼▼▼
+    // 臨時・不定期の販売会のために、販売会を前もって作っておき、当日は予定から開店する。
+    // ・予定はこの端末の中に置く（作った端末で開店する）。バックアップにも入る
+    // ・予約フォームを使う予定は、お客様が読む文書（plans/{予定の印}）を置き場に出す。
+    //   お客様の予約は plans/{予定の印}/resv に入り、その予定で開店したレジの「予約」に自動で入る
+    // ・閉店したら、置き場の予約（名前・電話番号）は消す（個人の情報を残さない）
+    const PLANS_KEY = sk('taizanboku_plans');
+    const RESV_CFG_KEY = sk('taizanboku_resv_cfg');
+    const PLANS_COL = 'plans';
+    const PLAN_SLOTS = [5, 10, 15, 30];
+    let salePlans = [];
+    let planDraft = null;        // 直している予定（「保存する」まで salePlans には入れない）
+    let planDraftNew = false;
+    let planViewId = '';         // 予約の一覧で見ている予定
+
+    function newPlanId() {
+        const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+        const a = new Uint32Array(22);
+        try { crypto.getRandomValues(a); } catch (e) { for (let i = 0; i < a.length; i++) a[i] = Math.floor(Math.random() * 4294967295); }
+        return Array.from(a, x => abc[x % abc.length]).join('');
+    }
+    const planStr = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f]/g, ' ').slice(0, n);
+    const planInt = (v, lo, hi) => { const n = Math.floor(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : lo; };
+    function normPlan(p) {
+        p = (p && typeof p === 'object') ? p : {};
+        const r = (p.resv && typeof p.resv === 'object') ? p.resv : {};
+        const hm = v => /^\d{2}:\d{2}$/.test(v) ? v : '';
+        const caps = {};
+        if (r.caps && typeof r.caps === 'object') Object.keys(r.caps).slice(0, 200).forEach(k => {
+            const n = Number(r.caps[k]);
+            if (Number.isFinite(n) && n >= 0) caps[String(k).slice(0, 20)] = Math.min(9999, Math.floor(n));
+        });
+        return {
+            id: /^[A-Za-z0-9]{16,40}$/.test(p.id) ? p.id : newPlanId(),
+            name: planStr(p.name, 40), kind: p.kind === 'teiki' ? 'teiki' : 'rinji',
+            date: /^\d{4}-\d{2}-\d{2}$/.test(p.date) ? p.date : '',
+            start: hm(p.start), end: hm(p.end),
+            place: planStr(p.place, 60), org: planStr(p.org, 60), collab: planStr(p.collab, 80), comment: planStr(p.comment, 200),
+            cmp: typeof p.cmp === 'string' && p.cmp ? p.cmp.slice(0, 40) : 'kind',
+            goal: planInt(p.goal, 0, 99999999),
+            slot: PLAN_SLOTS.includes(Number(p.slot)) ? Number(p.slot) : 15,
+            products: (Array.isArray(p.products) ? p.products : []).filter(x => x && typeof x === 'object').slice(0, 200),
+            resv: {
+                on: r.on === true,
+                from: planInt(r.from, 0, 9e15), to: planInt(r.to, 0, 9e15),
+                pickups: (Array.isArray(r.pickups) ? r.pickups : []).filter(x => /^\d{2}:\d{2}$/.test(x)).slice(0, 48),
+                caps
+            },
+            imported: (Array.isArray(p.imported) ? p.imported : []).filter(x => typeof x === 'string').slice(-500),
+            status: ['plan', 'open', 'done'].includes(p.status) ? p.status : 'plan',
+            pubAt: planInt(p.pubAt, 0, 9e15), purge: p.purge === true,
+            created: planInt(p.created, 0, 9e15) || Date.now(), updated: planInt(p.updated, 0, 9e15)
+        };
+    }
+    function loadPlans() {
+        try { const a = JSON.parse(localStorage.getItem(PLANS_KEY) || '[]'); salePlans = Array.isArray(a) ? a.map(normPlan) : []; }
+        catch (e) { salePlans = []; }
+    }
+    function savePlans() {
+        try { localStorage.setItem(PLANS_KEY, JSON.stringify(salePlans)); }
+        catch (e) { showToast('予定を保存できませんでした（端末の空きが足りないかもしれません）'); }
+    }
+    function planById(id) { return id ? salePlans.find(p => p.id === id) || null : null; }
+
+    // 予約フォームの決まり（この端末。予定を出す時に、お客様の文書へ写す）
+    function normResvCfg(c) {
+        c = (c && typeof c === 'object') ? c : {};
+        return {
+            tel: ['off', 'opt', 'req'].includes(c.tel) ? c.tel : 'off',
+            memo: c.memo === true,
+            maxQty: [3, 5, 10, 20, 30].includes(Number(c.maxQty)) ? Number(c.maxQty) : 10,
+            note: planStr(c.note, 300)
+        };
+    }
+    let resvCfg = normResvCfg();
+    function loadResvCfg() { try { resvCfg = normResvCfg(JSON.parse(localStorage.getItem(RESV_CFG_KEY) || '{}')); } catch (e) { resvCfg = normResvCfg(); } }
+    function saveResvCfg() { try { localStorage.setItem(RESV_CFG_KEY, JSON.stringify(resvCfg)); } catch (e) {} }
+    loadPlans();
+    loadResvCfg();
+
+    // ---- 日時の見せ方 ----
+    const WEEK_JA = ['日', '月', '火', '水', '木', '金', '土'];
+    function planDateText(p) {
+        if (!p.date) return '日にち未定';
+        const [y, m, d] = p.date.split('-').map(Number);
+        const w = WEEK_JA[new Date(y, m - 1, d).getDay()];
+        const tm = p.start ? `${p.start}${p.end ? '〜' + p.end : '〜'}` : '';
+        return `${m}月${d}日（${w}）${tm ? ' ' + tm : ''}`;
+    }
+    function planStartMs(p) {
+        if (!p.date) return 0;
+        const [y, m, d] = p.date.split('-').map(Number);
+        const [hh, mm] = (p.start || '00:00').split(':').map(Number);
+        return new Date(y, m - 1, d, hh, mm).getTime();
+    }
+    function planEndMs(p) {
+        if (!p.date || !p.end) return 0;
+        const [y, m, d] = p.date.split('-').map(Number);
+        const [hh, mm] = p.end.split(':').map(Number);
+        return new Date(y, m - 1, d, hh, mm).getTime();
+    }
+    function todayStr(d) { d = d || new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+    function msToLocalInput(ms) {
+        if (!ms) return '';
+        const d = new Date(ms), p2 = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`;
+    }
+    function localInputToMs(v) {
+        const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v || '');
+        return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime() : 0;
+    }
+    function shortDateTime(ms) {
+        if (!ms) return '';
+        const d = new Date(ms);
+        return `${d.getMonth() + 1}/${d.getDate()}（${WEEK_JA[d.getDay()]}）${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+    // これから・今日の予定（終わった物は後ろ）
+    function upcomingPlans() {
+        const today = todayStr();
+        return salePlans.filter(p => p.status !== 'done' && (!p.date || p.date >= today))
+            .sort((a, b) => (a.date || '9999').localeCompare(b.date || '9999') || (a.start || '').localeCompare(b.start || ''));
+    }
+    function resvState(p) {
+        if (!p.resv.on) return 'off';
+        const now = Date.now();
+        if (p.resv.from && now < p.resv.from) return 'before';
+        if (p.resv.to && now >= p.resv.to) return 'after';
+        return 'open';
+    }
+    function resvStateText(p) {
+        const s = resvState(p);
+        if (s === 'off') return '';
+        if (!p.pubAt) return '予約：まだ公開していません';
+        if (s === 'before') return `予約：${shortDateTime(p.resv.from)}から受付`;
+        if (s === 'after') return '予約：締め切りました';
+        return `予約：受付中（${shortDateTime(p.resv.to)}まで）`;
+    }
+    function resvPageUrl(p) {
+        const base = location.href.split('#')[0].split('?')[0].replace(/[^/]*$/, '');
+        return base + 'reserve.html?p=' + encodeURIComponent(p.id);
+    }
+
+    // ---- 予定の一覧 ----
+    function planSub() {
+        const up = upcomingPlans();
+        if (!up.length) return 'まだありません・臨時の販売会を前もって作っておけます';
+        return `${up.length}件・次は${escHtml(planDateText(up[0]))}「${escHtml(up[0].name || '無題')}」`;
+    }
+    function renderPlansView() {
+        const box = document.getElementById('plans-body');
+        if (!box) return;
+        const up = upcomingPlans();
+        const past = salePlans.filter(p => !up.includes(p)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        const card = p => {
+            const n = (p.products || []).filter(x => x.active !== false).length;
+            const rs = resvStateText(p);
+            const isToday = p.date === todayStr();
+            const canOpen = !currentSession && p.status !== 'done';
+            return `<div class="plan-card${isToday ? ' is-today' : ''}">
+                <div class="plan-top">
+                    <span class="plan-kind ${p.kind}">${p.kind === 'rinji' ? '臨時・不定期' : 'いつもの'}</span>
+                    ${isToday ? '<span class="plan-today">今日</span>' : ''}
+                    ${p.status === 'open' ? '<span class="plan-today">営業中</span>' : ''}
+                    ${p.status === 'done' ? '<span class="plan-done">終わりました</span>' : ''}
+                </div>
+                <div class="plan-name">${escHtml(p.name || '無題')}</div>
+                <div class="plan-when">${escHtml(planDateText(p))}${p.place ? `<span>${escHtml(p.place)}</span>` : ''}</div>
+                <div class="plan-meta"><span>${n}品</span>${p.goal ? `<span>目標 ${yenStr(p.goal)}</span>` : ''}${rs ? `<span>${escHtml(rs)}</span>` : ''}</div>
+                <div class="plan-acts">
+                    ${canOpen ? `<button class="action-btn btn-checkout" onclick="usePlanForOpen('${p.id}')"><svg class="ic"><use href="#ic-store"/></svg>この予定で開店の準備</button>` : ''}
+                    <button class="action-btn btn-secondary" onclick="editPlan('${p.id}')"><svg class="ic"><use href="#ic-pencil"/></svg>直す</button>
+                    ${p.resv.on && featOn('resv') ? `<button class="action-btn btn-secondary" onclick="openPlanResv('${p.id}')"><svg class="ic"><use href="#ic-calendar"/></svg>予約を見る</button>` : ''}
+                    ${featOn('pop') && typeof planPoster === 'function' ? `<button class="action-btn btn-secondary" onclick="planPoster('${p.id}')"><svg class="ic"><use href="#ic-image"/></svg>ポスター</button>` : ''}
+                    <button class="action-btn btn-secondary" onclick="copyPlan('${p.id}')"><svg class="ic"><use href="#ic-copy"/></svg>写して作る</button>
+                    ${p.status !== 'open' ? `<button class="action-btn btn-secondary plan-del" onclick="deletePlan('${p.id}')" aria-label="この予定を消す"><svg class="ic"><use href="#ic-trash"/></svg></button>` : ''}
+                </div>
+            </div>`;
+        };
+        box.innerHTML = `<p class="settings-hint" style="margin-top:0;">臨時・不定期の販売会を前もって作っておくと、当日は<b>「この予定で開店の準備」</b>を押すだけで、名前・メニュー・仕入れ数・目標・比べる相手がそろいます。予定は<b>この端末</b>に保存します（作った端末で開店してください）。</p>
+            <button class="action-btn btn-checkout" style="width:100%; margin:0 0 14px;" onclick="newPlan()"><svg class="ic"><use href="#ic-plus"/></svg>新しい予定を作る</button>
+            ${up.length ? up.map(card).join('') : emptyState('calendar', '予定はまだありません', '「新しい予定を作る」から、日にち・場所・メニューを入れておけます。')}
+            ${past.length ? `<div class="menu-head">終わった予定</div>${past.map(card).join('')}` : ''}`;
+    }
+    function newPlan() {
+        playSound();
+        const base = currentSession ? products : (tempSetupProducts.length ? tempSetupProducts : (products.length ? products : DEFAULT_PRODUCTS));
+        planDraft = normPlan({
+            name: '', kind: 'rinji', date: todayStr(new Date(Date.now() + 7 * 86400000)), start: '10:00', end: '13:00',
+            org: shopInfo().name || '', products: JSON.parse(JSON.stringify(base)),
+            resv: { on: false, pickups: [] }
+        });
+        planDraftNew = true;
+        openPanel('settings', 'plan-edit');
+    }
+    function editPlan(id) {
+        const p = planById(id);
+        if (!p) { playError(); return; }
+        playSound();
+        planDraft = normPlan(JSON.parse(JSON.stringify(p)));
+        planDraftNew = false;
+        openPanel('settings', 'plan-edit');
+    }
+    function copyPlan(id) {
+        const p = planById(id);
+        if (!p) return;
+        playSound();
+        const c = JSON.parse(JSON.stringify(p));
+        delete c.id; c.status = 'plan'; c.imported = []; c.pubAt = 0; c.purge = false; c.created = Date.now();
+        c.name = c.name ? c.name + '（写し）' : '';
+        c.resv = Object.assign({}, c.resv, { from: 0, to: 0 });
+        planDraft = normPlan(c);
+        planDraftNew = true;
+        openPanel('settings', 'plan-edit');
+    }
+    function deletePlan(id) {
+        const p = planById(id);
+        if (!p) return;
+        if (p.status === 'open') { playError(); alert('営業中の予定は消せません。閉店してから消してください。'); return; }
+        if (!confirm(`予定「${p.name || '無題'}」を消します。よろしいですか？${p.resv.on && p.pubAt ? '\n予約フォームも閉じ、置き場の予約も消します。' : ''}`)) return;
+        salePlans = salePlans.filter(x => x.id !== id);
+        savePlans();
+        if (p.pubAt) purgePlanOnline(p, true);
+        renderPlansView();
+        showToast('予定を消しました');
+    }
+
+    // ---- 予定を直す ----
+    function planSet(k, v) {
+        if (!planDraft) return;
+        planDraft[k] = v;
+        if (k === 'start' || k === 'end' || k === 'date') { const ps = document.getElementById('plan-pickups'); if (ps) ps.innerHTML = planPickupChips(); }
+    }
+    function planSetPick(k, v) {
+        if (!planDraft) return;
+        playSound(660, 0.04);
+        planDraft[k] = v;
+        renderPlanEdit();
+    }
+    function planCmpOptions(p) {
+        const arc = sessionArchive.filter(a => a && a.name);
+        const opt = (v, t) => `<option value="${escHtml(v)}"${p.cmp === v ? ' selected' : ''}>${escHtml(t)}</option>`;
+        return opt('kind', p.kind === 'rinji' ? '前回の臨時・不定期の販売会' : '前回のいつもの販売会')
+            + opt('last', 'すぐ前の販売会（種類を問わない）')
+            + opt('none', '比べない')
+            + arc.slice().reverse().map(a => {
+                const d = new Date(a.date);
+                return opt(a.date, `${d.getMonth() + 1}/${d.getDate()}「${a.name}」`);
+            }).join('');
+    }
+    function planPickupChips() {
+        const p = planDraft;
+        if (!p) return '';
+        const times = [];
+        if (p.start && p.end && p.end > p.start) {
+            let [h, m] = p.start.split(':').map(Number);
+            for (let i = 0; i < 48; i++) {
+                const t = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                if (t >= p.end) break;
+                times.push(t);
+                m += 30; if (m >= 60) { m -= 60; h++; }
+            }
+        }
+        if (!times.length) return '<p class="settings-hint" style="margin:0;">開始と終わりの時刻を入れると、30分ごとの時間を選べます。</p>';
+        return `<div class="chip-pick" role="group" aria-label="受け取り時間">${times.map(t => {
+            const on = p.resv.pickups.includes(t);
+            return `<button type="button" class="${on ? 'on' : ''}" aria-pressed="${on}" onclick="planTogglePickup('${t}')">${t}</button>`;
+        }).join('')}</div>`;
+    }
+    function planTogglePickup(t) {
+        if (!planDraft) return;
+        playSound(660, 0.04);
+        const a = planDraft.resv.pickups;
+        planDraft.resv.pickups = a.includes(t) ? a.filter(x => x !== t) : a.concat([t]).sort();
+        const ps = document.getElementById('plan-pickups');
+        if (ps) ps.innerHTML = planPickupChips();
+    }
+    function planCatOptions(type) {
+        return CAT_TYPES.map(c => `<option value="${escHtml(c.id)}"${c.id === type ? ' selected' : ''}>${escHtml(c.label)}</option>`).join('');
+    }
+    function planItemRows() {
+        const p = planDraft;
+        const resvOn = featOn('resv') && p.resv.on;
+        if (!p.products.length) return '<p class="settings-hint">まだ商品がありません。下のボタンから入れてください。</p>';
+        return `<div class="plan-items">
+            ${p.products.map((x, i) => {
+                const cap = p.resv.caps[String(x.id)];
+                return `<div class="pi-row${x.active === false ? ' off' : ''}">
+                    <div class="pi-top">
+                        <input type="checkbox" class="pi-on" ${x.active !== false ? 'checked' : ''} onchange="planItemSet(${i}, 'active', this.checked)" aria-label="${escHtml(x.name)}を売る">
+                        <input type="text" class="pi-name" maxlength="30" value="${escHtml(x.name || '')}" onchange="planItemSet(${i}, 'name', this.value)" aria-label="商品名">
+                    </div>
+                    <div class="pi-fields">
+                        <label><span>分類</span><select onchange="planItemSet(${i}, 'type', this.value)">${planCatOptions(x.type)}</select></label>
+                        <label><span>値段（円）</span><input type="number" inputmode="numeric" min="0" value="${Number(x.price) || 0}" onchange="planItemSet(${i}, 'price', this.value)"></label>
+                        <label><span>仕入れ数</span><input type="number" inputmode="numeric" min="0" value="${x.unlimited ? '' : (Number(x.initialStock) || 0)}" ${x.unlimited ? 'disabled placeholder="数えない"' : ''} onchange="planItemSet(${i}, 'initialStock', this.value)"></label>
+                        ${resvOn ? `<label><span>予約の上限</span><input type="number" inputmode="numeric" min="0" value="${cap == null ? '' : cap}" placeholder="なし" onchange="planCapSet(${i}, this.value)"></label>` : ''}
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>
+        ${resvOn ? '<p class="settings-hint">予約の上限：空欄なら上限なし、0 なら予約では受けません（当日だけ売る）。</p>' : ''}`;
+    }
+    function planItemSet(i, k, v) {
+        const x = planDraft && planDraft.products[i];
+        if (!x) return;
+        if (k === 'active') { x.active = !!v; const row = document.querySelectorAll('#plan-edit-body .pi-row')[i]; if (row) row.classList.toggle('off', !v); return; }
+        if (k === 'name') { x.name = planStr(v, 30).trim(); return; }
+        if (k === 'type') { x.type = v; return; }
+        if (k === 'price') { x.price = yenInput(v); return; }
+        if (k === 'initialStock') { x.initialStock = planInt(v, 0, 99999); x.stock = x.initialStock; return; }
+    }
+    function planCapSet(i, v) {
+        const x = planDraft && planDraft.products[i];
+        if (!x) return;
+        const s = String(v == null ? '' : v).normalize('NFKC').trim();
+        if (s === '') delete planDraft.resv.caps[String(x.id)];
+        else planDraft.resv.caps[String(x.id)] = planInt(s, 0, 9999);
+    }
+    function planAddItem() {
+        if (!planDraft) return;
+        const nm = (prompt('足す商品の名前') || '').trim();
+        if (!nm) return;
+        const price = yenInput(prompt(`「${nm}」の値段（円）`) || '0');
+        const id = planDraft.products.reduce((m, x) => Math.max(m, Number(x.id) || 0), 0) + 1;
+        planDraft.products.push({ id, name: nm.slice(0, 30), price, type: (CAT_TYPES[0] || {}).id || 'sweet', stock: 0, initialStock: 0, unlimited: false, note: '', active: true, cost: null, taste: null });
+        renderPlanEdit();
+    }
+    function planLoadMenu(src) {
+        if (!planDraft) return;
+        let list = null, label = '';
+        if (src === 'now') { list = currentSession ? products : (tempSetupProducts.length ? tempSetupProducts : products); label = 'いまの商品'; }
+        else if (window.PRODUCT_SETS && window.PRODUCT_SETS[src]) { list = buildProductsFromSet(window.PRODUCT_SETS[src]); label = window.PRODUCT_SETS[src].label || src; }
+        if (!list || !list.length) { playError(); return; }
+        if (planDraft.products.length && !confirm(`この予定のメニューを「${label}」（${list.length}品）に入れ替えます。よろしいですか？`)) return;
+        planDraft.products = JSON.parse(JSON.stringify(list));
+        planDraft.resv.caps = {};
+        renderPlanEdit();
+        showToast(`「${label}」を入れました`);
+    }
+    function renderPlanEdit() {
+        const box = document.getElementById('plan-edit-body');
+        if (!box) return;
+        const p = planDraft;
+        if (!p) { box.innerHTML = '<p class="settings-hint">予定が選ばれていません。</p>'; return; }
+        const sets = window.PRODUCT_SETS || {};
+        const resvAllowed = featOn('resv');
+        const fld = (id, label, html) => `<label class="field-label" for="${id}">${label}</label>${html}`;
+        const txt = (k, label, max, ph) => fld('plan-' + k, label, `<input type="text" id="plan-${k}" maxlength="${max}" value="${escHtml(p[k] || '')}" placeholder="${escHtml(ph || '')}" oninput="planSet('${k}', this.value)" autocomplete="off">`);
+        const st = resvState(p);
+        box.innerHTML = `
+            ${txt('name', '販売会の名前（必ず入れる）', 40, '例：10月の臨時販売会')}
+            <label class="field-label">種類</label>
+            <div class="chip-pick" role="group" aria-label="種類">
+                <button type="button" class="${p.kind === 'rinji' ? 'on' : ''}" aria-pressed="${p.kind === 'rinji'}" onclick="planSetPick('kind','rinji')">臨時・不定期</button>
+                <button type="button" class="${p.kind === 'teiki' ? 'on' : ''}" aria-pressed="${p.kind === 'teiki'}" onclick="planSetPick('kind','teiki')">いつもの</button>
+            </div>
+            <div class="plan-when-row">
+                <div>${fld('plan-date', '開催日', `<input type="date" id="plan-date" value="${p.date}" onchange="planSet('date', this.value)">`)}</div>
+                <div class="plan-time2">
+                    <div>${fld('plan-start', '始まり', `<input type="time" id="plan-start" value="${p.start}" step="300" onchange="planSet('start', this.value)">`)}</div>
+                    <div>${fld('plan-end', '終わり', `<input type="time" id="plan-end" value="${p.end}" step="300" onchange="planSet('end', this.value)">`)}</div>
+                </div>
+            </div>
+            ${txt('place', '開催場所', 60, '例：〇〇公民館 1階ロビー')}
+            ${txt('org', '実施団体', 60, '例：泰山木')}
+            ${txt('collab', 'コラボ団体（あれば）', 80, '例：〇〇カフェ')}
+            ${fld('plan-comment', '一言コメント（ポスター・予約のページに出ます）', `<textarea id="plan-comment" maxlength="200" placeholder="例：焼きたてのパンをご用意してお待ちしています。" oninput="planSet('comment', this.value)">${escHtml(p.comment)}</textarea>`)}
+
+            <label class="field-label sec">メニューと仕入れ数</label>
+            ${planItemRows()}
+            <div class="plan-btns">
+                <button type="button" class="action-btn btn-secondary" onclick="planAddItem()"><svg class="ic"><use href="#ic-plus"/></svg>1品足す</button>
+                <button type="button" class="action-btn btn-secondary" onclick="planLoadMenu('now')"><svg class="ic"><use href="#ic-copy"/></svg>いまの商品を入れる</button>
+                ${Object.keys(sets).map(k => `<button type="button" class="action-btn btn-secondary" onclick="planLoadMenu('${escArg(k)}')"><svg class="ic"><use href="#ic-box"/></svg>「${escHtml(sets[k].label || k)}」を入れる</button>`).join('')}
+            </div>
+
+            <label class="field-label sec">集計</label>
+            ${fld('plan-goal', '売上目標（円・空欄なら決めない）', `<input type="number" id="plan-goal" inputmode="numeric" min="0" step="1000" value="${p.goal || ''}" placeholder="例: 30000" oninput="planSet('goal', yenInput(this.value))">`)}
+            ${fld('plan-cmp', '前回比で比べる相手', `<select id="plan-cmp" onchange="planSet('cmp', this.value)">${planCmpOptions(p)}</select>`)}
+            <p class="settings-hint">臨時の販売会は、いつもの販売会と比べても参考にならないことが多いので、はじめは「前回の臨時・不定期の販売会」と比べます。</p>
+            <label class="field-label">時間の区切り（短い販売会は細かくすると流れが見えます）</label>
+            <div class="chip-pick" role="group" aria-label="時間の区切り">${PLAN_SLOTS.map(n =>
+                `<button type="button" class="${p.slot === n ? 'on' : ''}" aria-pressed="${p.slot === n}" onclick="planSetPick('slot', ${n})">${n}分</button>`).join('')}</div>
+
+            ${resvAllowed ? `<label class="field-label sec">予約フォーム</label>
+            <div class="sw-row">
+                <div class="sw-text"><b>スマホから予約を受ける</b><span>予約のページ（QRコード）を作ります。予約は、この予定で開店したレジの「予約」に自動で入ります</span></div>
+                <input type="checkbox" class="ios-switch" ${p.resv.on ? 'checked' : ''} onchange="planResvOn(this.checked)" aria-label="スマホから予約を受ける">
+            </div>
+            ${p.resv.on ? `
+                <div class="plan-when-row">
+                    <div>${fld('plan-rfrom', '受付の始め', `<input type="datetime-local" id="plan-rfrom" value="${msToLocalInput(p.resv.from)}" onchange="planDraft.resv.from = localInputToMs(this.value)">`)}</div>
+                    <div>${fld('plan-rto', '受付の終わり（締め切り）', `<input type="datetime-local" id="plan-rto" value="${msToLocalInput(p.resv.to)}" onchange="planDraft.resv.to = localInputToMs(this.value)">`)}</div>
+                </div>
+                <label class="field-label">受け取り時間（お客様が選ぶ。何も選ばなければ聞きません）</label>
+                <div id="plan-pickups">${planPickupChips()}</div>
+                <p class="settings-hint">聞く項目（電話番号・ひとことなど）と、1人が予約できる数は「設定 → 予約フォーム」で決めます。品ごとの上限は、上のメニューの「予約の上限」に入れます。</p>
+                ${!planDraftNew && p.pubAt ? planShareHtml(p) : ''}` : ''}` : ''}
+
+            <button class="action-btn btn-checkout" style="width:100%; margin-top:18px;" onclick="savePlanDraft()"><svg class="ic"><use href="#ic-check"/></svg>この予定を保存する</button>
+            ${st === 'open' && p.pubAt ? '' : ''}`;
+    }
+    function planShareHtml(p) {
+        const url = resvPageUrl(p);
+        let qr = '';
+        try { qr = qrSvg(url); } catch (e) {}
+        return `<div class="plan-share">
+            <div class="plan-qr">${qr}</div>
+            <div class="plan-share-t"><b>${escHtml(resvStateText(p))}</b><span class="plan-url">${escHtml(url)}</span>
+                <div class="plan-btns">
+                    <button type="button" class="action-btn btn-secondary" onclick="copyResvUrl('${p.id}')"><svg class="ic"><use href="#ic-copy"/></svg>リンクをコピー</button>
+                    <button type="button" class="action-btn btn-secondary" onclick="printResvQr('${p.id}')"><svg class="ic"><use href="#ic-printer"/></svg>QRコードを印刷</button>
+                </div>
+            </div>
+        </div>`;
+    }
+    function planResvOn(on) {
+        if (!planDraft) return;
+        playSound(660, 0.05);
+        planDraft.resv.on = !!on;
+        if (on) {
+            if (!planDraft.resv.from) planDraft.resv.from = Date.now();
+            if (!planDraft.resv.to) {
+                // 締め切りのはじめの値：前の日の18時。もう近い時は開店の時刻、それも過ぎていたら終わりの時刻
+                const now = Date.now(), s = planStartMs(planDraft), e = planEndMs(planDraft);
+                const eve = s ? new Date(s - 86400000).setHours(18, 0, 0, 0) : 0;
+                planDraft.resv.to = eve > now + 3600000 ? eve : s > now ? s : e > now ? e : now + 86400000;
+            }
+        }
+        renderPlanEdit();
+    }
+    async function savePlanDraft() {
+        const p = planDraft;
+        if (!p) return;
+        p.name = planStr(p.name, 40).trim();
+        if (!p.name) { playError(); alert('販売会の名前を入れてください。'); const el = document.getElementById('plan-name'); if (el) el.focus(); return; }
+        const sell = p.products.filter(x => x.active !== false && String(x.name || '').trim());
+        if (!sell.length) { playError(); alert('売る商品を1つ以上入れてください。'); return; }
+        const seen = {};
+        const dupe = sell.map(x => String(x.name).trim()).find(n => (seen[n] = (seen[n] || 0) + 1) === 2);
+        if (dupe) { playError(); alert(`同じ名前の商品が2つあります：「${dupe}」\n名前を変えるか、片方の「売る」を外してください。`); return; }
+        if (p.start && p.end && p.end <= p.start) { playError(); alert('終わりの時刻は、始まりより後にしてください。'); return; }
+        if (featOn('resv') && p.resv.on) {
+            if (!p.resv.to || (p.resv.from && p.resv.to <= p.resv.from)) { playError(); alert('予約の受付の終わりは、始めより後にしてください。'); return; }
+            if (p.resv.to <= Date.now() && !confirm('予約の受付の終わり（締め切り）が、もう過ぎています。\nこのままでは予約を受けられません。このまま保存しますか？')) return;
+            if (!window.FIREBASE_CONFIG) { playError(); alert('この端末は、置き場の準備が無いため、予約フォームを作れません。'); return; }
+        }
+        p.updated = Date.now();
+        const clean = normPlan(p);
+        const i = salePlans.findIndex(x => x.id === clean.id);
+        if (i >= 0) salePlans[i] = Object.assign(clean, { status: salePlans[i].status, imported: salePlans[i].imported, pubAt: salePlans[i].pubAt, purge: salePlans[i].purge });
+        else salePlans.push(clean);
+        savePlans();
+        playSuccess();
+        // 予約フォーム：お客様の読む文書を出す（受けない時は「受け付けていません」にする）
+        if (clean.resv.on && featOn('resv')) {
+            const ok = await publishPlan(clean);
+            showToast(ok ? '予定を保存し、予約のページを公開しました' : '予定を保存しました（通信できないため、予約のページはまだです。電波の良い所で、もう一度保存してください）');
+            planDraft = normPlan(JSON.parse(JSON.stringify(clean)));
+            planDraftNew = false;
+            renderPlanEdit();
+            return;
+        }
+        if (clean.pubAt) publishPlan(clean);
+        showToast('予定を保存しました');
+        planDraft = null;
+        panelBack();
+    }
+
+    // ---- 予約のページ（お客様が読む文書）を出す ----
+    function planPublicDoc(p) {
+        const catName = id => (CAT_TYPES.find(c => c.id === id) || {}).label || '';
+        const items = p.products.filter(x => x.active !== false && String(x.name || '').trim()).map(x => {
+            const cap = p.resv.caps[String(x.id)];
+            return { id: String(x.id), name: String(x.name).trim().slice(0, 30), price: Number(x.price) || 0, cat: catName(x.type).slice(0, 12), cap: cap == null ? -1 : cap };
+        }).filter(x => x.cap !== 0).slice(0, 80);
+        return {
+            owners: [myUid()],
+            name: p.name, date: p.date, start: p.start, end: p.end, place: p.place, org: p.org, collab: p.collab, comment: p.comment,
+            shop: planStr(shopInfo().name, 40),
+            on: !!(p.resv.on && featOn('resv')), from: p.resv.from || 0, to: p.resv.to || 0,
+            pickups: p.resv.pickups.slice(0, 48), items,
+            tel: resvCfg.tel, memo: resvCfg.memo, maxQty: resvCfg.maxQty, note: resvCfg.note,
+            at: Date.now()
+        };
+    }
+    async function publishPlan(p) {
+        if (!syncReady || !fbDb) return false;
+        try {
+            const ref = fbDb.collection(PLANS_COL).doc(p.id);
+            const doc = planPublicDoc(p);
+            let snap = null;
+            try { snap = await ref.get(); } catch (e) { snap = null; }
+            if (snap && snap.exists) {
+                const owners = Array.isArray((snap.data() || {}).owners) ? snap.data().owners : [];
+                if (!owners.includes(myUid())) {
+                    alert('この予定の予約のページは、別の端末（またはデータを消す前のこの端末）が作ったため、直せません。\n「写して作る」で新しい予定にしてください。');
+                    return false;
+                }
+                doc.owners = owners;
+            }
+            await ref.set(doc);
+            const live = planById(p.id);
+            if (live) { live.pubAt = Date.now(); savePlans(); }
+            p.pubAt = Date.now();
+            return true;
+        } catch (e) {
+            console.warn('予約のページを出せませんでした', e);
+            return false;
+        }
+    }
+    function copyResvUrl(id) {
+        const p = planById(id);
+        if (!p) return;
+        const url = resvPageUrl(p);
+        playSound();
+        const done = () => showToast('予約のページのリンクをコピーしました');
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done, () => prompt('このリンクをコピーしてください', url));
+        else prompt('このリンクをコピーしてください', url);
+    }
+    function printResvQr(id) {
+        const p = planById(id);
+        if (!p) return;
+        const url = resvPageUrl(p);
+        let qr = '';
+        try { qr = qrSvg(url); } catch (e) {}
+        const body = `<div class="sheet">
+            <div class="h">ご予約はこちら</div>
+            <div class="n">${escHtml(p.name)}</div>
+            <div class="w">${escHtml(planDateText(p))}${p.place ? '・' + escHtml(p.place) : ''}</div>
+            <div class="q">${qr}</div>
+            <div class="t">スマホのカメラで読み取ってください</div>
+            <div class="d">受付：${escHtml(shortDateTime(p.resv.from))} 〜 ${escHtml(shortDateTime(p.resv.to))}</div>
+        </div>`;
+        const css = `body{margin:0;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;color:#1C1D22}
+            .sheet{width:150mm;margin:12mm auto;text-align:center}
+            .h{font-size:30px;font-weight:800}.n{font-size:22px;font-weight:800;margin-top:8px}.w{font-size:16px;margin-top:4px;color:#444}
+            .q svg{width:90mm;height:90mm;margin:10mm auto 4mm;display:block}.t{font-size:16px;font-weight:700}.d{font-size:14px;margin-top:6px;color:#444}`;
+        openPrintSheet('予約のQRコード', css, body);
+    }
+    // 印刷用の窓（窓を開けない端末では、その画面に出して印刷する）
+    function openPrintSheet(title, css, body) {
+        const w = window.open('', '_blank');
+        const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escHtml(title)}</title><style>${css}${printWindowBarCss()}</style></head><body>${printWindowBarHtml()}${body}${printWindowScript()}</body></html>`;
+        if (!w) { playError(); alert('印刷の窓を開けませんでした。ポップアップを許可してから、もう一度押してください。'); return; }
+        w.document.open(); w.document.write(html); w.document.close();
+    }
+
+    // ---- 予約を見る（予定ごと）----
+    let planResvUnsub = null, planResvPid = '', planResvRows = [], planResvErr = '';
+    function watchPlanResv(pid) {
+        if (planResvPid === pid && planResvUnsub) return;
+        stopPlanResvWatch();
+        if (!pid || !syncReady || !fbDb) return;
+        planResvPid = pid; planResvRows = []; planResvErr = '';
+        planResvUnsub = fbDb.collection(PLANS_COL).doc(pid).collection('resv').onSnapshot(snap => {
+            const rows = [];
+            snap.forEach(doc => { const r = normWebResv(doc.id, doc.data()); if (r) rows.push(r); });
+            rows.sort((a, b) => a.seq - b.seq);
+            planResvRows = rows;
+            planResvErr = '';
+            importWebReservations();
+            if (currentView === 'settings' && currentSub === 'plan-resv') renderPlanResv();
+        }, err => {
+            console.warn('予約の一覧を読めませんでした', err);
+            planResvErr = isPermErr(err) ? 'perm' : 'net';
+            if (currentView === 'settings' && currentSub === 'plan-resv') renderPlanResv();
+            // 置き場の都合で切れた時は、少し待ってつなぎ直す（権限が無い時はやめる）
+            const was = planResvPid;
+            stopPlanResvWatch();
+            if (planResvErr !== 'perm') setTimeout(() => { if (!planResvUnsub && planWatchWanted() === was) watchPlanResv(was); }, 15000);
+        });
+    }
+    function stopPlanResvWatch() {
+        if (planResvUnsub) { try { planResvUnsub(); } catch (e) {} }
+        planResvUnsub = null; planResvPid = '';
+    }
+    // いま見続けたい予定（営業中の予定・予約の一覧を開いている予定）
+    function planWatchWanted() {
+        const cur = planById(currentPlanId);
+        if (currentSession && cur && cur.resv.on && featOn('resv')) return cur.id;
+        if (currentView === 'settings' && currentSub === 'plan-resv') return planViewId;
+        return '';
+    }
+    function syncPlanWatch() {
+        const want = planWatchWanted();
+        if (!want) { stopPlanResvWatch(); return; }
+        watchPlanResv(want);
+    }
+    function normWebResv(id, d) {
+        d = d || {};
+        if (!/^r\d{1,7}$/.test(id)) return null;
+        const items = (Array.isArray(d.items) ? d.items : []).slice(0, 30).map(i => ({
+            id: planStr(i && i.id, 20), name: planStr(i && i.name, 30), price: Number(i && i.price) || 0, n: planInt(i && i.n, 0, 99)
+        })).filter(i => i.n > 0);
+        return {
+            rid: id, seq: planInt(d.seq, 0, 9999999), name: planStr(d.name, 30), tel: planStr(d.tel, 20), memo: planStr(d.memo, 200),
+            pickup: /^\d{2}:\d{2}$/.test(d.pickup) ? d.pickup : '', items,
+            total: planInt(d.total, 0, 9999999), st: ['new', 'done', 'cancel'].includes(d.st) ? d.st : 'new',
+            at: d.at && typeof d.at.toMillis === 'function' ? d.at.toMillis() : (Number(d.at) || 0)
+        };
+    }
+    function openPlanResv(id) {
+        playSound();
+        planViewId = id;
+        openPanel('settings', 'plan-resv');
+    }
+    function renderPlanResv() {
+        const box = document.getElementById('plan-resv-body');
+        if (!box) return;
+        const p = planById(planViewId);
+        if (!p) { box.innerHTML = '<p class="settings-hint">予定が見つかりません。</p>'; return; }
+        syncPlanWatch();
+        const rows = planResvPid === p.id ? planResvRows : [];
+        const live = rows.filter(r => r.st !== 'cancel');
+        const tot = {};
+        live.forEach(r => r.items.forEach(i => { tot[i.name] = (tot[i.name] || 0) + i.n; }));
+        const byTime = {};
+        live.forEach(r => { const k = r.pickup || '時間の指定なし'; (byTime[k] = byTime[k] || []).push(r); });
+        const err = planResvErr === 'perm'
+            ? '<div class="notice notice-warn"><svg class="ic"><use href="#ic-alert"/></svg><span>この端末では、この予定の予約を読めません（予定を作った端末で見てください）。</span></div>'
+            : planResvErr === 'net' || !syncReady
+            ? '<div class="notice notice-warn"><svg class="ic"><use href="#ic-alert"/></svg><span>通信できないため、予約を読めません。電波の良い所で開き直してください。</span></div>' : '';
+        const row = r => `<div class="wr-row${r.st !== 'new' ? ' is-' + r.st : ''}">
+            <div class="wr-top"><span class="wr-no">No.${r.seq}</span><b>${escHtml(r.name)} 様</b>${r.pickup ? `<span class="wr-time">${escHtml(r.pickup)}</span>` : ''}
+                <span class="wr-st">${r.st === 'done' ? '受け取り済み' : r.st === 'cancel' ? '取り消し' : ''}</span></div>
+            <div class="wr-items">${r.items.map(i => `${escHtml(i.name)}×${i.n}`).join('、')}<span class="wr-sum">${yenStr(r.total)}</span></div>
+            ${r.tel ? `<div class="wr-sub">電話 ${escHtml(r.tel)}</div>` : ''}${r.memo ? `<div class="wr-sub">ひとこと：${escHtml(r.memo)}</div>` : ''}
+            ${r.st === 'new' && p.status !== 'open' ? `<button type="button" class="link-btn" onclick="cancelWebResv('${p.id}','${r.rid}')"><svg class="ic"><use href="#ic-x"/></svg>この予約を取り消す</button>` : ''}
+        </div>`;
+        box.innerHTML = `${err}
+            <div class="plan-card"><div class="plan-name">${escHtml(p.name)}</div><div class="plan-when">${escHtml(planDateText(p))}</div>
+                <div class="plan-meta"><span>${escHtml(resvStateText(p))}</span><span>${live.length}件</span></div>
+                ${p.pubAt ? planShareHtml(p) : '<p class="settings-hint">予約のページはまだ公開していません。予定を「保存する」と公開します。</p>'}</div>
+            ${p.status === 'open' ? '<p class="settings-hint">営業中です。新しい予約は、レジの「予約」に自動で入ります（受け取り・取り消しはレジの「予約」から）。</p>' : ''}
+            ${live.length ? `<label class="field-label sec">取り置く数（合計）</label>
+                <div class="wr-tot">${Object.keys(tot).map(n => `<span>${escHtml(n)}<b>${tot[n]}</b></span>`).join('')}</div>
+                <button type="button" class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="printPlanResv('${p.id}')"><svg class="ic"><use href="#ic-printer"/></svg>予約の一覧を印刷する（取り置きの準備に）</button>` : ''}
+            <label class="field-label sec">予約（${rows.length}件）</label>
+            ${rows.length ? Object.keys(byTime).sort().map(k => `<div class="menu-head">${escHtml(k)}</div>${byTime[k].map(row).join('')}`).join('')
+                + (rows.some(r => r.st === 'cancel') ? `<div class="menu-head">取り消し</div>${rows.filter(r => r.st === 'cancel').map(row).join('')}` : '')
+                : '<p class="settings-hint">まだ予約はありません。</p>'}
+            <p class="settings-hint">予約の名前・電話番号は、この予定で開店した販売会を閉店した時に、置き場から消します。</p>`;
+    }
+    function printPlanResv(id) {
+        const p = planById(id);
+        if (!p || planResvPid !== id) return;
+        const live = planResvRows.filter(r => r.st !== 'cancel');
+        const tot = {};
+        live.forEach(r => r.items.forEach(i => { tot[i.name] = (tot[i.name] || 0) + i.n; }));
+        const body = `<h1>${escHtml(p.name)}　予約の一覧</h1><p>${escHtml(planDateText(p))}${p.place ? '・' + escHtml(p.place) : ''}　${live.length}件</p>
+            <h2>取り置く数</h2><table>${Object.keys(tot).map(n => `<tr><td>${escHtml(n)}</td><td class="n">${tot[n]}</td></tr>`).join('')}</table>
+            <h2>予約</h2><table><tr><th>No.</th><th>お名前</th><th>受け取り</th><th>品物</th><th>金額</th><th>済</th></tr>${live.map(r => `<tr><td>${r.seq}</td><td>${escHtml(r.name)} 様${r.tel ? `<br><small>${escHtml(r.tel)}</small>` : ''}${r.memo ? `<br><small>${escHtml(r.memo)}</small>` : ''}</td><td>${escHtml(r.pickup || '')}</td><td>${r.items.map(i => `${escHtml(i.name)}×${i.n}`).join('<br>')}</td><td class="n">${yenStr(r.total)}</td><td class="c">□</td></tr>`).join('')}</table>`;
+        const css = `body{margin:10mm;font-family:-apple-system,"Hiragino Sans","Noto Sans JP",sans-serif;color:#1C1D22;font-size:13px}
+            h1{font-size:18px;margin:0 0 4px}h2{font-size:15px;margin:14px 0 6px}table{border-collapse:collapse;width:100%}
+            td,th{border:1px solid #bbb;padding:4px 6px;vertical-align:top;text-align:left}.n{text-align:right;white-space:nowrap}.c{text-align:center;width:24px}small{color:#555}`;
+        openPrintSheet('予約の一覧', css, body);
+    }
+    async function cancelWebResv(pid, rid) {
+        const r = planResvRows.find(x => x.rid === rid);
+        if (!r || !confirm(`${r.name} 様の予約（No.${r.seq}）を取り消します。よろしいですか？\nお客様には、お店から連絡してください。`)) return;
+        const ok = await markWebResv(pid, rid, 'cancel', r.items);
+        if (!ok) { playError(); alert('取り消せませんでした。電波の良い所で、もう一度押してください。'); return; }
+        showToast('予約を取り消しました');
+    }
+    // 予約の状態を置き場に書く（受け取り・取り消し）。取り消しは、予約できる残りの数も戻す
+    async function markWebResv(pid, rid, st, items) {
+        if (!syncReady || !fbDb || !pid || !rid) return false;
+        const ref = fbDb.collection(PLANS_COL).doc(pid);
+        try {
+            await ref.collection('resv').doc(rid).update({ st, stAt: Date.now() });
+        } catch (e) { console.warn('予約の状態を書けませんでした', e); return false; }
+        if (st === 'cancel' && items && items.length) {
+            try {
+                await fbDb.runTransaction(async tx => {
+                    const tref = ref.collection('tally').doc('c');
+                    const t = await tx.get(tref);
+                    if (!t.exists) return;
+                    const d = t.data() || {};
+                    const c = Object.assign({}, d.c || {});
+                    items.forEach(i => { const k = String(i.id); c[k] = Math.max(0, (Number(c[k]) || 0) - (Number(i.n) || 1)); });
+                    tx.set(tref, { n: Number(d.n) || 0, c });
+                });
+            } catch (e) { console.warn('予約の残りの数を戻せませんでした', e); }
+        }
+        return true;
+    }
+    // レジの予約（res.web）を受け取り・取り消しした時に、置き場の予約にも書く（予定を作った端末だけが書ける）
+    function webResvSettled(res, st) {
+        if (!res || !res.web || !res.web.pid || !res.web.rid) return;
+        const n = {};
+        (res.items || []).forEach(i => { const k = String(i.id); n[k] = (n[k] || 0) + 1; });
+        markWebResv(res.web.pid, res.web.rid, st, Object.keys(n).map(k => ({ id: k, n: n[k] }))).catch(() => {});
+    }
+
+    // ---- 開店した時：スマホの予約をレジの予約に入れる ----
+    function importWebReservations() {
+        const plan = planById(currentPlanId);
+        if (!plan || !currentSession || testMode || planResvPid !== plan.id) return;
+        const seen = new Set(plan.imported);
+        const added = [];
+        planResvRows.forEach(r => {
+            if (r.st !== 'new' || seen.has(r.rid)) return;
+            seen.add(r.rid);
+            if (reservations.some(x => x.web && x.web.pid === plan.id && x.web.rid === r.rid)) return;
+            const items = [];
+            r.items.forEach(it => {
+                const p = products.find(x => String(x.id) === String(it.id) && x.name === it.name)
+                    || products.find(x => x.name === it.name) || products.find(x => String(x.id) === String(it.id));
+                if (!p) return;
+                for (let k = 0; k < it.n; k++) {
+                    const u = { ...p };
+                    delete u.opt;
+                    items.push(u);
+                    // 1台だけの時は、レジの予約と同じく、取り置いた分を残数から引く（共有中は、予約の一覧から数える）
+                    if (!syncMode && !isUnlimited(p)) {
+                        p.stock--;
+                        if (p.stock === 0 && !p.soldOutTime) p.soldOutTime = new Date().toISOString();
+                    }
+                }
+            });
+            if (!items.length) return;
+            const rule = currentSetRule();
+            const total = itemsNet(items) + exTaxOf(items, setDiscountFor(items), taxSnapshot(false)).add;
+            const res = { id: newReservationId(), name: r.name || 'スマホの予約', items, total, setDisc: !!rule, setRule: rule,
+                          web: { pid: plan.id, rid: r.rid, no: r.seq, pickup: r.pickup, tel: r.tel, memo: r.memo } };
+            reservations.push(res);
+            syncPushReservation(res);
+            added.push(res);
+        });
+        if (seen.size !== plan.imported.length) { plan.imported = [...seen].slice(-500); savePlans(); }
+        if (!added.length) return;
+        saveData();
+        init();
+        renderReservations();
+        logEdit(`スマホの予約を${added.length}件、予約に入れた`);
+        playSound(880, 0.08);
+        showToast(added.length === 1 ? `スマホの予約が入りました（${added[0].name} 様）` : `スマホの予約が${added.length}件入りました`);
+    }
+    function normWebInfo(w) {
+        if (!w || typeof w !== 'object' || !w.pid || !w.rid) return undefined;
+        return { pid: planStr(w.pid, 40), rid: planStr(w.rid, 12), no: planInt(w.no, 0, 9999999), pickup: planStr(w.pickup, 5), tel: planStr(w.tel, 20), memo: planStr(w.memo, 200) };
+    }
+
+    // ---- 開店の準備で予定を使う ----
+    function usePlanForOpen(id) {
+        const p = planById(id);
+        if (!p) { playError(); return; }
+        if (currentSession) { playError(); alert('営業中です。閉店してから、予定で開店してください。'); return; }
+        playSound();
+        tempSetupProducts = JSON.parse(JSON.stringify(p.products));
+        tempSetupProducts.forEach(x => { x.stock = x.initialStock; x.soldOutTime = null; x.stopped = false; });
+        const nameInput = document.getElementById('session-name-input');
+        if (nameInput) nameInput.value = p.name;
+        salesGoal = p.goal || 0;
+        openPlanId = p.id;
+        const ci = document.getElementById('sync-event-code-input');
+        if (ci) ci.value = '';
+        if (!(currentView === 'session' && currentSub === 'open-new')) openPanel('session', 'open-new');
+        else renderOpenMenu();
+        showToast(`予定「${p.name}」を入れました。確かめて「この内容で開店する」を押してください`);
+    }
+    function clearOpenPlan() {
+        playSound(660, 0.04);
+        openPlanId = '';
+        renderOpenMenu();
+    }
+    // 開店の準備のいちばん上：今日の予定（選んでいる予定）
+    function openPlanHtml() {
+        if (!featOn('plan')) return '';
+        const sel = planById(openPlanId);
+        if (sel) return `<div class="plan-chosen"><svg class="ic"><use href="#ic-calendar"/></svg><span><b>予定「${escHtml(sel.name)}」で開店します</b><br>${escHtml(planDateText(sel))}${sel.place ? '・' + escHtml(sel.place) : ''}</span><button type="button" class="link-btn" onclick="clearOpenPlan()">やめる</button></div>`;
+        const up = upcomingPlans().filter(p => p.status === 'plan').slice(0, 3);
+        if (!up.length) return '';
+        return `<div class="plan-pick"><div class="menu-head" style="margin-top:0;">予定から開店する</div>${up.map(p =>
+            `<button type="button" class="plan-pick-row${p.date === todayStr() ? ' is-today' : ''}" onclick="usePlanForOpen('${p.id}')"><svg class="ic"><use href="#ic-calendar"/></svg><span><b>${escHtml(p.name || '無題')}</b><span>${escHtml(planDateText(p))}${p.place ? '・' + escHtml(p.place) : ''}</span></span><svg class="ic mr-go"><use href="#ic-right"/></svg></button>`).join('')}</div>`;
+    }
+    // レジの「まだ開店していません」のカード：今日の予定があれば、そこから開店の準備へ
+    function renderPlanCta() {
+        const box = document.getElementById('cta-plan');
+        if (!box) return;
+        const p = featOn('plan') && !currentSession ? upcomingPlans().find(x => x.status === 'plan' && x.date === todayStr()) : null;
+        box.style.display = p ? '' : 'none';
+        box.innerHTML = p ? `<button type="button" class="plan-pick-row is-today" onclick="usePlanForOpen('${p.id}')"><svg class="ic"><use href="#ic-calendar"/></svg><span><b>今日の予定「${escHtml(p.name || '無題')}」</b><span>${escHtml(planDateText(p))}・押すと開店の準備へ</span></span><svg class="ic mr-go"><use href="#ic-right"/></svg></button>` : '';
+    }
+    // 前回比の相手
+    function planBaseline(plan) {
+        const arc = sessionArchive.filter(a => a && typeof a.totalRev === 'number');
+        const last = arc[arc.length - 1] || null;
+        if (plan.cmp === 'none') return null;
+        if (plan.cmp === 'last') return last;
+        if (plan.cmp === 'kind') {
+            for (let i = arc.length - 1; i >= 0; i--) if (((arc[i].plan && arc[i].plan.kind) || 'teiki') === plan.kind) return arc[i];
+            return null;
+        }
+        return arc.find(a => a.date === plan.cmp) || null;
+    }
+    // startSession の最後で呼ぶ（合流した時は呼ばない）
+    function applyPlanOnOpen(joined) {
+        const plan = planById(openPlanId);
+        openPlanId = '';
+        currentPlanId = '';
+        reportSlotMin = 15;
+        if (joined || !plan || !currentSession) return;
+        comparisonBaseline = planBaseline(plan);
+        reportSlotMin = plan.slot;
+        if (plan.goal) salesGoal = plan.goal;
+        if (testMode) return;   // テストモードは、予定と結び付けない（予約も入れない）
+        currentPlanId = plan.id;
+        plan.status = 'open';
+        savePlans();
+        saveData();
+        syncPlanWatch();
+    }
+    // 閉店した時：記録に予定の中身を残し、置き場の予約を消す
+    function planOnClose(entry) {
+        const plan = planById(currentPlanId);
+        currentPlanId = '';
+        if (!plan) return;
+        if (entry) entry.plan = { kind: plan.kind, date: plan.date, start: plan.start, end: plan.end, place: plan.place, org: plan.org, collab: plan.collab };
+        plan.status = 'done';
+        savePlans();
+        stopPlanResvWatch();
+        if (plan.pubAt) purgePlanOnline(plan);
+    }
+    // 置き場の予約（名前・電話番号）を消し、予約のページを「受付は終わりました」にする
+    async function purgePlanOnline(plan, removeDoc) {
+        const live = planById(plan.id);
+        const mark = v => { if (live) { live.purge = v; savePlans(); } };
+        if (!syncReady || !fbDb) { mark(true); return; }
+        try {
+            const ref = fbDb.collection(PLANS_COL).doc(plan.id);
+            const snap = await ref.collection('resv').get();
+            const docs = snap.docs.slice();
+            while (docs.length) {
+                const b = fbDb.batch();
+                docs.splice(0, 400).forEach(d => b.delete(d.ref));
+                await b.commit();
+            }
+            await ref.collection('tally').doc('c').delete().catch(() => {});
+            if (removeDoc) await ref.delete();
+            else await ref.set(Object.assign(planPublicDoc(plan), { on: false, items: [], pickups: [], done: true }));
+            mark(false);
+        } catch (e) {
+            console.warn('置き場の予約を消せませんでした（あとでもう一度）', e);
+            if (!isPermErr(e)) mark(true);
+        }
+    }
+    // つながった時：営業中の予定の予約を見続ける・消しそびれた予約を消す
+    function planAfterSyncReady() {
+        syncPlanWatch();
+        salePlans.filter(p => p.purge && p.status === 'done').forEach(p => purgePlanOnline(p));
+    }
+    // 集計の時間の区切り（分）
+    let reportSlotPick = 0;
+    function reportSlot() { return reportSlotPick || reportSlotMin || 15; }
+    function setReportSlot(n) {
+        playSound(660, 0.04);
+        reportSlotPick = PLAN_SLOTS.includes(n) ? n : 0;
+        analyticsSections = null;
+        refreshView('analytics', currentSub);
+    }
+    function reportSlotPicker() {
+        if (!featOn('plan')) return '';
+        const cur = reportSlot();
+        return `<div class="chip-pick" role="group" aria-label="時間の区切り" style="margin:0 0 10px;">${PLAN_SLOTS.map(n =>
+            `<button type="button" class="${cur === n ? 'on' : ''}" aria-pressed="${cur === n}" onclick="setReportSlot(${n})">${n}分</button>`).join('')}</div>`;
+    }
+
+    // ---- 予約フォームの設定（機能：resv）----
+    function resvSub() {
+        const tel = { off: '電話番号は聞かない', opt: '電話番号は任意', req: '電話番号は必須' }[resvCfg.tel];
+        return `お名前・${tel}・1人${resvCfg.maxQty}個まで`;
+    }
+    function setResvCfg(k, v) {
+        playSound(660, 0.04);
+        resvCfg = normResvCfg(Object.assign({}, resvCfg, { [k]: v }));
+        saveResvCfg();
+        renderResvSettings();
+        republishOpenPlans();
+    }
+    function saveResvNote() {
+        const el = document.getElementById('resv-note');
+        resvCfg = normResvCfg(Object.assign({}, resvCfg, { note: el ? el.value : '' }));
+        saveResvCfg();
+        playSuccess();
+        showToast('お知らせを保存しました');
+        republishOpenPlans();
+    }
+    // 受付中・これからの予約のページにも、決まりを写す
+    let republishTimer = null;
+    function republishOpenPlans() {
+        clearTimeout(republishTimer);
+        republishTimer = setTimeout(() => {
+            salePlans.filter(p => p.resv.on && p.pubAt && p.status !== 'done').forEach(p => publishPlan(p));
+        }, 800);
+    }
+    function renderResvSettings() {
+        const box = document.getElementById('resv-body');
+        if (!box) return;
+        const chip = (k, v, t) => `<button type="button" class="${resvCfg[k] === v ? 'on' : ''}" aria-pressed="${resvCfg[k] === v}" onclick="setResvCfg('${k}', ${typeof v === 'string' ? `'${v}'` : v})">${t}</button>`;
+        box.innerHTML = `<p class="settings-hint" style="margin-top:0;">お客様がスマホから予約するページの決まりです。どの販売会で予約を受けるか・受付の期間・受け取り時間・品ごとの上限は、<b>「販売会の予定」</b>で予定ごとに決めます。</p>
+            ${featOn('plan') ? `<button type="button" class="action-btn btn-secondary" style="width:100%;" onclick="openPanel('settings','plans')"><svg class="ic"><use href="#ic-calendar"/></svg>販売会の予定を開く</button>`
+                : '<div class="notice notice-warn"><svg class="ic"><use href="#ic-alert"/></svg><span>予約フォームは「販売会の予定」と一緒に使います。「レジの機能」で「販売会の予定」もオンにしてください。</span></div>'}
+            <label class="field-label sec">聞く項目</label>
+            <div class="sw-row"><div class="sw-text"><b>お名前</b><span>いつも聞きます（名字だけ・呼び名でかまいません）</span></div></div>
+            <label class="field-label">電話番号</label>
+            <div class="chip-pick" role="group" aria-label="電話番号">${chip('tel', 'off', '聞かない')}${chip('tel', 'opt', '任意')}${chip('tel', 'req', '必須')}</div>
+            <p class="settings-hint">個人の情報は、要る物だけにしましょう。聞いた番号は、閉店した時に置き場から消します。</p>
+            <div class="sw-row">
+                <div class="sw-text"><b>ひとこと欄</b><span>「袋は要りません」「アレルギー」など、お客様が書ける欄を出します</span></div>
+                <input type="checkbox" class="ios-switch" ${resvCfg.memo ? 'checked' : ''} onchange="setResvCfg('memo', this.checked)" aria-label="ひとこと欄">
+            </div>
+            <label class="field-label sec">1人が予約できる数（合計）</label>
+            <div class="chip-pick" role="group" aria-label="1人が予約できる数">${[3, 5, 10, 20, 30].map(n => chip('maxQty', n, `${n}個まで`)).join('')}</div>
+            <label class="field-label sec" for="resv-note">予約のページに出すお知らせ</label>
+            <textarea id="resv-note" maxlength="300" placeholder="例：お支払いは受け取りの時にお願いします。取り消す時はお店にご連絡ください。">${escHtml(resvCfg.note)}</textarea>
+            <button class="action-btn btn-secondary" style="width:100%; margin-top:8px;" onclick="saveResvNote()"><svg class="ic"><use href="#ic-check"/></svg>お知らせを保存する</button>
+            <p class="settings-hint">お店の名前は「領収書」の発行者名を出します。予約は、予定で開店したレジの「予約」に自動で入り、受け取りの時にレジで会計します。</p>`;
+    }
+
+    // ▼▼▼ 閉店した後に在庫を数え直す（機能：recount）▼▼▼
+    // 販売会の前に仕入れ数を数えられなかった時、閉店した後に残りの数を数えて入れると、
+    // 「売れた数＋残りの数」を仕入れ数（概算）にして、売上集計（消化率・売れ残り・仕入れの目安）に使う。
+    let recountIdx = -1;
+    let recountDraft = {};
+    function recountRows(snap) {
+        const sold = {};
+        (snap.salesHistory || []).forEach(h => (h.items || []).forEach(i => { if (i && !i.manual && i.name) sold[i.name] = (sold[i.name] || 0) + 1; }));
+        return (snap.products || []).filter(p => p && p.name && p.active !== false && !p.unlimited).map(p => ({
+            name: p.name, sold: sold[p.name] || 0, before: Number(p.initialStock) || 0,
+            remain: recountDraft[p.name] != null ? recountDraft[p.name] : Math.max(0, Number(p.stock) || 0)
+        }));
+    }
+    function openRecount(idx) {
+        const a = sessionArchive[idx];
+        if (!a || !a.snapshot) { playError(); return; }
+        playSound();
+        recountIdx = idx;
+        recountDraft = {};
+        openPanel('settings', 'recount');
+    }
+    function renderRecountView() {
+        const box = document.getElementById('recount-body');
+        if (!box) return;
+        const a = sessionArchive[recountIdx];
+        if (!a || !a.snapshot) { box.innerHTML = '<p class="settings-hint">記録が見つかりません。</p>'; return; }
+        const rows = recountRows(a.snapshot);
+        const done = a.snapshot.stockRecount;
+        box.innerHTML = `<div class="plan-card"><div class="plan-name">${escHtml(a.name)}</div><div class="plan-when">${escHtml(new Date(a.date).toLocaleString('ja-JP'))}</div>
+                ${done ? `<div class="plan-meta"><span>${escHtml(shortDateTime(done.at))}に数え直し済み（在庫は概算）</span></div>` : ''}</div>
+            <p class="settings-hint">売れ残った数を数えて入れてください。<b>売れた数＋残りの数</b>を、この回の仕入れ数（概算）にします。売上集計の消化率・売れ残り・次の仕入れの目安に使います。売上の金額は変わりません。</p>
+            <div class="rc-list">
+                <div class="rc-head"><span>商品</span><span>売れた数</span><span>残り</span><span>仕入れ数（概算）</span></div>
+                ${rows.map((r, i) => `<div class="rc-row">
+                    <span class="rc-nm">${escHtml(r.name)}<small>前の仕入れ数 ${r.before}</small></span>
+                    <span class="rc-n">${r.sold}</span>
+                    <input type="number" inputmode="numeric" min="0" value="${r.remain}" data-name="${escHtml(r.name)}" oninput="onRecountInput(this, ${i})" aria-label="${escHtml(r.name)}の残り">
+                    <span class="rc-n rc-est" id="rc-est-${i}">${r.sold + r.remain}</span>
+                </div>`).join('')}
+            </div>
+            <button class="action-btn btn-checkout" style="width:100%; margin-top:14px;" onclick="saveRecount()"><svg class="ic"><use href="#ic-check"/></svg>この数で仕入れ数を直す</button>`;
+    }
+    function onRecountInput(el, i) {
+        const v = planInt(String(el.value).normalize('NFKC'), 0, 99999);
+        recountDraft[el.dataset.name] = v;
+        const a = sessionArchive[recountIdx];
+        if (!a || !a.snapshot) return;
+        const r = recountRows(a.snapshot)[i];
+        const out = document.getElementById('rc-est-' + i);
+        if (r && out) out.textContent = r.sold + v;
+    }
+    function saveRecount() {
+        const a = sessionArchive[recountIdx];
+        if (!a || !a.snapshot) { playError(); return; }
+        const rows = recountRows(a.snapshot);
+        const by = {};
+        rows.forEach(r => { by[r.name] = r; });
+        a.snapshot.products.forEach(p => {
+            const r = p && by[p.name];
+            if (!r) return;
+            p.initialStock = r.sold + r.remain;
+            p.stock = r.remain;
+            if (r.remain > 0) p.soldOutTime = null;
+            p.stockEst = true;
+        });
+        a.snapshot.stockRecount = { at: Date.now() };
+        try { a.recommendations = withSnapshot(a.snapshot, () => buildRestockRecommendations()); } catch (e) {}
+        if (reportViewSnapshot === a.snapshot) analyticsSections = null;
+        saveData();
+        playSuccess();
+        showToast('仕入れ数（概算）を直しました。売上集計に使います');
+        recountDraft = {};
+        panelBack();
+    }
+    // ▲▲▲ ここまで（販売会の予定・予約フォーム・在庫の数え直し）▲▲▲
     // ▲▲▲ ここまで ▲▲▲
 
     // ▼▼▼ キッチン（店舗モード「キッチン調理＋呼び出し」の時だけ動く）▼▼▼
