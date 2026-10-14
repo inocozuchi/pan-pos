@@ -3122,3 +3122,239 @@ CDにも出ています	Also on the CD
 {0}品の仕入れ数を入れました（メニューに無い{1}品は入れていません）	Filled stock for {0} item{s0} ({1} not on this menu were skipped)
 臨時・不定期の販売会の記録として残し、作っている予定の「前回比で比べる相手」にします。	Kept as a pop-up sale record and used as this plan's comparison.
 この画像は使えませんでした。別の画像を選んでください。	This image could not be used. Please choose another.
+# ---- Airレジにある機能（バリエーション・量り売り・値段を変える・さがす・客数・分けて会計・まとめ買い・CSV・在庫の動き・日別・仕訳・お客様メモ・勤怠・画面の案内）----
+商品をさがす	Find items
+商品をさがす（名前・よみ・コード）	Find items (name, reading, code)
+さがすのをやめる	Clear search
+{0}品が合います。押して選んでください	{0} item{s0} match. Tap one to choose
+合う商品がありません	No matching items
+レジの上に検索の欄を出し、名前・よみ・コードで商品をしぼる（商品が多い時に）	Show a search box above the register to filter items by name, reading or code (for large menus)
+バリエーション	Variations
+ホット・アイス、S・M・L のような選び方を商品ごとに決め、押した時に選ぶ（それぞれ値段を決められる。在庫は同じ商品で数える）	Set choices like hot/iced or S/M/L per item and pick one when tapping (each with its own price; stock is counted for the item as a whole)
+例：ホット 300、アイス 350（空欄＝なし）	e.g. Hot 300, Iced 350 (blank = none)
+選ぶと、そのままカートに入ります	Tap a choice to add it to the cart
+{0}：{1}つから選びます	{0}: choose from {1}
+{0}：バリエーションなし	{0}: no variations
+量り売り	Sold by weight
+商品を「100gあたりの値段」にして、押した時に重さ（g）を打って売る（1円未満は切り捨て）	Price items per 100 g and enter the weight when tapping (fractions of a yen are dropped)
+値段を「100gあたり」にして、重さを打って売る	Price per 100 g and enter the weight
+100gあたり ¥{0}。重さ（g）を打ってください（1円未満は切り捨て）	¥{0} per 100 g. Enter the weight in grams (fractions of a yen are dropped)
+入れる ¥{0}	Add ¥{0}
+係の人に、はかってもらってください	Please ask staff to weigh this item
+1品ごとの値引き・割増	Per-item discounts and surcharges
+カートの行を押して、その品だけ値引き・割増・値段の打ち直しをする（訳あり品・大盛りなど）	Change the price of a single cart line: discount, surcharge or a new price (seconds, large servings, etc.)
+値段	Price
+{0}の値段を変える	Change the price of {0}
+値段を変える：{0}	Change price: {0}
+訳あり品・大盛りなど、この品だけ値段を変えます（レシート・会計記録に、もとの値段と一緒に残ります）	Change the price of this item only, e.g. for seconds or large servings (the original price is kept on receipts and records)
+円引き	¥ off
+%引き	% off
+円増し	¥ extra
+%増し	% extra
+値段を打つ	New price
+新しい値段（円）	New price (¥)
+変える数	How many
+この値段にする	Use this price
+もとの値段	Original price
+{0}円引き	¥{0} off
+{0}%引き	{0}% off
+{0}円増し	¥{0} extra
+{0}%増し	{0}% extra
+値段を変更	Price changed
+{0}円引き（もと ¥{1}）	¥{0} off (was ¥{1})
+{0}%引き（もと ¥{1}）	{0}% off (was ¥{1})
+{0}円増し（もと ¥{1}）	¥{0} extra (was ¥{1})
+{0}%増し（もと ¥{1}）	{0}% extra (was ¥{1})
+値段を変更（もと ¥{0}）	Price changed (was ¥{0})
+{0}（{1}個）を{2}にしました	Set {0} ({1}) to {2}
+もとの値段に戻しました	Restored the original price
+まとめ買い割引	Bulk discount
+まとめ買い	Bulk discount
+商品ごとに「◯個で◯円」を決め、その数をまとめて買うと自動で引く（ふつうの会計だけ。予約・モバイルの注文には効かない）	Set "N for ¥X" per item and discount automatically when that many are bought (regular checkouts only; not reservations or mobile orders)
+まとめる数	Quantity
+まとめた値段	Bundle price
+個で	for
+{0}：{1}個で{2}円	{0}: {1} for ¥{2}
+{0}：まとめ買いなし	{0}: no bulk discount
+{0}：数と値段の両方を入れると効きます	{0}: enter both the quantity and the price
+予約では、まとめ買い割引は引きません	Bulk discounts do not apply to reservations
+客数	Party size
+お会計で人数を入れ、売上集計の客数・客単価を人数で出す（はじめは1人。会計の数とは別に数える）	Enter the number of people at checkout and report customers and spend per person by headcount (starts at 1; counted separately from checkouts)
+1人へらす	One fewer person
+1人ふやす	One more person
+{0}人	{0}
+会計数	Checkouts
+会計単価	Avg per checkout
+客数（人数）	Customers (people)
+1人あたり	Per person
+1人あたり ¥{0}	¥{0} per person
+{0}人（1人あたり ¥{1}）	{0} people (¥{1} per person)
+分けて会計	Split checkout
+カートから選んだ分だけ先に会計する（別々に払う時）。お会計で、人数で割った1人あたりの額も出せる	Check out only the items you pick from the cart (when paying separately). Checkout can also show the amount per person
+先に払う分を選んでください。残りはカートに残ります	Choose what to pay now. The rest stays in the cart
+選んだ分 {0}点（割引の前）	Selected: {0} item{s0} (before discounts)
+選んだ分を会計	Check out selected
+カートに残り{0}点	{0} item{s0} left in the cart
+割り勘	Split evenly
+割り勘の目安	Even split
+合計 ¥{0} を人数で割ります（記録はふつうの1件のまま。別々に払う時は「分けて会計」）	Divides the ¥{0} total by the number of people (still recorded as one sale; to pay separately use "Split checkout")
+人数	People
+ちょうど割り切れます。	Divides evenly.
+端数のため、{0}人が ¥{1}、1人が ¥{2} です。	Because of rounding, {0} people pay ¥{1} and 1 person pays ¥{2}.
+閉じる	Close
+お客様メモ	Customer notes
+よく来るお客様の呼び名とメモを、この端末だけに残す。会計にお客様を付けると、来店の回数と買った物が見られる	Keep regular customers' nicknames and notes on this device only. Attach a customer to a checkout to see their visits and purchases
+お客様	Customer
+{0} 様	{0}
+お客様を選ぶ	Choose a customer
+この端末だけに残すメモです（共有の置き場には送りません）。電話番号・住所などは入れないでください	These notes stay on this device only (never sent to the shared store). Do not enter phone numbers or addresses
+呼び名でさがす・新しく入れる	Search by nickname or add new
+新しく入れる	Add new
+付けない	None
+まだだれもいません。下の欄に呼び名を入れて「新しく入れる」を押してください。	No one yet. Type a nickname below and tap "Add new".
+合うお客様がいません。下の欄に呼び名を入れて「新しく入れる」を押してください。	No matching customer. Type a nickname below and tap "Add new".
+電話番号・住所・生年月日などは入れないでください。	Do not enter phone numbers, addresses or birthdays.
+呼び名（例：山田さん・赤い帽子の方）	Nickname (e.g. Ms. Yamada, the person in the red hat)
+入れる	Add
+呼び名	Nickname
+メモ（好み・アレルギー・取り置きの約束など）	Notes (preferences, allergies, items being held, etc.)
+よく買う物：{0}	Usually buys: {0}
+このお客様を消す	Delete this customer
+{0}回・¥{1}・最後 {2}/{3}	{0} visit{s0} · ¥{1} · last {2}/{3}
+まだ会計なし	No purchases yet
+同じ呼び名の方がいます	That nickname is already used
+直しました	Updated
+{0} 様：{1}回目のご来店	{0}: visit #{1}
+{0} 様：{1}回目のご来店（よく買う物：{2}）	{0}: visit #{1} (usually buys {2})
+お客様メモを保存できませんでした（容量がいっぱいです）	Could not save customer notes (storage is full)
+{0}人・この端末だけ	{0} · this device only
+勤怠	Attendance
+担当者ごとに出勤・退勤を記録し、働いた時間をCSVで書き出す（この端末だけに残す）	Record clock-in and clock-out for each staff member and export hours as CSV (kept on this device only)
+出勤・退勤を記録する	Record clock-in and clock-out
+出勤中 {0}	Working: {0}
+担当者ごとに	For each staff member, tap
+出勤・退勤	clock in / clock out
+を押して記録します（この端末だけに残ります）。「担当者」に入れた名前が並びます。退勤の時に休憩の分数を聞きます。	to record it (kept on this device only). Names from "Staff" are listed. You will be asked for break minutes when clocking out.
+を押して記録します（この端末だけに残ります）。退勤の時に休憩の分数を聞きます。	to record it (kept on this device only). You will be asked for break minutes when clocking out.
+名前を入れて出勤（一覧に無い人）	Clock in by name (not on the list)
+出勤	Clock in
+退勤	Clock out
+出勤中（{0}:{1}から）	Working (since {0}:{1})
+退勤中	Off
+この30日の記録	Last 30 days
+名前	Name
+休憩	Break
+時間	Hours
+{0}分	{0} min
+{0}時間{1}分	{0} h {1} min
+勤怠をCSVで書き出す	Export attendance as CSV
+{0}さん 出勤 {1}:{2}	{0} clocked in at {1}:{2}
+{0}さん 退勤 {1}:{2}（{3}時間{4}分）	{0} clocked out at {1}:{2} ({3} h {4} min)
+{0}さんは、もう出勤しています	{0} is already clocked in
+{0}さんの休憩は何分でしたか？（なければ 0）	How many minutes of break did {0} take? (0 if none)
+勤怠を保存できませんでした（容量がいっぱいです）	Could not save attendance (storage is full)
+在庫の動き	Stock movements
+商品ごとに、仕入れ・数の直し・売れた・取り消しを時刻の順に見る（「商品・在庫の調整」から開く）	See stock received, corrections, sales and voids in time order for each item (open it from "Items and stock")
+商品ごとに、仕入れ数の直し・売れた数を時刻の順に並べます。残りは「その時点で売れていない数」です（カートに入っている分・取り置きは引く前）。	Lists stock corrections and sales for each item in time order. "Left" is the number not yet sold at that time (before subtracting cart items and holds).
+時刻	Time
+内容	What
+増減	Change
+残り	Left
+開店	Open
+売れた	Sold
+仕入れ	Stock
+取り消し	Void
+直し	Edit
+数え方	Counting
+開店の時の仕入れ数	Stock at opening
+仕入れ数を直した	Stock corrected
+ほかの端末で仕入れ数を直した	Stock corrected on another device
+会計を取り消した（売れた数から外した）	Sale voided (removed from sold)
+会計の品目を直した	Sale items edited
+数え方を変えた	Counting changed
+仕入れ数を直した［{0}］	Stock corrected [{0}]
+ほかの端末で仕入れ数を直した［{0}］	Stock corrected on another device [{0}]
+会計を取り消した（売れた数から外した）［{0}］	Sale voided (removed from sold) [{0}]
+会計の品目を直した［{0}］	Sale items edited [{0}]
+数え方を変えた［{0}］	Counting changed [{0}]
+客No.{0}	Customer #{0}
+客No.{0}（直した会計）	Customer #{0} (edited)
+いまの仕入れ数 {0}・売れた数 {1}・残り {2}	Stock now {0} · sold {1} · left {2}
+この商品は「在庫は無制限」なので、数えていません。	This item has unlimited stock, so it is not counted.
+商品がありません。	No items.
+商品のCSV	Item CSV
+商品の一覧（名前・値段・分類・仕入れ数・原価・コードなど）をCSVで書き出す・取り込む（表計算でまとめて直す時に）	Export and import the item list (name, price, category, stock, cost, code, etc.) as CSV, to edit many items in a spreadsheet
+CSVで書き出す	Export CSV
+CSVを取り込む	Import CSV
+{0}品をCSVに書き出しました	Exported {0} item{s0} to CSV
+商品がありません	No items
+CSVが大きすぎます（2MBまで）。	The CSV is too large (up to 2 MB).
+CSVを読めませんでした。	Could not read the CSV.
+中身がありません	The file is empty
+1行目に「商品名」と「値段」の列が要ります（書き出したCSVの形）	The first row needs "商品名" (name) and "値段" (price) columns, as in an exported CSV
+開店してから取り込んでください（開店の準備の画面からも取り込めます）。	Open the sale before importing (you can also import from the opening setup screen).
+取り込める商品がありません。	There are no items to import.
+取り込みました（直した{0}品・足した{1}品）	Imported (updated {0}, added {1})
+取り込みました（直す{0}品・足す{1}品）。「決めて戻る」で確定します	Imported (update {0}, add {1}). Tap "Done" to confirm
+コードの無い品に番号を付ける	Number items without codes
+バーコードのラベルを印刷	Print barcode labels
+コードの無い{0}品に、お店の中で使う番号（20から始まる13けた）を付けます。よろしいですか？	Give {0} item{s0} without codes an in-store number (13 digits starting with 20)?
+{0}品に番号を付けました	Numbered {0} item{s0}
+コードの無い商品はありません	All items already have codes
+コードの付いた商品がありません。先に「番号を付ける」か、商品ごとにJANコードを入れてください。	No items have codes. Number them first, or enter a JAN code for each item.
+日別・月別の売上	Daily and monthly sales
+過去の販売会も合わせて、日ごと・月ごとの売上・客数・客単価・現金とそれ以外・割引・粗利を表とグラフで見る（CSVも）	See sales, customers, spend per customer, cash and non-cash, discounts and gross profit by day or month, including past sales, as a table and chart (CSV too)
+過去の販売会も合わせて、日ごと・月ごとに見る	By day and month, including past sales
+いまの販売会と、この端末に残っている過去の販売会を、日ごとにまとめます（テストモードの回は入りません）。「—」は、明細が残っていない古い回で分からない項目です。	Totals the current sale and past sales kept on this device by day (test-mode sales are excluded). "—" means unknown for older sales without details.
+いまの販売会と、この端末に残っている過去の販売会を、月ごとにまとめます（テストモードの回は入りません）。「—」は、明細が残っていない古い回で分からない項目です。	Totals the current sale and past sales kept on this device by month (test-mode sales are excluded). "—" means unknown for older sales without details.
+まとめ方	Group by
+日別	Daily
+月別	Monthly
+{0}月	{0}
+{0}年{1}月	{1}/{0}
+{0}/{1}（月）	{0}/{1} (Mon)
+{0}/{1}（火）	{0}/{1} (Tue)
+{0}/{1}（水）	{0}/{1} (Wed)
+{0}/{1}（木）	{0}/{1} (Thu)
+{0}/{1}（金）	{0}/{1} (Fri)
+{0}/{1}（土）	{0}/{1} (Sat)
+{0}/{1}（日）	{0}/{1} (Sun)
+売上の棒グラフ	Sales bar chart
+現金以外	Non-cash
+点数	Items
+粗利	Gross profit
+この表をCSVで書き出す	Export this table as CSV
+まだ売上がありません	No sales yet
+会計して閉店すると、ここに日ごとの売上が出ます。	Daily sales appear here after you check out and close.
+うち消費税（目安）：	Consumption tax included (estimate):
+{0}（営業中）	{0} (open)
+会計ソフト向けの書き出し	Export for accounting software
+売上を仕訳の形（日付・借方・貸方・金額・税区分）のCSVにする。会計ソフトに取り込む前に、科目の名前を合わせてください	Export sales as journal entries (date, debit, credit, amount, tax category) in CSV. Match account names to your accounting software before importing
+仕訳のCSV（会計ソフト向け）	Journal CSV (for accounting software)
+書き出す売上がありません	No sales to export
+仕訳を{0}行書き出しました。取り込む前に科目名を会計ソフトに合わせてください	Exported {0} journal line{s0}. Match account names to your accounting software before importing
+1品ごとの値引き（値段に入れ済み）	Per-item discounts (included in prices)
+1品ごとの割増（値段に入れ済み）	Per-item surcharges (included in prices)
+画面の案内を見る（「次へ」で1つずつ）	Take a screen tour (tap "Next" to step through)
+商品のボタン	Item buttons
+押すとカートに入ります。色は分類（パン・クッキー・ドリンクなど）。下の数字は残りの数です。	Tap to add to the cart. Colors show the category (bread, cookies, drinks, etc.). The number at the bottom is the stock left.
+カート	Cart
+入れた商品が並びます。−・＋で数を直します。「カートを全部取消す」で最初からやり直せます。	Items you add are listed here. Use − and + to change quantities. "Clear the whole cart" starts over.
+押すとお会計の画面になります。お預かりを打つか、そのまま押すと「ちょうど」で記録します。	Opens checkout. Enter the amount received, or just tap to record it as exact cash.
+あとで受け取る分は、名前を付けて取っておけます。受け取りの時に「予約」から会計します。	Hold items for later pickup under a name. Check them out from "Reservations" at pickup.
+済んだ会計の一覧です。取り消し・品目の直し・レシートと領収書はここから。	The list of completed sales. Void, edit items and print receipts here.
+売上・よく売れた商品・時間ごとの売れ方を見ます。PDF・CSVにも出せます。	See sales, best sellers and sales over time. Export to PDF and CSV.
+商品・在庫の調整、支払い方法、「レジの機能」（使う機能だけオンにする）などはここです。	Items and stock, payment methods and "Register features" (turn on only what you use) are here.
+開店・閉店	Open and close
+いつでもここから開店・合流・閉店できます。練習したい時は「テストモード」で開店すると記録に残りません。	Open, join or close here at any time. To practice, open in test mode so nothing is recorded.
+次へ	Next
+おしまい	Finish
+終わる	End
+案内はおしまいです。もう一度見る時は、操作マニュアルから	That's the end of the tour. You can replay it from the manual
+臨時・不定期の販売会を前もって作っておき、当日は予定から開店する（日時・場所・実施団体・メニュー・仕入れ数・目標・比べる相手）。予定ごとに、スマホの予約フォームも開ける。「開店・合流」の画面から作る	Create pop-up or irregular sales in advance and open from the plan on the day (date, place, organizer, menu, stock, goal, comparison). Each plan can also open a phone reservation form. Create them from "Open / Join"
+閉店した後に残りの数を入れて、「売れた数＋残りの数」を仕入れ数（概算）として集計に使う（前もって数えられなかった時）	After closing, enter what is left and use "sold + left" as the approximate stock in reports (when you could not count beforehand)
+%引き	% off
+よく来るお客様の呼び名とメモを、この端末だけに残します（共有の置き場・ほかの端末には送りません）。お会計の「お客様」で選ぶと、その会計に付きます。	Keeps regular customers' nicknames and notes on this device only (never sent to the shared store or other devices). Choose one under "Customer" at checkout to attach it to that sale.
+1品ごとの値引き	Per-item discounts
+割増	surcharges
+月別の売上	monthly sales
