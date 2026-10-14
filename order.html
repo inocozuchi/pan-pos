@@ -740,7 +740,7 @@
             heroAtNow = at;
             ev.collection('live').doc('mhero').get().then(doc => {
                 const d = doc.exists ? (doc.data() || {}).d : '';
-                heroData = typeof d === 'string' && /^data:image\/(png|jpeg|webp);base64,/.test(d) ? d : '';
+                heroData = typeof d === 'string' && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(d) ? d : '';
                 renderHero();
             }).catch(() => { heroAtNow = 0; });
         }
@@ -758,7 +758,7 @@
             // 写真の文書がまだ新しくなっていない時は、少し待ってから読み直す
             if (v.key !== k) { imgKeyNow = ''; imgRetryAt = Date.now() + 5000; setTimeout(() => { if (menu) render(); }, 5200); }
             const next = {};
-            Object.keys(v.imgs || {}).forEach(n => { const d = v.imgs[n]; if (typeof d === 'string' && /^data:image\/(png|jpeg|webp);base64,/.test(d) && d.length < 80000) next[n] = d; });
+            Object.keys(v.imgs || {}).forEach(n => { const d = v.imgs[n]; if (typeof d === 'string' && /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(d) && d.length < 80000) next[n] = d; });
             imgs = next;
             if (menu) render();
         }).catch(() => { imgKeyNow = ''; imgRetryAt = Date.now() + 5000; });

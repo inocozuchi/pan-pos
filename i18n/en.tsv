@@ -3110,3 +3110,15 @@ CDにも出ています	Also on the CD
 お客様の画面（CD）にも、この筆談が出ています	This chat is also shown on the customer screen (CD)
 お店とお客様が、それぞれの画面からチャットのように書き合えます。よく使う言葉は、下のボタンで送れます。	The shop and the customer can write to each other from their own screens, like a chat. Common phrases can be sent with the buttons below.
 文字や絵で、お店の人とお話しできます	You can talk with staff using text or drawings
+前回の臨時の販売会の売上	Sales at the last pop-up sale
+前回の集計PDFを読み込む	Import last report PDF
+前回の売れ行きから仕入れ数を入れる	Fill stock from last sales
+前回の臨時の販売会として保存する	Save as the last pop-up sale
+この端末には、まだ臨時の販売会の記録がありません。前回の集計結果のPDFから読み込めます。	No pop-up sale records on this device yet. You can import them from the last report PDF.
+「{0}」を前回の臨時の販売会として保存しました	Saved "{0}" as the last pop-up sale
+前回の記録に、このメニューと同じ名前の商品がありません。	The last record has no items with the same names as this menu.
+前回の売れ行きから、{0}品の仕入れ数を入れます（いまの数は上書きされます）。よろしいですか？	Fill stock for {0} item{s0} from last sales? Current numbers will be overwritten.
+{0}品の仕入れ数を入れました	Filled stock for {0} item{s0}
+{0}品の仕入れ数を入れました（メニューに無い{1}品は入れていません）	Filled stock for {0} item{s0} ({1} not on this menu were skipped)
+臨時・不定期の販売会の記録として残し、作っている予定の「前回比で比べる相手」にします。	Kept as a pop-up sale record and used as this plan's comparison.
+この画像は使えませんでした。別の画像を選んでください。	This image could not be used. Please choose another.
