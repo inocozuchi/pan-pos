@@ -59,7 +59,7 @@ window.PRODUCT_SETS.rinji = {
     { name: "オリジナルクッキー",               price: 200, category: "クッキー" },
     { name: "チーズスティック",                 price: 200, category: "クッキー" },
     { name: "スノーボール（抹茶）",             price: 200, category: "クッキー" },
-    { name: "スノーボール（プレーン）",         price: 200, category: "クッキー" },
+    { name: "ポルボロン（プレーン）",           price: 200, category: "クッキー" },
     { name: "ケンちゃんのチョコチップクッキー", price: 200, category: "クッキー" },
     { name: "杉ちゃんのココナッツクッキー",     price: 200, category: "クッキー" },
     { name: "ダンちゃんのアーモンドクッキー",   price: 200, category: "クッキー" },

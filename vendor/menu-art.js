@@ -41,7 +41,7 @@
         { id: 'pan', label: 'パン', food: 1, keys: ['パン', 'ブレッド', 'ロールパン', 'ブリオッシュ', 'バンズ', 'ベーカリー', 'ちぎりパン'],
           svg: sh + '<path d="M14 66Q12 36 50 34Q88 36 86 66Q86 76 50 76Q14 76 14 66Z" fill="#CF8137"/><path d="M34 44q6 6 4 14M50 40q6 7 4 16M66 44q6 6 4 14" stroke="#F2BE77" stroke-width="4" fill="none" stroke-linecap="round"/>' },
         // ---- 焼き菓子・甘いもの ----
-        { id: 'cookie', label: 'クッキー', food: 1, keys: ['クッキー', 'サブレ', 'ビスケット', 'ガレット', 'フロランタン', 'ショートブレッド', 'スノーボール'],
+        { id: 'cookie', label: 'クッキー', food: 1, keys: ['クッキー', 'サブレ', 'ビスケット', 'ガレット', 'フロランタン', 'ショートブレッド', 'スノーボール', 'ポルボロン'],
           svg: sh + '<circle cx="50" cy="54" r="32" fill="#DFA25C" stroke="#C6853E" stroke-width="3"/><g fill="#6B3B22"><ellipse cx="38" cy="42" rx="4" ry="3"/><ellipse cx="60" cy="40" rx="3.5" ry="3"/><ellipse cx="50" cy="56" rx="4" ry="3"/><ellipse cx="34" cy="62" rx="3.5" ry="3"/><ellipse cx="66" cy="62" rx="4" ry="3"/><ellipse cx="56" cy="72" rx="3" ry="2.5"/></g>' },
         { id: 'choco', label: 'チョコ', food: 1, keys: ['チョコ', 'ショコラ', 'ブラウニー', 'ココア', 'ガトーショコラ', 'トリュフ'],
           svg: sh + '<rect x="27" y="18" width="46" height="66" rx="6" fill="#6B3B22"/><g fill="#8E5634"><rect x="32" y="23" width="16" height="13" rx="2"/><rect x="52" y="23" width="16" height="13" rx="2"/><rect x="32" y="40" width="16" height="13" rx="2"/><rect x="52" y="40" width="16" height="13" rx="2"/></g><path d="M25 58H75V82Q75 86 71 86H29Q25 86 25 82Z" fill="#E5484D"/><rect x="25" y="58" width="50" height="5" fill="#F4C542"/>' },

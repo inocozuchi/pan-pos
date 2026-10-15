@@ -5654,7 +5654,7 @@
             savory: { label: 'クッキー', total: 'クッキー類' },
             drink: { label: 'ドリンク', total: 'ドリンク' }
         },
-        setDiscount: true,
+        setDiscount: false,
         eventsCollection: 'events'
     };
     const SITE_CFG = (function (c) {
@@ -5676,7 +5676,7 @@
             mode: (c.mode === 'kitchen' || c.mode === 'restaurant') ? c.mode : 'retail',
             customerTypes: [...new Set(types)],
             categories: cats,
-            setDiscount: c.setDiscount === false ? false : true,
+            setDiscount: c.setDiscount === true,   // セット割は、はじめはオフ（true と書いた時だけオン）
             eventsCollection: /^[A-Za-z0-9_-]{1,64}$/.test(String(c.eventsCollection || '')) ? String(c.eventsCollection) : d.eventsCollection
         };
     })(window.SITE);
@@ -6012,7 +6012,7 @@
     let openPlanId = '';           // 開店の準備で選んだ予定（開店すると currentPlanId になる）
     let reportSlotMin = 15;        // 集計の時間の区切り（分）。予定で決める（はじめは15分）
     // ▼ セット割 ▼
-    // 決めた「種類の組み合わせ」を同じ会計で買うと、決めた額だけ引く（初期設定：クッキー＋ドリンクで10円引き）。
+    // 決めた「種類の組み合わせ」を同じ会計で買うと、決めた額だけ引く（はじめはオフ。オンにした時の初めの決まり：クッキー＋ドリンクで10円引き）。
     // 【上限】1会計につき1回だけ。2セット買っても引くのは1回ぶん。
     // 【設定】設定の「セット割・クーポン」で、オン・オフ／組み合わせ／割引額を変えられる。共有中は全端末でそろえる。
     // 割引の決まりは setDiscountFor() の1か所にだけ書く。
@@ -8312,9 +8312,10 @@
                     <p>お客様が<b>「40円あります」</b>と小銭を先に出したときは、<b>¥1,040</b> を押せばそのまま合います。探して打ち込む必要はありません。</p>
                 </div>
                 <div class="man-box tip">
-                    <div class="man-box-h">セット割（初期設定：クッキー＋ドリンクで10円引き）</div>
-                    <p>決めた<b>種類の組み合わせ</b>を同じ会計で買うと、<b>自動で割り引き</b>になります。カートとお会計の明細に<b>「セット割 −¥10」</b>の行が出て、合計はもう引いた後の額です。何もしなくて大丈夫です。</p>
-                    <p><b>いまのセット割</b>は、空のカートの下（「セット割：クッキー＋ドリンクで10円引き」）と、<b>「設定 → セット割・クーポン」</b>に出ています。</p>
+                    <div class="man-box-h">セット割（はじめはオフ）</div>
+                    <p><b>はじめは使っていません。</b>使う時は<b>「設定 → セット割・クーポン」</b>でオンにして、組み合わせと割引額を決めます（決めていなければ、クッキー＋ドリンクで10円引き）。</p>
+                    <p>オンにすると、決めた<b>種類の組み合わせ</b>を同じ会計で買うと、<b>自動で割り引き</b>になります。カートとお会計の明細に<b>「セット割 −¥10」</b>の行が出て、合計はもう引いた後の額です。何もしなくて大丈夫です。</p>
+                    <p><b>いまのセット割</b>は、オンの時だけ、空のカートの下（「セット割：クッキー＋ドリンクで10円引き」など）と、<b>「設定 → セット割・クーポン」</b>に出ています。</p>
                     <ul class="man-list">
                         <li><b>2セット以上買っても、引くのは1会計1回ぶん</b>です（コーヒー2杯＋クッキー2枚でも10円引き）。</li>
                         <li>ほかの種類の商品がいっしょに入っていても、組み合わせがそろえば割引になります。</li>
@@ -18319,7 +18320,7 @@
         salesGoal = Number(data.salesGoal) > 0 ? Number(data.salesGoal) : 0;
         currentPlanId = typeof data.planId === 'string' ? data.planId : '';
         reportSlotMin = [5, 10, 15, 30].includes(Number(data.reportSlotMin)) ? Number(data.reportSlotMin) : 15;
-        // セット割は店の決まりなので、販売会をまたいで持ち越す（前の版のデータには無いのでオン）
+        // セット割は店の決まりなので、販売会をまたいで持ち越す（決めていないデータは、施設の設定のまま。はじめはオフ）
         setDiscountOn = (typeof data.setDiscountOn === 'boolean') ? data.setDiscountOn : SITE_CFG.setDiscount;
         // 組み合わせと額（前の版のデータには無いので、初期設定のクッキー＋ドリンクで10円引き）
         setRule = normSetRule(data.setRule) || { needs: SET_DEFAULT.needs.slice(), amount: SET_DEFAULT.amount };
@@ -18878,7 +18879,7 @@
                 showToast('全品目が無くなったため会計を削除しました');
             } else {
                 // 直した中身は ed にまとめて書く（元の会計の書き込みが遅れて届いても、直しが消えないように）
-                syncUpdateSale(rec.remoteId, { ed: Object.assign({ items, total, discount, taxAdd, coupon: rec.coupon || null, mdisc: rec.mdisc || null, bulk: rec.bulk || null }, cashAfterEdit(rec, total)), edited: true }, rec.remoteCode);
+                syncUpdateSale(rec.remoteId, { ed: Object.assign({ items, total, discount, taxAdd, coupon: rec.coupon || null, mdisc: rec.mdisc || null, bulk: rec.bulk || null }, cashAfterEdit(rec, total)), edited: true, edAt: Date.now() }, rec.remoteCode);
                 kitchenOnEdit(rec, items);
             }
             logEdit(`会計修正 客No.${rec.no || '-'}：${shown} ${delta < 0 ? '−1' : '＋1'}`);
@@ -18930,7 +18931,7 @@
         if (syncMode) {
             if (type && type !== '不明') lastCustomerType = type;
             recordTypeEditIdx = null;
-            syncUpdateSale(rec.remoteId, { ty: { customerType: type, pendingType: false }, customerType: type, pendingType: false, typeEditedLater: true }, rec.remoteCode);
+            syncUpdateSale(rec.remoteId, { ty: { customerType: type, pendingType: false }, customerType: type, pendingType: false, typeEditedLater: true, tyAt: Date.now() }, rec.remoteCode);
             logEdit(`属性入力 客No.${rec.no || '-'}：${type}`);
             playSound();
             return;
@@ -20698,7 +20699,7 @@
         const memo = String(v).replace(/\s+/g, ' ').trim().slice(0, 100);
         if ((h.memo || '') === memo) return;
         if (memo) h.memo = memo; else delete h.memo;
-        if (syncMode && h.remoteId) syncUpdateSale(h.remoteId, { memo }, h.remoteCode);
+        if (syncMode && h.remoteId) syncUpdateSale(h.remoteId, { memo, memoAt: Date.now() }, h.remoteCode);
         logEdit(memo ? `客No.${h.no || ''} にメモ：${memo}` : `客No.${h.no || ''} のメモを消した`);
         saveData();
         renderRecords();
@@ -27752,6 +27753,7 @@
     // サーバーの会計の一覧（手元の控えではないもの）を受け取った時に呼ぶ。
     // 届いている会計は控えから消し、しばらく経っても届いていない会計は送り直す。
     function reconcileOutbox(code, docs, pend) {
+        replaySaleUpdates(code);
         if (!saleOutbox.length || !fbDb) return;
         // 届いた（サーバーが受け取った）会計だけを控えから消す。手元で送っている途中の会計（pend）は、まだ消さない
         const seen = new Set(docs.map(d => d.__id));
@@ -27788,9 +27790,9 @@
     // 控えが残っている時は、置き場の様子が変わらなくても、ときどき確かめて送り直す
     // （静かな時間に読み込み直すと、次の会計が来るまで送り直されないため）
     setInterval(() => {
-        if (!saleOutbox.length || !syncMode || !syncReady || !fbDb || !syncEventCode || !navigator.onLine) return;
+        if ((!saleOutbox.length && !saleUpdQ.length) || !syncMode || !syncReady || !fbDb || !syncEventCode || !navigator.onLine) return;
         const code = syncEventCode;
-        if (!saleOutbox.some(e => e.code === code && Date.now() - e.at > OUTBOX_WAIT)) return;
+        if (![...saleOutbox, ...saleUpdQ].some(e => e.code === code && Date.now() - e.at > OUTBOX_WAIT)) return;
         fbDb.collection(EVENTS_COL).doc(code).collection('sales').get({ source: 'server' })
             .then(snap => { const docs = []; snap.forEach(d => docs.push({ __id: d.id })); if (syncEventCode === code) reconcileOutbox(code, docs); })
             .catch(() => {});
@@ -27883,8 +27885,66 @@
                 applyRemoteSales(withOutbox(c, lastSalesDocs.docs, ids));
             }
         }
+        // 取り消し・直しも、サーバーが受け取ったと返事をするまで控えておく（読み込み直しで消えないように。updQueue を参照）
+        const u = (changes.voided || changes.ed || changes.ty || 'memo' in changes) ? queueSaleUpdate(c, remoteId, changes) : '';
         fbDb.collection(EVENTS_COL).doc(c).collection('sales').doc(remoteId).update(changes)
+            .then(() => { if (u) updDone(u); })
             .catch(e => { console.warn('売上の更新同期に失敗', e); });
+    }
+    // ▼▼▼ 取り消し・直しの控え（updQueue）▼▼▼
+    // 【なぜ必要か】電波が悪い時に会計した直後、その会計を取り消してすぐ読み込み直す（電池が切れる）と、
+    //   会計そのものは置き場に届いても、取り消しの書き込みだけが届かずに消えてしまうことがあった
+    //   （会計の控え saleOutbox は「置き場に無い時だけ送り直す」ので、取り消しは送り直されない）。
+    //   取り消し・品目の直し・客層・メモも、返事が来るまでこの端末に控えておき、届いていなければ送り直す。
+    // 【上書きしないために】直し・客層・メモには時刻（edAt・tyAt・memoAt）を付け、置き場の方が新しい時は送り直さない
+    //   （ほかの端末が後から直した内容を、古い直しで戻さない）。取り消しは戻らない物なので、そのまま送る。
+    const UPDQ_KEY = sk('taizanboku_pos_updq');
+    let saleUpdQ = (() => { try { const a = JSON.parse(localStorage.getItem(UPDQ_KEY) || '[]'); return Array.isArray(a) ? a.filter(e => e && e.u && e.id && e.code && e.ch) : []; } catch (e) { return []; } })();
+    const updBusy = new Set();
+    function saveUpdQ() {
+        if (tabSuspended || !tabOwnsStorage()) return;
+        try { if (saleUpdQ.length) localStorage.setItem(UPDQ_KEY, JSON.stringify(saleUpdQ)); else localStorage.removeItem(UPDQ_KEY); } catch (e) {}
+    }
+    function queueSaleUpdate(code, id, changes) {
+        const u = 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+        saleUpdQ.push({ u, code, id, at: Date.now(), ch: JSON.parse(JSON.stringify(changes)) });
+        if (saleUpdQ.length > 300) saleUpdQ = saleUpdQ.slice(-300);
+        saveUpdQ();
+        return u;
+    }
+    function updDone(u) {
+        const n = saleUpdQ.length;
+        saleUpdQ = saleUpdQ.filter(e => e.u !== u);
+        if (saleUpdQ.length !== n) saveUpdQ();
+    }
+    // 置き場を確かめて、まだ入っていない取り消し・直しだけを書く（会計がまだ置き場に無い時は、届くまで待つ）
+    function replaySaleUpdates(code) {
+        if (!fbDb || !saleUpdQ.length) return;
+        const n0 = saleUpdQ.length;
+        saleUpdQ = saleUpdQ.filter(e => Date.now() - e.at < 12 * 3600000);   // 半日たった控えは捨てる（閉店した回など）
+        if (saleUpdQ.length !== n0) saveUpdQ();
+        saleUpdQ.forEach(e => {
+            if (e.code !== code || updBusy.has(e.u) || Date.now() - e.at < OUTBOX_WAIT) return;
+            updBusy.add(e.u);
+            const ref = fbDb.collection(EVENTS_COL).doc(code).collection('sales').doc(e.id);
+            const c = e.ch;
+            fbDb.runTransaction(tx => tx.get(ref).then(snap => {
+                if (!snap.exists) return 'wait';
+                const d = snap.data() || {};
+                const ch = {};
+                if (c.voided === true && d.voided !== true) { ch.voided = true; ch.voidedAt = c.voidedAt || Date.now(); }
+                if (c.ed && (Number(d.edAt) || 0) < (Number(c.edAt) || 0)) { ch.ed = c.ed; ch.edited = true; ch.edAt = c.edAt; }
+                if (c.ty && (Number(d.tyAt) || 0) < (Number(c.tyAt) || 0)) ['ty', 'customerType', 'pendingType', 'typeEditedLater', 'tyAt'].forEach(k => { if (k in c) ch[k] = c[k]; });
+                if ('memo' in c && (Number(d.memoAt) || 0) < (Number(c.memoAt) || 0)) { ch.memo = c.memo; ch.memoAt = c.memoAt; }
+                if (Object.keys(ch).length) tx.update(ref, ch);
+                return Object.keys(ch).length ? 'sent' : 'done';
+            })).then(r => {
+                if (r === 'wait') return;
+                updDone(e.u);
+                if (r === 'sent') logEdit(`送れていなかった${c.voided ? '取り消し' : '会計の直し'}を送り直しました`);
+            }).catch(err => console.warn('取り消し・直しの送り直しに失敗しました（次にまた試します）', err))
+              .finally(() => updBusy.delete(e.u));
+        });
     }
 
     // 同期状態の表示（開店画面のバッジ等）を更新
