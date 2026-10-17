@@ -1,0 +1,15 @@
+Tesseract.js / tesseract.js-core / 日本語の学習データ（jpn.traineddata）
+--------------------------------------------------
+このフォルダの物は、泰山木POS の「カメラで自動入力」で、商品名の文字を読む時だけ使います。
+
+- tesseract.min.js / worker.min.js … Tesseract.js 7.0.0（Apache License 2.0）LICENSE-tesseract.js.md
+  中に入っている物：
+    regenerator-runtime — Copyright (c) 2014-present, Facebook, Inc.（MIT License）
+    buffer — Feross Aboukhadijeh（MIT License）
+    ieee754 — Feross Aboukhadijeh（BSD-3-Clause License）
+    zlib.js — imaya（MIT License）
+- tesseract-core-*.js / *.wasm … tesseract.js-core 7.0.0（Apache License 2.0）LICENSE-tesseract-core
+  Tesseract OCR（Apache License 2.0）と Leptonica（BSD 2-Clause License）を
+  WebAssembly にした物です。
+- lang/jpn.traineddata.gz … tessdata_best（int）の日本語の学習データ（Apache License 2.0）。
+  npm の @tesseract.js-data/jpn 1.0.0 の 4.0.0_best_int から取りました。

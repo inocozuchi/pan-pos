@@ -1,0 +1,4 @@
+zxing-wasm 3.1.5（MIT License, Copyright (c) Ze-Zheng Wu）LICENSE
+- zxing-reader.js … dist/iife/reader/index.js
+- zxing_reader.wasm … zxing-cpp（Apache License 2.0）を WebAssembly にした物
+泰山木POS の「カメラで自動入力」で、バーコードを読む時だけ使います。

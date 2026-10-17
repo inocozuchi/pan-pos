@@ -3358,3 +3358,68 @@ CSVを読めませんでした。	Could not read the CSV.
 1品ごとの値引き	Per-item discounts
 割増	surcharges
 月別の売上	monthly sales
+# カメラで自動入力
+カメラで自動入力	Camera auto-entry
+バーコードと商品名の文字を読んで、まとめてカートに入れる（使う時だけ）	Reads barcodes and item names and adds them to the cart together (only when used)
+開店中、レジの隅でカメラを動かし、写った商品のバーコード（印刷したラベル）や商品名の文字を読んで、まとめてカートに入れる（この端末だけ。はっきりしない物は「推定」で入れる）	While open, a camera in the corner of the register reads barcodes (printed labels) and item names, and adds the items to the cart together (this device only; unclear items are added as "Est.")
+カメラの映像	Camera view
+カメラの窓を小さくする	Make the camera window smaller
+カメラの窓を大きくする	Make the camera window larger
+止める	Stop
+始める	Start
+もう一度	Retry
+止めています	Paused
+カメラを起動しています…	Starting camera…
+この開き方ではカメラを使えません（https のアドレスで開いてください）	The camera can't be used when opened this way (open the https address)
+カメラを使う許可がありません（ブラウザの設定で許可して「もう一度」）	No permission to use the camera (allow it in the browser settings, then tap "Retry")
+カメラが見つかりません	No camera found
+カメラを起動できませんでした	Couldn't start the camera
+バーコード・文字を読んでいます	Reading barcodes and text
+バーコード・文字（準備中）を読んでいます	Reading barcodes (text is getting ready)
+バーコード・文字（使えません）を読んでいます	Reading barcodes (text unavailable)
+バーコードを読んでいます	Reading barcodes
+文字を読んでいます	Reading text
+文字（準備中）を読んでいます	Getting text reading ready
+文字（使えません）を読んでいます	Text reading is unavailable
+読む物が選ばれていません	Nothing selected to read
+お会計の間は入れません	Not adding during checkout
+「始める」でカメラを使います	Tap "Start" to use the camera
+{0} を入れました（推定・確かめてください）	Added {0} (estimated — please check)
+{0} を入れました	Added {0}
+{0}は、押して入れた分と同じとみなしました	{0} was treated as the one you just tapped in
+カメラで入れた{0}点を取り消しました	Undid {0} item{s0} added by the camera
+取り消す物はもうカートにありません	The items to undo are no longer in the cart
+推定	Est.
+推定 {0}個	Est. {0}
+開店中、レジの画面の隅でカメラを動かし、写った商品を	While open, the camera runs in a corner of the register screen and
+自動でカートに入れます	automatically adds the items it sees to the cart
+。何点かまとめて写すと、まとめて入ります。	. Show several items at once to add them all together.
+入った物は、必ずカートとCDで確かめてください。	Always check what was added in the cart and on the CD.
+文字で決めた物で、はっきりしない物には「推定」の印が付きます。	Uncertain items matched by text get an "Est." mark.
+バーコードで読む	Read barcodes
+商品のラベルのバーコード（お店の番号・JANコード）。速くて確か	Barcodes on item labels (in-store numbers or JAN codes). Fast and reliable
+文字で読む	Read text
+商品の裏などに書いた商品名。登録した商品のうち、いちばん近い物にします（初めは準備に少し時間がかかります）	Item names written on the back, etc. The closest registered item is chosen (takes a moment to get ready the first time)
+開店中は自動でカメラを動かす	Start the camera automatically while open
+オフの時は、カメラの窓の「始める」で動かします	When off, tap "Start" in the camera window
+カメラ	Camera
+外側（背面）	Back camera
+画面側（前面）	Front camera
+ラベル（バーコード・商品名）	Labels (barcode and item name)
+コードの付いた商品：{0} / {1}品。コードの無い品には、お店の中で使う番号（20から始まる13けた）を付けてから印刷します。商品名も大きく入るので、文字でも読めます。	Items with codes: {0} / {1}. Items without codes get an in-store number (13 digits starting with 20) before printing. The item name is printed large, so text reading works too.
+ラベルを1品1枚ずつ印刷	Print one label per item
+ラベルを仕入れ数の分だけ印刷	Print labels for the stock quantity
+うまく読むために	Tips for good reading
+・ラベルを	• Hold the label
+カメラに向けて、少しの間止めます	toward the camera and keep it still for a moment
+（何点か並べて写すと、まとめて入ります）。	(show several items side by side to add them together).
+・同じ商品を続けて読ませる時は、	• To read the same item again,
+いったんカメラの外に出してから	move it out of view first
+写します（写っている間は、1つとして数えます）。	and then show it again (while it stays in view, it counts as one).
+・カメラで入れる時は、	• When using the camera,
+商品のボタンは押さないでください	don't tap the item buttons
+（押した直後に写った同じ商品は入れませんが、二重になることがあります）。	(the same item seen right after a tap is skipped, but it may still be added twice).
+・お会計の画面が開いている間は入れません。間違えて入った時は、カメラの窓の	• Nothing is added while the checkout screen is open. If something is added by mistake, use
+「取り消す」	"Cancel"
+か、カートの −。	in the camera window, or − in the cart.
+・手書きの文字は、印刷した文字より読み間違えやすくなります。	• Handwriting is misread more often than printed text.
