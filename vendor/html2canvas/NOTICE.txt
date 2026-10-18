@@ -1,0 +1,4 @@
+html2canvas 1.4.1（MIT License, Copyright (c) 2012 Niklas von Hertzen）LICENSE
+- html2canvas.min.js … dist/html2canvas.min.js
+泰山木POS で、集計の結果をPDFファイルにする時（iPhone・iPad など、印刷の画面が出にくい端末）だけ使います。
+文字は端末に入っている字体で描くので、字体のファイルは同梱していません。

@@ -89,7 +89,7 @@ eq('整合性チェックで問題なし', await page.evaluate(() => checkIntegr
 
 // レポートは全8セクションが生成される（4.「売上の積み上がりとペース」を追加）
 await page.evaluate(() => { openSettings(); showTab('analytics'); downloadPDF(); });
-eq('レポート：8セクション＋操作の履歴', await page.evaluate(() => [...document.querySelectorAll('#print-report .report-heading')].map(h => h.textContent.replace(/^\d+\. /, '').slice(0, 5))), ['概要', '商品別（消', '時間帯別の', '売上の積み', '商品ごとの', '客層・カテ', '完売と売り', '次回の仕入', '操作の履歴']);
+eq('レポート：8セクション＋操作の履歴', await page.evaluate(() => [...document.querySelectorAll('#print-report .report-heading')].map(h => h.textContent.replace(/^\d+\. /, '').slice(0, 5))), ['概要', '商品別（売', '時間帯別の', '売上の積み', '商品ごとの', '客層・カテ', '完売と売り', '次回の仕入', '操作の履歴']);
 
 // ===== P2/P3 機能の回帰テスト =====
 
@@ -160,7 +160,7 @@ eq('P3-3 精算CSVヘッダ拡充', await page.evaluate(() => {
   let captured = ''; const _d = window.triggerDownload; window.triggerDownload = (f, c) => { captured = c; };
   exportFacilityCSV(); window.triggerDownload = _d;
   return (captured.split('\n').find(l => l.startsWith('商品名')) || '');
-}), '商品名,カテゴリ,単価,仕入れ数,販売数,消化率(%),売れ残り数,売れ残り売価,完売時刻,原価,粗利,味,売上');
+}), '商品名,カテゴリ,単価,仕入れ数,販売数,消化率(%),残り数,残りの売価,完売時刻,原価,粗利,味,売上');
 
 console.log(`\n${pass} passed, ${fail} failed`);
 console.log('runtime errors:', errors.length ? errors.join('\n') : 'none');

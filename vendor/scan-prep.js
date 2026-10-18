@@ -28,12 +28,12 @@
         for (var x = 0; x < W; x++) runFilter(tmp, out, H, W, x, k, isMax, g, h);
         return out;
     }
-    // data … RGBA の並び（そのまま書きかえる）
-    function prep(data, W, H) {
+    // data … RGBA の並び（そのまま書きかえる）。kk … 窓の大きさ（省くと画面の幅から決める。ラベルを拡大して並べた画像は、文字が太いので大きめ）
+    function prep(data, W, H, kk) {
         var n = W * H, i;
         var gray = new Uint8ClampedArray(n);
         for (i = 0; i < n; i++) gray[i] = (data[i * 4] * 77 + data[i * 4 + 1] * 150 + data[i * 4 + 2] * 29) >> 8;
-        var k = Math.max(9, Math.round(W / 56)) | 1;           // 文字の線の太さより十分大きい窓
+        var k = (kk > 0 ? kk : Math.max(9, Math.round(W / 56))) | 1;   // 文字の線の太さより十分大きい窓
         var clo = filter2d(filter2d(gray, W, H, k, true), W, H, k, false);
         for (i = 0; i < n; i++) { var v = clo[i] - gray[i] > 38 ? 0 : 255; data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = v; data[i * 4 + 3] = 255; }
         return data;

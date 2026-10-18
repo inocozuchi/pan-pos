@@ -25,7 +25,8 @@ export function siteHtml(src) {
         ['<link rel="icon" href="icons/', `<link rel="icon" href="${UP}icons/`],
         ['<script src="vendor/', `<script src="${UP}vendor/`],
         ["const PDFJS_DIR = 'vendor/pdfjs/';", `const PDFJS_DIR = '${UP}vendor/pdfjs/';`],
-        ["const SCAN_JS = 'vendor/scan.js';", `const SCAN_JS = '${UP}vendor/scan.js';`]
+        ["const SCAN_JS = 'vendor/scan.js';", `const SCAN_JS = '${UP}vendor/scan.js';`],
+        ["const REPORT_PDF_JS = 'vendor/report-pdf.js';", `const REPORT_PDF_JS = '${UP}vendor/report-pdf.js';`]
     ];
     for (const [a, b] of swaps) {
         if (!out.includes(a)) throw new Error('index.html に、書き換えるはずの所が見つかりません: ' + a);

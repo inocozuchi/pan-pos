@@ -1026,7 +1026,7 @@ A・B・C は売上への貢献度です。A＝上位（累計70%まで）／B�
 約{0}回	about {0}
 2種類以上を買った会計の中で、偶然なら一緒に入るはずの回数より	Among sales with two or more kinds, bought together
 少ない	less often
-2品です。お客様がどちらか一方で満足している見込みがあり、値段や味が近いなら、次回はどちらかを減らす（売れ数の少ない方を削る）候補になります。	 than chance would suggest. Customers may be satisfied with either one; if price and taste are similar, consider reducing one next time (the one that sells less).
+2品です。お客様がどちらか一方で満足している見込みがあり、値段や味が近いなら、次回はどちらかを減らす（売れ数の少ない方を削る）候補になります。	 than chance would suggest.
 完売した後の会計は数えていません（「○時まで」）。「傾向あり」は件数が少なめなので、次の販売会でも出るかを見てから決めてください。	Sales after an item sold out are not counted ("until …"). "Tendency" is based on fewer sales, so check whether it appears again next time before deciding.
 セット割の効果	Effect of set discount
 セット割になった会計	Sales with set discount
@@ -3423,3 +3423,68 @@ CSVを読めませんでした。	Could not read the CSV.
 「取り消す」	"Cancel"
 か、カートの −。	in the camera window, or − in the cart.
 ・手書きの文字は、印刷した文字より読み間違えやすくなります。	• Handwriting is misread more often than printed text.
+# 2026-10 セット割・客属性・予約・省エネ・カメラ（映像なし）・iPhone の保存・印刷・割引の取り消し・売上の割合
+客属性	Customer type
+予約	Reservations
+省エネ	Power saving
+決めた組み合わせ（クッキー＋ドリンク など）で買うと、自動で引く。組み合わせと額は「セット割・クーポン」で決める	Automatically discounts set combinations (e.g., cookie + drink). Set the combination and amount in "Set discount & coupons"
+お会計で {0} などを選び、売上集計で客層ごとに見る（選ばなくても会計できる。あとから「会計記録」で入れられる）	Choose {0} etc. at checkout and see sales by customer type (you can check out without choosing; enter it later in Records)
+レジに「予約保留」を出し、あとで受け取る分を名前を付けて取っておく。受け取りの時に「予約」の画面から会計する	Shows "Hold as reservation" on the register to set items aside under a name; check them out from the Reservations screen at pickup
+画面の動き・ぼかしを止め、カメラの読み取りや画面の書きかえを控えめにして、電池を長く持たせる（この端末だけ）	Stops animations and blur and reduces camera reading and screen updates to make the battery last longer (this device only)
+開店中、カメラを裏で動かし（映像は出さない）、写った商品のQRコード・バーコード（印刷したラベル）や商品名の文字を読んで、まとめてカートに入れる（この端末だけ。カメラの無い端末では自動でオフ。はっきりしない物は「推定」で入れる）	While open, the camera runs in the background (no video shown), reads QR codes and barcodes (printed labels) and item names, and adds the items to the cart together (this device only; turns off automatically on devices without a camera; unclear items are added as "Est.")
+省エネで画面を暗くしています（さわると戻ります）	Screen dimmed to save power (touch to return)
+省エネで画面を暗くしています。さわると戻ります	Screen dimmed to save power. Touch to return
+この端末にはカメラが無いので、カメラで自動入力は使いません	This device has no camera, so camera auto-entry is not used
+この開き方ではカメラを使えないので、カメラで自動入力は止めました（https のアドレスで開くと使えます）	The camera can't be used when opened this way, so camera auto-entry was stopped (it works from the https address)
+この端末にはカメラが無いので、使いません	This device has no camera, so it is not used
+（カメラのある iPhone・iPad などでオンにしてください）。	(turn it on on a device with a camera, such as an iPhone or iPad).
+この開き方ではカメラを使えないので、止めています	The camera can't be used when opened this way, so it is stopped
+（https のアドレスで開くと使えます）。	(it works when opened from the https address).
+開店中、カメラを裏で動かし（映像は画面に出しません）、写った商品を	While open, the camera runs in the background (no video is shown) and
+文字で決めた物で、はっきりしない物には「推定」の印が付きます。カメラの無い端末では、自動でオフになります。	Uncertain items matched by text get an "Est." mark. On devices without a camera, this turns off automatically.
+バーコード・QRコードで読む	Read barcodes and QR codes
+商品のラベルの QRコードとバーコード（お店の番号・JANコード）。速くて確か	QR codes and barcodes on item labels (in-store numbers or JAN codes). Fast and reliable
+オフの時は、カートの上の札の「始める」で動かします	When off, tap "Start" on the bar above the cart
+ラベル（商品名・QRコード・バーコード）	Labels (item name, QR code, barcode)
+コードの付いた商品：{0} / {1}品。コードの無い品には、お店の中で使う番号（20から始まる13けた）を付けてから印刷します。	Items with codes: {0} / {1}. Items without codes get an in-store number (13 digits starting with 20) before printing.
+QRコードが入ったラベルは、少し離れていても読めます	Labels with a QR code can be read from a little farther away
+（前に印刷したバーコードだけのラベルは、カメラの近くでないと読めないことがあるので、印刷し直すのがおすすめです）。商品名も大きく入るので、文字でも読めます。	 (labels printed earlier with only a barcode may need to be held close to the camera, so reprinting them is recommended). The item name is printed large, so text reading works too.
+（何点か並べて写すと、まとめて入ります。カメラから30〜60cmくらいが読みやすい距離です）。	(show several items side by side to add them together; about 30–60 cm from the camera works best).
+・お会計の画面が開いている間は入れません。間違えて入った時は、カートの上の札の	• Nothing is added while the checkout screen is open. If something is added by mistake, use
+セット割がオンです	Set discount is on
+（{0}）。使わない時は	({0}). If you don't use it,
+オフにする	turn it off
+客No.{0} の「{1}」（−¥{2}）を取り消しますか？	Remove "{1}" (−¥{2}) from customer no. {0}?
+合計：¥{0} → ¥{1}	Total: ¥{0} → ¥{1}
+（増えた分は、その場で受け取ったことにします）	(The increase is treated as received on the spot)
+{0}を取り消しました（合計 ¥{1}）	{0} removed (total ¥{1})
+売上の{0}%	{0}% of sales
+「売上の◯%」は、その商品の売上が全体の売上に占める割合です。消化率＝販売数÷仕入れ数。	"◯% of sales" is the item's share of total sales. Sell-through = sold ÷ stocked.
+残った数（仕入れのうち、今回は残ったぶん）	Remaining (stock left over this time)
+残りの多い商品	Items with the most left
+残り	Left
+「売価ぶん」は、残った数にそのまま売値をかけた金額です（原価ではありません）。次回の仕入れ数を決める時の参考にしてください。	"At selling price" is the number left times the selling price (not cost). Use it as a reference when deciding next time's stock.
+残った商品はありませんでした。	Nothing was left over.
+どちらか一方が選ばれやすい組み合わせ	Pairs where customers tend to pick one or the other
+2品です。どちらも好まれていて、お客様がその時の気分でどちらか一方を選んでいる見込みがあります。値段や味が近いなら、次回それぞれをいくつ用意するかを決める時の参考になります。	 than chance would suggest. Both are liked, and customers likely pick one or the other depending on their mood. If price and taste are similar, use this when deciding how many of each to prepare next time.
+よく売れた商品	Items that sold well
+何がどれだけ売れたか（10品まで）	What sold and how much (up to 10 items)
+この{0}品で売上の{1}%を占めています。	These {0} items make up {1}% of sales.
+今回は販売がなかったので、半分ほどに	No sales this time, so about half
+残りが多め・少し控えめに	Quite a few left, slightly fewer
+保存・印刷	Save / print
+iPhone・iPad では、	On iPhone and iPad, it is most reliable to
+PDFファイルを作ってから	create a PDF file first
+「ファイルに保存」や「プリント」を選ぶのが確実です。	and then choose "Save to Files" or "Print".
+PDFファイルを作る	Create a PDF file
+このまま印刷の画面を出す	Open the print screen here
+別の画面で開く	Open in a separate screen
+PDFを作っています…	Creating PDF…
+PDFを作っています…（{0} / {1}ページ）	Creating PDF… (page {0} / {1})
+PDFができました	PDF is ready
+（{0}KB）	({0} KB)
+保存・共有・プリント	Save, share or print
+PDFを開く・ダウンロード	Open / download PDF
+PDFを作れませんでした。「このまま印刷の画面を出す」をお試しください。	Couldn't create the PDF. Try "Open the print screen here".
+共有できませんでした。「PDFを開く・ダウンロード」をお使いください	Couldn't share. Use "Open / download PDF"
+この端末では印刷の画面を出せませんでした。「PDFファイルを作る」をお使いください。	This device couldn't open the print screen. Use "Create a PDF file".
