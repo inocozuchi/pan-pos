@@ -99,7 +99,7 @@ service cloud.firestore {
     // 予定を作った端末（owners）が、お客様の読む文書（名前・日時・場所・予約できる品・受付の期間）を書く。
     // 予定の印は長い乱数で、知らない予定は探せない（一覧は出さない）。
     // お客様は、受付の期間の間だけ、自分の予約を1つずつ作れる。読めるのは自分の予約だけ。
-    // 予約の一覧を読めるのは、予定を作った端末だけ。閉店した時に、その端末が予約を消す。
+    // 予約の一覧を読めるのは、予定を作った端末だけ。予約は、だれも消せない（取り消しは状態を変えるだけ）。
     function planPath(pid) { return /databases/$(database)/documents/plans/$(pid); }
     function planOwner(pid) { return signedIn() && exists(planPath(pid)) && me() in get(planPath(pid)).data.owners; }
     function planResvOpen(pid) {
@@ -143,7 +143,7 @@ service cloud.firestore {
         allow update: if planOwner(pid)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['st', 'stAt'])
           && request.resource.data.st in ['new', 'done', 'cancel'];
-        allow delete: if planOwner(pid);
+        allow delete: if false;   // 予約は消さない
         function resvShape() {
           let d = request.resource.data;
           return d.keys().hasOnly(['uid', 'seq', 'name', 'tel', 'memo', 'pickup', 'items', 'total', 'st', 'at'])
@@ -156,6 +156,150 @@ service cloud.firestore {
         }
       }
     }
+    // ---- 予約帳（books/{予約帳の印}）----
+    // レジ・販売会・予定とは別の置き場。レジを初期化しても、販売会を閉じても、何も消えない。
+    // ・予約帳を作った端末と、「予約帳の鍵」を使った端末が管理者（owners）。鍵は印刷して保管する。
+    //   管理の端末をなくしても・初期化しても、鍵があれば、どの端末からでも管理者に戻れる。
+    // ・お客様は、受付の期間の間だけ、予約を1つずつ作れる。予約の印は長い乱数で、印を知っている人だけが読める
+    //   （お客様の控えのリンク）。一覧を読めるのは管理者だけ。
+    // ・予約は、だれにも消せない。管理者も、状態（受け取り・取り消し）と、お店のメモを変えるだけ。
+    //   状態を変えた記録（log）は、足すことしかできない（あとから書きかえ・消すことはできない）。
+    // ・予約帳そのものも消せない（受付をやめる時は on: false にする）。
+    function bookPath(bid) { return /databases/$(database)/documents/books/$(bid); }
+    function bookOwner(bid) { return signedIn() && exists(bookPath(bid)) && me() in get(bookPath(bid)).data.owners; }
+    function bookOpen(bid) {
+      let b = get(bookPath(bid)).data;
+      return b.get('on', false) == true && request.time.toMillis() >= b.get('from', 0) && request.time.toMillis() < b.get('to', 0);
+    }
+    // 予約を足せるか：受付の期間のお客様か、管理者（店頭・電話の予約を、期間の外でも足せる）
+    function bookCanAdd(bid) { return bookOpen(bid) || bookOwner(bid); }
+    function bookClaimOk(bid) {
+      let c = /databases/$(database)/documents/books/$(bid)/claims/$(request.auth.uid);
+      return exists(c) && get(c).data.at > request.time - duration.value(10, 'm')
+        && exists(/databases/$(database)/documents/books/$(bid)/keys/$(get(c).data.k));
+    }
+    match /books/{bid} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && bid.size() >= 20 && request.resource.data.owners == [me()] && bookShape();
+      // 書きかえる：管理者か、鍵を使った端末（自分を管理者に足す）。管理者を0人にはできない
+      allow update: if signedIn() && (me() in resource.data.owners || bookClaimOk(bid))
+        && me() in request.resource.data.owners && request.resource.data.owners.size() <= 20 && bookShape();
+      allow delete: if false;
+      function bookShape() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['owners', 'title', 'shop', 'lead', 'pickup', 'note', 'on', 'from', 'to', 'items',
+                                 'maxQty', 'sidLabel', 'sidReq', 'sheet', 'theme', 'at', 'ver'])
+          && d.owners is list && d.owners.size() >= 1 && d.on is bool && d.from is int && d.to is int
+          && d.items is list && d.items.size() <= 20
+          && str(d.get('title', ''), 40) && str(d.get('shop', ''), 60) && str(d.get('lead', ''), 400)
+          && str(d.get('pickup', ''), 300) && str(d.get('note', ''), 400) && str(d.get('sidLabel', ''), 16)
+          && str(d.get('sheet', ''), 300) && str(d.get('theme', ''), 20)
+          && d.get('maxQty', 10) is int && d.get('maxQty', 10) >= 1 && d.get('maxQty', 10) <= 50;
+      }
+      // 予約の数え（何件目か・品ごとに何個予約されたか）。お客様は、予約を1つ作る時に、番号を1つだけ進める
+      match /tally/{t} {
+        allow get: if signedIn();
+        // 管理者は数え直せる。ただし番号を戻すことはできない（戻すと、次の予約が前の番号とぶつかるため）
+        allow write: if bookOwner(bid) && t == 'c'
+          && request.resource.data.n is int && request.resource.data.n >= (resource == null ? 0 : resource.data.n);
+        allow create, update: if signedIn() && t == 'c' && bookCanAdd(bid)
+          && request.resource.data.keys().hasOnly(['n', 'c'])
+          && request.resource.data.n is int && request.resource.data.c is map
+          && request.resource.data.n == (resource == null ? 0 : resource.data.n) + 1
+          && existsAfter(/databases/$(database)/documents/books/$(bid)/seq/$('s' + string(request.resource.data.n)));
+      }
+      // 番号 → 予約の印（番号がとびとびにならない・同じ番号が2つできないように。足すだけ）
+      match /seq/{s} {
+        allow get: if bookOwner(bid);
+        allow list: if bookOwner(bid);
+        allow create: if signedIn() && bookCanAdd(bid)
+          && request.resource.data.keys().hasOnly(['r'])
+          && str(request.resource.data.r, 40)
+          && s == 's' + string(getAfter(/databases/$(database)/documents/books/$(bid)/tally/c).data.n)
+          && getAfter(/databases/$(database)/documents/books/$(bid)/resv/$(request.resource.data.r)).data.seq
+             == getAfter(/databases/$(database)/documents/books/$(bid)/tally/c).data.n;
+        allow update, delete: if false;
+      }
+      // 予約
+      match /resv/{rid} {
+        // 予約の印（20文字以上の乱数）を知っている人は読める（お客様の控えのリンク）。一覧は管理者だけ
+        allow get: if signedIn();
+        allow list: if bookOwner(bid);
+        allow create: if signedIn() && bookCanAdd(bid) && rid.size() >= 20 && resvShape()
+          && getAfter(/databases/$(database)/documents/books/$(bid)/tally/c).data.n == request.resource.data.seq
+          && getAfter(/databases/$(database)/documents/books/$(bid)/seq/$('s' + string(request.resource.data.seq))).data.r == rid;
+        // 管理者：状態・お店のメモ・お支払いの印だけを変えられる（お客様が書いた中身は変えない）
+        allow update: if bookOwner(bid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['st', 'stAt', 'stBy', 'snote', 'paid'])
+          && request.resource.data.st in ['new', 'done', 'cancel']
+          && str(request.resource.data.get('snote', ''), 200)
+          && request.resource.data.get('paid', false) is bool;
+        allow delete: if false;   // 予約は、だれにも消せない
+        function resvShape() {
+          let d = request.resource.data;
+          return d.keys().hasOnly(['uid', 'seq', 'name', 'sid', 'items', 'qty', 'total', 'st', 'at', 'cat', 'via'])
+            && str(d.get('via', 'web'), 10)
+            && d.uid == me() && d.st == 'new' && d.at == request.time
+            && d.seq is int && d.seq >= 1
+            && d.name is string && d.name.size() >= 1 && d.name.size() <= 30
+            && str(d.get('sid', ''), 20)
+            && d.items is list && d.items.size() >= 1 && d.items.size() <= 20
+            && d.qty is int && d.qty >= 1 && d.qty <= 50
+            && d.total is int && d.total >= 0
+            && d.get('cat', 0) is int;
+        }
+      }
+      // 状態を変えた記録（管理者が足す。書きかえ・消すことはできない）
+      match /log/{id} {
+        allow get, list: if bookOwner(bid);
+        allow create: if bookOwner(bid)
+          && request.resource.data.keys().hasOnly(['at', 'by', 'rid', 'act', 'from', 'to', 'who', 'note'])
+          && request.resource.data.by == me() && request.resource.data.at == request.time
+          && str(request.resource.data.rid, 40) && str(request.resource.data.act, 20)
+          && str(request.resource.data.get('who', ''), 40) && str(request.resource.data.get('note', ''), 200);
+        allow update, delete: if false;
+      }
+      // 学籍番号ごとの予約の数（同じ番号での予約に気づけるように。番号そのものは置かず、ハッシュだけ）
+      match /sid/{h} {
+        allow get: if signedIn();
+        allow list: if bookOwner(bid);
+        allow create, update: if signedIn() && bookCanAdd(bid) && h.size() >= 16
+          && request.resource.data.keys().hasOnly(['n'])
+          && request.resource.data.n == (resource == null ? 0 : resource.data.n) + 1;
+        allow delete: if false;
+      }
+      // 予約帳の鍵（印刷して保管する長い合言葉）。読めるのは管理者だけ
+      match /keys/{k} {
+        allow get, list: if bookOwner(bid);
+        allow create: if bookOwner(bid) && k.size() >= 20
+          && request.resource.data.keys().hasOnly(['at', 'by']) && request.resource.data.by == me();
+        allow update: if false;
+        allow delete: if bookOwner(bid);
+      }
+      // 鍵を使う：自分の名前で「この鍵を持っています」を書く（時刻は置き場の時刻。10分だけ有効）
+      match /claims/{uid} {
+        allow get: if signedIn() && (uid == me() || bookOwner(bid));
+        allow create, update: if signedIn() && uid == me()
+          && request.resource.data.keys().hasOnly(['k', 'at'])
+          && str(request.resource.data.k, 64) && request.resource.data.k.size() >= 20
+          && request.resource.data.at == request.time
+          && exists(/databases/$(database)/documents/books/$(bid)/keys/$(request.resource.data.k));
+        allow delete: if signedIn() && (uid == me() || bookOwner(bid));
+      }
+    }
+    // 予約帳の鍵から、どの予約帳かを引く（鍵を知っている人だけが引ける。一覧は出さない）
+    match /bookkeys/{k} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && k.size() >= 20
+        && request.resource.data.keys().hasOnly(['book', 'at'])
+        && request.resource.data.book is string && request.resource.data.book.size() >= 20
+        && me() in get(bookPath(request.resource.data.book)).data.owners
+        && existsAfter(/databases/$(database)/documents/books/$(request.resource.data.book)/keys/$(k));
+      allow update, delete: if false;
+    }
+
     function shopPath(shopId) { return /databases/$(database)/documents/shops/$(shopId); }
     function claimPath(shopId) { return /databases/$(database)/documents/shops/$(shopId)/claims/$(request.auth.uid); }
     function keyClaimOk(shopId) {

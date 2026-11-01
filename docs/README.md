@@ -17,6 +17,11 @@
 配る相手がスマホ・タブレットを持っているなら、PDFを渡さずに
 「設定 → 操作マニュアル」を見てもらうほうが、いつでも最新の内容になります。
 
+## 予約帳.md・yoyakucho-sheet.gs
+
+12月のシュトーレンなど、前もってスマホで予約を受ける「予約帳」（`yoyaku.html`・`yoyaku-kanri.html`）の使い方と、
+予約が消えないしくみ（何重の控え）、Google スプレッドシートに控えを写す Apps Script（`yoyakucho-sheet.gs`）の作り方です。
+
 ## firebase-sync.md
 
 複数の端末で同時に会計するための Firebase（Cloud Firestore）の設定手順です。

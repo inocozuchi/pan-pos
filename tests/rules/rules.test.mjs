@@ -349,10 +349,106 @@ await t('予約：受付の期間が終わると、予約できない', async ()
   await updateDoc(planDoc(ownerDb), { on: true, to: Date.now() - 1000 });
   await assertFails(reserve(cust2Db, 'cust2', 2));
 });
-await t('予約：持ち主は閉店の後に予約を消せる・お客様は消せない', async () => {
+await t('予約：予約は、お客様にも持ち主にも消せない', async () => {
   await assertFails(deleteDoc(doc(custDb, 'plans', PID, 'resv', 'r1')));
-  await assertSucceeds(deleteDoc(doc(ownerDb, 'plans', PID, 'resv', 'r1')));
-  await assertSucceeds(deleteDoc(doc(ownerDb, 'plans', PID, 'tally', 'c')));
+  await assertFails(deleteDoc(doc(ownerDb, 'plans', PID, 'resv', 'r1')));
+});
+
+// ---- 予約帳（books）：レジ・販売会とは別。予約はだれにも消せない ----
+const BID = 'book-abcdefghijklmnopqrst', KEY = 'KEYABCDEFGHJKLMNPQRSTUVW';
+const RID1 = 'r1aaaaaaaaaaaaaaaaaaaaa', RID2 = 'r2bbbbbbbbbbbbbbbbbbbbb';
+const bookDoc = (d, b = BID) => doc(d, 'books', b);
+const bookBase = () => ({ owners: ['owner1'], title: '12月 シュトーレンのご予約', shop: '泰山木', lead: '', pickup: '12月20日 12時から', note: '',
+  on: true, from: Date.now() - 60000, to: Date.now() + 3600000, items: [{ id: 'st', name: 'シュトーレン', price: 1500, cap: 3 }],
+  maxQty: 5, sidLabel: '学籍番号', sidReq: true, sheet: '', theme: 'pastel', at: 1, ver: 1 });
+async function bookReserve(d, uid, n, rid, over = {}) {
+  return runTransaction(d, async tx => {
+    tx.set(doc(d, 'books', BID, 'tally', 'c'), { n, c: { st: n } });
+    tx.set(doc(d, 'books', BID, 'seq', 's' + n), { r: rid });
+    tx.set(doc(d, 'books', BID, 'resv', rid), Object.assign({ uid, seq: n, name: '山田', sid: 'A1234', items: [{ id: 'st', name: 'シュトーレン', price: 1500, n: 1 }], qty: 1, total: 1500, st: 'new', at: serverTimestamp(), cat: Date.now() }, over));
+  });
+}
+await t('予約帳：作った端末が管理者になる・ほかの人を管理者にしては作れない', async () => {
+  await assertFails(setDoc(bookDoc(strangerDb, 'book-xxxxxxxxxxxxxxxxxxxx'), Object.assign(bookBase(), { owners: ['owner1'] })));
+  await assertSucceeds(setDoc(bookDoc(ownerDb), bookBase()));
+});
+await t('予約帳：鍵を作れる（管理者だけ）', async () => {
+  await assertFails(setDoc(doc(strangerDb, 'books', BID, 'keys', KEY), { at: 1, by: 'stranger' }));
+  const b = writeBatch(ownerDb);
+  b.set(doc(ownerDb, 'books', BID, 'keys', KEY), { at: 1, by: 'owner1' });
+  b.set(doc(ownerDb, 'bookkeys', KEY), { book: BID, at: 1 });
+  await assertSucceeds(b.commit());
+});
+await t('予約帳：お客様は予約帳を読める・一覧は探せない', async () => {
+  await assertSucceeds(getDoc(bookDoc(custDb)));
+  await assertFails(getDocs(collection(custDb, 'books')));
+});
+await t('予約帳：お客様は番号・数えといっしょに予約を作れる', () => assertSucceeds(bookReserve(custDb, 'cust1', 1, RID1)));
+await t('予約帳：番号を進めずに予約だけは書けない', () =>
+  assertFails(setDoc(doc(cust2Db, 'books', BID, 'resv', RID2), { uid: 'cust2', seq: 2, name: 'x', sid: '', items: [{ id: 'st', n: 1 }], qty: 1, total: 1, st: 'new', at: serverTimestamp() })));
+await t('予約帳：同じ番号を2回は使えない（前の予約を上書きできない）', () => assertFails(bookReserve(cust2Db, 'cust2', 1, RID2)));
+await t('予約帳：短い予約の印（当てられる印）は使えない', () => assertFails(bookReserve(cust2Db, 'cust2', 2, 'r2short')));
+await t('予約帳：ほかの人の名前（uid）では予約できない・はじめから受け取り済みでは作れない', async () => {
+  await assertFails(bookReserve(cust2Db, 'cust1', 2, RID2));
+  await assertFails(bookReserve(cust2Db, 'cust2', 2, RID2, { st: 'done' }));
+});
+await t('予約帳：予約の印を知っていれば読める（控えのリンク）・一覧は管理者だけ', async () => {
+  await assertSucceeds(getDoc(doc(cust2Db, 'books', BID, 'resv', RID1)));
+  await assertFails(getDocs(collection(cust2Db, 'books', BID, 'resv')));
+  await assertSucceeds(getDocs(collection(ownerDb, 'books', BID, 'resv')));
+});
+await t('予約帳：予約はだれにも消せない（お客様・管理者・知らない人）', async () => {
+  await assertFails(deleteDoc(doc(custDb, 'books', BID, 'resv', RID1)));
+  await assertFails(deleteDoc(doc(ownerDb, 'books', BID, 'resv', RID1)));
+  await assertFails(deleteDoc(doc(strangerDb, 'books', BID, 'resv', RID1)));
+  await assertFails(deleteDoc(doc(ownerDb, 'books', BID, 'seq', 's1')));
+});
+await t('予約帳：予約帳そのものも消せない', () => assertFails(deleteDoc(bookDoc(ownerDb))));
+await t('予約帳：お客様は予約の中身を変えられない', async () => {
+  await assertFails(updateDoc(doc(custDb, 'books', BID, 'resv', RID1), { st: 'cancel' }));
+  await assertFails(updateDoc(doc(custDb, 'books', BID, 'resv', RID1), { name: '書きかえ' }));
+});
+await t('予約帳：管理者は状態・メモだけを変えられる（名前・品物は変えられない）', async () => {
+  await assertSucceeds(updateDoc(doc(ownerDb, 'books', BID, 'resv', RID1), { st: 'done', stAt: 1, stBy: 'owner1', paid: true }));
+  await assertFails(updateDoc(doc(ownerDb, 'books', BID, 'resv', RID1), { name: '書きかえ' }));
+  await assertFails(updateDoc(doc(ownerDb, 'books', BID, 'resv', RID1), { items: [] }));
+  await assertFails(updateDoc(doc(ownerDb, 'books', BID, 'resv', RID1), { st: 'gone' }));
+});
+await t('予約帳：記録は足せるだけ（書きかえ・消すことはできない）', async () => {
+  await assertSucceeds(setDoc(doc(ownerDb, 'books', BID, 'log', 'l1'), { at: serverTimestamp(), by: 'owner1', rid: RID1, act: 'done', from: 'new', to: 'done', who: 'レジ1' }));
+  await assertFails(updateDoc(doc(ownerDb, 'books', BID, 'log', 'l1'), { act: 'x' }));
+  await assertFails(deleteDoc(doc(ownerDb, 'books', BID, 'log', 'l1')));
+  await assertFails(getDocs(collection(custDb, 'books', BID, 'log')));
+});
+await t('予約帳：知らない端末は管理者になれない・鍵を持っていればなれる', async () => {
+  await assertFails(updateDoc(bookDoc(strangerDb), { owners: ['owner1', 'stranger'] }));
+  await assertFails(setDoc(doc(strangerDb, 'books', BID, 'claims', 'stranger'), { k: 'WRONGKEYWRONGKEYWRONGKEY', at: serverTimestamp() }));
+  const nd = db('newdev');
+  await assertSucceeds(getDoc(doc(nd, 'bookkeys', KEY)));
+  await assertSucceeds(setDoc(doc(nd, 'books', BID, 'claims', 'newdev'), { k: KEY, at: serverTimestamp() }));
+  await assertSucceeds(updateDoc(bookDoc(nd), { owners: ['owner1', 'newdev'] }));
+  await assertSucceeds(getDocs(collection(nd, 'books', BID, 'resv')));
+});
+await t('予約帳：受付を止める・期間が終わると予約できない', async () => {
+  await updateDoc(bookDoc(ownerDb), { on: false });
+  await assertFails(bookReserve(cust2Db, 'cust2', 2, RID2));
+  await updateDoc(bookDoc(ownerDb), { on: true, to: Date.now() - 1000 });
+  await assertFails(bookReserve(cust2Db, 'cust2', 2, RID2));
+});
+await t('予約帳：管理者は数えを直せる（数え直し）', () => assertSucceeds(setDoc(doc(ownerDb, 'books', BID, 'tally', 'c'), { n: 1, c: { st: 1 } })));
+await t('予約帳：管理者でも番号を戻せない（次の予約がぶつからないように）', () => assertFails(setDoc(doc(ownerDb, 'books', BID, 'tally', 'c'), { n: 0, c: {} })));
+await t('予約帳：受付の外でも、管理者は店頭・電話の予約を足せる（お客様は足せない）', async () => {
+  await assertFails(bookReserve(cust2Db, 'cust2', 2, RID2));
+  await assertSucceeds(bookReserve(ownerDb, 'owner1', 2, 'r3ccccccccccccccccccccc', { via: 'shop' }));
+  await assertFails(deleteDoc(doc(ownerDb, 'books', BID, 'resv', 'r3ccccccccccccccccccccc')));
+});
+await t('予約帳：学籍番号の数えは1つずつ・消せない', async () => {
+  await updateDoc(bookDoc(ownerDb), { to: Date.now() + 3600000 });
+  const H = 'h0123456789abcdef0123';
+  await assertSucceeds(setDoc(doc(cust2Db, 'books', BID, 'sid', H), { n: 1 }));
+  await assertFails(setDoc(doc(cust2Db, 'books', BID, 'sid', H), { n: 5 }));
+  await assertSucceeds(setDoc(doc(cust2Db, 'books', BID, 'sid', H), { n: 2 }));
+  await assertFails(deleteDoc(doc(ownerDb, 'books', BID, 'sid', H)));
 });
 
 await env.cleanup();

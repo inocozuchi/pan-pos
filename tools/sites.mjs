@@ -53,7 +53,20 @@ export function siteReserveHtml(src) {
     }
     return '<!-- このファイルは tools/sites.mjs が作った写しです。直すときは、いちばん上の reserve.html を直して build してください。 -->\n' + out;
 }
-const PAGES = [['index.html', siteHtml], ['order.html', siteOrderHtml], ['reserve.html', siteReserveHtml]];
+// 予約帳のページ（yoyaku.html・yoyaku-kanri.html）の写し。アイコンと vendor/ の部品は2つ上から読む
+// （予約帳は Firestore だけに置くので、施設ごとの違いは data/firebase-config.js だけ）
+export function siteBookHtml(name) {
+    return src => {
+        let out = src;
+        for (const [a, b] of [['<link rel="icon" href="icons/', `<link rel="icon" href="${UP}icons/`], ['<link rel="apple-touch-icon" href="icons/', `<link rel="apple-touch-icon" href="${UP}icons/`], ['<script src="vendor/', `<script src="${UP}vendor/`]]) {
+            if (!out.includes(a)) throw new Error(name + ' に、書き換えるはずの所が見つかりません: ' + a);
+            out = out.split(a).join(b);
+        }
+        return `<!-- このファイルは tools/sites.mjs が作った写しです。直すときは、いちばん上の ${name} を直して build してください。 -->\n` + out;
+    };
+}
+const PAGES = [['index.html', siteHtml], ['order.html', siteOrderHtml], ['reserve.html', siteReserveHtml],
+    ['yoyaku.html', siteBookHtml('yoyaku.html')], ['yoyaku-kanri.html', siteBookHtml('yoyaku-kanri.html')]];
 
 function listSites() {
     if (!fs.existsSync(SITES)) return [];

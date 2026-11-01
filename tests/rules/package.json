@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "firebase emulators:exec --only firestore --project demo-pos --config ../../firebase.json \"node rules.test.mjs\""
+    "test": "firebase emulators:exec --only firestore --project demo-pos --config ../../firebase.json \"node rules.test.mjs\"",
+    "test:yoyaku": "firebase emulators:exec --only firestore,auth --project demo-pos --config ../../firebase.json \"node yoyaku.e2e.mjs\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^3.0.4",

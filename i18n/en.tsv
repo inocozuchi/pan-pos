@@ -3492,3 +3492,7 @@ PDFを作れませんでした。「このまま印刷の画面を出す」を�
 いまは練習です（記録にも在庫にも残りません）。	This is practice (nothing is recorded and stock is not changed).
 光っている所を押して、試せます。いまは練習です（記録にも在庫にも残りません）。	You can try it by tapping the highlighted area. This is practice (nothing is recorded and stock is not changed).
 いまは練習です。開店すると、ここからお会計に進みます	This is practice. Once the shop is open, you go to checkout from here
+予約帳	Reservation book
+予約帳を開く	Open reservation book
+シュトーレンなどの予約を、お客様のスマホで前もって受け付ける（お名前・学籍番号・品・個数）。予約はレジとは別の所に置くので、レジを初期化しても・販売会を閉じても消えない。管理は別のページで行う	Take advance orders (e.g. stollen) on customers' phones (name, student ID, item, quantity). Reservations are stored apart from the register, so they survive a register reset or closing a sale. Managed on a separate page.
+閉店すると、予約のページは「受付は終わりました」になります。届いた予約は消えずに残ります（だれにも消せません）。	When you close, the reservation page shows "Reservations closed". Reservations already received stay (nobody can delete them).
