@@ -2849,7 +2849,7 @@
         #undo-toast span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
         #undo-toast button {
             flex: none; border: none; border-radius: var(--r-pill); padding: 8px 14px; min-height: 36px; cursor: pointer; font-family: inherit;
-            background: rgba(255,255,255,.18); color: #9EC5FF; font-weight: 800; font-size: 14px;
+            background: rgba(255,255,255,.18); color: #C7DEFF; font-weight: 800; font-size: 14px;
         }
         #undo-toast button:active { background: rgba(255,255,255,.3); }
         /* 空の画面の案内（予約・会計記録・集計など） */
@@ -3015,9 +3015,9 @@
         .plan-items .pi-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(72px, 1fr)); gap: 6px; margin-top: 8px; padding-left: 34px; }
         .plan-items .pi-fields label { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .plan-items .pi-fields span { font-size: 11px; font-weight: 700; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        #plan-edit-body .plan-items .pi-fields input, #plan-edit-body .plan-items .pi-fields select { min-height: 38px; padding: 6px 8px; font-size: 15px; }
+        #plan-edit-body .plan-items .pi-fields input, #plan-edit-body .plan-items .pi-fields select { min-height: 38px; padding: 6px 8px; font-size: 16px; }
         #plan-edit-body .plan-items .pi-fields input { text-align: right; font-variant-numeric: tabular-nums; }
-        #plan-edit-body .plan-items .pi-fields select { font-size: 13px; }
+        #plan-edit-body .plan-items .pi-fields select { font-size: 16px; }
         .plan-share { display: flex; gap: 12px; align-items: flex-start; margin-top: 10px; background: var(--sunken); border-radius: 12px; padding: 10px; }
         .plan-qr { flex: 0 0 96px; background: #fff; border-radius: 8px; padding: 4px; }
         .plan-qr svg { width: 88px; height: 88px; display: block; }
@@ -3068,7 +3068,7 @@
         .rc-nm small { font-weight: 400; font-size: 11px; color: var(--text-light); }
         .rc-n { text-align: right; font-variant-numeric: tabular-nums; font-size: 15px; }
         .rc-est { font-weight: 800; color: var(--accent-ink); }
-        .rc-row input { margin: 0; padding: 6px 8px; min-height: 38px; text-align: right; font-size: 15px; }
+        .rc-row input { margin: 0; padding: 6px 8px; min-height: 38px; text-align: right; font-size: 16px; }
         @media (max-height: 740px) {
             .closed-card { padding: 20px 18px; gap: 9px; }
             .closed-card .cc-icon { width: 34px; height: 34px; }
@@ -8448,7 +8448,7 @@
                     </div>
                     <div style="display:flex; gap:8px; align-items:center;">
                         ${pimgHtml(p, 'setup')}
-                        <input type="text" value="${escHtml(p.name)}" style="flex:1; min-width:0; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
+                        <input type="text" value="${escHtml(p.name)}" style="flex:1; min-width:0; padding:8px; font-size:16px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" placeholder="商品名" onchange="updateTempProduct(${p.id}, 'name', this.value)">
                         <button class="step-btn" onclick="removeTempProduct(${p.id}, this)" style="background:var(--danger-bg); color:var(--danger-ink); box-shadow:inset 0 0 0 1.5px var(--danger);" title="この商品を一覧から消す">×</button>
                     </div>
                     ${catPicker(p.type, `updateTempProduct(${p.id}, 'type', '%T%')`)}
@@ -8456,13 +8456,13 @@
                     <div style="display:flex; gap:5px; margin-top:5px;">
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:11px; color:var(--text-light);">価格</div>
-                            <input type="number" value="${p.price}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="価格" onchange="updateTempProduct(${p.id}, 'price', this.value)">
+                            <input type="number" value="${p.price}" style="width:100%; box-sizing:border-box; padding:8px; font-size:16px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="価格" onchange="updateTempProduct(${p.id}, 'price', this.value)">
                         </div>
                         <div style="flex:1; min-width:0;">
                             <div style="font-size:11px; color:var(--text-light);">仕入れ数</div>
                             ${p.unlimited
                                 ? `<div class="unl-box">無制限</div>`
-                                : `<input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">`}
+                                : `<input type="number" value="${p.initialStock}" style="width:100%; box-sizing:border-box; padding:8px; font-size:16px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" placeholder="数" onchange="updateTempProduct(${p.id}, 'initialStock', this.value)">`}
                         </div>
                     </div>
                     ${hint}
@@ -8496,7 +8496,10 @@
         const idx = tempSetupProducts.findIndex(p => p.id === id);
         if (idx < 0) return;
         const removed = tempSetupProducts[idx];
+        let finished = false;
         const done = () => {
+            if (finished) return;   // 動きの終わりと、念のための時間切れの、どちらか先の1回だけ
+            finished = true;
             tempSetupProducts = tempSetupProducts.filter(p => p.id !== id);
             renderInventorySetup();
             showUndoToast(`「${removed.name || '名前なし'}」を消しました`, () => {
@@ -8507,7 +8510,7 @@
             });
         };
         const card = btn && btn.closest ? btn.closest('.setup-card') : null;
-        if (!card || REDUCE_MOTION || !card.animate) { done(); return; }
+        if (!card || motionOff() || !card.animate) { done(); return; }
         // iPhoneの一覧のように、横へ流れながら高さを詰めて消える
         const h = card.offsetHeight;
         card.style.overflow = 'hidden';
@@ -8517,6 +8520,8 @@
             { opacity: 0, transform: 'translateX(-24px)', height: '0px', paddingTop: '0px', paddingBottom: '0px', marginTop: '0px', marginBottom: '0px' }
         ], { duration: 280, easing: 'cubic-bezier(.32,.72,0,1)' });
         a.onfinish = done;
+        // 途中で一覧が描き直されて動きが止まっても、消すのは必ず行う
+        setTimeout(done, 450);
     }
 
     function addTempProduct() {
@@ -8530,7 +8535,7 @@
             last.classList.add('just-added');
             const nm = last.querySelector('input[type=text]');
             if (nm) { try { nm.focus({ preventScroll: true }); } catch (e) {} }
-            last.scrollIntoView({ block: 'center', behavior: REDUCE_MOTION ? 'auto' : 'smooth' });
+            last.scrollIntoView({ block: 'center', behavior: motionOff() ? 'auto' : 'smooth' });
         }
     }
 
@@ -16194,7 +16199,7 @@
     function gridToTop() {
         const g = document.getElementById('product-grid');
         if (!g) return;
-        try { g.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { g.scrollTop = 0; }
+        try { g.scrollTo({ top: 0, behavior: motionOff() ? 'auto' : 'smooth' }); } catch (e) { g.scrollTop = 0; }
         playSound(660, 0.04);
     }
     function initGridTop() {
@@ -16339,7 +16344,7 @@
             }
             panel.classList.remove('swipe-settle');
             panel.style.transform = '';
-            if (commit && typeof panel.animate === 'function' && !(reduceMotion && reduceMotion.matches)) {
+            if (commit && typeof panel.animate === 'function' && !motionOff()) {
                 if (panel._navAnim) panel._navAnim.cancel();
                 panel._navAnim = panel.animate([
                     { opacity: 0, transform: 'translate3d(-24px, 0, 0)' },
@@ -22615,16 +22620,16 @@
                     </div>
                     <div class="ls-row" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
                         <label style="font-size:12px; color:var(--text-light);">価格</label>
-                        <input type="number" value="${p.price}" class="num ls-price" style="width:78px; padding:6px; text-align:right; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLivePrice(${p.id}, this.value)">
+                        <input type="number" value="${p.price}" class="num ls-price" style="width:78px; padding:6px; text-align:right; font-size:16px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLivePrice(${p.id}, this.value)">
                         ${isUnlimited(p) ? '' : `<label style="font-size:12px; color:var(--text-light); margin-left:2px;">仕入れ数</label>
                         <button class="step-btn minus" onclick="adjustLiveInitialStock(${p.id}, -1)">−</button>
-                        <input type="number" value="${p.initialStock}" class="num ls-stock" style="width:62px; padding:6px; text-align:center; font-size:14px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLiveInitialStock(${p.id}, this.value)">
+                        <input type="number" value="${p.initialStock}" class="num ls-stock" style="width:62px; padding:6px; text-align:center; font-size:16px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken); margin:0;" onchange="setLiveInitialStock(${p.id}, this.value)">
                         <button class="step-btn plus" onclick="adjustLiveInitialStock(${p.id}, 1)">＋</button>`}
                         <label class="ls-unl"><span>無制限</span><input class="ios-switch" type="checkbox" ${isUnlimited(p) ? 'checked' : ''} onchange="setLiveUnlimited(${p.id}, this.checked)"></label>
                     </div>
                     ${catPicker(p.type, `setLiveType(${p.id}, '%T%')`)}
                     ${productExtraFields(p, 'live')}
-                    ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:6px; padding:6px; font-size:12px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" onchange="setProductNote(${p.id}, this.value)">` : ''}
+                    ${oversold ? `<input type="text" value="${noteVal}" placeholder="備考（例：途中で20個補充 / 数え直し済 など）" style="width:100%; box-sizing:border-box; margin-top:6px; padding:6px; font-size:16px; border:none; box-shadow:inset 0 0 0 1px var(--hairline); border-radius:var(--r-sm); background:var(--sunken);" onchange="setProductNote(${p.id}, this.value)">` : ''}
                 </div>
             `);
         });
@@ -22753,7 +22758,7 @@
             renderLiveAddType();
             const n = document.getElementById('la-name');
             if (n) n.focus();
-            form.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            form.scrollIntoView({ block: 'nearest', behavior: motionOff() ? 'auto' : 'smooth' });
         }
     }
 
@@ -24440,7 +24445,7 @@
         if (!window.FIREBASE_CONFIG) p.resv.on = false;
         if (p.resv.on !== true && p.resv.on !== false) {
             playError(); alert('スマホの予約フォームを開くかどうかを選んでください。');
-            const q = document.getElementById('plan-resv-q'); if (q) q.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            const q = document.getElementById('plan-resv-q'); if (q) q.scrollIntoView({ block: 'center', behavior: motionOff() ? 'auto' : 'smooth' });
             return;
         }
         if (p.resv.on) {
@@ -25708,7 +25713,7 @@
         const els = [];
         show.forEach(x => x.parts.forEach(p => els.push(p.el)));
         grid.replaceChildren(...els);
-        if (kdsPageDir && !REDUCE_MOTION && grid.animate) {
+        if (kdsPageDir && !motionOff() && grid.animate) {
             grid.animate([{ transform: `translateX(${kdsPageDir * 40}px)`, opacity: 0.4 }, { transform: 'none', opacity: 1 }], { duration: 260, easing: 'cubic-bezier(.32,.72,0,1)' });
         }
         kdsPageDir = 0;

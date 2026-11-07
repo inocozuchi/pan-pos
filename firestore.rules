@@ -182,9 +182,11 @@ service cloud.firestore {
       allow get: if signedIn();
       allow list: if false;
       allow create: if signedIn() && bid.size() >= 20 && request.resource.data.owners == [me()] && bookShape();
-      // 書きかえる：管理者か、鍵を使った端末（自分を管理者に足す）。管理者を0人にはできない
+      // 書きかえる：管理者か、鍵を使った端末（自分を管理者に足す）。
+      // 管理者は増やすだけで、外せない（鍵がもれても、元の管理者が締め出されて予約を見られなくならないように）
       allow update: if signedIn() && (me() in resource.data.owners || bookClaimOk(bid))
-        && me() in request.resource.data.owners && request.resource.data.owners.size() <= 20 && bookShape();
+        && me() in request.resource.data.owners && request.resource.data.owners.hasAll(resource.data.owners)
+        && request.resource.data.owners.size() <= 20 && bookShape();
       allow delete: if false;
       function bookShape() {
         let d = request.resource.data;
@@ -269,13 +271,13 @@ service cloud.firestore {
           && request.resource.data.n == (resource == null ? 0 : resource.data.n) + 1;
         allow delete: if false;
       }
-      // 予約帳の鍵（印刷して保管する長い合言葉）。読めるのは管理者だけ
+      // 予約帳の鍵（印刷して保管する長い合言葉）。読めるのは管理者だけ。
+      // 鍵は消せない（だれかが鍵を消して、ほかの人が管理者に戻れなくなることがないように）
       match /keys/{k} {
         allow get, list: if bookOwner(bid);
         allow create: if bookOwner(bid) && k.size() >= 20
           && request.resource.data.keys().hasOnly(['at', 'by']) && request.resource.data.by == me();
-        allow update: if false;
-        allow delete: if bookOwner(bid);
+        allow update, delete: if false;
       }
       // 鍵を使う：自分の名前で「この鍵を持っています」を書く（時刻は置き場の時刻。10分だけ有効）
       match /claims/{uid} {

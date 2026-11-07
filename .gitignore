@@ -1,2 +1,6 @@
 # Firebase エミュレーターの記録（試験の時にできる）
 *-debug.log
+
+# 試験の道具（npm i で入る）
+node_modules
+package-lock.json

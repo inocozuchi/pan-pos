@@ -25,7 +25,7 @@
         :root {
             --pink: #FFC0D9; --sky: #A0E9FF; --peach: #FFBFA9; --purple: #8E7AB5;
             --paper: #FFF4F1; --card: #FFFFFF; --sunk: #FBEFF3; --sunk-2: #F4E6EC;
-            --ink: #2A2140; --ink-2: #5E5278; --ink-3: #8D82A6; --line: rgba(42, 33, 64, .13);
+            --ink: #2A2140; --ink-2: #5E5278; --ink-3: #6F6390; --purple-ink: #6A5698; --line: rgba(42, 33, 64, .13);
             --btn: #5E4A93; --btn-ink: #FFFFFF;
             --ok: #1F7A55; --ok-bg: #DDF5EA; --warn: #9A4A12; --warn-bg: #FFEBDD; --bad: #B4233F; --bad-bg: #FFE3EA; --info-bg: #E3F6FD;
             --dot: rgba(142, 122, 181, .2);
@@ -39,7 +39,7 @@
         @media (prefers-color-scheme: dark) {
             :root {
                 --paper: #1A1430; --card: #251D40; --sunk: #2E2550; --sunk-2: #382D60;
-                --ink: #F7F0FF; --ink-2: #CBBFE6; --ink-3: #9C90BC; --line: rgba(247, 240, 255, .14);
+                --ink: #F7F0FF; --ink-2: #CBBFE6; --ink-3: #9C90BC; --purple-ink: #B9A6E6; --line: rgba(247, 240, 255, .14);
                 --btn: #FFC0D9; --btn-ink: #2A2140;
                 --ok: #7FE0B4; --ok-bg: rgba(60, 190, 130, .16); --warn: #FFC79C; --warn-bg: rgba(255, 160, 90, .14); --bad: #FF9DB3; --bad-bg: rgba(255, 90, 130, .15); --info-bg: rgba(110, 200, 240, .14);
                 --dot: rgba(200, 180, 255, .14);
@@ -73,7 +73,7 @@
         .tabs .pill { position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 4); border-radius: 12px; background: var(--card); box-shadow: 0 1px 3px rgba(42, 33, 64, .14), 0 0 0 1px var(--line); transition: transform 300ms var(--ease-in-out); }
         .tabs button { position: relative; z-index: 1; border: 0; background: none; padding: 9px 2px; font-size: 14px; font-weight: 800; color: var(--ink-2); cursor: pointer; touch-action: manipulation; transition: color 200ms ease; }
         .tabs button.on { color: var(--ink); }
-        .tabs button b { font-variant-numeric: tabular-nums; font-size: 11.5px; margin-left: 3px; color: var(--purple); }
+        .tabs button b { font-variant-numeric: tabular-nums; font-size: 12px; margin-left: 3px; color: var(--purple-ink); }
         .tabs[hidden] { display: none; }
 
         /* カード */
@@ -126,11 +126,13 @@
         .r .nm small { font-size: 12.5px; font-weight: 700; color: var(--ink-2); margin-left: 6px; font-variant-numeric: tabular-nums; }
         .r .it { font-size: 13.5px; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .r .it b { color: var(--ink); font-variant-numeric: tabular-nums; }
+        .r .it b.yen { font-weight: 800; }
         .r.st-cancel .nm, .r.st-cancel .it { opacity: .55; }
         .tag { display: inline-block; font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 99px; margin-left: 6px; vertical-align: 2px; }
         .tag.shop { background: var(--info-bg); color: var(--ink); }
         .tag.dup { background: var(--warn-bg); color: var(--warn); }
         .tag.paid { background: var(--ok-bg); color: var(--ok); }
+        .tag.bad { background: var(--bad-bg); color: var(--bad); }
         .quick { min-width: 92px; min-height: 48px; border: 0; border-radius: 14px; font-size: 14px; font-weight: 800; cursor: pointer; touch-action: manipulation; transition: transform 140ms var(--ease-out); background: var(--ink); color: var(--paper); padding: 0 12px; }
         .quick:active { transform: scale(.95); }
         .quick.done { background: var(--ok-bg); color: var(--ok); }
@@ -362,7 +364,7 @@
     let c = null, bid = '', book = null, tally = { n: 0, c: {} };
     let resv = {};            // rid → 予約（置き場から。届いた物は消さずに持つ）
     let tab = 'list', filter = 'all', query = '', viewer = null;
-    let offs = [], online = 'wait', pendingWrites = false, firstList = true, seen = new Set();
+    let offs = [], online = 'wait', pendingWrites = false, firstList = true, seen = new Set(), notOwner = false;
     let draft = null, draftDirty = false;
 
     // ---- 知らせ ----
@@ -435,7 +437,7 @@
         offs = [];
         bid = b; adm.cur = b; saveAdm();
         viewer = null;
-        resv = {}; book = null; tally = { n: 0, c: {} }; firstList = true; seen = new Set(); draft = null; draftDirty = false;
+        resv = {}; book = null; tally = { n: 0, c: {} }; firstList = true; seen = new Set(); draft = null; draftDirty = false; notOwner = false;
         // まず手元の控えを出す（電波が無くても一覧が見える）
         const m = await restoreMirror(b);
         if (m) { book = m.book || null; resv = Object.assign({}, m.resv || {}); tally = m.tally || tally; Object.keys(resv).forEach(r => seen.add(r)); }
@@ -477,6 +479,7 @@
             }
             netFrom(s.metadata);
             saveMirror();
+            if (tab === 'set' && !draftDirty) draft = null;   // ほかの端末で直した時も、今の設定を出す
             if (!(tab === 'set' && draftDirty)) render();
         }, e => { setNet('off', Y.isPerm(e) ? '管理者ではありません' : 'つながっていません'); render(); }));
         offs.push(ref.collection('resv').onSnapshot({ includeMetadataChanges: true }, s => {
@@ -489,6 +492,7 @@
                 if (!seen.has(ch.doc.id)) { seen.add(ch.doc.id); if (!firstList) fresh.push(d); }
             });
             pendingWrites = s.metadata.hasPendingWrites;
+            notOwner = false;
             netFrom(s.metadata);
             firstList = false;
             saveMirror();
@@ -499,7 +503,7 @@
             }
             if (tab === 'list' || tab === 'sum') render(fresh.map(x => x.rid));
             else paintCounts();
-        }, e => { setNet('off', Y.isPerm(e) ? '管理者ではありません' : 'つながっていません'); if (Y.isPerm(e)) render(); }));
+        }, e => { setNet('off', Y.isPerm(e) ? '管理者ではありません' : 'つながっていません'); if (Y.isPerm(e)) { notOwner = true; render(); } }));
         offs.push(ref.collection('tally').doc('c').onSnapshot(s => { if (b0 !== bid) return; if (s.exists) tally = Object.assign({ n: 0, c: {} }, s.data()); if (tab === 'sum') render(); }, () => {}));
     }
     function netFrom(md) {
@@ -535,6 +539,15 @@
         $('h-shop').textContent = viewer ? '控えのファイル（読むだけ）' : ((b && b.shop) ? b.shop + '・予約帳' : '予約帳');
         paintCounts();
         const prevTab = main.dataset.tab;
+        // 一覧の時は、検索の欄はそのままにして、下だけ作り直す（日本語の入力の途中で、欄が消えないように）
+        if (tab === 'list' && prevTab === 'list' && main.dataset.viewer === (viewer ? '1' : '0') && main.dataset.no === (notOwner ? '1' : '0') && $('q')) {
+            const parts = listParts();
+            $('l-top').innerHTML = parts.top;
+            $('l-filters').innerHTML = parts.filters;
+            $('l-box').innerHTML = parts.box;
+            (flash || []).forEach(rid => { const el = main.querySelector(`[data-rid="${CSS.escape(rid)}"]`); if (el) el.classList.add('flash'); });
+            return;
+        }
         let html = '';
         if (viewer) html = `<div class="note info banner"><p>控えのファイルを表示しています（読むだけ）。</p><button type="button" class="btn sub" data-act="closeViewer">控えのファイルを閉じる</button></div>`;
         if (tab === 'list') html += listHtml();
@@ -546,6 +559,8 @@
         main.innerHTML = html;
         if (prevTab !== tab) { main.classList.remove('view-in'); void main.offsetWidth; main.classList.add('view-in'); }
         main.dataset.tab = tab;
+        main.dataset.viewer = viewer ? '1' : '0';
+        main.dataset.no = notOwner ? '1' : '0';
         if (focusSearch) { const q = $('q'); q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
         (flash || []).forEach(rid => { const el = main.querySelector(`[data-rid="${CSS.escape(rid)}"]`); if (el) el.classList.add('flash'); });
         if (tab === 'set' && !viewer) bindSet();
@@ -559,6 +574,15 @@
     }
     function itemsText(r) { return (r.items || []).map(l => `${esc(l.name)} <b>×${l.n}</b>`).join('、'); }
     function listHtml() {
+        const p = listParts();
+        const b = curBook();
+        return `<div id="l-top">${p.top}</div>
+            <div class="tools"><label class="search"><svg><use href="#i-search"/></svg><input id="q" type="search" placeholder="番号・お名前・${esc((b && b.sidLabel) || '学籍番号')}で探す" value="${esc(query)}" autocomplete="off" enterkeyhint="search"></label>
+                ${viewer || notOwner ? '' : `<button type="button" class="icon-btn" data-act="add" aria-label="店頭・電話の予約を足す"><svg><use href="#i-plus"/></svg></button>`}</div>
+            <div class="filters" id="l-filters">${p.filters}</div>
+            <div class="list" id="l-box">${p.box}</div>`;
+    }
+    function listParts() {
         const all = list();
         const counts = { all: all.length, new: 0, done: 0, cancel: 0 };
         all.forEach(r => { counts[r.st] = (counts[r.st] || 0) + 1; });
@@ -572,18 +596,20 @@
             const s = Y.bookState(b);
             state = s === 'open' ? '' : `<div class="note ${s === 'after' ? 'info' : 'warn'} banner"><p>${s === 'before' ? `受付は ${Y.dt(b.from)} から始まります。` : s === 'off' ? 'いまは受付を止めています（お客様は予約できません）。' : '受付の期間は終わりました。'}</p>${s === 'off' && !all.length ? '<p>「受付」のタブで内容を確かめてから、受付を始めてください。</p>' : ''}</div>`;
         }
-        return `${state}${remind}
-            <div class="tools"><label class="search"><svg><use href="#i-search"/></svg><input id="q" type="search" placeholder="番号・お名前・${esc((b && b.sidLabel) || '学籍番号')}で探す" value="${esc(query)}" autocomplete="off" enterkeyhint="search"></label>
-                ${viewer ? '' : `<button type="button" class="icon-btn" data-act="add" aria-label="店頭・電話の予約を足す"><svg><use href="#i-plus"/></svg></button>`}</div>
-            <div class="filters">${[['all', 'すべて'], ['new', '予約中'], ['done', '受け取り済み'], ['cancel', '取り消し']].map(([k, t]) => `<button type="button" data-filter="${k}" class="${filter === k ? 'on' : ''}">${t}<b>${counts[k] || 0}</b></button>`).join('')}</div>
-            <div class="list">${shown.length ? shown.map(r => rowHtml(r, dup)).join('') : `<div class="empty"><svg viewBox="0 0 190 120"><use href="#loaf"/></svg><p>${all.length ? '見つかりませんでした。' : 'まだ予約はありません。'}</p></div>`}</div>`;
+        const owner = notOwner && !viewer ? `<div class="note bad banner"><p>この端末は、この予約帳の管理者ではありません。予約帳の鍵を入れると、管理者になれます。</p><button type="button" class="btn sub" data-act="enterKey"><svg><use href="#i-key"/></svg>鍵を入れる</button></div>` : '';
+        return {
+            top: owner + state + remind,
+            filters: [['all', 'すべて'], ['new', '予約中'], ['done', '受け取り済み'], ['cancel', '取り消し']].map(([k, t]) => `<button type="button" data-filter="${k}" class="${filter === k ? 'on' : ''}">${t}<b>${counts[k] || 0}</b></button>`).join(''),
+            box: shown.length ? shown.map(r => rowHtml(r, dup)).join('') : `<div class="empty"><svg viewBox="0 0 190 120"><use href="#loaf"/></svg><p>${all.length ? '見つかりませんでした。' : (notOwner ? '管理者になると、予約が出ます。' : 'まだ予約はありません。')}</p></div>`
+        };
     }
     function rowHtml(r, dup) {
+        const pc = Y.priceCheck(r, curBook());
         const q = r.st === 'new' ? `<button type="button" class="quick" data-quick="${esc(r.rid)}">受け取り</button>` : `<button type="button" class="quick ${r.st}" data-open="${esc(r.rid)}">${ST[r.st] || ''}</button>`;
         return `<div class="r st-${esc(r.st)}" data-rid="${esc(r.rid)}" data-open="${esc(r.rid)}">
             <div class="no">${esc(r.seq)}</div>
-            <div class="tx"><div class="nm">${esc(r.name)}<small>${esc(r.sid || '')}</small>${r.via === 'shop' ? '<span class="tag shop">店頭</span>' : ''}${r.sid && dup[r.sid] > 1 ? `<span class="tag dup">同じ番号 ${dup[r.sid]}件</span>` : ''}${r.paid ? '<span class="tag paid">支払い済み</span>' : ''}</div>
-                <div class="it">${itemsText(r)}・${yen(r.total)}</div></div>
+            <div class="tx"><div class="nm">${esc(r.name)}<small>${esc(r.sid || '')}</small>${r.via === 'shop' ? '<span class="tag shop">店頭</span>' : ''}${r.sid && dup[r.sid] > 1 ? `<span class="tag dup">同じ番号 ${dup[r.sid]}件</span>` : ''}${r.paid ? '<span class="tag paid">支払い済み</span>' : ''}${pc === 'bad' ? '<span class="tag bad">金額を確かめて</span>' : pc === 'old' ? '<span class="tag dup">前の値段</span>' : ''}</div>
+                <div class="it"><b class="yen">${yen(r.total)}</b>・${itemsText(r)}</div></div>
             ${viewer ? '' : q}</div>`;
     }
     // 控えの保存を思い出させる（新しい予約が増えたのに、ファイルの控えが古い時）
@@ -689,11 +715,13 @@
         const m = $('main');
         m.querySelectorAll('[data-k]').forEach(el => {
             if (el.classList.contains('toggle')) return;
-            el.addEventListener('input', () => {
+            const on = () => {
                 const k = el.dataset.k;
                 draft[k] = k === 'from' || k === 'to' ? fromLocal(el.value) : (k === 'maxQty' ? Number(el.value) : el.value);
                 markDirty();
-            });
+            };
+            el.addEventListener('input', on);
+            el.addEventListener('change', on);   // iPhone の日時の欄は、選び終わった時だけ知らせることがある
         });
         m.querySelectorAll('[data-ik]').forEach(el => el.addEventListener('input', () => {
             const i = Number(el.closest('[data-i]').dataset.i), k = el.dataset.ik;
@@ -717,6 +745,8 @@
         const bad = draftCheck();
         if (bad) { toast(bad); return; }
         const d = draft;
+        const free = d.items.filter(it => !it.off && !(Math.round(Number(it.price) || 0) > 0));
+        if (free.length && !confirm(`値段が 0 円の品があります（${free.map(it => it.name).join('、')}）。このまま保存しますか？`)) return;
         const upd = {
             title: d.title.trim().slice(0, 40), shop: d.shop.trim().slice(0, 60), lead: d.lead.slice(0, 400), pickup: d.pickup.slice(0, 300), note: d.note.slice(0, 400),
             from: Math.round(d.from), to: Math.round(d.to), maxQty: Math.round(d.maxQty), sidLabel: (d.sidLabel.trim() || '学籍番号').slice(0, 16), sidReq: !!d.sidReq,
@@ -796,9 +826,10 @@
         if (o) { openDetail(o.dataset.open); return; }
     });
     document.addEventListener('input', e => {
-        if (e.target.id === 'q') { query = e.target.value; render(); }
+        if (e.target.id === 'q') { if (e.isComposing) return; query = e.target.value; render(); }
         if (e.target.id === 'who') { adm.who = e.target.value.trim().slice(0, 40); saveAdm(); }
     });
+    document.addEventListener('compositionend', e => { if (e.target.id === 'q') { query = e.target.value; render(); } });
     $('menu-btn').addEventListener('click', openMenu);
     $('file-in').addEventListener('change', openFile);
     function act(a, el) {
@@ -807,7 +838,7 @@
         if (a === 'saveJson') return saveJson();
         if (a === 'printList') return printList();
         if (a === 'openFile') return $('file-in').click();
-        if (a === 'closeViewer') { viewer = null; render(); return; }
+        if (a === 'closeViewer') { viewer = null; if (!bid) renderWelcome(); else render(); return; }
         if (a === 'recount') return recount();
         if (a === 'toggleOn') return toggleOn();
         if (a === 'copyUrl') return copyText(custUrl(), 'リンクをコピーしました');
@@ -820,6 +851,7 @@
         if (a === 'printKey') return printKey();
         if (a === 'copyKey') { const ent = curEntry(); if (ent) copyText(Y.keyShow(ent.key), '鍵をコピーしました'); return; }
         if (a === 'newKey') return makeKey(true);
+        if (a === 'enterKey') return openByKey();
     }
     function newItemId() { const used = new Set((draft.items || []).map(i => i.id)); let id = ''; do { id = 'i' + Math.random().toString(36).slice(2, 7); } while (used.has(id)); return id; }
     function removeItem(i) {
@@ -910,6 +942,13 @@
     }
     addEventListener('keydown', e => { if (e.key === 'Escape' && sheetEl) closeSheet(); });
 
+    function pcNote(r) {
+        const pc = Y.priceCheck(r, curBook());
+        const sum = (r.items || []).reduce((s, l) => s + (Number(l.price) || 0) * (Number(l.n) || 0), 0);
+        if (pc === 'bad') return `<div class="note bad"><p>合計（${yen(r.total)}）が、品の値段×個数（${yen(sum)}）と合いません。受け取りの時は、品の値段で確かめてください。</p></div>`;
+        if (pc === 'old') return `<div class="note warn"><p>予約した時の値段です。今の品の値段とは違います。</p></div>`;
+        return '';
+    }
     async function openDetail(rid) {
         const r = (viewer ? viewer.resv : resv)[rid];
         if (!r) return;
@@ -918,6 +957,7 @@
             <dl class="kv"><dt>状態</dt><dd>${ST[r.st] || esc(r.st)}${r.stAt ? `<span class="muted">（${esc(Y.dt(r.stAt))}${r.stBy ? '・' + esc(r.stBy) : ''}）</span>` : ''}</dd>
                 ${r.sid ? `<dt>${esc((b && b.sidLabel) || '学籍番号')}</dt><dd>${esc(r.sid)}</dd>` : ''}<dt>受付</dt><dd>${esc(Y.dt(Y.msOf(r.at) || r.cat))}${r.via === 'shop' ? '（店頭・電話）' : ''}</dd></dl>
             <div class="lines">${(r.items || []).map(l => `<div><span>${esc(l.name)} × ${l.n}</span><span>${yen(l.price * l.n)}</span></div>`).join('')}<div class="sum"><span>合計</span><span>${yen(r.total)}</span></div></div>
+            ${pcNote(r)}
             ${viewer ? '' : `<label class="f" style="margin-top:14px"><span class="lb">お店のメモ<small>お客様には見えません</small></span><input type="text" id="snote" maxlength="200" value="${esc(r.snote || '')}"></label>
             <div class="sw" style="margin-top:12px"><span class="t">お支払い済み<small>前払いの時など</small></span><button type="button" class="toggle" id="paid" role="switch" aria-checked="${r.paid ? 'true' : 'false'}"></button></div>
             <div class="row-btns">${r.st === 'new' ? `<button type="button" class="btn okb" data-st="done">受け取り済みにする</button><button type="button" class="btn warn" data-st="cancel">取り消す</button>` : `<button type="button" class="btn sub" data-st="new">「予約中」に戻す</button>${r.st === 'done' ? `<button type="button" class="btn warn" data-st="cancel">取り消す</button>` : ''}`}</div>
@@ -1027,7 +1067,7 @@
     function saveJson() {
         const all = {};
         Object.values(viewer ? viewer.resv : resv).forEach(r => { all[r.rid] = plain(r); });
-        const data = { kind: 'yoyakucho-backup', ver: 1, bid: viewer ? viewer.bid : bid, savedAt: Date.now(), book: curBook(), tally, resv: all };
+        const data = { kind: 'yoyakucho-backup', ver: 1, bid: viewer ? viewer.bid : bid, savedAt: Date.now(), book: curBook(), tally: viewer ? (viewer.tally || {}) : tally, resv: all };
         Y.download(`${fileBase()}_${stamp()}.json`, JSON.stringify(data, null, 1), 'application/json');
         if (!viewer) { const ent = curEntry(); if (ent) { ent.savedAt = Date.now(); saveAdm(); } }
         toast('控えのファイルを保存しました');
@@ -1045,7 +1085,7 @@
         try {
             const d = JSON.parse(await f.text());
             if (!d || d.kind !== 'yoyakucho-backup' || typeof d.resv !== 'object') throw new Error('kind');
-            viewer = { bid: d.bid, book: d.book || {}, resv: d.resv };
+            viewer = { bid: d.bid, book: d.book || {}, resv: d.resv, tally: d.tally || {} };
             Object.entries(viewer.resv).forEach(([rid, r]) => { r.rid = rid; });
             tab = 'list';
             $('top').hidden = false;
@@ -1055,7 +1095,8 @@
     }
     function doPrint(html) {
         $('print').innerHTML = html;
-        setTimeout(() => { try { window.print(); } catch (e) {} }, 60);
+        // 押した時のうちに印刷を始める（iPhone は、間をあけると印刷の窓が出ないことがある）
+        try { window.print(); } catch (e) {}
     }
     function printList() {
         const b = curBook() || {};
@@ -1141,21 +1182,33 @@
     async function createBook() {
         const btn = $('w-new');
         if (btn) btn.classList.add('busy');
+        let nb = '';
         try {
             c = c || await Y.connect({ persist: true });
-            const nb = Y.newBid(), key = Y.newKey();
-            // 先にこの端末に覚える（途中で止まっても、鍵と印が残るように）
-            adm.books.push({ bid: nb, key, title: '12月 シュトーレンのご予約', at: Date.now() });
+            nb = Y.newBid();
+            const key = Y.newKey();
+            // 先にこの端末に覚える（送れたか分からない時も、予約帳の印が残るように）
+            const ent = { bid: nb, key: '', title: '12月 シュトーレンのご予約', at: Date.now() };
+            adm.books.push(ent);
             adm.cur = nb;
             saveAdm();
             const ref = c.db.collection('books').doc(nb);
             await Y.withTimeout(ref.set(templateBook(c.uid)), 20000);
-            await makeKeyFor(nb, key);
+            // 鍵は、置き場にできてから覚える（できていない鍵を印刷しないように）
+            let keyOk = false;
+            try { await makeKeyFor(nb, key); ent.key = key; saveAdm(); keyOk = true; } catch (e) {}
             tab = 'set';
             await openBook(nb);
-            showKeyCard(key, true);
+            if (keyOk) showKeyCard(key, true);
+            else toast('予約帳はできました。鍵は作れなかったので、「控え・鍵」のタブで作ってください');
         } catch (e) {
             if (btn) btn.classList.remove('busy');
+            // 置き場に予約帳ができていなければ、この端末の覚えからも外す（読み込み中のまま止まらないように）
+            if (nb) {
+                let exists = true;
+                try { exists = (await Y.withTimeout(c.db.collection('books').doc(nb).get(), 8000)).exists; } catch (e2) {}
+                if (!exists) { adm.books = adm.books.filter(b => b.bid !== nb); if (adm.cur === nb) adm.cur = ''; saveAdm(); }
+            }
             toast(Y.isNet(e) ? 'つながっていないので、作れませんでした' : '作れませんでした');
         }
     }

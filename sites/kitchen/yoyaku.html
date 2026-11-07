@@ -25,7 +25,7 @@
             /* きらめく夢心地パステル */
             --pink: #FFC0D9; --sky: #A0E9FF; --peach: #FFBFA9; --purple: #8E7AB5;
             --paper: #FFF4F1; --card: #FFFFFF; --sunk: #FBEFF3;
-            --ink: #2A2140; --ink-2: #5E5278; --ink-3: #8D82A6; --line: rgba(42, 33, 64, .14);
+            --ink: #2A2140; --ink-2: #5E5278; --ink-3: #6F6390; --purple-ink: #6A5698; --line: rgba(42, 33, 64, .14);
             --btn: #5E4A93; --btn-ink: #FFFFFF; --btn-offset: #FFC0D9;
             --ok: #1F7A55; --ok-bg: #DDF5EA; --warn: #9A4A12; --warn-bg: #FFEBDD; --bad: #B4233F; --bad-bg: #FFE3EA;
             --crust: #C98551; --bread: #EFB57F; --sugar: #FFFDF8;
@@ -42,7 +42,7 @@
         @media (prefers-color-scheme: dark) {
             :root {
                 --paper: #1A1430; --card: #251D40; --sunk: #2E2550;
-                --ink: #F7F0FF; --ink-2: #CBBFE6; --ink-3: #9C90BC; --line: rgba(247, 240, 255, .16);
+                --ink: #F7F0FF; --ink-2: #CBBFE6; --ink-3: #9C90BC; --purple-ink: #B9A6E6; --line: rgba(247, 240, 255, .16);
                 --btn: #FFC0D9; --btn-ink: #2A2140; --btn-offset: #8E7AB5;
                 --ok: #7FE0B4; --ok-bg: rgba(60, 190, 130, .16); --warn: #FFC79C; --warn-bg: rgba(255, 160, 90, .14); --bad: #FF9DB3; --bad-bg: rgba(255, 90, 130, .15);
                 --blob-a: rgba(255, 140, 190, .28); --blob-b: rgba(90, 190, 240, .22); --blob-c: rgba(255, 150, 120, .2);
@@ -81,11 +81,11 @@
         .hero.wait { visibility: hidden; }
         .shop { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .14em; color: var(--ink-2); padding: 4px 12px; border-radius: 99px; background: color-mix(in srgb, var(--card) 70%, transparent); box-shadow: 0 0 0 1px var(--line); }
         .shop:empty { display: none; }
-        .kicker { margin: 14px 0 0; font-size: 15px; font-weight: 700; letter-spacing: .12em; color: var(--purple); }
+        .kicker { margin: 14px 0 0; font-size: 15px; font-weight: 700; letter-spacing: .12em; color: var(--purple-ink); }
         .riso { position: relative; display: inline-block; margin: 2px 0 0; font-size: clamp(26px, 7.4vw, 44px); word-break: auto-phrase; text-wrap: balance; line-height: 1.22; font-weight: 800; letter-spacing: .02em; color: var(--ink); }
         .riso .t { position: relative; z-index: 2; }
         /* ずらして重ねる（版画のような、色のずれ） */
-        .riso::before, .riso::after { content: attr(data-text); position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+        .riso::before, .riso::after { content: attr(data-text); content: attr(data-text) / ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; }
         .riso::before { color: var(--pink); transform: translate(.07em, .06em); }
         .riso::after { color: var(--sky); transform: translate(-.05em, -.035em); opacity: .9; }
         @media (prefers-color-scheme: dark) { .riso::before { color: #B0477A; } .riso::after { color: #2E7FA6; } }
@@ -164,7 +164,7 @@
         .who { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 15px; }
         .who dt { color: var(--ink-2); font-weight: 700; }
         .who dd { margin: 0; font-weight: 800; word-break: break-all; }
-        .ttl { margin: 0 0 12px; font-size: 13px; font-weight: 800; letter-spacing: .14em; color: var(--purple); }
+        .ttl { margin: 0 0 12px; font-size: 13px; font-weight: 800; letter-spacing: .14em; color: var(--purple-ink); }
         .note { border-radius: 16px; padding: 12px 14px; font-size: 14px; font-weight: 700; }
         .note.warn { background: var(--warn-bg); color: var(--warn); }
         .note.bad { background: var(--bad-bg); color: var(--bad); }
@@ -415,7 +415,11 @@
 
     let c = null, book = null, tally = { n: 0, c: {} }, items = [];
     let step = '', cart = {}, form = { name: '', sid: '' }, dupN = 0, sending = false, fails = 0, last = null, sendErr = '';
-    let firstPaint = true, resvOff = null;
+    let resvOff = null, pendMem = null, checking = false;
+    // 送る前の予約の印（この端末に保存できない時も、この画面の間は覚えておく。二重にならないように）
+    const getPend = () => Y.lsGet(PEND, null) || pendMem;
+    function setPend(p) { pendMem = p; Y.lsSet(PEND, p); }
+    function clearPend() { pendMem = null; try { localStorage.removeItem(Y.LS + PEND); } catch (e) {} }
 
     // ---- 小さな道具 ----
     let toastT = 0;
@@ -535,7 +539,7 @@
         kids.forEach((el, i) => el.animate([{ opacity: 0, transform: `translateX(${36 * dx}px)`, filter: 'blur(3px)' }, { opacity: 1, transform: 'none', filter: 'blur(0)' }], { duration: 460, delay: 60 + i * 45, easing: 'cubic-bezier(0.23, 1, 0.32, 1)', fill: 'backwards' }));
         setTimeout(() => { view.style.minHeight = ''; }, 520);
         const top = $('steps').hidden ? 0 : $('steps').getBoundingClientRect().top + scrollY - 12;
-        if (scrollY > top + 40) scrollTo({ top, behavior: 'smooth' });
+        if (scrollY > top + 40) scrollTo({ top, behavior: calm() ? 'auto' : 'smooth' });
         afterPaint(next);
     }
     function afterPaint(s) {
@@ -616,7 +620,7 @@
     }
     function checkHtml() {
         const lines = linesOf();
-        const p = Y.lsGet(PEND, null);
+        const p = getPend();
         const notes = [];
         if (dupN > 0) notes.push(`<div class="note warn"><p>この${esc(sidLabel())}で、すでに ${dupN} 件のご予約があります。</p><p>追加のご予約でよければ、そのまま進んでください。</p></div>`);
         if (sendErr) notes.push(`<div class="note bad" id="send-err">${sendErr}</div>`);
@@ -748,6 +752,7 @@
         if (msg && !calm()) { f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake'); }
     }
     async function toCheck() {
+        if (checking) return;
         readForm();
         let ok = true;
         fieldErr('fl-name', form.name ? '' : 'お名前を入れてください');
@@ -763,6 +768,7 @@
             dupN = mine().filter(r => r.sid === form.sid).length;
             const tb = $('to-check');
             if (tb) { tb.classList.add('busy'); tb.disabled = true; }
+            checking = true;
             try {
                 const h = await Y.sidHash(bid, form.sid);
                 if (h) {
@@ -770,6 +776,7 @@
                     if (s.exists) dupN = Math.max(dupN, Number(s.data().n) || 0);
                 }
             } catch (e) {}
+            checking = false;
             if (tb) { tb.classList.remove('busy'); tb.disabled = false; }
         }
         sendErr = '';
@@ -791,10 +798,11 @@
         sendErr = '';
         const errBox = $('send-err');
         if (errBox) errBox.remove();
-        let p = Y.lsGet(PEND, null);
+        if (cartQty() > maxQty()) { sending = false; toast(`1回のご予約は ${maxQty()} 個までです`); go('pick'); return; }
+        let p = getPend();
         if (!p || !Y.isRid(p.rid)) p = { rid: Y.newRid(), at: Date.now() };
         p.order = { name: form.name, sid: form.sid, lines: linesOf().map(l => ({ id: l.id, n: l.n })), via: 'web' };
-        if (!Y.lsSet(PEND, p)) { /* 保存できない端末でも、送ることはできる（印はこの画面の間だけ覚える） */ }
+        setPend(p);
         setBusy(true);
         let res = null, err = null;
         for (let i = 0; i < 3 && !res; i++) {
@@ -828,7 +836,7 @@
     function finish(rid, d, existed) {
         const rec = { rid, seq: d.seq, name: d.name, sid: d.sid || '', items: (d.items || []).map(l => ({ id: l.id, name: l.name, price: l.price, n: l.n })), qty: d.qty, total: d.total, st: d.st || 'new', at: Y.msOf(d.at) || d.cat || Date.now() };
         remember(rec);
-        try { localStorage.removeItem(Y.LS + PEND); } catch (e) {}
+        clearPend();
         last = rec;
         cart = {};
         dupN = 0;
@@ -841,12 +849,12 @@
     }
     // 予備の受付：置き場（Firestore）に送れない時だけ、お店のスプレッドシートに送る。番号はまだ無い
     async function backup() {
-        const p = Y.lsGet(PEND, null);
+        const p = getPend();
         if (!p || !p.order) return;
         const rec = { rid: p.rid, seq: 0, name: Y.normName(p.order.name), sid: Y.normSid(p.order.sid), items: linesOf(), qty: cartQty(), total: cartYen(), st: 'new', at: Date.now(), backup: Date.now() };
         await Y.sheetPost(book.sheet, { kind: 'backup', row: Object.assign(Y.rowOf(bid, p.rid, rec), { st: 'backup' }) });
         p.backup = Date.now();
-        Y.lsSet(PEND, p);
+        setPend(p);
         remember(rec);
         last = rec;
         go('done');
@@ -1025,7 +1033,7 @@
     }
     // 仮の受付のまま：置き場に送り直す（受付の期間なら番号がつく）
     async function retryBackup(local) {
-        const p = Y.lsGet(PEND, null);
+        const p = getPend();
         if (!p || p.rid !== local.rid || !p.order || Y.bookState(book) !== 'open') return;
         try {
             const res = await Y.withTimeout(Y.reserve(c, bid, p.rid, p.order, book), 25000);
@@ -1037,7 +1045,7 @@
 
     // ---- 送れたか分からない予約を確かめる ----
     async function resolvePending() {
-        const p = Y.lsGet(PEND, null);
+        const p = getPend();
         if (!p || !Y.isRid(p.rid) || !p.order) return false;
         try {
             const s = await Y.withTimeout(c.db.collection('books').doc(bid).collection('resv').doc(p.rid).get(), 12000);
@@ -1055,6 +1063,8 @@
     // ---- はじめ ----
     function onBook(first) {
         items = Y.bookItems(book);
+        // 品が消えた・受付を止めた品は、カートから外す
+        Object.keys(cart).forEach(id => { const it = items.find(x => x.id === id); if (!it || it.off) delete cart[id]; });
         lastState = Y.bookState(book);
         paintHero();
         if (first) {

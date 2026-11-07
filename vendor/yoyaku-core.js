@@ -259,6 +259,23 @@
         return `${d.getMonth() + 1}月${d.getDate()}日（${WEEK[d.getDay()]}）` + (withTime === false ? '' : ` ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`);
     }
     function msOf(v) { return v && v.toMillis ? v.toMillis() : (Number(v) || 0); }
+    // 年も入れた日時（表計算ソフト・控えのファイル用）：2026/12/01 10:05
+    function ymdhm(ms) {
+        if (!ms) return '';
+        const d = new Date(ms), p = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}/${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+    // 金額を確かめる：'bad' … 合計が品の値段×個数と合わない（書きかえられたかもしれない）、
+    // 'old' … 予約した時の値段が、今の品の値段と違う（あとで値段を直した時など）、'' … 合っている
+    function priceCheck(r, book) {
+        const lines = Array.isArray(r && r.items) ? r.items : [];
+        const sum = lines.reduce((s, l) => s + (Number(l.price) || 0) * (Number(l.n) || 0), 0);
+        const qty = lines.reduce((s, l) => s + (Number(l.n) || 0), 0);
+        if (sum !== Number(r.total) || qty !== Number(r.qty)) return 'bad';
+        const items = bookItems(book);
+        if (lines.some(l => { const it = items.find(x => x.id === l.id); return it && it.price !== Number(l.price); })) return 'old';
+        return '';
+    }
 
     // ---- CSV（表計算ソフトで、文字が式として動かないように） ----
     function csvCell(v) {
@@ -272,7 +289,7 @@
         const head = ['番号', '受付の日時', 'お名前', (book && book.sidLabel) || '学籍番号'].concat(items.map(i => i.name), ['個数', '金額', '状態', 'お支払い', 'お店のメモ', '受け方', '予約の印']);
         const rows = list.slice().sort((a, b) => (a.seq || 0) - (b.seq || 0)).map(r => {
             const per = items.map(i => { const l = (r.items || []).find(x => x.id === i.id); return l ? l.n : ''; });
-            return [r.seq, dt(msOf(r.at) || r.cat), r.name, r.sid].concat(per, [r.qty, r.total, ST_JA[r.st] || r.st, r.paid ? '済み' : '', r.snote || '', r.via === 'shop' ? '店頭・電話' : 'ウェブ', r.rid]);
+            return [r.seq, ymdhm(msOf(r.at) || r.cat), r.name, r.sid].concat(per, [r.qty, r.total, ST_JA[r.st] || r.st, r.paid ? '済み' : '', r.snote || '', r.via === 'shop' ? '店頭・電話' : 'ウェブ', r.rid]);
         });
         return '﻿' + [head].concat(rows).map(r => r.map(csvCell).join(',')).join('\r\n');
     }
@@ -310,6 +327,6 @@
     window.Yoyaku = {
         LS, esc, yen, newRid, newBid, newKey, keyShow, keyNorm, isRid, isBid, normSid, normName, sidHash, sha256hex,
         withTimeout, isPerm, isNet, lsGet, lsSet, idbPut, idbGet, askPersist, connect, bookState, bookItems, remainOf, reserve,
-        sheetOk, sheetPost, rowOf, dt, msOf, toCsv, csvCell, download, qrSvg, qrDraw, calm, ST_JA, WEEK
+        sheetOk, sheetPost, rowOf, dt, ymdhm, priceCheck, msOf, toCsv, csvCell, download, qrSvg, qrDraw, calm, ST_JA, WEEK
     };
 })();

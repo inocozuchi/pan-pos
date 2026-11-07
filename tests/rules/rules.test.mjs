@@ -436,6 +436,13 @@ await t('予約帳：受付を止める・期間が終わると予約できな�
   await assertFails(bookReserve(cust2Db, 'cust2', 2, RID2));
 });
 await t('予約帳：管理者は数えを直せる（数え直し）', () => assertSucceeds(setDoc(doc(ownerDb, 'books', BID, 'tally', 'c'), { n: 1, c: { st: 1 } })));
+await t('予約帳：管理者は増やすだけ（鍵を使った端末も、元の管理者を外せない）・鍵は消せない', async () => {
+  await assertFails(updateDoc(bookDoc(db('newdev')), { owners: ['newdev'] }));
+  await assertFails(updateDoc(bookDoc(ownerDb), { owners: ['owner1'] }));
+  await assertSucceeds(updateDoc(bookDoc(ownerDb), { owners: ['owner1', 'newdev'] }));
+  await assertFails(deleteDoc(doc(ownerDb, 'books', BID, 'keys', KEY)));
+  await assertFails(deleteDoc(doc(ownerDb, 'bookkeys', KEY)));
+});
 await t('予約帳：管理者でも番号を戻せない（次の予約がぶつからないように）', () => assertFails(setDoc(doc(ownerDb, 'books', BID, 'tally', 'c'), { n: 0, c: {} })));
 await t('予約帳：受付の外でも、管理者は店頭・電話の予約を足せる（お客様は足せない）', async () => {
   await assertFails(bookReserve(cust2Db, 'cust2', 2, RID2));

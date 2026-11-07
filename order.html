@@ -385,6 +385,10 @@
     </div>
 
 <script>
+    // 動きを減らす設定の端末では、すっと動かさずに、すぐ移る
+    window.SCROLL_B = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'; } catch (e) { return 'auto'; } };
+</script>
+<script>
 (function () {
     'use strict';
     const SITE = window.SITE || {};
@@ -787,7 +791,7 @@
             const b = e.target.closest('button[data-sec]');
             if (!b) return;
             const sec = document.getElementById(b.dataset.sec);
-            if (sec) { tabLock = Date.now(); setTab(b.dataset.sec); sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+            if (sec) { tabLock = Date.now(); setTab(b.dataset.sec); sec.scrollIntoView({ behavior: SCROLL_B(), block: 'start' }); }
         });
         window.addEventListener('scroll', () => { if (!spyQueued) { spyQueued = true; requestAnimationFrame(spyTabs); } }, { passive: true });
     }
@@ -809,7 +813,7 @@
             const on = b.dataset.sec === id;
             if (b.classList.contains('on') === on) return;
             b.classList.toggle('on', on);
-            if (on) { const l = b.offsetLeft - 16, r = l + b.offsetWidth + 32; if (l < tabs.scrollLeft || r > tabs.scrollLeft + tabs.clientWidth) tabs.scrollTo({ left: Math.max(0, l), behavior: 'smooth' }); }
+            if (on) { const l = b.offsetLeft - 16, r = l + b.offsetWidth + 32; if (l < tabs.scrollLeft || r > tabs.scrollLeft + tabs.clientWidth) tabs.scrollTo({ left: Math.max(0, l), behavior: SCROLL_B() }); }
         });
     }
     function menuGroups() {

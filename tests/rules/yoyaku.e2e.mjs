@@ -300,5 +300,88 @@ async function fillAndCheck(p, name, sid, picks) {
   ok('管理のページでも文字が動かない（一覧・詳しく・集計・設定）', !(await ad.evaluate(() => window.__x)) && ad.errs.length === 0);
   await b.close();
 }
+// ---- 総点検で直した所 ----
+{
+  await L.wipe();
+  const BID = 'bkAUDITabcdefghijklmnopq';
+  const items2 = [{ id: 'st', name: 'シュトーレン', price: 1500, cap: 0 }, { id: 'hf', name: 'ハーフ', price: 900, cap: 0 }];
+  await L.put('books/' + BID, L.bookObj({ items: items2 }));
+  const b = await L.browser();
+
+  // 1) 端末に保存できない（プライベートモードなど）時も、送り直しで2件にならない
+  const p1 = await L.page(b, { url: C + '?b=' + BID, dev: 'priv' });
+  await fillAndCheck(p1, '保存なし 一郎', 'Q0001', [['hf', 1]]);
+  await p1.evaluate(() => {
+    Storage.prototype.setItem = function () { throw new Error('QuotaExceededError'); };
+    const orig = Yoyaku.reserve; let n = 0;
+    // 1回目は届くのに「分からない」になる。3回目までは失敗したように見せる
+    Yoyaku.reserve = async (...a) => { n++; if (n === 1) { await orig(...a); } if (n <= 3) { const e = new Error('timeout'); e.code = 'timeout'; throw e; } return orig(...a); };
+  });
+  await p1.click('#send');
+  await p1.waitForSelector('#send-err', { timeout: 60000 });
+  await p1.click('#send');
+  await p1.waitForSelector('#ticket', { timeout: 30000 });
+  ok('保存できない端末：もう一度押しても1件だけ', (await L.list(`books/${BID}/resv`)).filter(r => r.name === '保存なし 一郎').length === 1);
+
+  // 2) 品が消えたら、カートからも外れる（合計が合う）
+  const p2 = await L.page(b, { url: C + '?b=' + BID, dev: 'prune' });
+  await p2.waitForSelector('.item');
+  await p2.click('.item[data-id="hf"] [data-act="inc"]');
+  await p2.click('.item[data-id="st"] [data-act="inc"]');
+  await L.put('books/' + BID, L.bookObj({ items: [items2[0]] }));
+  await L.wait(1500);
+  ok('消えた品はカートから外れ、合計が合う', (await p2.textContent('#bar-n')) === '1個' && (await p2.textContent('#bar-yen')) === '¥1,500', [await p2.textContent('#bar-n'), await p2.textContent('#bar-yen')]);
+  await L.put('books/' + BID, L.bookObj({ items: items2 }));
+
+  // 3) 管理のページ：金額がおかしい予約に印・検索の欄は入力の途中で作り直さない・管理者でない端末に鍵の案内
+  const ad = await L.page(b, { dev: 'adm2', w: 820, h: 1000 });
+  await ad.goto(A);
+  await ad.waitForSelector('#w-new');
+  const uid = await ad.evaluate(async () => (await Yoyaku.connect()).uid);
+  await ad.evaluate(b2 => localStorage.setItem('yoyakucho_admin', JSON.stringify({ books: [{ bid: b2, key: '', title: 't' }], cur: b2, who: '' })), BID);
+  await ad.reload();
+  await ad.waitForSelector('[data-act="enterKey"]', { timeout: 20000 });
+  ok('管理者でない端末には「鍵を入れる」が出る', true);
+  await L.put('books/' + BID, L.bookObj({ owners: [uid], items: items2 }));
+  await ad.reload();
+  await ad.waitForSelector('.r', { timeout: 20000 });
+  await L.put(`books/${BID}/resv/rBADPRICExxxxxxxxxxxxxx`, { uid: 'x', seq: 99, name: '書きかえ', sid: 'Z9', items: [{ id: 'st', name: 'シュトーレン', price: 1500, n: 2 }], qty: 2, total: 0, st: 'new', cat: Date.now(), via: 'web' });
+  await ad.waitForFunction(() => (document.getElementById('l-box') || {}).textContent.includes('金額を確かめて'), null, { timeout: 30000 }).catch(() => {});
+  ok('合計が値段×個数と合わない予約に「金額を確かめて」', (await ad.textContent('#l-box')).includes('金額を確かめて'), (await ad.textContent('#l-box')).slice(0, 300));
+  await ad.evaluate(() => { document.getElementById('q').__mark = 1; });
+  await ad.focus('#q');
+  await ad.evaluate(() => { const q = document.getElementById('q'); q.value = 'やまだ'; q.dispatchEvent(new InputEvent('input', { bubbles: true, isComposing: true })); });
+  await L.put('books/' + BID, L.bookObj({ owners: [uid], items: items2, title: '題を直した' }));
+  await L.wait(1500);
+  ok('入力の途中で一覧が変わっても、検索の欄はそのまま', await ad.evaluate(() => document.getElementById('q').__mark === 1 && document.getElementById('q').value === 'やまだ'));
+  await ad.evaluate(() => { const q = document.getElementById('q'); q.value = ''; q.dispatchEvent(new InputEvent('input', { bubbles: true })); });
+
+  // 4) 受付のタブ：ほかの端末で直した設定が出る
+  await ad.click('[data-tab="set"]'); await L.wait(500);
+  await L.put('books/' + BID, L.bookObj({ owners: [uid], items: items2, title: 'ほかの端末で直した' }));
+  await L.wait(1500);
+  ok('ほかの端末で直した設定が、受付のタブに出る', (await ad.inputValue('[data-k="title"]')) === 'ほかの端末で直した');
+
+  // 5) CSV に年が入る
+  await ad.click('[data-tab="safe"]'); await L.wait(400);
+  const [dl] = await Promise.all([ad.waitForEvent('download'), ad.click('[data-act="csv"]')]);
+  const cp = OUT + '/audit.csv'; await dl.saveAs(cp);
+  ok('CSV の日時に年が入る', /\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}/.test(fs.readFileSync(cp, 'utf8')));
+
+  // 6) はじめの画面から開いた控えのファイルを閉じると、はじめの画面に戻る
+  const [dl2] = await Promise.all([ad.waitForEvent('download'), ad.click('[data-act="saveJson"]')]);
+  const jp = OUT + '/audit.json'; await dl2.saveAs(jp);
+  const v = await L.page(b, { dev: 'viewer2' });
+  await v.goto(A);
+  await v.waitForSelector('#w-file');
+  const [fc] = await Promise.all([v.waitForEvent('filechooser'), v.click('#w-file')]);
+  await fc.setFiles(jp);
+  await v.waitForSelector('[data-act="closeViewer"]');
+  await v.click('[data-act="closeViewer"]');
+  ok('控えのファイルを閉じると、はじめの画面に戻る', !!(await v.$('#w-new')));
+  const errs = [p1, p2, ad, v].reduce((n, p) => n + p.errs.length, 0);
+  ok('ページの中の失敗（エラー）が無い', errs === 0, errs);
+  await b.close();
+}
 console.log(`${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
