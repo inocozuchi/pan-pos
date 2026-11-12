@@ -42,34 +42,29 @@ window.PRODUCT_SETS.normal = {
 
 // ---- デモ販売会のメニュー（いまの既定）----
 // 開店の準備で、商品がまだ無い端末にはこのメニューが最初から入る。
-// 前の販売会の商品が残っている端末には「デモ販売会のメニュー（21品）に入れ替える」が出る。
+// 前の販売会の商品が残っている端末には「デモ販売会のメニュー（18品）に入れ替える」が出る。
 window.PRODUCT_SETS.rinji = {
   label: "デモ販売会のメニュー",
   items: [
     // パン類
-    { name: "あんぱん",                 price: 180, category: "パン" },
-    { name: "ウィンナーパン",           price: 180, category: "パン" },
-    { name: "カメのメロンパン",         price: 180, category: "パン" },
-    { name: "塩パン",                   price: 150, category: "パン" },
-    { name: "チーズパン",               price: 180, category: "パン" },
-    { name: "ミルクパン",               price: 150, category: "パン" },
-    { name: "りんごさつまいもパン",     price: 200, category: "パン" },
-    { name: "レモンはちみつパン",       price: 200, category: "パン" },
-    // クッキー類（パウンドケーキも、焼き菓子としてここに入れる）
-    { name: "オリジナルクッキー",               price: 200, category: "クッキー" },
-    { name: "チーズスティック",                 price: 200, category: "クッキー" },
-    { name: "スノーボール（抹茶）",             price: 200, category: "クッキー" },
-    { name: "ポルボロン（プレーン）",           price: 200, category: "クッキー" },
-    { name: "ケンちゃんのチョコチップクッキー", price: 200, category: "クッキー" },
-    { name: "杉ちゃんのココナッツクッキー",     price: 200, category: "クッキー" },
-    { name: "ダンちゃんのアーモンドクッキー",   price: 200, category: "クッキー" },
-    { name: "ふじもっちゃんの全粒粉クッキー",   price: 200, category: "クッキー" },
-    { name: "なっちゃんの紅茶クッキー",         price: 100, category: "クッキー" },
-    { name: "なっちゃんのチョコクッキー",       price: 100, category: "クッキー" },
-    { name: "クッキーつめ合わせ",               price: 500, category: "クッキー" },
-    { name: "パウンドケーキ",                   price: 350, category: "クッキー" },
-    // コーヒー
-    { name: "KENJIブレンド",                    price: 100, category: "ドリンク" }
+    { name: "あんぱん",                       price: 180, category: "パン" },
+    { name: "ウィンナーパン",                 price: 180, category: "パン" },
+    { name: "カメのメロンパン",               price: 180, category: "パン" },
+    { name: "クリームパン",                   price: 180, category: "パン" },
+    { name: "塩パン",                         price: 150, category: "パン" },
+    { name: "チーズパン",                     price: 180, category: "パン" },
+    { name: "ミルクパン",                     price: 150, category: "パン" },
+    { name: "りんごさつまいもパン",           price: 200, category: "パン" },
+    { name: "レーズンパン",                   price: 200, category: "パン" },
+    // クッキー類（ケーキも、焼き菓子としてここに入れる）
+    { name: "スノーボール（プレーン）",       price: 200, category: "クッキー" },
+    { name: "スノーボール（抹茶）",           price: 200, category: "クッキー" },
+    { name: "ダンちゃんのアーモンドクッキー", price: 200, category: "クッキー" },
+    { name: "なっちゃんの紅茶クッキー",       price: 100, category: "クッキー" },
+    { name: "なっちゃんのチョコクッキー",     price: 100, category: "クッキー" },
+    { name: "クッキーつめ合わせ",             price: 500, category: "クッキー" },
+    { name: "チーズケーキ",                   price: 250, category: "クッキー" },
+    { name: "ガトーショコラ",                 price: 300, category: "クッキー" },
+    { name: "パウンドケーキ",                 price: 350, category: "クッキー" }
   ]
 };
-
